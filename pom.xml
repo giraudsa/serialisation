@@ -1,0 +1,57 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.actemium</groupId>
+  <artifactId>Marshalling</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>Marshalling</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  
+  
+ <distributionManagement>
+     <repository>
+     <id>actemium_nexus_release</id>
+     <name>Internal Releases</name>
+     <url>http://46.105.48.117:8081/nexus/content/repositories/releases/</url>
+  </repository>
+  <snapshotRepository>
+     <id>actemium_nexus_snapshot</id>
+     <name>Internal Releases</name>
+     <url>http://46.105.48.117:8081/nexus/content/repositories/snapshots/</url>
+  </snapshotRepository>
+             
+ </distributionManagement>
+
+   <build>
+    <plugins>
+   
+	<!-- Make this jar executable -->
+	<plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-jar-plugin</artifactId>
+		<configuration>
+			<source>1.7</source>
+			<target>1.7</target>
+		</configuration>
+	</plugin>
+ 
+    </plugins>
+  </build>
+  
+
+  <dependencies>
+    <dependency>
+		<groupId>org.apache.commons</groupId>
+		<artifactId>commons-lang3</artifactId>
+		<version>3.4</version>
+	</dependency>
+
+  </dependencies>
+</project>
