@@ -1,6 +1,6 @@
 # serialisation-désérialisation multi-format (json - xml)
 
-petite bibliothèque de sérialisation - deserialisation orienté simplicité d'utilisation et supportant le polymorphisme.
+Petite bibliothèque de sérialisation - deserialisation orienté simplicité d'utilisation et supportant le polymorphisme.
 
 Elle propose un outil de sérialisation vers le format xml et json (bientot en binaire):
 
