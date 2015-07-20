@@ -11,6 +11,7 @@ public class ChampUid extends Champ {
 		super(null, true);
 		name = uidFieldName;
 		uuid = UUID.randomUUID();
+		valueType = UUID.class;
 	}
 	
 	@Override
