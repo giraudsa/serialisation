@@ -165,7 +165,7 @@ public class TypeExtension {
 		dicoTypePrimitifToEnveloppe.put(double.class, Double.class);
 	}
 	public static Class<?> getTypeEnveloppe(Class<?> typePrimitif){
-		if (!typePrimitif.isPrimitive()) return typePrimitif;
+		if (typePrimitif == null || !typePrimitif.isPrimitive()) return typePrimitif;
 		return dicoTypePrimitifToEnveloppe.get(typePrimitif);
 	}
 }
