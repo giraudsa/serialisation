@@ -13,7 +13,7 @@ import java.util.Map.Entry;
 @SuppressWarnings("rawtypes")
 public class ActionBinaryDictionaryType<T extends Map> extends ActionBinary<T> {
 
-	public ActionBinaryDictionaryType(Class<? super T> type, T obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+	public ActionBinaryDictionaryType(Class<? super T> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
 		super(type,obj, relation, isDejaVu, b);
 	}
 	

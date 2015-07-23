@@ -17,18 +17,11 @@ import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryLong;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryShort;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryString;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryUUID;
-import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlCollectionType;
-import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlDate;
-import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlDictionaryType;
-import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlObject;
-import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlSimpleComportement;
-import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlString;
-import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlUUID;
-import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlVoid;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Date;
@@ -44,12 +37,12 @@ import utils.TypeExtension;
 public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	
 	//////METHODES STATICS PUBLICS
-	public static <U> U fromBinary(DataInputStream reader, EntityManager entity) throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
-		BinaryUnmarshaller<U> w = new BinaryUnmarshaller<U>(reader, entity){};
+	public static <U> U fromBinary(InputStream reader, EntityManager entity) throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
+		BinaryUnmarshaller<U> w = new BinaryUnmarshaller<U>(new DataInputStream(reader), entity){};
 		return w.parse();
 	}
 	
-	public static <U> U fromBinary(DataInputStream reader) throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
+	public static <U> U fromBinary(InputStream reader) throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
 		return fromBinary(reader, null);
 	}
 	
@@ -113,9 +106,19 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		////null
 		if(header == Constants.IS_NULL) return null;
 		
-		Class<?> typeCandidat = Constants.Type.getSimpleType(header);
+		Class<?> typeCandidat = Constants.Type.getSimpleType(header, typeProbable);
 		///bool
 		if(typeCandidat == Boolean.class) return Constants.BOOL_VALUE.getBool(header);
+		//DATE, UUID, STRING
+		if(typeCandidat == Date.class || typeCandidat == String.class || typeCandidat == UUID.class){
+			int smallId = getSmallId(header);
+			if(isDejaVu(smallId)){
+				return dicoSmallIdToObject.get(smallId);
+			}
+			Object objetResultat = dicoSimpleTypeToAction.get(typeCandidat).unmarshall();
+			dicoSmallIdToObject.put(smallId, objetResultat);
+			return objetResultat;
+		}
 		///autres types simples
 		if(TypeExtension.isSimple(typeCandidat)) return dicoSimpleTypeToAction.get(typeCandidat).unmarshall();
 		//le type complexe

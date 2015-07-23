@@ -10,7 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 
 public class ActionBinaryFloat  extends ActionBinarySimpleComportement<Float> {
 
-	public ActionBinaryFloat(Class<? super Float> type, Float obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+	public ActionBinaryFloat(Class<? super Float> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
 		super(type,obj, TypeRelation.COMPOSITION, isDejaVu, b);
 	}
 	@Override

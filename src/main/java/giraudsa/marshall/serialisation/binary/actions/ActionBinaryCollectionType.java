@@ -12,7 +12,7 @@ import java.util.Collection;
 @SuppressWarnings("rawtypes")
 public class ActionBinaryCollectionType<T extends Collection> extends ActionBinary<T> {
 
-	public ActionBinaryCollectionType(Class<? super T> type, T obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+	public ActionBinaryCollectionType(Class<? super T> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
 		super(type,obj, relation, isDejaVu, b);
 	}
 	

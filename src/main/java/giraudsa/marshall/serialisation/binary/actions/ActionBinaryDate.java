@@ -11,14 +11,14 @@ import java.util.Date;
 
 public class ActionBinaryDate<DateType extends Date> extends ActionBinary<DateType> {
 
-	public ActionBinaryDate(Class<? super DateType> type, DateType obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		super(type,obj, relation, isDejaVu, b);
+	public ActionBinaryDate(Class<? super DateType> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+		super(type,obj, TypeRelation.COMPOSITION, isDejaVu, b);
 	}
 
 
 	@Override
 	public void marshall(DateType obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
 			NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		writeLong(obj.getTime());		
+		if(!isDejaVu) writeLong(obj.getTime());		
 	}
 }

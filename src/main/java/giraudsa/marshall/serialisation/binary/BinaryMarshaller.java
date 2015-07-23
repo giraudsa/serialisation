@@ -21,6 +21,8 @@ import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryShort;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,13 +38,13 @@ public class BinaryMarshaller extends Marshaller{
 	private DataOutputStream output;
 
 	/////METHODES STATICS PUBLICS
-	public static <U> void toBinary(U obj, DataOutputStream  output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException  {
-		BinaryMarshaller v = new BinaryMarshaller(output);
+	public static <U> void toBinary(U obj, OutputStream  output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException  {
+		BinaryMarshaller v = new BinaryMarshaller(new DataOutputStream(output));
 		v.marshall(obj);
 	}
 
-	public static <U> void toCompleteBinary(U obj, DataOutputStream  output) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
-		BinaryMarshaller v = new BinaryMarshaller(output);
+	public static <U> void toCompleteBinary(U obj, OutputStream  output) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
+		BinaryMarshaller v = new BinaryMarshaller(new DataOutputStream(output));
 		v.marshallAll(obj);
 	}
 	
@@ -95,6 +97,7 @@ public class BinaryMarshaller extends Marshaller{
 		writeByte(Constants.IS_FINI);
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected <T> void marshallSpecialise(T obj, TypeRelation relation, Boolean couldTypeBeLessSpecifique ) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException{
 		Class<?> typeObj = TypeExtension.getTypeEnveloppe(obj == null ? void.class : obj.getClass());
 		if(obj == null){
@@ -126,55 +129,67 @@ public class BinaryMarshaller extends Marshaller{
 					header |= typeOfSmallIdTypeObj;
 				}
 				
-				///////////write header
-				writeByte(header);
+				writeByte(header);			
+				writeSmallId(smallId, typeOfSmallId);
+				ecritTypeSiNecessaire(couldTypeBeLessSpecifique, typeObj, isDejaVu, isDejaVuTypeObj, smallIdTypeObj, typeOfSmallIdTypeObj);
 				
-				
-				/////////write obj small id
-				switch (typeOfSmallId) {
-				case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_BYTE:
-					writeByte((byte)smallId);
-					break;
-				case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_SHORT:
-					writeShort((short)smallId);
-					break;
-				case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_INT:
-					writeInt(smallId);
-					break;
-				}
-				
-				
-				///////write type if necessary
-				if(!isDejaVu && !couldTypeBeLessSpecifique){
-					switch (typeOfSmallIdTypeObj) {
-					case Constants.Type.CODAGE_BYTE:
-						writeByte((byte)smallIdTypeObj);
-						break;
-					case Constants.Type.CODAGE_SHORT:
-						writeShort((short)smallIdTypeObj);
-						break;
-					case Constants.Type.CODAGE_INT:
-						writeInt(smallIdTypeObj);
-						break;
-					}
-					if(!isDejaVuTypeObj) writeUTF(typeObj.getName());
-				}
 				break;
-				
+			case Constants.Type.UUID:
+			case Constants.Type.STRING:
+			case Constants.Type.DATE:
+				isDejaVu = dejaVu.containsKey(obj);
+				int smallIdSimple = _getSmallId(obj);
+				byte typeOfSmallIdSimple = getTypeOfSmallId(smallIdSimple);
+				header |= typeOfSmallIdSimple;
+				writeByte(header);
+				writeSmallId(smallIdSimple, typeOfSmallIdSimple);
 			case Constants.Type.BYTE:
 			case Constants.Type.SHORT:
 			case Constants.Type.INT:
 			case Constants.Type.LONG:
 			case Constants.Type.FLOAT:
 			case Constants.Type.DOUBLE:
-			case Constants.Type.UUID:
-			case Constants.Type.STRING:
-			case Constants.Type.DATE:
 			case Constants.Type.CHAR:
 				writeByte(header);
 			}
 		///////write value of obj
-			getBehavior(obj).getConstructor(Class.class, obj.getClass(), TypeRelation.class, Boolean.class, BinaryMarshaller.class).newInstance(typeObj, obj, relation, isDejaVu, this);
+			Class< ? extends ActionBinary> action = (Class<? extends ActionBinary>) getTypeAction(obj);
+			Constructor<?> c = action.getConstructor(Class.class, Object.class, TypeRelation.class, Boolean.class, BinaryMarshaller.class);
+			c.newInstance(typeObj, obj, relation, isDejaVu, this);
+		}
+	}
+
+	private void ecritTypeSiNecessaire(Boolean couldTypeBeLessSpecifique, Class<?> typeObj, boolean isDejaVu, boolean isDejaVuTypeObj, int smallIdTypeObj, byte typeOfSmallIdTypeObj)
+			throws IOException {
+		///////write type if necessary
+		if(!isDejaVu && couldTypeBeLessSpecifique){
+			switch (typeOfSmallIdTypeObj) {
+			case Constants.Type.CODAGE_BYTE:
+				writeByte((byte)smallIdTypeObj);
+				break;
+			case Constants.Type.CODAGE_SHORT:
+				writeShort((short)smallIdTypeObj);
+				break;
+			case Constants.Type.CODAGE_INT:
+				writeInt(smallIdTypeObj);
+				break;
+			}
+			if(!isDejaVuTypeObj) writeUTF(typeObj.getName());
+		}
+	}
+
+	private void writeSmallId(int smallId, byte typeOfSmallId) throws IOException {
+		/////////write obj small id
+		switch (typeOfSmallId) {
+		case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_BYTE:
+			writeByte((byte)smallId);
+			break;
+		case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_SHORT:
+			writeShort((short)smallId);
+			break;
+		case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_INT:
+			writeInt(smallId);
+			break;
 		}
 	}
 	

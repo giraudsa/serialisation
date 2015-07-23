@@ -15,14 +15,15 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 		return (BinaryMarshaller)marshaller;
 	}
 	
-	public ActionBinary(Class<? super T> type, T obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+	@SuppressWarnings("unchecked")
+	public ActionBinary(Class<? super T> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
 		super(type, b);
-		this.obj = obj;
+		this.obj = (T)obj;
 		this.relation = relation;
 		this.isDejaVu = isDejaVu;
 		if(relation == TypeRelation.COMPOSITION) setEstSerialise(obj);
 		else stockeASerialiser(obj);
-		marshall(obj, relation);
+		marshall(this.obj, relation);
 	}
 
 	protected void writeBoolean(boolean v) throws IOException {

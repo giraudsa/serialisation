@@ -10,7 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 
 public class ActionBinaryLong  extends ActionBinarySimpleComportement<Long>{
 
-	public ActionBinaryLong(Class<? super Long> type, Long obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+	public ActionBinaryLong(Class<? super Long> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
 		super(type,obj, TypeRelation.COMPOSITION, isDejaVu, b);
 	}
 	

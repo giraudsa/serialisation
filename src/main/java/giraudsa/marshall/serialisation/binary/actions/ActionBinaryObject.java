@@ -14,7 +14,7 @@ import utils.champ.Champ;
 
 public class ActionBinaryObject<T> extends ActionBinary<T> {
 
-	public ActionBinaryObject(Class<? super T> type, T obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+	public ActionBinaryObject(Class<? super T> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
 		super(type,obj, relation, isDejaVu, b);
 	}
 
@@ -38,8 +38,8 @@ public class ActionBinaryObject<T> extends ActionBinary<T> {
 	protected void traiteChamp(T obj, Champ champ) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException,
 			SecurityException, NotImplementedSerializeException, IOException {
 		if(champ.get(obj) == null) writeNull();
-		else if(champ.isSimple)	traiteObject(champ.get(obj), champ.relation, false);
+		else if(champ.isSimple)	traiteObject(champ.get(obj), TypeRelation.COMPOSITION, false);
 		else if(champ.valueType == obj.getClass()) traiteObject(obj, champ.relation, false);
-		else traiteObject(champ.get(obj), relation, true);
+		else traiteObject(champ.get(obj), champ.relation, true);
 	}
 }

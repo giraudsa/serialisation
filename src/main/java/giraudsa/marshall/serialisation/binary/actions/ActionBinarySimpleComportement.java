@@ -10,13 +10,13 @@ import java.lang.reflect.InvocationTargetException;
 
 public class ActionBinarySimpleComportement<T> extends ActionBinary<T> {
 
-	public ActionBinarySimpleComportement(Class<? super T> type, T obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+	public ActionBinarySimpleComportement(Class<? super T> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
 		super(type,obj, TypeRelation.COMPOSITION, isDejaVu, b);
 	}
 
 	@Override
 	public void marshall(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
 			SecurityException, NotImplementedSerializeException {
-		writeUTF(obj.toString());
+		if(!isDejaVu) writeUTF(obj.toString());
 	}
 }

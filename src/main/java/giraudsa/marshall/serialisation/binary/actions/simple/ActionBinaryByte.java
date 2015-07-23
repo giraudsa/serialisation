@@ -10,7 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 
 public class ActionBinaryByte extends ActionBinarySimpleComportement<Byte> {
 
-	public ActionBinaryByte(Class<? super Byte> type, Byte obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+	public ActionBinaryByte(Class<? super Byte> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
 		super(type,obj, TypeRelation.COMPOSITION, isDejaVu, b);
 	}
 	

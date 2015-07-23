@@ -97,7 +97,7 @@ public class JsonMarshaller extends TextMarshaller {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <T> void marshallSpecialise(T obj, TypeRelation relation, String nom) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
 		Class<T> typeObj = (Class<T>) obj.getClass();
-		Class<? extends ActionJson> behaviorJson = (Class<? extends ActionJson>)getBehavior(obj);
+		Class<? extends ActionJson> behaviorJson = (Class<? extends ActionJson>)getTypeAction(obj);
 		ActionJson<T> action =  (ActionJson<T>)behaviorJson.getConstructor(Class.class, JsonMarshaller.class, String.class).newInstance(typeObj, this, nom);
 		action.marshall(obj, relation);
 	}

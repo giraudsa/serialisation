@@ -31,7 +31,7 @@ public abstract class Marshaller {
 	
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected <T> Class<? extends ActionAbstrait> getBehavior(T obj) throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException  {
+	protected <T> Class<? extends ActionAbstrait> getTypeAction(T obj) throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException  {
 		Class<T> type = null;
 		Class<? extends ActionAbstrait> action;
 		if (obj == null) {

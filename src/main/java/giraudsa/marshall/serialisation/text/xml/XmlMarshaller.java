@@ -87,7 +87,7 @@ public class XmlMarshaller extends TextMarshaller {
 	protected <T> void marshallSpecialise(T obj, TypeRelation relation, String nom) throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, NoSuchMethodException, SecurityException, IOException {
 		Class<T> typeObj = (Class<T>) obj.getClass();
-		Class<? extends ActionXml> behaviorXml = (Class<? extends ActionXml>)getBehavior(obj);
+		Class<? extends ActionXml> behaviorXml = (Class<? extends ActionXml>)getTypeAction(obj);
 		ActionXml<T> action =  (ActionXml<T>)behaviorXml.getConstructor(Class.class, XmlMarshaller.class, String.class).newInstance(typeObj, this, nom);
 		action.marshall(obj, relation);
 	}

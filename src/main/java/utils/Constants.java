@@ -109,9 +109,11 @@ public class Constants {
 			return ret;
 		}
 		
-		public static Class<?> getSimpleType(byte b){
+		public static Class<?> getSimpleType(byte b, Class<?> typeProbable){
 			byte t = (byte) (b & MASQUE);
-			return dicoByteToTypeSimple.get(t);
+			Class<?> ret = dicoByteToTypeSimple.get(t);
+			if(ret == null) ret = typeProbable;
+			return ret;
 		}
 		
 	}
