@@ -9,7 +9,7 @@ public abstract class FabriqueChamp {
 		return new Champ(info, TypeExtension.isSimple(info.getType()));
 	}
 	
-	public static <Obj> ChampUid createChampId(){
+	public static ChampUid createChampId(){
 		return new ChampUid();
 	}
 }

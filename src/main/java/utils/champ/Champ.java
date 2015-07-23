@@ -1,10 +1,10 @@
 package utils.champ;
 
-import java.lang.reflect.Field;
+import giraudsa.marshall.annotations.MarshallAsAttribute;
+import giraudsa.marshall.annotations.Relation;
+import giraudsa.marshall.annotations.TypeRelation;
 
-import com.actemium.marshall.annotations.MarshallAsAttribute;
-import com.actemium.marshall.annotations.Relation;
-import com.actemium.marshall.annotations.TypeRelation;
+import java.lang.reflect.Field;
 
 public class Champ implements Comparable<Champ> {
 
@@ -47,6 +47,5 @@ public class Champ implements Comparable<Champ> {
 			Relation maRelation = info.getAnnotation(Relation.class);
 			relation = maRelation != null ? maRelation.type() : TypeRelation.ASSOCIATION;
 		}
-	}
-	
+	}	
 }

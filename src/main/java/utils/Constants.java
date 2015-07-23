@@ -1,17 +1,121 @@
 package utils;
 
+import giraudsa.marshall.deserialisation.text.json.Container;
+import giraudsa.marshall.serialisation.text.json.Pair;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.AbstractMap.SimpleEntry;
 
-import com.actemium.marshall.deserialisation.json.Container;
-import com.actemium.marshall.serialisation.json.Pair;
+public class Constants {
+	public static final byte IS_NULL = 					(byte) 0x00;//0b 0000 0000
+	public static final byte IS_FINI = 					(byte) 0xff;//0b 1111 1111
+	
+	public static final class SMALL_ID_TYPE{
+		public static final byte NEXT_IS_SMALL_ID_BYTE =	(byte) 0x01;//0b 0000 0001
+		public static final byte NEXT_IS_SMALL_ID_SHORT =	(byte) 0x02;//0b 0000 0010
+		public static final byte NEXT_IS_SMALL_ID_INT =		(byte) 0x03;//0b 0000 0011
+		private static final byte MASK_SID_TYPE = 			(byte) 0x03;//0b 0000 0011
+		
+		public static byte getSmallId(byte candidat){
+			return (byte) (candidat & MASK_SID_TYPE);
+		}
+		
+	}
+	
+	public static final class BOOL_VALUE{
+		private static final byte B_MASQUE = 		(byte) 0x0c;//0b 0000 1100
+		private static final byte B_NULL =			(byte) 0x04;//0b 0000 0100	
+		private static final byte TRUE = 			(byte) 0x08;//0b 0000 1000	
+		private static final byte FALSE = 			(byte) 0x0c;//0b 0000 1100
+		
+		private static final Map<Boolean, Byte> dicoBoolToByte = new HashMap<>();
+		private static final Map<Byte, Boolean> dicoByteToBool = new HashMap<>();
+		static {
+			dicoBoolToByte.put(null, B_NULL);
+			dicoBoolToByte.put(true, TRUE);
+			dicoBoolToByte.put(false, FALSE);
+			dicoByteToBool.put(B_NULL, null);
+			dicoByteToBool.put(TRUE, true);
+			dicoByteToBool.put(FALSE, false);
+		}
+		
+		public static byte getByte(Boolean b){
+			return dicoBoolToByte.get(b);
+		}
+		public static Boolean getBool(byte b){
+			byte t = (byte) (b & B_MASQUE);
+			return dicoByteToBool.get(t);
+		}
+	}
 
-public abstract class Constants {
+	
+	public final static class Type{
+		private static final byte MASQUE = 		(byte) 0xf0;
+		public static final byte CODAGE_INT = 	(byte) 0x10;
+		public static final byte CODAGE_BYTE =	(byte) 0x20;
+		public static final byte CODAGE_SHORT =	(byte) 0x30;
+		public static final byte BOOL =			(byte) 0x40;
+		public static final byte BYTE =	 		(byte) 0x50;
+		public static final byte SHORT =	 	(byte) 0x60;
+		public static final byte INT = 			(byte) 0x70;
+		public static final byte LONG = 		(byte) 0x80;
+		public static final byte FLOAT = 		(byte) 0x90;
+		public static final byte DOUBLE = 		(byte) 0xa0;
+		public static final byte UUID = 		(byte) 0xb0;
+		public static final byte STRING = 		(byte) 0xc0;
+		public static final byte DATE = 		(byte) 0xd0;
+		public static final byte CHAR = 		(byte) 0xe0;
+		public static final byte AUTRE = 		(byte) 0x00;
+		
+		public static byte getLongueurCodageType(byte header){
+			return (byte) (header & MASQUE);
+		}
+		private static final Map<Byte, Class<?>> dicoByteToTypeSimple = new HashMap<>();
+		private static final Map<Class<?>, Byte> dicoTypeSimpleToByte = new HashMap<>();
+		
+		static {
+			dicoByteToTypeSimple.put(BOOL, Boolean.class);
+			dicoByteToTypeSimple.put(BYTE, Byte.class);
+			dicoByteToTypeSimple.put(SHORT, Short.class);
+			dicoByteToTypeSimple.put(INT, Integer.class);
+			dicoByteToTypeSimple.put(LONG, Long.class);
+			dicoByteToTypeSimple.put(FLOAT, Float.class);
+			dicoByteToTypeSimple.put(DOUBLE, Double.class);
+			dicoByteToTypeSimple.put(UUID, UUID.class);
+			dicoByteToTypeSimple.put(STRING, String.class);
+			dicoByteToTypeSimple.put(DATE, Date.class);
+			dicoByteToTypeSimple.put(CHAR, Character.class);
+			dicoTypeSimpleToByte.put(Boolean.class, BOOL);
+			dicoTypeSimpleToByte.put(Byte.class, BYTE);
+			dicoTypeSimpleToByte.put(Short.class, SHORT);
+			dicoTypeSimpleToByte.put(Integer.class, INT);
+			dicoTypeSimpleToByte.put(Long.class, LONG);
+			dicoTypeSimpleToByte.put(Float.class, FLOAT);
+			dicoTypeSimpleToByte.put(Double.class, DOUBLE);
+			dicoTypeSimpleToByte.put(UUID.class, UUID);
+			dicoTypeSimpleToByte.put(String.class, STRING);
+			dicoTypeSimpleToByte.put(Date.class, DATE);
+			dicoTypeSimpleToByte.put(Character.class, CHAR);
+		}
+		
+		public static byte getByteHeader(Class<?> typePrimitif){
+			Class<?> typeSimple = TypeExtension.getTypeEnveloppe(typePrimitif);
+			Byte ret = dicoTypeSimpleToByte.get(typeSimple);
+			if (ret == null) ret = AUTRE;
+			return ret;
+		}
+		
+		public static Class<?> getSimpleType(byte b){
+			byte t = (byte) (b & MASQUE);
+			return dicoByteToTypeSimple.get(t);
+		}
+		
+	}
+	
 	
 	public static final String MAP_CLEF = "__map__clef";
 	public static final String MAP_VALEUR = "__map__valeur";

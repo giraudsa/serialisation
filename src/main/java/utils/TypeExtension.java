@@ -1,6 +1,9 @@
 package utils;
 
 
+import giraudsa.marshall.annotations.IgnoreSerialise;
+import giraudsa.marshall.annotations.TypeRelation;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -22,13 +25,10 @@ import utils.champ.Champ;
 import utils.champ.ChampUid;
 import utils.champ.FabriqueChamp;
 
-import com.actemium.marshall.annotations.IgnoreSerialise;
-import com.actemium.marshall.annotations.TypeRelation;
-
 public class TypeExtension {
 	
-	private static Set<Class<?>> simpleTypes = new HashSet<Class<?>>(Arrays.asList(Boolean.class, Byte.class, Short.class, Integer.class, Long.class, Float.class, Double.class, 
-			String.class, Date.class, void.class, UUID.class)); 
+	public static Set<Class<?>> simpleTypes = new HashSet<Class<?>>(Arrays.asList(Boolean.class, Byte.class, Short.class, Integer.class, Long.class, Float.class, Double.class, 
+			String.class, Date.class, void.class, UUID.class, Character.class)); 
 
 	public static boolean isSimple(Class<?> type) { // Simple types become XML Attributes and JSON Values
 		return type.isPrimitive() || type.isEnum() || simpleTypes.contains(type);
