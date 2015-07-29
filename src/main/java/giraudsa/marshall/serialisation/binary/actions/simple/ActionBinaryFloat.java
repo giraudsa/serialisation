@@ -1,21 +1,23 @@
 package giraudsa.marshall.serialisation.binary.actions.simple;
 
-import giraudsa.marshall.annotations.TypeRelation;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
-import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
-import giraudsa.marshall.serialisation.binary.actions.ActionBinarySimpleComportement;
-
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
-public class ActionBinaryFloat  extends ActionBinarySimpleComportement<Float> {
+import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
 
-	public ActionBinaryFloat(Class<? super Float> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		super(type,obj, TypeRelation.COMPOSITION, isDejaVu, b);
+public class ActionBinaryFloat  extends ActionBinarySimple<Float> {
+
+	public ActionBinaryFloat(Class<? super Float> type, BinaryMarshaller b) {
+		super(type, b);
 	}
+	
 	@Override
-	public void marshall(Float obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
-			NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		writeFloat(obj);
+	public void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
+		writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
+		try {
+			writeFloat((float)objetASerialiser);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

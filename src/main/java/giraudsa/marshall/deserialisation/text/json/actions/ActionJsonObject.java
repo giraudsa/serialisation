@@ -38,7 +38,7 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 	@Override
 	protected <U> void construitObjet(Unmarshaller<U> um) throws InstantiationException, IllegalAccessException {
 		String id = dicoChampToValue.get(champId).toString();
-		obj = getObject(um, id, type, champId.isFakeId());
+		obj = getObject(id, type, champId.isFakeId());
 		for(Entry<Champ, Object> entry : dicoChampToValue.entrySet()){
 			Champ champ = entry.getKey();
 			if (!champ.isFakeId()){

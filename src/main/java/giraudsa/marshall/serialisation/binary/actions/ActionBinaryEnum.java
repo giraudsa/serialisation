@@ -1,7 +1,6 @@
 package giraudsa.marshall.serialisation.binary.actions;
 
 import giraudsa.marshall.annotations.TypeRelation;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
 import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
 
@@ -16,39 +15,50 @@ import utils.Constants;
 @SuppressWarnings("rawtypes")
 public class ActionBinaryEnum<T extends Enum> extends ActionBinary<T> {
 	
-	private byte typeSousJacent;
-	private Map<T, Integer> dicoObjToInteger;
-
-
-	public ActionBinaryEnum(Class<? super T> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		super(type, obj, relation, isDejaVu, b);
+	public ActionBinaryEnum(Class<? super T> type, BinaryMarshaller b) {
+		super(type, b);
 	}
 
+	private static final Map<Class<? extends Enum>, Byte> dicoEnumToCodage = new HashMap<>();
+	private static final Map<Class<? extends Enum>, Map<Object, Integer>> dicoObjToInteger = new HashMap<>();
+
+	protected void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
+		boolean isDejaVu = writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
+		try {
+			if(!isDejaVu){
+				rempliDictionnaire(objetASerialiser);
+				Integer objInt = dicoObjToInteger.get(objetASerialiser.getClass()).get(objetASerialiser);
+				if(dicoEnumToCodage.get(objetASerialiser.getClass()) == Constants.Type.CODAGE_BYTE) writeByte(objInt.byteValue());
+				else if(dicoEnumToCodage.get(objetASerialiser.getClass()) == Constants.Type.CODAGE_SHORT) writeShort(objInt.shortValue());
+				else writeInt(objInt);
+			}
+		} catch (IOException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	@Override
-	public void marshall(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
-			SecurityException, NotImplementedSerializeException {
-		rempliDictionnaire();		
-		Integer objInt = dicoObjToInteger.get(obj);
-		if(typeSousJacent == Constants.Type.CODAGE_BYTE) writeByte(objInt.byteValue());
-		else if(typeSousJacent == Constants.Type.CODAGE_SHORT) writeShort(objInt.shortValue());
-		else writeInt(objInt);
+	protected <U> boolean isDejaVu(U objet) {
+		return false;
 	}
 
 	@SuppressWarnings("unchecked")
-	private void rempliDictionnaire() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-		if(dicoObjToInteger == null){
-		Method values = type.getDeclaredMethod("values");
-		T[] listeEnum = (T[]) values.invoke(null);
-		int size = listeEnum.length;
-		if((int)(byte)size == size) typeSousJacent = Constants.Type.CODAGE_BYTE;
-		else if((int)(short)size == size) typeSousJacent = Constants.Type.CODAGE_SHORT;
-		else typeSousJacent = Constants.Type.CODAGE_INT;
-		int i=0;
-		dicoObjToInteger = new HashMap<>();
-		for (T objEnum : listeEnum){
-			dicoObjToInteger.put(objEnum, i++);
-		}
+	private  void rempliDictionnaire(Object objetASerialiser) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+		Map<Object, Integer> map = dicoObjToInteger.get(objetASerialiser.getClass());
+		if(map == null){
+			map = new HashMap<>();
+			dicoObjToInteger.put((Class<? extends Enum>) objetASerialiser.getClass(), map);
+			
+			Method values = objetASerialiser.getClass().getDeclaredMethod("values");
+			T[] listeEnum = (T[]) values.invoke(null);
+			int size = listeEnum.length;
+			if((int)(byte)size == size) dicoEnumToCodage.put((Class<? extends Enum>) objetASerialiser.getClass(), Constants.Type.CODAGE_BYTE);
+			else if((int)(short)size == size) dicoEnumToCodage.put((Class<? extends Enum>) objetASerialiser.getClass(), Constants.Type.CODAGE_SHORT);
+			else dicoEnumToCodage.put((Class<? extends Enum>) objetASerialiser.getClass(), Constants.Type.CODAGE_INT);
+			int i=0;
+			for (T objEnum : listeEnum){
+				map.put(objEnum, i++);
+			}
 		}
 	}
 

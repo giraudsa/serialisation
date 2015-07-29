@@ -13,27 +13,52 @@ import utils.TypeExtension;
 import utils.champ.Champ;
 
 
-public class ActionBinaryObject<T> extends ActionBinary<T> {
+public class ActionBinaryObject extends ActionBinary<Object> {
 
-	public ActionBinaryObject(Class<? extends T> type,  TypeRelation relation, T objetPreconstruit, Unmarshaller<?> b) throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		super(type, relation, objetPreconstruit, b);
+	public ActionBinaryObject(Class<Object> type, Unmarshaller<?> b){
+		super(type, b);
+	}
+
+	@Override
+	protected Object readObject(Class<? extends Object> typeADeserialiser, TypeRelation typeRelation, int smallId) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException {
+		boolean isDejaVu = isDejaVu(smallId);
+		boolean unmarshallAll = (!isDejaVu && deserialisationComplete) || (!deserialisationComplete && typeRelation == TypeRelation.COMPOSITION);
+		Champ champId = TypeExtension.getChampId(typeADeserialiser);
+		Object objetADeserialiser = getObjet(smallId);
+		if(!isDejaVu){
+			if(!champId.isFakeId()){
+				Object id = litObject(typeRelation, champId.valueType);
+				objetADeserialiser = getObject(id.toString(), typeADeserialiser, false);
+				champId.set(objetADeserialiser, id);
+			}else{
+				objetADeserialiser = typeADeserialiser.newInstance();
+			}
+			stockeObjetId(smallId, objetADeserialiser);
+		}
+		if(unmarshallAll){
+			List<Champ> champs = TypeExtension.getSerializableFields(typeADeserialiser);
+			boolean ilResteDesChampsComplexes = false;
+			for (Champ champ : champs){
+				if (!champ.isFakeId() && champ != champId && champ.isSimple){
+					champ.set(objetADeserialiser, litObject(champ.relation, champ.valueType));
+				}else if(!champ.isSimple){
+					ilResteDesChampsComplexes = true;
+					break;
+				}
+			}
+			if(ilResteDesChampsComplexes) pushComportement(objetADeserialiser, typeRelation);
+		}
+		return objetADeserialiser;
 	}
 	
 	@Override
-	protected T readObject() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException {
-		boolean onlyReadId = relation != TypeRelation.COMPOSITION;
-		List<Champ> champs = TypeExtension.getSerializableFields(type);
-		Champ champId = TypeExtension.getChampId(type);
-		if(!onlyReadId){
-			if(!champId.isFakeId() && !isDejaVu) champId.set(obj, litObject(relation, champId.valueType));
-			for(Champ champ : champs){
-				if(!champ.isFakeId() && champ != champId){
-					champ.set(obj, litObject(relation, champ.valueType));
-				}
-			}
-		}else if(!isDejaVu){
-			if(!champId.isFakeId() && !isDejaVu) champId.set(obj, litObject(relation, champId.valueType));
+	public void traiteChampsRestant(Object objetADeserialiser, TypeRelation typeRelation) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException {
+		Champ champId =TypeExtension.getChampId(objetADeserialiser.getClass());
+		for(Champ champ : TypeExtension.getSerializableFields(objetADeserialiser.getClass())){
+			if(champ != champId && !champ.isSimple)
+				champ.set(objetADeserialiser, litObject(champ.relation, champ.valueType));
 		}
-		return obj;		
 	}
+
 }

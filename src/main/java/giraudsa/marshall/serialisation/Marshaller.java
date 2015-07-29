@@ -2,13 +2,11 @@ package giraudsa.marshall.serialisation;
 
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
-
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -24,10 +22,13 @@ public abstract class Marshaller {
 	protected Map<Class<?>, Class<? extends ActionAbstrait>> dicoTypeToTypeAction = new HashMap<>();
 	protected SetQueue<Object> aSerialiser;
 	protected Set<Object> estSerialise = new HashSet<>();
+	protected Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new HashMap<>();
 
 	//////ATTRIBUT
-	protected Map<Object, Integer> dejaVu = new IdentityHashMap<>();
+	protected Map<Object, Integer> dejaVu = new HashMap<>();
+	protected Map<Class<?>, Integer> dejaVuType = new HashMap<>();
 	Integer compteur = 0;
+	Integer compteurType = 1;
 	
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -64,6 +65,42 @@ public abstract class Marshaller {
 		return action;
 	}
 	
+	
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	protected <T> ActionAbstrait getAction(T obj) throws NotImplementedSerializeException {
+		Class<T> type = null;
+		ActionAbstrait action;
+		if (obj == null) {
+			action = dicoTypeToAction.get(void.class);
+		} else {
+			type = (Class<T>) obj.getClass();
+			action =  dicoTypeToAction.get(type);
+			if (action == null) {
+				Class<?> genericType = type;
+				if (type.isEnum())
+					genericType = Constants.enumType;
+				else if (Constants.dictionaryType.isAssignableFrom(type))
+					genericType = Constants.dictionaryType;
+				else if(Constants.dateType.isAssignableFrom(type))
+					genericType = Constants.dateType;
+				else if (type != Constants.stringType && Constants.collectionType.isAssignableFrom(type))
+					genericType = Constants.collectionType;
+				else if (type.getPackage() == null || ! type.getPackage().getName().startsWith("System"))
+					genericType = Constants.objectType;
+				action = dicoTypeToAction.get(genericType);
+				dicoTypeToAction.put(type, action); 
+				if (action == null) {
+					throw new NotImplementedSerializeException("not implemented: " + type);
+				}
+			}
+		}
+		return action;
+	}
+	
+	
+	
+	
 	<T> void marshall(T value, TypeRelation typeRelation, String nom) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException{
 		marshallSpecialise(value, typeRelation, nom);
 	}
@@ -71,19 +108,36 @@ public abstract class Marshaller {
 	<T> boolean isDejaVu(T obj){
 		return dejaVu.containsKey(obj);
 	}
-
 	
-	int getSmallId(Object obj){
+	protected boolean isDejaVuType(Class<?> typeObj) {
+		return dejaVuType.containsKey(typeObj);
+	}
+	
+	<T> void stockDejaVu(T obj, int smallId){
+		dejaVu.put(obj, smallId);
+	}
+	
+	int getSmallIdAndStockObj(Object obj){
 		if(!isDejaVu(obj)){
 			dejaVu.put(obj, compteur++);
 		}
 		 return dejaVu.get(obj);
 	}
 	
-	protected int _getSmallId(Object obj){
-		return getSmallId(obj);
+	
+	protected int _getSmallIdAndStockObj(Object o) {
+		return getSmallIdAndStockObj(o);
 	}
 	
+	protected int _getSmallIdTypeAndStockType(Class<?> typeObj) {
+		if(!isDejaVuType(typeObj)){
+			dejaVuType.put(typeObj, compteurType++);
+		}
+		return dejaVuType.get(typeObj);
+	}
+	
+
+
 	protected  <T> void marshallSpecialise(T value, TypeRelation typeRelation, String nom) throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException{}
 	
 	public class SetQueue<E> implements Queue<E>{

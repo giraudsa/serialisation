@@ -14,23 +14,55 @@ import utils.champ.Champ;
 
 public class ActionBinaryObject<T> extends ActionBinary<T> {
 
-	public ActionBinaryObject(Class<? super T> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		super(type,obj, relation, isDejaVu, b);
+
+
+	public ActionBinaryObject(Class<? super T> type, BinaryMarshaller b) {
+		super(type,  b);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public void marshall(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
-			SecurityException, NotImplementedSerializeException {
-		boolean onlyWriteId = relation != TypeRelation.COMPOSITION;
-		List<Champ> champs = TypeExtension.getSerializableFields(getType());
-		Champ champId = TypeExtension.getChampId(getType());
-		if(!champId.isFakeId() || !isDejaVu) traiteChamp(obj, champId);
-		if(!onlyWriteId){//on ecrit tout
+	protected void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
+		boolean isDejaVu = writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
+		boolean marshallAll = (!isDejaVu && isCompleteMarshalling) || (!isCompleteMarshalling && relation == TypeRelation.COMPOSITION);
+		Champ champId = TypeExtension.getChampId(objetASerialiser.getClass());
+		if(!champId.isFakeId() && !isDejaVu)
+			try {
+				traiteChamp((T)objetASerialiser, champId);
+			} catch (IllegalArgumentException | IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException | SecurityException
+					| NotImplementedSerializeException | IOException e) {
+				e.printStackTrace();
+			}
+		if(marshallAll){
+			List<Champ> champs = TypeExtension.getSerializableFields(objetASerialiser.getClass());
+			boolean ilResteDesChampsComplexes = false;
+			try{
+				for (Champ champ : champs){
+					if (!champ.isFakeId() && champ != champId && champ.isSimple){
+						traiteChamp((T)objetASerialiser, champ);
+					}else if(!champ.isSimple){
+						ilResteDesChampsComplexes = true;
+					}
+				}
+			}catch(IllegalArgumentException | IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException | SecurityException | IOException | NotImplementedSerializeException e){
+				e.printStackTrace();
+			}
+			if(ilResteDesChampsComplexes) pushComportement(objetASerialiser, typeRelation, couldBeLessSpecific);
+		}
+	}
+
+	@SuppressWarnings("unchecked") @Override
+	protected void traiteChampsComplexes(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific){
+		try{
+			List<Champ> champs = TypeExtension.getSerializableFields(objetASerialiser.getClass());
+			Champ champId = TypeExtension.getChampId(objetASerialiser.getClass());
 			for (Champ champ : champs){
-				if (!champ.isFakeId() && champ != champId){
-					traiteChamp(obj, champ);
+				if (champ != champId && !champ.isSimple){
+					traiteChamp((T)objetASerialiser, champ);
 				}
 			}
+		}catch(IOException | IllegalArgumentException | IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException | SecurityException | NotImplementedSerializeException e){
+			e.printStackTrace();
 		}
 	}
 	

@@ -1,5 +1,6 @@
 package giraudsa.marshall.deserialisation.binary.actions.simple;
 
+import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.ActionBinary;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
@@ -14,8 +15,8 @@ public class ActionBinaryFloat extends ActionBinary<Float> {
 	}
 
 	@Override
-	protected Float readObject() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException,
-			ClassNotFoundException, IOException, NotImplementedSerializeException {
+	protected Float readObject(Class<? extends Float> typeADeserialiser, TypeRelation typeRelation, int smallId) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException {
 		return readFloat();
 	}
 

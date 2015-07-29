@@ -34,8 +34,8 @@ public abstract class ActionAbstrait<T> {
 	protected void construitObjet() throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {}
 	
 	
-	protected <W> W getObject(Unmarshaller<?> um, String id, Class<W> type, boolean isFakeId) throws InstantiationException, IllegalAccessException{
-		return um.getObject(id, type, isFakeId);
+	protected <W> W getObject(String id, Class<W> type, boolean isFakeId) throws InstantiationException, IllegalAccessException{
+		return unmarshaller.getObject(id, type, isFakeId);
 	}
 	
 
@@ -47,6 +47,7 @@ public abstract class ActionAbstrait<T> {
 	protected T getObjet(){
 		return obj;
 	}
+
 	
 	protected <W> void integreObjet(String nomAttribut, W objet){}
 	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException{}

@@ -1,5 +1,6 @@
 package giraudsa.marshall.deserialisation.binary.actions.simple;
 
+import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.ActionBinary;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
@@ -14,9 +15,13 @@ public class ActionBinaryString extends ActionBinary<String> {
 	}
 
 	@Override
-	protected String readObject() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException,
-			ClassNotFoundException, IOException, NotImplementedSerializeException {
-		return readUTF();
+	protected String readObject(Class<? extends String> typeADeserialiser, TypeRelation typeRelation, int smallId) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException {
+		boolean isDejaVu = isDejaVu(smallId);
+		if(isDejaVu) return (String) getObjet(smallId);
+		String s = readUTF();
+		stockeObjetId(smallId, s);
+		return s;
 	}
 
 }

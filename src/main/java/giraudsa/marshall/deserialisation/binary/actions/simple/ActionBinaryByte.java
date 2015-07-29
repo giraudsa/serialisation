@@ -1,5 +1,6 @@
 package giraudsa.marshall.deserialisation.binary.actions.simple;
 
+import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.ActionBinary;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
@@ -14,8 +15,8 @@ public class ActionBinaryByte extends ActionBinary<Byte> {
 	}
 
 	@Override
-	protected Byte readObject() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException,
-			ClassNotFoundException, IOException, NotImplementedSerializeException {
+	protected Byte readObject(Class<? extends Byte> typeADeserialiser, TypeRelation typeRelation, int smallId) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException {
 		return readByte();
 	}
 

@@ -7,29 +7,53 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
 
 @SuppressWarnings("rawtypes")
-public class ActionBinaryCollection<T extends Collection> extends ActionBinary<T> {
+public class ActionBinaryCollection extends ActionBinary<Collection> {
 
-	public ActionBinaryCollection(Class<? extends T> type, TypeRelation relation, T objetPreConstruit, Unmarshaller<?> b) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
-		super(type, relation, objetPreConstruit, b);
+	public ActionBinaryCollection(Class<Collection> type, Unmarshaller<?> b){
+		super(type, b);
 	}
 
 	@SuppressWarnings({ "unchecked", "unused" })
 	@Override
-	protected T readObject() throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, ClassNotFoundException {
+	protected Collection readObject(Class<? extends Collection> typeADeserialiser, TypeRelation typeRelation, int smallId) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException{
+		boolean isDejaVu = isDejaVu(smallId);
+		Collection objetADeserialiser = null;
 		if(!isDejaVu){
-			for(int i = 0 ; i < readInt(); i++){
-				obj.add(litObject(relation, Object.class));
+			objetADeserialiser = newInstance(typeADeserialiser);
+			stockeObjetId(smallId, objetADeserialiser);
+			int taille = readInt();
+			for(int i = 0 ; i < taille; i++){
+				objetADeserialiser.add(litObject(typeRelation, Object.class));
 			}
-		}
-		if(isDejaVu && TypeRelation.COMPOSITION == relation){
-			for(Object value : obj){
-				litObject(relation, Object.class);
+		}else if (!deserialisationComplete && typeRelation == TypeRelation.COMPOSITION){
+			objetADeserialiser = (Collection)getObjet(smallId);
+			for(Object value : objetADeserialiser){
+				litObject(typeRelation, Object.class);
 			}
+		}else{
+			objetADeserialiser = (Collection)getObjet(smallId);
 		}
-		return obj;
+		return objetADeserialiser;
+	}
+
+	private Collection newInstance(Class<? extends Collection> typeADeserialiser) {
+		Collection objetADeserialiser = null;
+		try {
+			if(typeADeserialiser == ArrayList.class) objetADeserialiser = new ArrayList();
+			else if(typeADeserialiser == LinkedList.class) objetADeserialiser = new LinkedList();
+			else if(typeADeserialiser.getName().indexOf("ArrayList") != -1) objetADeserialiser = new ArrayList();
+			else if(typeADeserialiser == HashSet.class) objetADeserialiser = new HashSet();
+			else objetADeserialiser = typeADeserialiser.newInstance();
+		} catch (InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		return objetADeserialiser;
 	}
 
 

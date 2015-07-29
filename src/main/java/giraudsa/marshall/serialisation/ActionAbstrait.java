@@ -26,14 +26,18 @@ public abstract class ActionAbstrait<T> {
 		this.marshaller = marshaller;
 	}
 
-	public abstract void marshall(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException;
+	protected abstract void marshall(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException;
 	
-	protected <U> boolean isDejaVu(U obj){
-		return marshaller.isDejaVu(obj);
+	protected <U> boolean isDejaVu(U objet){
+		return marshaller.isDejaVu(objet);
 	}
 	
-	protected <U> int getSmallId(U obj){
-		return marshaller.getSmallId(obj);
+	void stockeDejaVu(Object obj, int smallId){
+		marshaller.stockDejaVu(obj, smallId);
+	}
+	
+	protected <U> int getSmallIdAndStockObj(U obj){
+		return marshaller.getSmallIdAndStockObj(obj);
 	}
 	
 	protected void traiteChamp(T obj, Champ champ) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException {
@@ -68,7 +72,7 @@ public abstract class ActionAbstrait<T> {
 		Champ champId = TypeExtension.getChampId(typeObj);
 		traiteChamp(obj, champId);
 		if(!onlyWriteReference){//on ecrit tout
-			getSmallId(obj);
+			getSmallIdAndStockObj(obj);
 			for (Champ champ : champs){
 				if (champ != champId){
 					traiteChamp(obj, champ);
@@ -85,8 +89,9 @@ public abstract class ActionAbstrait<T> {
 		if(marshaller.aSerialiser != null && !marshaller.estSerialise.contains(objet)) marshaller.aSerialiser.add(objet);
 	}
 	
-	protected void setEstSerialise(Object objet) {
-		marshaller.estSerialise.add(objet);
+	protected boolean setEstSerialiseEtRetourneSiLObjetEtaitDejaSerialise(Object objet) {
+		boolean ret = marshaller.estSerialise.add(objet);
 		if(marshaller.aSerialiser != null) marshaller.aSerialiser.remove(objet);
+		return !ret;
 	}
 }

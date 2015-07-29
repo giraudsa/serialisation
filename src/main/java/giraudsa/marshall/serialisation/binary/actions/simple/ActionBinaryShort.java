@@ -1,22 +1,24 @@
 package giraudsa.marshall.serialisation.binary.actions.simple;
 
 import giraudsa.marshall.annotations.TypeRelation;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
-import giraudsa.marshall.serialisation.binary.actions.ActionBinarySimpleComportement;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
-public class ActionBinaryShort extends ActionBinarySimpleComportement<Short>{
+public class ActionBinaryShort extends ActionBinarySimple<Short>{
 
-	public ActionBinaryShort(Class<? super Short> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		super(type,obj, TypeRelation.COMPOSITION, isDejaVu, b);
+	public ActionBinaryShort(Class<? super Short> type, BinaryMarshaller b) {
+		super(type, b);
 	}
 	
 	@Override
-	public void marshall(Short obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
-	NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		writeShort(obj);
+	public void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
+		writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
+		try {
+			writeShort((short)objetASerialiser);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
+
 }

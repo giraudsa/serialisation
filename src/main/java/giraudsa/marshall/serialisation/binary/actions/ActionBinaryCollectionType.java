@@ -12,23 +12,27 @@ import java.util.Collection;
 @SuppressWarnings("rawtypes")
 public class ActionBinaryCollectionType<T extends Collection> extends ActionBinary<T> {
 
-	public ActionBinaryCollectionType(Class<? super T> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		super(type,obj, relation, isDejaVu, b);
+
+	public ActionBinaryCollectionType(Class<? super T> type, BinaryMarshaller b) {
+		super(type, b);
 	}
-	
 
 	@Override
-	public void marshall(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
-			SecurityException, NotImplementedSerializeException {
-		if(!isDejaVu){
-			writeInt(obj.size());
-			for (Object value : obj) {
-				traiteObject(value, relation, true);
+	protected void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
+		boolean isDejaVu = writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
+		try {
+			if(!isDejaVu){
+				writeInt(((Collection)objetASerialiser).size());
+				for (Object value : (Collection)objetASerialiser) {
+					traiteObject(value, typeRelation, true);
+				}
+			}else if (!isCompleteMarshalling && relation == TypeRelation.COMPOSITION){//deja vu, donc on passe ici qd la relation est de type COMPOSITION
+				for(Object value : (Collection)objetASerialiser){
+					traiteObject(value, typeRelation, true);
+				}
 			}
-		}else if (relation == TypeRelation.COMPOSITION){//deja vu, donc on passe ici qd la relation est de type COMPOSITION
-			for(Object value : obj){
-				traiteObject(value, relation, true);
-			}
+		} catch (IOException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | NotImplementedSerializeException e) {
+			e.printStackTrace();
 		}
 	}
 }

@@ -1,24 +1,26 @@
 package giraudsa.marshall.serialisation.binary.actions;
 
 import giraudsa.marshall.annotations.TypeRelation;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
 import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 
 public class ActionBinaryDate<DateType extends Date> extends ActionBinary<DateType> {
 
-	public ActionBinaryDate(Class<? super DateType> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		super(type,obj, TypeRelation.COMPOSITION, isDejaVu, b);
+
+	public ActionBinaryDate(Class<? super DateType> type, BinaryMarshaller b) {
+		super(type, b);
 	}
 
-
 	@Override
-	public void marshall(DateType obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
-			NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		if(!isDejaVu) writeLong(obj.getTime());		
+	protected void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
+		boolean isDejaVu = writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
+		try {
+			if(!isDejaVu) writeLong(((Date)objetASerialiser).getTime());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

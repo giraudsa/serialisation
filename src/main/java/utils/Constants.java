@@ -11,8 +11,13 @@ import java.util.Map;
 import java.util.UUID;
 
 public class Constants {
+	
+	public static final Class[] classVide = new Class[0];
+	public static final Object[] nullArgument = new Object[0];
+	
+	public static final byte[] TABLEAU_DE_BYTE_VIDE = new byte[0];
+	
 	public static final byte IS_NULL = 					(byte) 0x00;//0b 0000 0000
-	public static final byte IS_FINI = 					(byte) 0xff;//0b 1111 1111
 	
 	public static final class SMALL_ID_TYPE{
 		public static final byte NEXT_IS_SMALL_ID_BYTE =	(byte) 0x01;//0b 0000 0001
@@ -28,9 +33,9 @@ public class Constants {
 	
 	public static final class BOOL_VALUE{
 		private static final byte B_MASQUE = 		(byte) 0x0c;//0b 0000 1100
-		private static final byte B_NULL =			(byte) 0x04;//0b 0000 0100	
-		private static final byte TRUE = 			(byte) 0x08;//0b 0000 1000	
-		private static final byte FALSE = 			(byte) 0x0c;//0b 0000 1100
+		public static final byte B_NULL =			(byte) 0x04;//0b 0000 0100	
+		public static final byte TRUE = 			(byte) 0x48;//0b 0100 1000	
+		public static final byte FALSE = 			(byte) 0x4c;//0b 0100 1100
 		
 		private static final Map<Boolean, Byte> dicoBoolToByte = new HashMap<>();
 		private static final Map<Byte, Boolean> dicoByteToBool = new HashMap<>();
@@ -102,8 +107,8 @@ public class Constants {
 			dicoTypeSimpleToByte.put(Character.class, CHAR);
 		}
 		
-		public static byte getByteHeader(Class<?> typePrimitif){
-			Class<?> typeSimple = TypeExtension.getTypeEnveloppe(typePrimitif);
+		public static byte getByteHeader(Class<?> type){
+			Class<?> typeSimple = TypeExtension.getTypeEnveloppe(type);
 			Byte ret = dicoTypeSimpleToByte.get(typeSimple);
 			if (ret == null) ret = AUTRE;
 			return ret;

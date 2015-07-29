@@ -107,8 +107,8 @@ public class TypeExtension {
 			}
 			for (Field info : fieldstmp) {
 				info.setAccessible(true);
-				if (info.getAnnotation(IgnoreSerialise.class)==null && !Modifier.isFinal(info.getModifiers())) {
-					//on ne sérialise pas les attributs finaux ni ceux a ne pas sérialiser
+				if (info.getAnnotation(IgnoreSerialise.class)==null && !Modifier.isFinal(info.getModifiers()) && info.getType().getName().indexOf("org.apache.log4j.Logger") == -1) {
+					//on ne sérialise pas les attributs finaux ni ceux a ne pas sérialiser ni les attributs techniques de log4j.
 					Champ champ = FabriqueChamp.createChamp(info);
 					fields.add(champ);
 					if (champ.name == ChampUid.uidFieldName) {

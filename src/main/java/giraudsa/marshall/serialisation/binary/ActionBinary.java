@@ -7,25 +7,42 @@ import giraudsa.marshall.serialisation.ActionAbstrait;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
-public abstract class ActionBinary<T> extends ActionAbstrait<T> {
+import utils.Constants;
 
-	protected boolean isDejaVu;
+
+public abstract class ActionBinary<T> extends ActionAbstrait<T> {
+	
+	protected byte headerType;
+	protected byte[] headerConstant;
+
+	protected boolean isCompleteMarshalling;//ignore relation
 	
 	protected BinaryMarshaller getBinaryMarshaller(){
 		return (BinaryMarshaller)marshaller;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public ActionBinary(Class<? super T> type, Object obj, TypeRelation relation, Boolean isDejaVu, BinaryMarshaller b) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+	public ActionBinary(Class<? super T> type, BinaryMarshaller b){
 		super(type, b);
-		this.obj = (T)obj;
-		this.relation = relation;
-		this.isDejaVu = isDejaVu;
-		if(relation == TypeRelation.COMPOSITION) setEstSerialise(obj);
-		else stockeASerialiser(obj);
-		marshall(this.obj, relation);
+		headerType = Constants.Type.getByteHeader(type);
+		headerConstant = new byte[]{headerType};
+		this.isCompleteMarshalling = getBinaryMarshaller().isCompleteSerialisation;
+	}
+	
+	protected boolean writeHeaders(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific){
+		try {
+			boolean isDejaVu = isDejaVu(objetASerialiser);
+			getBinaryMarshaller().writeByteArray(calculHeaders(objetASerialiser, typeRelation, couldBeLessSpecific, isDejaVu));
+			return isDejaVu;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 
+	protected byte[] calculHeaders(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific, boolean isDejaVu) throws IOException {
+		
+		return getBinaryMarshaller().calculHeader(objetASerialiser, typeRelation, couldBeLessSpecific, headerType, isDejaVu);
+	}
 	protected void writeBoolean(boolean v) throws IOException {
 		getBinaryMarshaller().writeBoolean(v);
 	}
@@ -60,5 +77,34 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	protected <U> void traiteObject(U obj, TypeRelation relation, Boolean couldTypeBeLessSpecifique) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException{
 		getBinaryMarshaller().marshallSpecialise(obj, relation, couldTypeBeLessSpecifique);
 	}
+
+	@Override
+	protected void marshall(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
+			SecurityException, NotImplementedSerializeException {}
+	
+	protected void traiteChampsComplexes(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific){}
+	
+	protected void pushComportement(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
+		getBinaryMarshaller().aFaire.push(new Comportement(objetASerialiser, typeRelation, couldBeLessSpecific));
+	}
+	
+	class Comportement {
+		private Object objet;
+		private TypeRelation relation;
+		private boolean laRelationsAuraitPuEtreMoinsSpecifique;
+		protected Comportement(Object objet, TypeRelation relation, boolean laRelationsAuraitPuEtreMoinsSpecifique) {
+			super();
+			this.objet = objet;
+			this.relation = relation;
+			this.laRelationsAuraitPuEtreMoinsSpecifique = laRelationsAuraitPuEtreMoinsSpecifique;
+		}
+		
+		void evalue(){
+			traiteChampsComplexes(objet, relation, laRelationsAuraitPuEtreMoinsSpecifique);
+		}
+		
+	}
+
+	protected abstract void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific);
 	
 }

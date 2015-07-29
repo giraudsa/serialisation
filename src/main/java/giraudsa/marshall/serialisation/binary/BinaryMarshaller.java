@@ -3,13 +3,14 @@ package giraudsa.marshall.serialisation.binary;
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
+import giraudsa.marshall.serialisation.binary.ActionBinary.Comportement;
 import giraudsa.marshall.serialisation.binary.actions.ActionBinaryCollectionType;
 import giraudsa.marshall.serialisation.binary.actions.ActionBinaryDate;
 import giraudsa.marshall.serialisation.binary.actions.ActionBinaryDictionaryType;
 import giraudsa.marshall.serialisation.binary.actions.ActionBinaryEnum;
 import giraudsa.marshall.serialisation.binary.actions.ActionBinaryObject;
-import giraudsa.marshall.serialisation.binary.actions.ActionBinarySimpleComportement;
-import giraudsa.marshall.serialisation.binary.actions.ActionBinaryVoid;
+import giraudsa.marshall.serialisation.binary.actions.ActionBinaryString;
+import giraudsa.marshall.serialisation.binary.actions.ActionBinaryUUID;
 import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryBoolean;
 import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryByte;
 import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryChar;
@@ -18,191 +19,163 @@ import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryFloat;
 import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryInteger;
 import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryLong;
 import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryShort;
+import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryVoid;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
+import java.util.zip.DeflaterOutputStream;
 
 import utils.Constants;
-import utils.TypeExtension;
 
 public class BinaryMarshaller extends Marshaller{
-	
+	boolean isCompleteSerialisation;
 	private DataOutputStream output;
-
+	@SuppressWarnings("rawtypes")
+	Deque<Comportement> aFaire = new LinkedList<>();
+	
 	/////METHODES STATICS PUBLICS
 	public static <U> void toBinary(U obj, OutputStream  output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException  {
-		BinaryMarshaller v = new BinaryMarshaller(new DataOutputStream(output));
-		v.marshall(obj);
+		try(DataOutputStream stream = new DataOutputStream(output)){
+			BinaryMarshaller v = new BinaryMarshaller(stream, false);
+			v.marshall(obj);
+			stream.flush();
+		}
 	}
 
 	public static <U> void toCompleteBinary(U obj, OutputStream  output) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
-		BinaryMarshaller v = new BinaryMarshaller(new DataOutputStream(output));
-		v.marshallAll(obj);
+		try(DataOutputStream stream = new DataOutputStream(output)){
+			BinaryMarshaller v = new BinaryMarshaller(stream,true);
+			v.marshall(obj);
+			stream.flush();
+		}
 	}
 	
-	public BinaryMarshaller(DataOutputStream  output) {
+	private BinaryMarshaller(DataOutputStream  output, boolean isCompleteSerialisation) throws IOException {
 		this.output = output;
-		dicoTypeToTypeAction.put(Date.class, ActionBinaryDate.class);
-		dicoTypeToTypeAction.put(Boolean.class, ActionBinaryBoolean.class);
-		dicoTypeToTypeAction.put(Collection.class, ActionBinaryCollectionType.class);
-		dicoTypeToTypeAction.put(Map.class, ActionBinaryDictionaryType.class);
-		dicoTypeToTypeAction.put(Object.class, ActionBinaryObject.class);
-		dicoTypeToTypeAction.put(void.class, ActionBinaryVoid.class);
-		dicoTypeToTypeAction.put(Integer.class, ActionBinaryInteger.class);
-		dicoTypeToTypeAction.put(Enum.class, ActionBinarySimpleComportement.class);
-		dicoTypeToTypeAction.put(UUID.class, ActionBinarySimpleComportement.class);
-		dicoTypeToTypeAction.put(String.class, ActionBinarySimpleComportement.class);
-		dicoTypeToTypeAction.put(Byte.class, ActionBinaryByte.class);
-		dicoTypeToTypeAction.put(Float.class, ActionBinaryFloat.class);
-		dicoTypeToTypeAction.put(Double.class, ActionBinaryDouble.class);
-		dicoTypeToTypeAction.put(Long.class, ActionBinaryLong.class);
-		dicoTypeToTypeAction.put(Short.class, ActionBinaryShort.class);
-		dicoTypeToTypeAction.put(Character.class, ActionBinaryChar.class);
-		dicoTypeToTypeAction.put(Enum.class, ActionBinaryEnum.class);
+		this.isCompleteSerialisation = isCompleteSerialisation ;
+		output.writeBoolean(isCompleteSerialisation);
+		//Sans referencement
+		dicoTypeToAction.put(void.class, new ActionBinaryVoid(Boolean.class, this));
+		dicoTypeToAction.put(Boolean.class, new ActionBinaryBoolean(Boolean.class, this));
+		dicoTypeToAction.put(Integer.class, new ActionBinaryInteger(Integer.class, this));
+		dicoTypeToAction.put(Byte.class, new ActionBinaryByte(Byte.class, this));
+		dicoTypeToAction.put(Float.class, new ActionBinaryFloat(Float.class, this));
+		dicoTypeToAction.put(Double.class, new ActionBinaryDouble(Double.class, this));
+		dicoTypeToAction.put(Long.class, new ActionBinaryLong(Long.class, this));
+		dicoTypeToAction.put(Short.class, new ActionBinaryShort(Short.class, this));
+		dicoTypeToAction.put(Character.class, new ActionBinaryChar(Character.class, this));
+		//Avec referencement
+		dicoTypeToAction.put(UUID.class, new ActionBinaryUUID(UUID.class, this));
+		dicoTypeToAction.put(String.class, new ActionBinaryString(String.class, this));
+		dicoTypeToAction.put(Date.class, new ActionBinaryDate<>(Date.class, this));
+		dicoTypeToAction.put(Enum.class, new ActionBinaryEnum<>(Enum.class, this));
+		dicoTypeToAction.put(Collection.class, new ActionBinaryCollectionType<>(Collection.class, this));
+		dicoTypeToAction.put(Map.class, new ActionBinaryDictionaryType<>(Map.class, this));
+		dicoTypeToAction.put(Object.class, new ActionBinaryObject<>(Object.class, this));
 	}
+	
 
 
 	/////METHODES 
 	private <T> void marshall(T obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
-		if (obj == null){
-			writeByte(Constants.IS_NULL);//writeIsNull
-			writeByte(Constants.IS_FINI);
-			return ;
-		}
+		long debut = System.nanoTime();
 		marshallSpecialise(obj, TypeRelation.COMPOSITION, true);
-		writeByte(Constants.IS_FINI);
+		while(!aFaire.isEmpty()){
+			aFaire.pop().evalue();
+		}
+		long fin = System.nanoTime();
+		System.out.println("temps de sérialisation = " + + (fin - debut)/1e9 + "secondes" );
 	}
 	
-	private <T> void marshallAll(T obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException{
-		if (obj == null){
-			writeByte(Constants.IS_NULL);//writeIsNull
-			writeByte(Constants.IS_FINI);
-			return ;
+	byte[] calculHeader(Object o, TypeRelation relation, boolean laRelationAuraitPuEtreMoinsSpecifique, byte debutHeader, boolean estDejaVu) throws IOException{
+		Class<?> typeObj = o.getClass();
+		boolean isTypeAutre = debutHeader == Constants.Type.AUTRE;
+		int smallId = _getSmallIdAndStockObj(o);
+		byte typeOfSmallId = getTypeOfSmallId(smallId);
+		debutHeader |= typeOfSmallId;
+		boolean isDejaVuTypeObj = true;
+		int smallIdTypeObj = 0;
+		byte typeOfSmallIdTypeObj = 0;
+		if(isTypeAutre){
+			if(!estDejaVu){
+				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentBag") != -1) typeObj = ArrayList.class;
+				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSet") != -1) typeObj = HashSet.class;
+				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentMap") != -1) typeObj = HashMap.class;
+				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedSet") != -1) typeObj = TreeSet.class;
+				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedMap") != -1) typeObj = TreeMap.class;
+				
+				isDejaVuTypeObj = isDejaVuType(typeObj);
+				smallIdTypeObj = _getSmallIdTypeAndStockType(typeObj);
+				typeOfSmallIdTypeObj = getTypeOfSmallIdTypeObj(smallIdTypeObj);
+				debutHeader |= typeOfSmallIdTypeObj;
+			}
 		}
-		aSerialiser = new SetQueue<>();
-		marshallSpecialise(obj, TypeRelation.COMPOSITION, true);
-		while(!aSerialiser.isEmpty()){
-			Object objet = aSerialiser.poll();
-			if(!estSerialise.contains(objet))
-				marshallSpecialise(aSerialiser.poll(), TypeRelation.COMPOSITION, true);
-		}
-		writeByte(Constants.IS_FINI);
-	}
-	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected <T> void marshallSpecialise(T obj, TypeRelation relation, Boolean couldTypeBeLessSpecifique ) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException{
-		Class<?> typeObj = TypeExtension.getTypeEnveloppe(obj == null ? void.class : obj.getClass());
-		if(obj == null){
-			writeByte(Constants.IS_NULL);
-		}else{
-			boolean isDejaVu = false;
-			
-			byte header = Constants.Type.getByteHeader(typeObj);
-			switch (header) {
-			case Constants.Type.BOOL:
-				header |= Constants.BOOL_VALUE.getByte((Boolean) obj);
-				writeByte(header);
+		try(ByteArrayOutputStream byteOut = new ByteArrayOutputStream()){
+			DataOutputStream dataOut = new DataOutputStream(byteOut);
+			dataOut.writeByte(debutHeader);
+			switch (typeOfSmallId) {
+			case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_BYTE:
+				dataOut.writeByte((byte)smallId);
 				break;
-			case Constants.Type.AUTRE:
-				isDejaVu = dejaVu.containsKey(obj);
-				int smallId = _getSmallId(obj);
-				byte typeOfSmallId = getTypeOfSmallId(smallId);
-				header |= typeOfSmallId;
-				
-				boolean isDejaVuTypeObj = true;
-				int smallIdTypeObj = 0;
-				byte typeOfSmallIdTypeObj = 0;
-				
-				if(!isDejaVu){
-					if(typeObj.getName().toLowerCase().indexOf("hibernate") != -1) typeObj = ArrayList.class;
-					isDejaVuTypeObj = dejaVu.containsKey(typeObj);
-					smallIdTypeObj = _getSmallId(typeObj);
-					typeOfSmallIdTypeObj = getTypeOfSmallIdTypeObj(smallIdTypeObj);
-					header |= typeOfSmallIdTypeObj;
+			case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_SHORT:
+				dataOut.writeShort((short)smallId);
+				break;
+			case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_INT:
+				dataOut.writeInt(smallId);
+				break;
+			}
+			if(isTypeAutre){
+			///////write type if necessary
+				if(!estDejaVu && laRelationAuraitPuEtreMoinsSpecifique){
+					switch (typeOfSmallIdTypeObj) {
+					case Constants.Type.CODAGE_BYTE:
+						dataOut.writeByte((byte)smallIdTypeObj);
+						break;
+					case Constants.Type.CODAGE_SHORT:
+						dataOut.writeShort((short)smallIdTypeObj);
+						break;
+					case Constants.Type.CODAGE_INT:
+						dataOut.writeInt(smallIdTypeObj);
+						break;
+					}
+					if(!isDejaVuTypeObj){
+						dataOut.writeUTF(typeObj.getName());
+						
+					}
 				}
-				
-				writeByte(header);			
-				writeSmallId(smallId, typeOfSmallId);
-				ecritTypeSiNecessaire(couldTypeBeLessSpecifique, typeObj, isDejaVu, isDejaVuTypeObj, smallIdTypeObj, typeOfSmallIdTypeObj);
-				
-				break;
-			case Constants.Type.UUID:
-			case Constants.Type.STRING:
-			case Constants.Type.DATE:
-				isDejaVu = dejaVu.containsKey(obj);
-				int smallIdSimple = _getSmallId(obj);
-				byte typeOfSmallIdSimple = getTypeOfSmallId(smallIdSimple);
-				header |= typeOfSmallIdSimple;
-				writeByte(header);
-				writeSmallId(smallIdSimple, typeOfSmallIdSimple);
-			case Constants.Type.BYTE:
-			case Constants.Type.SHORT:
-			case Constants.Type.INT:
-			case Constants.Type.LONG:
-			case Constants.Type.FLOAT:
-			case Constants.Type.DOUBLE:
-			case Constants.Type.CHAR:
-				writeByte(header);
 			}
-		///////write value of obj
-			Class< ? extends ActionBinary> action = (Class<? extends ActionBinary>) getTypeAction(obj);
-			Constructor<?> c = action.getConstructor(Class.class, Object.class, TypeRelation.class, Boolean.class, BinaryMarshaller.class);
-			c.newInstance(typeObj, obj, relation, isDejaVu, this);
+			return byteOut.toByteArray();
 		}
 	}
 
-	private void ecritTypeSiNecessaire(Boolean couldTypeBeLessSpecifique, Class<?> typeObj, boolean isDejaVu, boolean isDejaVuTypeObj, int smallIdTypeObj, byte typeOfSmallIdTypeObj)
-			throws IOException {
-		///////write type if necessary
-		if(!isDejaVu && couldTypeBeLessSpecifique){
-			switch (typeOfSmallIdTypeObj) {
-			case Constants.Type.CODAGE_BYTE:
-				writeByte((byte)smallIdTypeObj);
-				break;
-			case Constants.Type.CODAGE_SHORT:
-				writeShort((short)smallIdTypeObj);
-				break;
-			case Constants.Type.CODAGE_INT:
-				writeInt(smallIdTypeObj);
-				break;
-			}
-			if(!isDejaVuTypeObj) writeUTF(typeObj.getName());
-		}
+	protected <T> void marshallSpecialise(T obj, TypeRelation relation, boolean laRelationAuraitPuEtreMoinsSpecifique) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException{
+		ActionBinary<?> action = (ActionBinary<?>) getAction(obj);
+		action.serialise(obj, relation, laRelationAuraitPuEtreMoinsSpecifique);
 	}
-
-	private void writeSmallId(int smallId, byte typeOfSmallId) throws IOException {
-		/////////write obj small id
-		switch (typeOfSmallId) {
-		case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_BYTE:
-			writeByte((byte)smallId);
-			break;
-		case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_SHORT:
-			writeShort((short)smallId);
-			break;
-		case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_INT:
-			writeInt(smallId);
-			break;
-		}
-	}
-	
 
 	private byte getTypeOfSmallId(int smallId) {
-		if( (int)((byte)smallId) == smallId) return Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_BYTE;
-		if( (int)((short)smallId) == smallId) return Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_SHORT;
+		if( ((int)((byte)smallId) & 0x000000FF) == smallId) return Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_BYTE;
+		if( ((int)((short)smallId) & 0x0000FFFF) == smallId) return Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_SHORT;
 		return Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_INT;
 	}
 	
 	private byte getTypeOfSmallIdTypeObj(int smallId) {
-		if( (int)((byte)smallId) == smallId) return Constants.Type.CODAGE_BYTE;
-		if( (int)((short)smallId) == smallId) return Constants.Type.CODAGE_SHORT;
+		if( ((int)((byte)smallId) & 0x000000FF) == smallId) return Constants.Type.CODAGE_BYTE;
+		if( ((int)((short)smallId) & 0x0000FFFF) == smallId) return Constants.Type.CODAGE_SHORT;
 		return Constants.Type.CODAGE_INT;
 	}
 	
@@ -213,6 +186,9 @@ public class BinaryMarshaller extends Marshaller{
 	}
 	void writeByte(byte v) throws IOException {
 		output.writeByte((int)v);
+	}
+	void writeByteArray(byte[] v) throws IOException{
+		output.write(v);
 	}
 	void writeShort(short v) throws IOException {
 		output.writeShort((int)v);

@@ -10,28 +10,34 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 @SuppressWarnings("rawtypes")
-public class ActionBinaryDictionary<T extends Map> extends ActionBinary<T> {
+public class ActionBinaryDictionary extends ActionBinary<Map> {
 
-	public ActionBinaryDictionary(Class<? extends T> type, TypeRelation relation, T objetPreconstruit, Unmarshaller<?> b) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
-		super(type, relation, objetPreconstruit, b);
+	public ActionBinaryDictionary(Class<Map> type,Unmarshaller<?> b) {
+		super(type, b);
 	}
 
 	@SuppressWarnings({ "unchecked", "unused" })
 	@Override
-	protected T readObject() throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, ClassNotFoundException {
+	protected Map readObject(Class<? extends Map> typeADeserialiser, TypeRelation typeRelation, int smallId) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, ClassNotFoundException {
+		boolean isDejaVu = isDejaVu(smallId);
+		Map objetADeserialiser =  null;
 		if(!isDejaVu){
+			objetADeserialiser = typeADeserialiser.newInstance();
+			stockeObjetId(smallId, objetADeserialiser);
 			for(int i = 0 ; i < readInt(); i++){
-				Object key = litObject(relation, Object.class);
-				Object value = litObject(relation, Object.class);
-				obj.put(key, value);
+				Object key = litObject(typeRelation, Object.class);
+				Object value = litObject(typeRelation, Object.class);
+				objetADeserialiser.put(key, value);
 			}
-		}
-		if(isDejaVu && TypeRelation.COMPOSITION == relation){
-			for(Object entry : obj.entrySet()){
-				litObject(relation, Object.class);
-				litObject(relation, Object.class);
+		}else if(!deserialisationComplete && typeRelation == TypeRelation.COMPOSITION){
+			objetADeserialiser = (Map) getObjet(smallId);
+			for(Object entry : objetADeserialiser.entrySet()){
+				litObject(typeRelation, Object.class);
+				litObject(typeRelation, Object.class);
 			}
+		}else{
+			objetADeserialiser = (Map) getObjet(smallId);
 		}
-		return obj;
+		return objetADeserialiser;
 	}
 }
