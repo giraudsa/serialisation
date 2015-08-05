@@ -1,6 +1,7 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
 import giraudsa.marshall.deserialisation.text.json.ActionJson;
+import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -16,8 +17,8 @@ public class ActionJsonDate extends ActionJson<Date>{
 		df.setTimeZone(tz);
 	}
 	
-	public ActionJsonDate(Class<Date> type, String nom) {
-		super(type, nom);
+	public ActionJsonDate(Class<Date> type, String nom, JsonUnmarshaller<?> jsonUnmarshaller) {
+		super(type, nom, jsonUnmarshaller);
 	}
 	
 	@Override

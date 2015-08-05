@@ -1,6 +1,7 @@
 package giraudsa.marshall.deserialisation.text.xml.actions;
 
 import giraudsa.marshall.deserialisation.text.xml.ActionXml;
+import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 
 import java.util.Map;
 
@@ -8,8 +9,8 @@ import java.util.Map;
 public class ActionXmlDictionaryType<T extends Map> extends ActionXml<T> {
 	private Object keyTampon;
 	
-	public ActionXmlDictionaryType(Class<T> type, String nom) throws InstantiationException, IllegalAccessException {
-		super(type, nom);
+	public ActionXmlDictionaryType(Class<T> type, String nom, XmlUnmarshaller<?> xmlUnmarshaller) throws InstantiationException, IllegalAccessException {
+		super(type, nom, xmlUnmarshaller);
 		obj = type.newInstance();
 	}
 

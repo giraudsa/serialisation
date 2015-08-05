@@ -2,6 +2,7 @@ package giraudsa.marshall.deserialisation.text.xml.actions;
 
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.ActionXml;
+import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -15,8 +16,8 @@ public class ActionXmlEnum<T extends Enum> extends ActionXml<T>  {
 	StringBuilder sb = new StringBuilder();
 
 	@SuppressWarnings("unchecked")
-	public ActionXmlEnum(Class<T> type, String nom) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		super(type, nom);
+	public ActionXmlEnum(Class<T> type, String nom, XmlUnmarshaller<?> xmlUnmarshaller) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		super(type, nom, xmlUnmarshaller);
 		Method values = type.getDeclaredMethod("values");
 		T[] listeEnum = (T[]) values.invoke(null);
 		for(T objEnum : listeEnum){

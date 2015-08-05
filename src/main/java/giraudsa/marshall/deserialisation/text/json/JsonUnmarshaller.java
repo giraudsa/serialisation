@@ -125,7 +125,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	void ouvreChrochet() throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		Class<?> type = ArrayList.class;
 		Class<? extends ActionJson> behavior = (Class<? extends ActionJson>) getTypeAction(type);
-		ActionJson<?> action = behavior.getConstructor(Class.class, String.class).newInstance(type, clefEnCours);
+		ActionJson<?> action = behavior.getConstructor(Class.class, String.class, JsonUnmarshaller.class).newInstance(type, clefEnCours, this);
 		clefEnCours = null;
 		pileAction.push(action);
 	}

@@ -1,6 +1,7 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
 import giraudsa.marshall.deserialisation.text.json.ActionJson;
+import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
 import giraudsa.marshall.serialisation.text.json.Pair;
 
 import java.util.ArrayList;
@@ -9,8 +10,8 @@ import java.util.Map;
 @SuppressWarnings("rawtypes")
 public class ActionJsonDictionaryType<T extends Map> extends ActionJson<T> {
 
-	public ActionJsonDictionaryType(Class<T> type, String nom) throws InstantiationException, IllegalAccessException {
-		super(type, nom);
+	public ActionJsonDictionaryType(Class<T> type, String nom, JsonUnmarshaller<?> jsonUnmarshaller) throws InstantiationException, IllegalAccessException {
+		super(type, nom, jsonUnmarshaller);
 		obj = type.newInstance();
 	}
 	

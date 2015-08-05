@@ -1,14 +1,15 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
 import giraudsa.marshall.deserialisation.text.json.ActionJson;
+import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.UUID;
 
 public class ActionJsonUUID extends ActionJson<UUID> {
 
-	public ActionJsonUUID(Class<UUID> type, String nom) {
-		super(type, nom);
+	public ActionJsonUUID(Class<UUID> type, String nom, JsonUnmarshaller<?> jsonUnmarshaller) {
+		super(type, nom, jsonUnmarshaller);
 	}
 
 	@Override

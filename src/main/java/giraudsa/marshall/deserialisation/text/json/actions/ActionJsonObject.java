@@ -2,6 +2,7 @@ package giraudsa.marshall.deserialisation.text.json.actions;
 
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.json.ActionJson;
+import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
 
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
@@ -16,8 +17,8 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 	private Champ champId;
 	private Map<Champ, Object> dicoChampToValue;
 	
-	public ActionJsonObject(Class<T> type, String nom) {
-		super(type, nom);
+	public ActionJsonObject(Class<T> type, String nom, JsonUnmarshaller<?> jsonUnmarshaller) {
+		super(type, nom, jsonUnmarshaller);
 		champId = TypeExtension.getChampId(type);
 		dicoChampToValue = new HashMap<>();
 	}

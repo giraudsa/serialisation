@@ -1,6 +1,7 @@
 package giraudsa.marshall.deserialisation.text.xml.actions;
 
 import giraudsa.marshall.deserialisation.text.xml.ActionXml;
+import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -16,8 +17,8 @@ public class ActionXmlDate extends ActionXml<Date>{
 		df.setTimeZone(tz);
 	}
 	
-	public ActionXmlDate(Class<Date> type, String nom) {
-		super(type, nom);
+	public ActionXmlDate(Class<Date> type, String nom, XmlUnmarshaller<?> xmlUnmarshaller) {
+		super(type, nom, xmlUnmarshaller);
 	}
 	
 	@Override

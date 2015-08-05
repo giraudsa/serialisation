@@ -1,14 +1,15 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
 import giraudsa.marshall.deserialisation.text.json.ActionJson;
+import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
 
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 
 public class ActionJsonSimpleComportement<T> extends ActionJson<T> {
 
-	public ActionJsonSimpleComportement(Class<T> type, String nom) {
-		super(type, nom);
+	public ActionJsonSimpleComportement(Class<T> type, String nom, JsonUnmarshaller<?> jsonUnmarshaller) {
+		super(type, nom, jsonUnmarshaller);
 	}
 
 	@Override

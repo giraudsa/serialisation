@@ -16,9 +16,10 @@ public abstract class ActionAbstrait<T> {
 	protected TypeRelation relation;
 	protected boolean leTypeEstEvident;
 	
-	public ActionAbstrait(Class<? extends T> type, String nom){
+	public ActionAbstrait(Class<? extends T> type, String nom, Unmarshaller<?> b){
 		this.type = type;
 		this.nom = nom;
+		this.unmarshaller = b;
 	}
 	public ActionAbstrait(Class<? extends T> type, TypeRelation relation, Unmarshaller<?> b) throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
 		this.type = type;

@@ -2,6 +2,7 @@ package giraudsa.marshall.deserialisation.text.xml.actions;
 
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.ActionXml;
+import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
@@ -16,8 +17,8 @@ public class ActionXmlObject<T> extends ActionXml<T> {
 	private Champ champId;
 	private Map<Champ, Object> dicoChampToValue;
 	
-	public ActionXmlObject(Class<T> type, String nom) {
-		super(type, nom);
+	public ActionXmlObject(Class<T> type, String nom, XmlUnmarshaller<?> xmlUnmarshaller) {
+		super(type, nom, xmlUnmarshaller);
 		champId = TypeExtension.getChampId(type);
 		dicoChampToValue = new HashMap<>();
 	}

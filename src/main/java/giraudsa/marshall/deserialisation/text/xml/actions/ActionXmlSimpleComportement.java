@@ -1,6 +1,7 @@
 package giraudsa.marshall.deserialisation.text.xml.actions;
 
 import giraudsa.marshall.deserialisation.text.xml.ActionXml;
+import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -8,8 +9,8 @@ import org.apache.commons.lang3.StringEscapeUtils;
 
 public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 
-	public ActionXmlSimpleComportement(Class<T> type, String nom) {
-		super(type, nom);
+	public ActionXmlSimpleComportement(Class<T> type, String nom, XmlUnmarshaller<?> xmlUnmarshaller) {
+		super(type, nom, xmlUnmarshaller);
 	}
 
 	@Override

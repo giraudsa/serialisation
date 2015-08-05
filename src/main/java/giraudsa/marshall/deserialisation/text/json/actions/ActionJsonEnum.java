@@ -1,6 +1,7 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
 import giraudsa.marshall.deserialisation.text.json.ActionJson;
+import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -13,8 +14,8 @@ public class ActionJsonEnum<T extends Enum> extends ActionJson<T>  {
 	Map<String, T> dicoStringEnumToObjEnum = new HashMap<>();
 	
 	@SuppressWarnings("unchecked")
-	public ActionJsonEnum(Class<T> type, String nom) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		super(type, nom);
+	public ActionJsonEnum(Class<T> type, String nom, JsonUnmarshaller<?> jsonUnmarshaller) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		super(type, nom, jsonUnmarshaller);
 		Method values = type.getDeclaredMethod("values");
 		T[] listeEnum = (T[]) values.invoke(null);
 		for(T objEnum : listeEnum){

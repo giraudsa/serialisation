@@ -116,7 +116,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		Class<?> type = getType(attributes);
 		if(type != null){
 			Class<? extends ActionXml> behavior = (Class<? extends ActionXml>) getTypeAction(type);
-			ActionXml<?> action = behavior.getConstructor(Class.class, String.class).newInstance(type, qName);
+			ActionXml<?> action = behavior.getConstructor(Class.class, String.class, XmlUnmarshaller.class).newInstance(type, qName, this);
 			pileAction.push(action);
 		}
 	}

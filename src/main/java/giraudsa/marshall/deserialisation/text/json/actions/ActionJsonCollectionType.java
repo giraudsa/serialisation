@@ -1,6 +1,7 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
 import giraudsa.marshall.deserialisation.text.json.ActionJson;
+import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,8 +9,8 @@ import java.util.Collection;
 @SuppressWarnings("rawtypes")
 public class ActionJsonCollectionType<T extends Collection> extends ActionJson<T> {
 	ArrayList<?> remplacement = new ArrayList<>();
-	public ActionJsonCollectionType(Class<T> type, String nom) throws InstantiationException, IllegalAccessException {
-		super(type, nom);
+	public ActionJsonCollectionType(Class<T> type, String nom, JsonUnmarshaller<?> jsonUnmarshaller) throws InstantiationException, IllegalAccessException {
+		super(type, nom, jsonUnmarshaller);
 		obj = type.newInstance();
 	}
 

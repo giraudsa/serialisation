@@ -4,8 +4,8 @@ import giraudsa.marshall.deserialisation.ActionAbstrait;
 
 public class ActionText<T> extends ActionAbstrait<T> {
 
-	public ActionText(Class<T> type, String nom) {
-		super(type, nom);
+	public ActionText(Class<T> type, String nom, TextUnmarshaller<?> textUnmarshaller) {
+		super(type, nom, textUnmarshaller);
 	}
 
 }

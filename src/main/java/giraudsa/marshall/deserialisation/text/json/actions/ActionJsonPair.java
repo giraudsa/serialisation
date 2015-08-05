@@ -1,14 +1,15 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
 import giraudsa.marshall.deserialisation.text.json.ActionJson;
+import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
 import giraudsa.marshall.serialisation.text.json.Pair;
 import utils.champ.ChampUid;
 
 public class ActionJsonPair extends ActionJson<Pair> {
 	private boolean keyAllreadyHere = false;
 	private Object key;
-	public ActionJsonPair(Class<Pair> type, String nom) {
-		super(type, nom);
+	public ActionJsonPair(Class<Pair> type, String nom, JsonUnmarshaller<?> jsonUnmarshaller) {
+		super(type, nom, jsonUnmarshaller);
 	}
 	
 	@Override
