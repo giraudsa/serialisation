@@ -106,7 +106,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		}
 		type = type2 != null ? type2 : type;
 		Class<? extends ActionJson> behavior = (Class<? extends ActionJson>) getTypeAction(type);
-		ActionJson<?> action = behavior.getConstructor(Class.class, String.class).newInstance(type, clefEnCours);
+		ActionJson<?> action = behavior.getConstructor(Class.class, String.class, JsonUnmarshaller.class).newInstance(type, clefEnCours, this);
 		clefEnCours = null;
 		pileAction.push(action);
 		if(!waitingForType){
