@@ -66,10 +66,10 @@ public abstract class ActionAbstrait<T> {
 	@SuppressWarnings("unchecked")
 	protected void ecritValeur(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		boolean onlyWriteReference = relation != TypeRelation.COMPOSITION || isDejaVu(obj);
 		Class<T> typeObj = (Class<T>) obj.getClass();
 		List<Champ> champs = TypeExtension.getSerializableFields(typeObj);
 		Champ champId = TypeExtension.getChampId(typeObj);
+		boolean onlyWriteReference = relation != TypeRelation.COMPOSITION || isDejaVu(obj);
 		traiteChamp(obj, champId);
 		if(!onlyWriteReference){//on ecrit tout
 			getSmallIdAndStockObj(obj);

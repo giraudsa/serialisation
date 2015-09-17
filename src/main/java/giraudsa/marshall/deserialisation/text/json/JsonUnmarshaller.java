@@ -47,7 +47,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		return fromJson(reader, null);
 	}
 
-	public static <U> U fromXml(String stringToUnmarshall)  throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, JsonHandlerException, ParseException{
+	public static <U> U fromJson(String stringToUnmarshall)  throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, JsonHandlerException, ParseException{
 		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) return null;
 		try(StringReader sr = new StringReader(stringToUnmarshall)){
 			return fromJson(sr, null);

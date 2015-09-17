@@ -1,8 +1,6 @@
 package utils;
 
 import giraudsa.marshall.deserialisation.text.json.Container;
-import giraudsa.marshall.serialisation.text.json.Pair;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -168,7 +166,6 @@ public class Constants {
 		dicoSimpleNameToName.put(DATE_TYPE, Date.class.getName());
 		dicoSimpleNameToName.put(VOID_TYPE, Void.class.getName());
 		dicoSimpleNameToName.put(CONTAINER_TYPE, Container.class.getName());
-		dicoSimpleNameToName.put(MAP_TYPE, Pair.class.getName());
 		dicoClassToSimpleName.put(HashMap.class, DICTIONNAIRE_TYPE);
 		dicoClassToSimpleName.put(ArrayList.class, COLLECTION_TYPE);
 		dicoClassToSimpleName.put(Integer.class, INTEGER_TYPE);
@@ -183,7 +180,6 @@ public class Constants {
 		dicoClassToSimpleName.put(Date.class, DATE_TYPE);
 		dicoClassToSimpleName.put(Void.class, VOID_TYPE);
 		dicoClassToSimpleName.put(Container.class, CONTAINER_TYPE);
-		dicoClassToSimpleName.put(Pair.class, MAP_TYPE);
 	}
 	
 	public static String getSmallNameType(Class<?> clazz){
