@@ -23,7 +23,7 @@ import utils.Constants;
 
 public class XmlMarshaller extends TextMarshaller {
 	/////METHODES STATICS PUBLICS
-	public static <U> void toXml(U obj, StringWriter output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException  {
+	public static <U> void toXml(U obj, Writer output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException  {
 		XmlMarshaller v = new XmlMarshaller(output);
 		v.marshall(obj);
 	}
