@@ -32,11 +32,11 @@ import java.util.UUID;
 
 public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	//////METHODES STATICS PUBLICS
-	public static <U> U fromXml(StringReader reader, EntityManager entity) throws IOException, SAXException, ClassNotFoundException{
+	public static <U> U fromXml(Reader reader, EntityManager entity) throws IOException, SAXException, ClassNotFoundException{
 		XmlUnmarshaller<U> w = new XmlUnmarshaller<U>(reader, entity){};
 		return w.parse();
 	}
-	public static <U> U fromXml(StringReader reader) throws IOException, SAXException, ClassNotFoundException{
+	public static <U> U fromXml(Reader reader) throws IOException, SAXException, ClassNotFoundException{
 		return fromXml(reader, null);
 	}
 	public static <U> U fromXml(String stringToUnmarshall)  throws IOException, SAXException, ClassNotFoundException{
