@@ -52,6 +52,7 @@ public class JsonUnmarshallerHandler {
 	
 	private void virgule() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException, ParseException {
 		if(!isBetweenQuote)	setValeur();
+		else buff.add(',');
 	}
 	
 	private void quote() {
