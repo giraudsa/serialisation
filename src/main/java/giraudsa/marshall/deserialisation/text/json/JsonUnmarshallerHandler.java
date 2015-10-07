@@ -61,6 +61,7 @@ public class JsonUnmarshallerHandler {
 	
 	private void ouvreAccolade(){
 		if(!isBetweenQuote) buff.clear();
+		else buff.add('{');
 	}
 
 	private void fermeAccolade() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException, ParseException{
@@ -70,13 +71,16 @@ public class JsonUnmarshallerHandler {
 			}
 			jsonUnmarshaller.fermeAccolade();
 		}
+		else buff.add('}');
 	}
 	private void ouvreCrochet() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
 		if(!isBetweenQuote) jsonUnmarshaller.ouvreChrochet();
+		else buff.add('[');
 	}
 	
 	private void fermeCrochet() throws InstantiationException, IllegalAccessException{
 		if(!isBetweenQuote) jsonUnmarshaller.fermeCrocher();
+		else buff.add(']');
 	}
 
 	private void comportement(char c) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, JsonHandlerException, ClassNotFoundException, ParseException {
