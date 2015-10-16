@@ -10,20 +10,13 @@ import java.util.Date;
 import java.util.TimeZone;
 
 public class ActionJsonDate extends ActionJson<Date>{
-	
-	private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-	private static TimeZone tz = TimeZone.getTimeZone("UTC");
-	static{
-		df.setTimeZone(tz);
-	}
-	
 	public ActionJsonDate(Class<Date> type, String nom, JsonUnmarshaller<?> jsonUnmarshaller) {
 		super(type, nom, jsonUnmarshaller);
 	}
 	
 	@Override
 	protected void rempliData(String donnees) throws ParseException {
-		obj = df.parse(donnees);
+		obj = getDateFormat().parse(donnees);
 	}
 
 	@Override

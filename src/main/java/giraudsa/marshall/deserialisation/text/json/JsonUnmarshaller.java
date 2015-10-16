@@ -16,7 +16,9 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
+import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -39,18 +41,18 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	}
 
 	public static <U> U fromJson(Reader reader, EntityManager entity) throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, JsonHandlerException, ParseException{
-		JsonUnmarshaller<U> w = new JsonUnmarshaller<U>(reader, entity){};
+		JsonUnmarshaller<U> w = new JsonUnmarshaller<U>(reader, entity, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")){};
 		return w.parse();
 	}
 
 	public static <U> U fromJson(Reader reader) throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, JsonHandlerException, ParseException{
-		return fromJson(reader, null);
+		return fromJson(reader, null, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
 	}
 
 	public static <U> U fromJson(String stringToUnmarshall)  throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, JsonHandlerException, ParseException{
 		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) return null;
 		try(StringReader sr = new StringReader(stringToUnmarshall)){
-			return fromJson(sr, null);
+			return fromJson(sr, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
 		}
 	}
 
@@ -60,9 +62,36 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 			return fromJson(sr, entity);
 		}
 	}
+	
+	public static <U> U fromJson(Reader reader, EntityManager entity, DateFormat df) throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, JsonHandlerException, ParseException{
+		JsonUnmarshaller<U> w = new JsonUnmarshaller<U>(reader, entity, df){};
+		return w.parse();
+	}
 
-	private JsonUnmarshaller(Reader reader, EntityManager entity) throws ClassNotFoundException {
-		super(reader, entity);
+	public static <U> U fromJson(Reader reader, DateFormat df) throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, JsonHandlerException, ParseException{
+		return fromJson(reader, null, df);
+	}
+
+	public static <U> U fromJson(String stringToUnmarshall, DateFormat df)  throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, JsonHandlerException, ParseException{
+		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) return null;
+		try(StringReader sr = new StringReader(stringToUnmarshall)){
+			return fromJson(sr, null, df);
+		}
+	}
+
+	public static  <U> U fromJson(String stringToUnmarshall, EntityManager entity, DateFormat df)  throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, JsonHandlerException, ParseException{
+		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) return null;
+		try(StringReader sr = new StringReader(stringToUnmarshall)){
+			return fromJson(sr, entity, df);
+		}
+	}
+
+	private JsonUnmarshaller(Reader reader, EntityManager entity, DateFormat df) throws ClassNotFoundException {
+		super(reader, entity, df);
+		initDico();
+	}
+
+	private void initDico() {
 		typesAction.put(Date.class, ActionJsonDate.class);
 		typesAction.put(Iterable.class, ActionJsonCollectionType.class);
 		typesAction.put(Collection.class, ActionJsonCollectionType.class);

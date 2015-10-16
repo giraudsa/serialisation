@@ -14,6 +14,8 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -24,7 +26,7 @@ import utils.Constants;
 public class XmlMarshaller extends TextMarshaller {
 	/////METHODES STATICS PUBLICS
 	public static <U> void toXml(U obj, Writer output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException  {
-		XmlMarshaller v = new XmlMarshaller(output);
+		XmlMarshaller v = new XmlMarshaller(output, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"));
 		v.marshall(obj);
 	}
 	public static <U> String ToXml(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
@@ -33,8 +35,18 @@ public class XmlMarshaller extends TextMarshaller {
 			return sw.toString();
 		}
 	}
+	public static <U> void toXml(U obj, Writer output, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException  {
+		XmlMarshaller v = new XmlMarshaller(output, df);
+		v.marshall(obj);
+	}
+	public static <U> String ToXml(U obj, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
+		try(StringWriter sw = new StringWriter()){
+			toXml(obj, sw, df);
+			return sw.toString();
+		}
+	}	
 	public static <U> void toCompleteXml(U obj, StringWriter output) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
-		XmlMarshaller v = new XmlMarshaller(output);
+		XmlMarshaller v = new XmlMarshaller(output, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"));
 		v.marshallAll(obj);
 	}
 	public static <U> String toCompleteXml(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException{
@@ -44,10 +56,20 @@ public class XmlMarshaller extends TextMarshaller {
 		}
 	}
 
+	public static <U> void toCompleteXml(U obj, StringWriter output, DateFormat df) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
+		XmlMarshaller v = new XmlMarshaller(output, df);
+		v.marshallAll(obj);
+	}
+	public static <U> String toCompleteXml(U obj, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException{
+		try(StringWriter sw = new StringWriter()){
+			toCompleteXml(obj, sw, df);
+			return sw.toString();
+		}
+	}
 	
 	//////CONSTRUCTEUR
-	private XmlMarshaller(Writer output) throws IOException {
-		super(output);
+	private XmlMarshaller(Writer output, DateFormat df) throws IOException {
+		super(output, df);
 		writeHeader();
 		dicoTypeToTypeAction.put(Date.class, ActionXmlDate.class);
 		dicoTypeToTypeAction.put(Timestamp.class, ActionXmlDate.class);

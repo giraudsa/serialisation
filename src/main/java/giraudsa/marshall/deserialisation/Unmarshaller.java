@@ -104,6 +104,7 @@ public class Unmarshaller<T> {
 					}
 				}
 			}
+			if(entity != null && !isFake) entity.metEnCache(id, obj);
 			dicoIdToObject.put(id, obj);
 		}
 		return obj;

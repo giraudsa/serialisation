@@ -23,7 +23,9 @@ import giraudsa.marshall.exception.BadTypeUnmarshallException;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -33,16 +35,16 @@ import java.util.UUID;
 public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	//////METHODES STATICS PUBLICS
 	public static <U> U fromXml(Reader reader, EntityManager entity) throws IOException, SAXException, ClassNotFoundException{
-		XmlUnmarshaller<U> w = new XmlUnmarshaller<U>(reader, entity){};
+		XmlUnmarshaller<U> w = new XmlUnmarshaller<U>(reader, entity, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")){};
 		return w.parse();
 	}
 	public static <U> U fromXml(Reader reader) throws IOException, SAXException, ClassNotFoundException{
-		return fromXml(reader, null);
+		return fromXml(reader, null, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"));
 	}
 	public static <U> U fromXml(String stringToUnmarshall)  throws IOException, SAXException, ClassNotFoundException{
 		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) return null;
 		try(StringReader sr = new StringReader(stringToUnmarshall)){
-			return fromXml(sr, null);
+			return fromXml(sr, null, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"));
 		}
 	}
 	public static  <U> U fromXml(String stringToUnmarshall, EntityManager entity)  throws IOException, SAXException, ClassNotFoundException{
@@ -51,7 +53,25 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 			return fromXml(sr, entity);
 		}
 	}
-	
+	public static <U> U fromXml(Reader reader, EntityManager entity, DateFormat df) throws IOException, SAXException, ClassNotFoundException{
+		XmlUnmarshaller<U> w = new XmlUnmarshaller<U>(reader, entity, df){};
+		return w.parse();
+	}
+	public static <U> U fromXml(Reader reader, DateFormat df) throws IOException, SAXException, ClassNotFoundException{
+		return fromXml(reader, null, df);
+	}
+	public static <U> U fromXml(String stringToUnmarshall, DateFormat df)  throws IOException, SAXException, ClassNotFoundException{
+		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) return null;
+		try(StringReader sr = new StringReader(stringToUnmarshall)){
+			return fromXml(sr, null, df);
+		}
+	}
+	public static  <U> U fromXml(String stringToUnmarshall, EntityManager entity, DateFormat df)  throws IOException, SAXException, ClassNotFoundException{
+		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) return null;
+		try(StringReader sr = new StringReader(stringToUnmarshall)){
+			return fromXml(sr, entity, df);
+		}
+	}
 	
 	/////ATTRIBUTS
 	private boolean isFirst = true;
@@ -61,8 +81,8 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	}
 
 	/////CONSTRUCTEUR
-	private XmlUnmarshaller(Reader reader, EntityManager entity) throws ClassNotFoundException {
-		super(reader, entity);
+	private XmlUnmarshaller(Reader reader, EntityManager entity, DateFormat df) throws ClassNotFoundException {
+		super(reader, entity, df);
 		typesAction.put(Date.class, ActionXmlDate.class);
 		typesAction.put(Collection.class, ActionXmlCollectionType.class);
 		typesAction.put(Map.class, ActionXmlDictionaryType.class);
