@@ -24,7 +24,7 @@ public class ActionBinaryObject<T> extends ActionBinary<T> {
 	@Override
 	protected void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
 		boolean isDejaVu = writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
-		boolean marshallAll = (!isDejaVu && isCompleteMarshalling) || (!isCompleteMarshalling && relation == TypeRelation.COMPOSITION);
+		boolean marshallAll = (!isDejaVu && isCompleteMarshalling) || (!isCompleteMarshalling && typeRelation == TypeRelation.COMPOSITION);
 		Champ champId = TypeExtension.getChampId(objetASerialiser.getClass());
 		if(!champId.isFakeId() && !isDejaVu)
 			try {

@@ -14,7 +14,6 @@ import utils.champ.Champ;
 
 public abstract class ActionAbstrait<T> {
 	protected T obj;
-	protected TypeRelation relation;
 	protected Marshaller marshaller;
 	protected Class<? super T> type;
 	protected Class<?> getType(){

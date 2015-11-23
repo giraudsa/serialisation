@@ -26,7 +26,7 @@ public class ActionBinaryCollectionType<T extends Collection> extends ActionBina
 				for (Object value : (Collection)objetASerialiser) {
 					traiteObject(value, typeRelation, true);
 				}
-			}else if (!isCompleteMarshalling && relation == TypeRelation.COMPOSITION){//deja vu, donc on passe ici qd la relation est de type COMPOSITION
+			}else if (!isCompleteMarshalling && typeRelation == TypeRelation.COMPOSITION){//deja vu, donc on passe ici qd la relation est de type COMPOSITION
 				for(Object value : (Collection)objetASerialiser){
 					traiteObject(value, typeRelation, true);
 				}

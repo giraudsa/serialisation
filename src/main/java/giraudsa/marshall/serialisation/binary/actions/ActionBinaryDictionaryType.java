@@ -29,7 +29,7 @@ public class ActionBinaryDictionaryType<T extends Map> extends ActionBinary<T> {
 					traiteObject(key, typeRelation, true);
 					traiteObject(value, typeRelation, true);
 				}
-			}else if(!isCompleteMarshalling && relation == TypeRelation.COMPOSITION){//deja vu, donc on passe ici qd la relation est de type COMPOSITION
+			}else if(!isCompleteMarshalling && typeRelation == TypeRelation.COMPOSITION){//deja vu, donc on passe ici qd la relation est de type COMPOSITION
 				for(Object entry : ((Map)objetASerialiser).entrySet()){
 					traiteObject(((Entry)entry).getKey(), typeRelation, true);
 					traiteObject(((Entry)entry).getValue(), typeRelation, true);
