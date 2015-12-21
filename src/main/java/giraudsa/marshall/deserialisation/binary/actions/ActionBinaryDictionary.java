@@ -1,43 +1,80 @@
 package giraudsa.marshall.deserialisation.binary.actions;
 
 import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.ActionBinary;
+import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.Map;
 
 @SuppressWarnings("rawtypes")
-public class ActionBinaryDictionary extends ActionBinary<Map> {
+public class ActionBinaryDictionary<Dico extends Map> extends ActionBinary<Dico> {
 
-	public ActionBinaryDictionary(Class<Map> type,Unmarshaller<?> b) {
+	private boolean deserialisationFini = false;
+	private int tailleCollection;
+	private int index = 0;
+	private Object clefTampon;
+	
+	public static ActionAbstrait<?> getInstance(BinaryUnmarshaller<?> bu){
+		return new ActionBinaryDictionary<>(Map.class, bu);
+	}
+	
+
+	@Override
+	public <U extends Dico> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
+		return new ActionBinaryDictionary<>(type, (BinaryUnmarshaller<?>) unmarshaller);
+	}
+	
+	private ActionBinaryDictionary(Class<Dico> type, BinaryUnmarshaller<?> b) {
 		super(type, b);
 	}
 
-	@SuppressWarnings({ "unchecked", "unused" })
+	
+	
+	
+	
 	@Override
-	protected Map readObject(Class<? extends Map> typeADeserialiser, TypeRelation typeRelation, int smallId) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, ClassNotFoundException {
-		boolean isDejaVu = isDejaVu(smallId);
-		Map objetADeserialiser =  null;
-		if(!isDejaVu){
-			objetADeserialiser = typeADeserialiser.newInstance();
-			stockeObjetId(smallId, objetADeserialiser);
-			for(int i = 0 ; i < readInt(); i++){
-				Object key = litObject(typeRelation, Object.class);
-				Object value = litObject(typeRelation, Object.class);
-				objetADeserialiser.put(key, value);
-			}
-		}else if(!deserialisationComplete && typeRelation == TypeRelation.COMPOSITION){
-			objetADeserialiser = (Map) getObjet(smallId);
-			for(Object entry : objetADeserialiser.entrySet()){
-				litObject(typeRelation, Object.class);
-				litObject(typeRelation, Object.class);
-			}
-		}else{
-			objetADeserialiser = (Map) getObjet(smallId);
+	protected void initialise() throws InstantiationException, IllegalAccessException, IOException{
+		if (isDejaVu() && !isDeserialisationComplete() && relation == TypeRelation.COMPOSITION){
+			obj = getObjetDejaVu();
+			tailleCollection = ((Map)obj).size();
+			deserialisationFini = index < tailleCollection;
+		}else if(isDejaVu()){
+			deserialisationFini = true;
+			obj = getObjetDejaVu();
+		}else if(!isDejaVu()){
+			obj = type.newInstance();
+			stockeObjetId();
+			tailleCollection = readInt();
+			deserialisationFini = index < tailleCollection;
 		}
-		return objetADeserialiser;
 	}
+
+	@Override
+	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException{
+		if(!deserialisationFini){
+			litObject(relation, null);
+			deserialisationFini = clefTampon != null && ++index < tailleCollection;
+		}else{
+			exporteObject();
+		}
+	}
+
+
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void integreObject(Object objet) {
+		if(clefTampon == null) clefTampon = objet;
+		else if(((Collection)obj).size() < index){
+			((Map)obj).put(clefTampon, objet);
+			clefTampon = null;
+		}
+	}
+	
 }

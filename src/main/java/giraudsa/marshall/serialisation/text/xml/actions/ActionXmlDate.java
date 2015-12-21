@@ -5,27 +5,18 @@ import giraudsa.marshall.serialisation.text.xml.ActionXml;
 import giraudsa.marshall.serialisation.text.xml.XmlMarshaller;
 
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.TimeZone;
 
 
-public class ActionXmlDate<DateGeneric> extends ActionXml<DateGeneric>{
+public class ActionXmlDate extends ActionXml<Date>{
 	
-	@Override
-	protected Class<?> getType() {
-		return Date.class;
-	}
-	
-	public ActionXmlDate(Class<DateGeneric> type, XmlMarshaller xmlM, String nomBalise){
-		super(type, xmlM, nomBalise);
-		if(nomBalise == null) balise = "Date";
+	public ActionXmlDate(XmlMarshaller xmlM){
+		super(xmlM);
 	}
 	
 
 	@Override
-	protected void ecritValeur(DateGeneric date, TypeRelation relation) throws IOException  {
+	protected void ecritValeur(Date date, TypeRelation relation) throws IOException  {
 		write(getDateFormat().format(date));
 	}
 }

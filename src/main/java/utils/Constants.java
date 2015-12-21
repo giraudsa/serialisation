@@ -1,6 +1,5 @@
 package utils;
 
-import giraudsa.marshall.deserialisation.text.json.Container;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -72,11 +71,18 @@ public class Constants {
 		public static final byte STRING = 		(byte) 0xc0;
 		public static final byte DATE = 		(byte) 0xd0;
 		public static final byte CHAR = 		(byte) 0xe0;
+		public static final byte DEVINABLE = 	(byte) 0xf0;
 		public static final byte AUTRE = 		(byte) 0x00;
 		
 		public static byte getLongueurCodageType(byte header){
 			return (byte) (header & MASQUE);
 		}
+		
+		public static boolean isTypeDevinable(byte header) {
+			byte typeDevinable = (byte) (header & MASQUE);
+			return typeDevinable == DEVINABLE;
+		}
+		
 		private static final Map<Byte, Class<?>> dicoByteToTypeSimple = new HashMap<>();
 		private static final Map<Class<?>, Byte> dicoTypeSimpleToByte = new HashMap<>();
 		
@@ -105,10 +111,10 @@ public class Constants {
 			dicoTypeSimpleToByte.put(Character.class, CHAR);
 		}
 		
-		public static byte getByteHeader(Class<?> type){
+		public static byte getByteHeader(Class<?> type, boolean typeDevinable){
 			Class<?> typeSimple = TypeExtension.getTypeEnveloppe(type);
 			Byte ret = dicoTypeSimpleToByte.get(typeSimple);
-			if (ret == null) ret = AUTRE;
+			if (ret == null) ret = typeDevinable ? DEVINABLE : AUTRE;
 			return ret;
 		}
 		
@@ -126,6 +132,7 @@ public class Constants {
 	public static final String MAP_VALEUR = "__map__valeur";
 	public static final String MAP_TYPE = "__entry__set";
 	public static final String CLEF_TYPE = "__type";
+	public static final String VALEUR = "__valeur";
 	
 	public static Class<?> dictionaryType = Map.class;
 	public static Class<?> collectionType = Collection.class;
@@ -147,7 +154,6 @@ public class Constants {
 	private static String STRING_TYPE = "string";
 	private static String DATE_TYPE = "date";
 	private static String VOID_TYPE = "void";
-	private static String CONTAINER_TYPE = "__container";
 	
 	private static Map<String, String> dicoSimpleNameToName = new HashMap<>();
 	private static Map<Class<?>, String> dicoClassToSimpleName = new HashMap<>();
@@ -165,7 +171,6 @@ public class Constants {
 		dicoSimpleNameToName.put(STRING_TYPE, String.class.getName());
 		dicoSimpleNameToName.put(DATE_TYPE, Date.class.getName());
 		dicoSimpleNameToName.put(VOID_TYPE, Void.class.getName());
-		dicoSimpleNameToName.put(CONTAINER_TYPE, Container.class.getName());
 		dicoClassToSimpleName.put(HashMap.class, DICTIONNAIRE_TYPE);
 		dicoClassToSimpleName.put(ArrayList.class, COLLECTION_TYPE);
 		dicoClassToSimpleName.put(Integer.class, INTEGER_TYPE);
@@ -179,7 +184,6 @@ public class Constants {
 		dicoClassToSimpleName.put(String.class, STRING_TYPE);
 		dicoClassToSimpleName.put(Date.class, DATE_TYPE);
 		dicoClassToSimpleName.put(Void.class, VOID_TYPE);
-		dicoClassToSimpleName.put(Container.class, CONTAINER_TYPE);
 	}
 	
 	public static String getSmallNameType(Class<?> clazz){

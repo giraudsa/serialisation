@@ -1,21 +1,22 @@
 package giraudsa.marshall.serialisation.text.json;
 
-import giraudsa.marshall.annotations.TypeRelation;
-import giraudsa.marshall.deserialisation.text.json.Container;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.text.TextMarshaller;
 import giraudsa.marshall.serialisation.text.json.actions.ActionJsonCollectionType;
-import giraudsa.marshall.serialisation.text.json.actions.ActionJsonDate;
 import giraudsa.marshall.serialisation.text.json.actions.ActionJsonDictionary;
-import giraudsa.marshall.serialisation.text.json.actions.ActionJsonSimpleComportement;
-import giraudsa.marshall.serialisation.text.json.actions.ActionJsonString;
-import giraudsa.marshall.serialisation.text.json.actions.ActionJsonVoid;
+import giraudsa.marshall.serialisation.text.json.actions.ActionJsonObject;
+import giraudsa.marshall.serialisation.text.json.actions.ActionJsonSimpleWithQuote;
+import giraudsa.marshall.serialisation.text.json.actions.ActionJsonSimpleWithoutQuote;
+import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonBoolean;
+import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonDate;
+import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonInteger;
+import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonString;
+import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonVoid;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
-import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -34,7 +35,7 @@ public class JsonMarshaller extends TextMarshaller {
 	// /////METHODES PUBLIQUES STATIQUES
 	public static <U> void toJson(U obj, Writer output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
 	SecurityException, IOException, NotImplementedSerializeException {
-		JsonMarshaller v = new JsonMarshaller(output, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
+		JsonMarshaller v = new JsonMarshaller(output, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"), false);
 		LOGGER.debug("debut de sérialisation de " + obj.getClass());
 		v.marshall(obj);
 		LOGGER.debug("fin de sérialisation de " + obj.getClass());
@@ -50,7 +51,7 @@ public class JsonMarshaller extends TextMarshaller {
 
 	public static <U> void toJson(U obj, Writer output, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
 	SecurityException, IOException, NotImplementedSerializeException {
-		JsonMarshaller v = new JsonMarshaller(output, df);
+		JsonMarshaller v = new JsonMarshaller(output, df, false);
 		v.marshall(obj);
 	}
 
@@ -62,8 +63,8 @@ public class JsonMarshaller extends TextMarshaller {
 		}
 	}
 	public static <U> void toCompleteJson(U obj, Writer output) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		JsonMarshaller v = new JsonMarshaller(output, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
-		v.marshallAll(obj);
+		JsonMarshaller v = new JsonMarshaller(output, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"), true);
+		v.marshall(obj);
 	}
 
 
@@ -75,8 +76,8 @@ public class JsonMarshaller extends TextMarshaller {
 	}
 
 	public static <U> void toCompleteJson(U obj, Writer output, DateFormat df) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		JsonMarshaller v = new JsonMarshaller(output, df);
-		v.marshallAll(obj);
+		JsonMarshaller v = new JsonMarshaller(output, df, true);
+		v.marshall(obj);
 	}
 	public static <U> String toCompleteJson(U obj, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException{
 		try(StringWriter sw = new StringWriter()){
@@ -86,61 +87,32 @@ public class JsonMarshaller extends TextMarshaller {
 	}
 
 	// ///CONSTRUCTEUR
-	private JsonMarshaller(Writer output, DateFormat df) throws IOException {
-		super(output, df);
-		initialiseDico();
+	private JsonMarshaller(Writer output, DateFormat df, boolean isCompleteSerialisation) throws IOException {
+		super(output, df, isCompleteSerialisation);
 	}
 
-	private void initialiseDico() {
-		dicoTypeToTypeAction.put(Date.class, ActionJsonDate.class);
-		dicoTypeToTypeAction.put(Timestamp.class, ActionJsonDate.class);
-		dicoTypeToTypeAction.put(Boolean.class, ActionJsonSimpleComportement.class);
-		dicoTypeToTypeAction.put(Collection.class, ActionJsonCollectionType.class);
-		dicoTypeToTypeAction.put(Map.class, ActionJsonDictionary.class);
-		dicoTypeToTypeAction.put(Object.class, ActionJson.class);
-		dicoTypeToTypeAction.put(void.class, ActionJsonVoid.class);
-		dicoTypeToTypeAction.put(Integer.class, ActionJsonSimpleComportement.class);
-		dicoTypeToTypeAction.put(Enum.class, ActionJsonString.class);
-		dicoTypeToTypeAction.put(UUID.class, ActionJsonString.class);
-		dicoTypeToTypeAction.put(String.class, ActionJsonString.class);
-		dicoTypeToTypeAction.put(Byte.class, ActionJsonSimpleComportement.class);
-		dicoTypeToTypeAction.put(Float.class, ActionJsonSimpleComportement.class);
-		dicoTypeToTypeAction.put(Double.class, ActionJsonSimpleComportement.class);
-		dicoTypeToTypeAction.put(Long.class, ActionJsonSimpleComportement.class);
-		dicoTypeToTypeAction.put(Short.class, ActionJsonSimpleComportement.class);
+	@SuppressWarnings("rawtypes")
+	@Override
+	protected void initialiseDico() {
+		dicoTypeToAction.put(Date.class, new ActionJsonDate(this));
+		dicoTypeToAction.put(Boolean.class, new ActionJsonBoolean(this));
+		dicoTypeToAction.put(Collection.class, new ActionJsonCollectionType(this));
+		dicoTypeToAction.put(Map.class, new ActionJsonDictionary(this));
+		dicoTypeToAction.put(Object.class, new ActionJsonObject(this));
+		dicoTypeToAction.put(void.class, new ActionJsonVoid(this));
+		dicoTypeToAction.put(Integer.class, new ActionJsonInteger(this));
+		dicoTypeToAction.put(Enum.class, new ActionJsonSimpleWithQuote<Enum>(this));
+		dicoTypeToAction.put(UUID.class, new ActionJsonSimpleWithQuote<UUID>(this));
+		dicoTypeToAction.put(String.class, new ActionJsonString(this));
+		dicoTypeToAction.put(Byte.class, new ActionJsonSimpleWithoutQuote<Byte>(this));
+		dicoTypeToAction.put(Float.class, new ActionJsonSimpleWithoutQuote<Float>(this));
+		dicoTypeToAction.put(Double.class, new ActionJsonSimpleWithoutQuote<Double>(this));
+		dicoTypeToAction.put(Long.class, new ActionJsonSimpleWithoutQuote<Long>(this));
+		dicoTypeToAction.put(Short.class, new ActionJsonSimpleWithoutQuote<Short>(this));
 	}
 
 	// ///ME
-	private <U> void marshall(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
-		if (obj == null)
-			return;
-		marshallSpecialise(obj, TypeRelation.COMPOSITION, null);
-	}
-
-	private <U> void marshallAll(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
-		if (obj == null)
-			return;
-		aSerialiser = new SetQueue<Object>();
-		writer.write("{");
-		ecritType(Container.class);
-		writer.write(", ");
-		marshallSpecialise(obj, TypeRelation.COMPOSITION, "__principal");
-		writer.write(",\"__references\":[");
-		while (!aSerialiser.isEmpty()) {
-			writer.write(",");
-			marshallSpecialise(aSerialiser.poll(), TypeRelation.COMPOSITION, null);
-		}
-		writer.write("]}");
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public <T> void marshallSpecialise(T obj, TypeRelation relation, String nom) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
-		Class<T> typeObj = (Class<T>) obj.getClass();
-		Class<? extends ActionJson> behaviorJson = (Class<? extends ActionJson>)getTypeAction(obj);
-		ActionJson<T> action =  (ActionJson<T>)behaviorJson.getConstructor(Class.class, JsonMarshaller.class, String.class).newInstance(typeObj, this, nom);
-		action.marshall(obj, relation);
-	}
-
+	
 	void ecritClef(String nomClef) throws IOException {
 		if(nomClef != null)	writer.write("\"" + nomClef + "\":");
 	}
@@ -153,5 +125,9 @@ public class JsonMarshaller extends TextMarshaller {
 
 	public void writeWithQuote(String string) throws IOException {
 		writer.write("\"" + string + "\"");
+	}
+
+	public void writeSeparator() throws IOException {
+		writer.write(",");
 	}
 }

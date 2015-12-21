@@ -1,7 +1,7 @@
 package giraudsa.marshall.deserialisation.text.xml.actions;
 
+import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
-import giraudsa.marshall.deserialisation.text.xml.ActionXml;
 import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 
 import java.lang.reflect.Modifier;
@@ -13,18 +13,28 @@ import utils.TypeExtension;
 import utils.champ.Champ;
 
 
-public class ActionXmlObject<T> extends ActionXml<T> {
+public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 	private Champ champId;
 	private Map<Champ, Object> dicoChampToValue;
 	
-	public ActionXmlObject(Class<T> type, String nom, XmlUnmarshaller<?> xmlUnmarshaller) {
-		super(type, nom, xmlUnmarshaller);
+	public static ActionAbstrait<?> getInstance(XmlUnmarshaller<?> u) {	
+		return new ActionXmlObject<Object>(Object.class, u);
+	}
+	
+	@SuppressWarnings("rawtypes")
+	@Override
+	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
+		return new ActionXmlObject<>(type, (XmlUnmarshaller<?>)unmarshaller);
+	}
+	
+	private ActionXmlObject(Class<T> type, XmlUnmarshaller<?> xmlUnmarshaller) {
+		super(type, xmlUnmarshaller);
 		champId = TypeExtension.getChampId(type);
 		dicoChampToValue = new HashMap<>();
 	}
 
 	@Override
-	protected <U> void construitObjet(Unmarshaller<U> um) throws InstantiationException, IllegalAccessException {
+	protected  void construitObjet() throws InstantiationException, IllegalAccessException {
 		obj = getObject(dicoChampToValue.get(champId).toString(), type, champId.isFakeId());
 		for(Entry<Champ, Object> entry : dicoChampToValue.entrySet()){
 			Champ champ = entry.getKey();
@@ -41,5 +51,10 @@ public class ActionXmlObject<T> extends ActionXml<T> {
 		Champ champ = TypeExtension.getChampByName(type, nomAttribut);
 		dicoChampToValue.put(champ, objet);
 	}
-
+	
+    @Override
+	protected Class<?> getTypeAttribute(String nomAttribut) {
+		Champ champ = TypeExtension.getChampByName(type, nomAttribut);
+		return champ.valueType;
+	}
 }

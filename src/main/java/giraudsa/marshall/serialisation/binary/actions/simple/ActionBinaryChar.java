@@ -7,17 +7,12 @@ import java.io.IOException;
 
 public class ActionBinaryChar  extends ActionBinarySimple<Character>{
 
-	public ActionBinaryChar(Class<? super Character> type, BinaryMarshaller b) {
-		super(type, b);
+	public ActionBinaryChar(BinaryMarshaller b) {
+		super(b);
 	}
 	
 	@Override
-	public void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
-		writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
-		try {
-			writeChar((char)objetASerialiser);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	public void ecritValeur(Character objetASerialiser, TypeRelation typeRelation) throws IOException {
+		writeChar(objetASerialiser);
 	}
 }

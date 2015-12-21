@@ -50,7 +50,7 @@ public class JsonUnmarshallerHandler {
 		else buff.add(':');
 	}
 	
-	private void virgule() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException, ParseException {
+	private void virgule() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException {
 		if(!isBetweenQuote)	setValeur();
 		else buff.add(',');
 	}
@@ -64,7 +64,7 @@ public class JsonUnmarshallerHandler {
 		else buff.add('{');
 	}
 
-	private void fermeAccolade() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException, ParseException{
+	private void fermeAccolade() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException{
 		if(!isBetweenQuote){
 			if(!buff.isEmpty()){
 				setValeur();
@@ -78,7 +78,7 @@ public class JsonUnmarshallerHandler {
 		else buff.add('[');
 	}
 	
-	private void fermeCrochet() throws InstantiationException, IllegalAccessException{
+	private void fermeCrochet() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException{
 		if(!isBetweenQuote) jsonUnmarshaller.fermeCrocher();
 		else buff.add(']');
 	}
@@ -124,9 +124,9 @@ public class JsonUnmarshallerHandler {
 	}
 	
 
-	private void setValeur() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException, ParseException{
+	private void setValeur() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException{
 		if(!buff.isEmpty()){
-			Class<?> type = null;
+			Class<?> type = String.class;
 			if(!enleveGuillemets()){
 				type = guessType(); 
 			}
@@ -154,6 +154,8 @@ public class JsonUnmarshallerHandler {
 		case 't':
 		case 'f':
 			return Boolean.class;
+		case 'n':
+			return Void.class;
 		default:
 			return Integer.class;
 		}

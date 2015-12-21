@@ -4,41 +4,54 @@ import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.text.json.ActionJson;
 import giraudsa.marshall.serialisation.text.json.JsonMarshaller;
+import utils.Constants;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Stack;
 
 @SuppressWarnings("rawtypes")
-public class ActionJsonDictionary<T extends Map> extends ActionJson<T> {
+public class ActionJsonDictionary extends ActionJson<Map> {
 	
-	public ActionJsonDictionary(Class<T> type, JsonMarshaller jsonM, String nomClef) {
-		super(type, jsonM, nomClef);
+	public ActionJsonDictionary(JsonMarshaller jsonM) {
+		super(jsonM);
 	}
 
 	@Override
-	protected void ecritValeur(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException,
+	protected void ecritValeur(Map obj, TypeRelation relation, boolean ecrisSeparateur) throws IOException, InstantiationException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
 		Map<?,?> map = (Map<?,?>) obj;
-		int i = 0;
+		Stack<Comportement> tmp = new Stack<>();
 		for (Entry<?, ?> entry : map.entrySet()) {
-			if(i++ > 0) writeSeparator();
-			marshallValue(entry.getKey(), null, relation);
-			writeSeparator();
-			marshallValue(entry.getValue(), null, relation);
+			tmp.push(new ComportementMarshallValue(entry.getKey(), null, relation, false, ecrisSeparateur));
+			ecrisSeparateur = true;
+			tmp.push(new ComportementMarshallValue(entry.getValue(), null, relation, false, ecrisSeparateur));
 		}
+		pushComportements(tmp);//on remet dans le bon ordre
 	}
 	
 	@Override
-	protected void ouvreAccolade() throws IOException {
-		write("{");
-		ecritType();
-		writeSeparator();
-		ecritClef("valeur");
-		write("[");	
+	protected boolean ouvreAccolade(Map obj, boolean typeDevinable) throws IOException {
+		if(typeDevinable){
+			write("[");
+		}else{
+			write("{");
+			ecritType(obj);
+			writeSeparator();
+			ecritClef(Constants.VALEUR);
+			write("[");	
+		}
+		return false;
 	}
+	
 	@Override
-	protected void fermeAccolade(T obj) throws IOException {
-		write("]}");
+	protected void fermeAccolade(Map obj, boolean typeDevinable) throws IOException {
+		if(typeDevinable){
+			write("]");
+		}else{
+			write("]}");
+		}
 	}
 }

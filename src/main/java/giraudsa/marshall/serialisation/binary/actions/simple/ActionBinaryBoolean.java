@@ -11,13 +11,13 @@ public class ActionBinaryBoolean extends ActionBinarySimple<Boolean> {
 	private byte[] headerTrue = new byte[]{Constants.BOOL_VALUE.TRUE};
 	private byte[] headerFalse = new byte[]{Constants.BOOL_VALUE.FALSE};
 	
-	public ActionBinaryBoolean(Class<? super Boolean> type, BinaryMarshaller b) {
-		super(type, b);
+	public ActionBinaryBoolean(BinaryMarshaller b) {
+		super(b);
 	}
 
 	@Override
-	protected byte[] calculHeaders(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific, boolean isDejaVu) {
-		return (Boolean)objetASerialiser ? headerTrue : headerFalse;
+	protected byte[] calculHeaders(Boolean objetASerialiser, TypeRelation typeRelation, boolean typeDevinable, boolean isDejaVu) {
+		return objetASerialiser ? headerTrue : headerFalse;
 	}
 
 

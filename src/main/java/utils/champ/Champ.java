@@ -46,6 +46,7 @@ public class Champ implements Comparable<Champ> {
 			name = metadata !=null ? metadata.name() : info.getName();
 			Relation maRelation = info.getAnnotation(Relation.class);
 			relation = maRelation != null ? maRelation.type() : TypeRelation.ASSOCIATION;
+			if (isSimple) relation = TypeRelation.COMPOSITION;
 		}
 	}	
 }

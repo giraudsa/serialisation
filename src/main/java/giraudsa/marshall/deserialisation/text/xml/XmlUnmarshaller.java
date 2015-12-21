@@ -14,12 +14,14 @@ import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlCollectionType;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlDate;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlDictionaryType;
+import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlEnum;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlObject;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlSimpleComportement;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlString;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlUUID;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlVoid;
 import giraudsa.marshall.exception.BadTypeUnmarshallException;
+import giraudsa.marshall.exception.NotImplementedSerializeException;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -75,29 +77,27 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	
 	/////ATTRIBUTS
 	private boolean isFirst = true;
-	private Stack<ActionXml<?>> pileAction = new Stack<ActionXml<?>>();
-	private ActionXml<?> getActionEnCours(){
-		return pileAction.peek();
-	}
 
 	/////CONSTRUCTEUR
 	private XmlUnmarshaller(Reader reader, EntityManager entity, DateFormat df) throws ClassNotFoundException {
 		super(reader, entity, df);
-		typesAction.put(Date.class, ActionXmlDate.class);
-		typesAction.put(Collection.class, ActionXmlCollectionType.class);
-		typesAction.put(Map.class, ActionXmlDictionaryType.class);
-		typesAction.put(Object.class, ActionXmlObject.class);
-		typesAction.put(void.class, ActionXmlVoid.class);
-		typesAction.put(Boolean.class, ActionXmlSimpleComportement.class);
-		typesAction.put(Enum.class, ActionXmlSimpleComportement.class);
-		typesAction.put(UUID.class, ActionXmlUUID.class);
-		typesAction.put(String.class, ActionXmlString.class);
-		typesAction.put(Byte.class, ActionXmlSimpleComportement.class);
-		typesAction.put(Float.class, ActionXmlSimpleComportement.class);
-		typesAction.put(Integer.class, ActionXmlSimpleComportement.class);
-		typesAction.put(Double.class, ActionXmlSimpleComportement.class);
-		typesAction.put(Long.class, ActionXmlSimpleComportement.class);
-		typesAction.put(Short.class, ActionXmlSimpleComportement.class);
+		actions.put(Date.class, ActionXmlDate.getInstance(this));
+		actions.put(Collection.class, ActionXmlCollectionType.getInstance(this));
+		actions.put(Map.class, ActionXmlDictionaryType.getInstance(this));
+		actions.put(Object.class, ActionXmlObject.getInstance(this));
+		actions.put(Void.class, ActionXmlVoid.getInstance(this));
+		actions.put(UUID.class, ActionXmlUUID.getInstance(this));
+		actions.put(Enum.class, ActionXmlEnum.getInstance(this));
+		actions.put(String.class, ActionXmlString.getInstance(this));
+		
+		actions.put(Boolean.class, ActionXmlSimpleComportement.getInstance(Boolean.class,this));
+		actions.put(Byte.class, ActionXmlSimpleComportement.getInstance(Byte.class,this));
+		actions.put(Float.class, ActionXmlSimpleComportement.getInstance(Float.class,this));
+		actions.put(Integer.class, ActionXmlSimpleComportement.getInstance(Integer.class,this));
+		actions.put(Double.class, ActionXmlSimpleComportement.getInstance(Double.class,this));
+		actions.put(Long.class, ActionXmlSimpleComportement.getInstance(Long.class,this));
+		actions.put(Short.class, ActionXmlSimpleComportement.getInstance(Short.class,this));
+		actions.put(Character.class, ActionXmlSimpleComportement.getInstance(Character.class,this));
 	}
 	
 	//////METHODES PRIVEES
@@ -111,12 +111,17 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		return obj;
 	}
 
-	private Class<?> getType(Attributes attributes) throws ClassNotFoundException, BadTypeUnmarshallException {
-		Class<?> typeToUnmarshall =  Class.forName(Constants.getNameType(attributes.getValue("type")));
-		if(isFirst) checkType(typeToUnmarshall);
+	private Class<?> getType(Attributes attributes, String nomAttribut) throws ClassNotFoundException, BadTypeUnmarshallException {
+		Class<?> typeToUnmarshall;
+		String typeEcrit = attributes.getValue("type");
+		if(typeEcrit != null){
+			typeToUnmarshall =  Class.forName(Constants.getNameType(attributes.getValue("type")));
+			if(isFirst) checkType(typeToUnmarshall);
+		}else{
+			typeToUnmarshall = getType((ActionXml<?>)getActionEnCours(), nomAttribut);
+		}
 		return typeToUnmarshall;
 	}
-
 
 	@SuppressWarnings({ "unchecked", "unused" })
 	private <T> void checkType(Class<T> typeToUnmarshall) throws BadTypeUnmarshallException {
@@ -131,12 +136,12 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	/////XML EVENT
 	void startDocument() {}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" }) void startElement(String uri, String localName, String qName,
+	void startElement(String uri, String localName, String qName,
 			Attributes attributes) throws Exception {
-		Class<?> type = getType(attributes);
+		Class<?> type = getType(attributes, qName);
 		if(type != null){
-			Class<? extends ActionXml> behavior = (Class<? extends ActionXml>) getTypeAction(type);
-			ActionXml<?> action = behavior.getConstructor(Class.class, String.class, XmlUnmarshaller.class).newInstance(type, qName, this);
+			ActionXml<?> action = (ActionXml<?>) getAction(type);
+			setNom(action, qName);
 			pileAction.push(action);
 		}
 	}
@@ -145,9 +150,9 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		rempliData(getActionEnCours(), donnees);
 	}
 
-	@SuppressWarnings("unchecked") void endElement(String uri, String localName, String qName) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException {
+	@SuppressWarnings("unchecked") void endElement(String uri, String localName, String qName) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, ClassNotFoundException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
 		construitObjet(getActionEnCours());
-		ActionXml<?> actionATraiter = pileAction.pop();
+		ActionXml<?> actionATraiter = (ActionXml<?>) pileAction.pop();
 		if(pileAction.isEmpty()){
 			obj = obj == null ? (U) getObjet(actionATraiter) : obj;
 		}else{

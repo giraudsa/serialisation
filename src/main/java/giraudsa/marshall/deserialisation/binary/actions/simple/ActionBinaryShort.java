@@ -1,23 +1,28 @@
 package giraudsa.marshall.deserialisation.binary.actions.simple;
 
-import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
-import giraudsa.marshall.deserialisation.binary.ActionBinary;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
-
+import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
-public class ActionBinaryShort extends ActionBinary<Short> {
+public class ActionBinaryShort extends ActionBinarySimple<Short> {
 
-	public ActionBinaryShort(Class<? extends Short> type, Unmarshaller<?> unmarshaller) {
+	public static ActionAbstrait<Short> getInstance(BinaryUnmarshaller<?> bu){
+		return new ActionBinaryShort(Short.class, bu);
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override
+	public <U extends Short> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
+		return (ActionAbstrait<U>) new ActionBinaryShort(Short.class, (BinaryUnmarshaller<?>) unmarshaller);
+	}
+	
+	private ActionBinaryShort(Class<Short> type, BinaryUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);
 	}
 
 	@Override
-	protected Short readObject(Class<? extends Short> typeADeserialiser, TypeRelation typeRelation, int smallId) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException {
-		return readShort();
+	protected void initialise() throws IOException{
+		obj = readShort();
 	}
-	
 }

@@ -12,12 +12,12 @@ import org.apache.commons.lang3.StringEscapeUtils;
 
 public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 
-	public ActionXmlSimpleComportement(Class<T> type, XmlMarshaller xmlM, String nomBalise) {
-		super(type, xmlM, nomBalise);
+	public ActionXmlSimpleComportement(XmlMarshaller xmlM) {
+		super(xmlM);
 	}
 
 	@Override
-	protected void ecritValeur(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException,
+	protected void ecritValeur(Object obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
 		write(StringEscapeUtils.escapeXml10(obj.toString()));
 	}

@@ -8,31 +8,30 @@ import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.Stack;
 
 @SuppressWarnings("rawtypes")
-public class ActionBinaryCollectionType<T extends Collection> extends ActionBinary<T> {
+public class ActionBinaryCollectionType extends ActionBinary<Collection> {
 
 
-	public ActionBinaryCollectionType(Class<? super T> type, BinaryMarshaller b) {
-		super(type, b);
+	public ActionBinaryCollectionType(BinaryMarshaller b) {
+		super(b);
 	}
 
 	@Override
-	protected void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
-		boolean isDejaVu = writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
-		try {
-			if(!isDejaVu){
-				writeInt(((Collection)objetASerialiser).size());
-				for (Object value : (Collection)objetASerialiser) {
-					traiteObject(value, typeRelation, true);
-				}
-			}else if (!isCompleteMarshalling && typeRelation == TypeRelation.COMPOSITION){//deja vu, donc on passe ici qd la relation est de type COMPOSITION
-				for(Object value : (Collection)objetASerialiser){
-					traiteObject(value, typeRelation, true);
-				}
+	protected void ecritValeur(Collection obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+		Stack<Comportement> tmp = new Stack<>();
+		if (!isDejaTotalementSerialise(obj)){
+			setDejaTotalementSerialise(obj);
+			writeInt(((Collection)obj).size());
+			for (Object value : (Collection)obj) {
+				tmp.push(new ComportementMarshallValue(value, relation, false));
 			}
-		} catch (IOException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | NotImplementedSerializeException e) {
-			e.printStackTrace();
+		}else if(!isCompleteMarshalling() && relation == TypeRelation.COMPOSITION){//deja vu, donc on passe ici qd la relation est de type COMPOSITION
+			for(Object value : (Collection)obj){
+				tmp.push(new ComportementMarshallValue(value, relation, false));
+			}
 		}
+		pushComportements(tmp);
 	}
 }

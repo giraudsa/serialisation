@@ -6,32 +6,31 @@ import giraudsa.marshall.serialisation.ActionAbstrait;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-
 import utils.Constants;
 
 
 public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	
-	protected byte headerType;
-	protected byte[] headerConstant;
-
-	protected boolean isCompleteMarshalling;//ignore relation
+	protected byte getHeaderType(Class<?> type, boolean typeDevinable){
+		return Constants.Type.getByteHeader(type, typeDevinable);
+	}
+	
+	protected byte[] getHeaderConstant(Class<?> type, boolean typeDevinable){
+		return new byte[]{getHeaderType(type, typeDevinable)};
+	}
 	
 	protected BinaryMarshaller getBinaryMarshaller(){
 		return (BinaryMarshaller)marshaller;
 	}
 	
-	public ActionBinary(Class<? super T> type, BinaryMarshaller b){
-		super(type, b);
-		headerType = Constants.Type.getByteHeader(type);
-		headerConstant = new byte[]{headerType};
-		this.isCompleteMarshalling = getBinaryMarshaller().isCompleteSerialisation;
+	public ActionBinary(BinaryMarshaller b){
+		super(b);
 	}
 	
-	protected boolean writeHeaders(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific){
+	protected boolean writeHeaders(T objetASerialiser, TypeRelation typeRelation, boolean typeDevinable){
 		try {
 			boolean isDejaVu = isDejaVu(objetASerialiser);
-			getBinaryMarshaller().writeByteArray(calculHeaders(objetASerialiser, typeRelation, couldBeLessSpecific, isDejaVu));
+			getBinaryMarshaller().writeByteArray(calculHeaders(objetASerialiser, typeRelation, typeDevinable, isDejaVu));
 			return isDejaVu;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -39,9 +38,9 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 		return false;
 	}
 
-	protected byte[] calculHeaders(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific, boolean isDejaVu) throws IOException {
-		
-		return getBinaryMarshaller().calculHeader(objetASerialiser, typeRelation, couldBeLessSpecific, headerType, isDejaVu);
+	protected byte[] calculHeaders(T objetASerialiser, TypeRelation typeRelation, boolean typeDevinable, boolean isDejaVu) throws IOException {
+		byte headerType = getHeaderType(objetASerialiser.getClass(), typeDevinable);
+		return getBinaryMarshaller().calculHeader(objetASerialiser, typeRelation, headerType, isDejaVu);
 	}
 	protected void writeBoolean(boolean v) throws IOException {
 		getBinaryMarshaller().writeBoolean(v);
@@ -74,37 +73,57 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 		writeByte((byte) 0);
 	}
 	
-	protected <U> void traiteObject(U obj, TypeRelation relation, Boolean couldTypeBeLessSpecifique) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException{
-		getBinaryMarshaller().marshallSpecialise(obj, relation, couldTypeBeLessSpecifique);
+	@SuppressWarnings("unchecked")
+	protected void marshall(Object objetASerialiser, TypeRelation typeRelation, boolean typeDevinable){
+		pushComportement(new ComportementEcrisValeur((T) objetASerialiser, typeRelation));
+		pushComportement(new ComportementWriteHeader(objetASerialiser, typeRelation, typeDevinable));
 	}
+	
+	abstract protected void ecritValeur(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException;
+	
+	protected class ComportementWriteHeader extends Comportement{
 
-	@Override
-	protected void marshall(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
-			SecurityException, NotImplementedSerializeException {}
-	
-	protected void traiteChampsComplexes(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific){}
-	
-	protected void pushComportement(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
-		getBinaryMarshaller().aFaire.push(new Comportement(objetASerialiser, typeRelation, couldBeLessSpecific));
-	}
-	
-	class Comportement {
-		private Object objet;
-		private TypeRelation relation;
-		private boolean laRelationsAuraitPuEtreMoinsSpecifique;
-		protected Comportement(Object objet, TypeRelation relation, boolean laRelationsAuraitPuEtreMoinsSpecifique) {
+		private Object objetASerialiser;
+		private TypeRelation typeRelation;
+		private boolean typeDevinable;
+
+		public ComportementWriteHeader(Object objetASerialiser, TypeRelation typeRelation, boolean typeDevinable) {
 			super();
-			this.objet = objet;
-			this.relation = relation;
-			this.laRelationsAuraitPuEtreMoinsSpecifique = laRelationsAuraitPuEtreMoinsSpecifique;
+			this.objetASerialiser = objetASerialiser;
+			this.typeRelation = typeRelation;
+			this.typeDevinable = typeDevinable;
 		}
-		
-		void evalue(){
-			traiteChampsComplexes(objet, relation, laRelationsAuraitPuEtreMoinsSpecifique);
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public void evalue()
+				throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException,
+				InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+			writeHeaders((T) objetASerialiser, typeRelation, typeDevinable);
 		}
 		
 	}
+	protected class ComportementEcrisValeur extends Comportement{
 
-	protected abstract void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific);
+		private T obj;
+		private TypeRelation relation;
+
+		public ComportementEcrisValeur(T obj, TypeRelation relation) {
+			super();
+			this.obj = obj;
+			this.relation = relation;
+		}
+
+		@Override
+		public void evalue()
+				throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException,
+				InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+			ecritValeur(obj, relation);
+		}
+	}
 	
+	@Override
+	protected <TypeValue> boolean aTraiter(TypeValue value) throws IOException {
+		return true;
+	}
 }

@@ -5,13 +5,13 @@ import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonCollectionType;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonDate;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonDictionaryType;
+import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonEnum;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonObject;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonSimpleComportement;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonUUID;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonVoid;
 import giraudsa.marshall.exception.JsonHandlerException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
-
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 import java.util.UUID;
 
 import org.xml.sax.SAXException;
@@ -35,10 +34,6 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	/////ATTRIBUTS
 	private boolean waitingForType;
 	private String clefEnCours;
-	private Stack<ActionJson<?>> pileAction = new Stack<ActionJson<?>>();
-	private ActionJson<?> getActionEnCours(){
-		return pileAction.peek();
-	}
 
 	public static <U> U fromJson(Reader reader, EntityManager entity) throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, JsonHandlerException, ParseException{
 		JsonUnmarshaller<U> w = new JsonUnmarshaller<U>(reader, entity, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")){};
@@ -92,23 +87,25 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	}
 
 	private void initDico() {
-		typesAction.put(Date.class, ActionJsonDate.class);
-		typesAction.put(Iterable.class, ActionJsonCollectionType.class);
-		typesAction.put(Collection.class, ActionJsonCollectionType.class);
-		typesAction.put(List.class, ActionJsonCollectionType.class);
-		typesAction.put(Map.class, ActionJsonDictionaryType.class);
-		typesAction.put(Object.class, ActionJsonObject.class);
-		typesAction.put(void.class, ActionJsonVoid.class);
-		typesAction.put(Boolean.class, ActionJsonSimpleComportement.class);
-		typesAction.put(Enum.class, ActionJsonSimpleComportement.class);
-		typesAction.put(UUID.class, ActionJsonUUID.class);
-		typesAction.put(String.class, ActionJsonSimpleComportement.class);
-		typesAction.put(Byte.class, ActionJsonSimpleComportement.class);
-		typesAction.put(Float.class, ActionJsonSimpleComportement.class);
-		typesAction.put(Integer.class, ActionJsonSimpleComportement.class);
-		typesAction.put(Double.class, ActionJsonSimpleComportement.class);
-		typesAction.put(Long.class, ActionJsonSimpleComportement.class);
-		typesAction.put(Short.class, ActionJsonSimpleComportement.class);
+		actions.put(Date.class, ActionJsonDate.getInstance(this));
+		actions.put(Iterable.class, ActionJsonCollectionType.getInstance(this));
+		actions.put(Collection.class, ActionJsonCollectionType.getInstance(this));
+		actions.put(List.class, ActionJsonCollectionType.getInstance(this));
+		actions.put(Map.class, ActionJsonDictionaryType.getInstance(this));
+		actions.put(Object.class, ActionJsonObject.getInstance(this));
+		actions.put(void.class, ActionJsonVoid.getInstance(this));
+		actions.put(UUID.class, ActionJsonUUID.getInstance(this));
+		actions.put(Enum.class, ActionJsonEnum.getInstance(this));
+		
+		actions.put(String.class, ActionJsonSimpleComportement.getInstance(String.class, this));
+		actions.put(Boolean.class, ActionJsonSimpleComportement.getInstance(Boolean.class, this));
+		actions.put(Byte.class, ActionJsonSimpleComportement.getInstance(Byte.class, this));
+		actions.put(Float.class, ActionJsonSimpleComportement.getInstance(Float.class, this));
+		actions.put(Integer.class, ActionJsonSimpleComportement.getInstance(Integer.class, this));
+		actions.put(Double.class, ActionJsonSimpleComportement.getInstance(Double.class, this));
+		actions.put(Long.class, ActionJsonSimpleComportement.getInstance(Long.class, this));
+		actions.put(Short.class, ActionJsonSimpleComportement.getInstance(Short.class, this));
+		actions.put(Character.class, ActionJsonSimpleComportement.getInstance(Character.class,this));
 	}
 
 	private T parse() throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException {
@@ -125,17 +122,17 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		}
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" }) void setValeur(String valeur, Class<?> type) throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
-	ParseException, IllegalArgumentException, SecurityException, ClassNotFoundException {
+	void setValeur(String valeur, Class<?> type) throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
+	ParseException, IllegalArgumentException, SecurityException, ClassNotFoundException, IOException {
 		Class<?> type2 = null;
 		if(waitingForType){
 			type2 = getType(valeur);
 		}else{
-			type2 = getActionEnCours().getType(clefEnCours);
+			type2 = getType((ActionJson<?>)getActionEnCours(), clefEnCours);
 		}
 		type = type2 != null ? type2 : type;
-		Class<? extends ActionJson> behavior = (Class<? extends ActionJson>) getTypeAction(type);
-		ActionJson<?> action = behavior.getConstructor(Class.class, String.class, JsonUnmarshaller.class).newInstance(type, clefEnCours, this);
+		ActionJson<?> action = (ActionJson<?>) getAction(type);
+		setNom(action, clefEnCours);
 		clefEnCours = null;
 		pileAction.push(action);
 		if(!waitingForType){
@@ -145,21 +142,21 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		waitingForType = false;
 	}
 
-	void fermeAccolade() throws InstantiationException, IllegalAccessException {
+	void fermeAccolade() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
 		integreObject();
 	}
 
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	void ouvreChrochet() throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		Class<?> type = ArrayList.class;
-		Class<? extends ActionJson> behavior = (Class<? extends ActionJson>) getTypeAction(type);
-		ActionJson<?> action = behavior.getConstructor(Class.class, String.class, JsonUnmarshaller.class).newInstance(type, clefEnCours, this);
+		Class<?> type = getType((ActionJson<?>)getActionEnCours(), clefEnCours);
+		if(type == null) type = ArrayList.class;
+		ActionJson<?> action = (ActionJson<?>) getAction(type);
+		setNom(action, clefEnCours);
 		clefEnCours = null;
 		pileAction.push(action);
 	}
 
-	void fermeCrocher() throws InstantiationException, IllegalAccessException {
+	void fermeCrocher() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
 		integreObject();
 	}
 
@@ -168,13 +165,11 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void integreObject() throws InstantiationException, IllegalAccessException {
+	private void integreObject() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
 		construitObjet(getActionEnCours());
-		ActionJson<?> actionATraiter = pileAction.pop();
+		ActionJson<?> actionATraiter = (ActionJson<?>) pileAction.pop();
 		if(pileAction.isEmpty()){
-			Object t = getObjet(actionATraiter);
-			if(t instanceof Container) obj = (T) ((Container)t).get__Principal();
-			else obj = (T)t;
+			obj = (T)getObjet(actionATraiter);
 		}else{
 			String nom = getNom(actionATraiter);
 			Object objet = getObjet(actionATraiter);

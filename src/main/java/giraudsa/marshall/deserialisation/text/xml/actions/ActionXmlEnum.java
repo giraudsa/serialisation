@@ -1,5 +1,6 @@
 package giraudsa.marshall.deserialisation.text.xml.actions;
 
+import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.ActionXml;
 import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
@@ -12,16 +13,38 @@ import java.util.Map;
 @SuppressWarnings("rawtypes")
 public class ActionXmlEnum<T extends Enum> extends ActionXml<T>  {
 
-	Map<String, T> dicoStringEnumToObjEnum = new HashMap<>();
-	StringBuilder sb = new StringBuilder();
+	private Map<String, T> dicoStringEnumToObjEnum = new HashMap<>();
+	private StringBuilder sb = new StringBuilder();
+	
+	public static ActionAbstrait<?> getInstance(XmlUnmarshaller<?> u) {	
+		return new ActionXmlEnum<Enum>(Enum.class, u);
+	}
+	
+	@Override
+	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
+		return new ActionXmlEnum<U>(type, (XmlUnmarshaller<?>)unmarshaller);
+	}
 
 	@SuppressWarnings("unchecked")
-	public ActionXmlEnum(Class<T> type, String nom, XmlUnmarshaller<?> xmlUnmarshaller) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		super(type, nom, xmlUnmarshaller);
-		Method values = type.getDeclaredMethod("values");
-		T[] listeEnum = (T[]) values.invoke(null);
-		for(T objEnum : listeEnum){
-			dicoStringEnumToObjEnum.put(objEnum.toString(), objEnum);
+	private ActionXmlEnum(Class<T> type, XmlUnmarshaller<?> xmlUnmarshaller) {
+		super(type, xmlUnmarshaller);
+		Method values;
+		try {
+			values = type.getDeclaredMethod("values");
+			T[] listeEnum = (T[]) values.invoke(null);
+			for(T objEnum : listeEnum){
+				dicoStringEnumToObjEnum.put(objEnum.toString(), objEnum);
+			}
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -30,7 +53,12 @@ public class ActionXmlEnum<T extends Enum> extends ActionXml<T>  {
 		sb.append(donnees);
 	}
 	
-	@Override protected <U> void construitObjet(Unmarshaller<U> um) throws InstantiationException, IllegalAccessException {
+	@Override protected void construitObjet(){
 		obj = dicoStringEnumToObjEnum.get(sb.toString());
+	}
+
+	@Override
+	protected <W> void integreObjet(String nomAttribut, W objet) {
+		//rien a faire
 	}
 }

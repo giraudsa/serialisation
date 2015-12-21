@@ -1,42 +1,36 @@
 package giraudsa.marshall.serialisation.binary.actions;
 
 import giraudsa.marshall.annotations.TypeRelation;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
 import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Stack;
 
 @SuppressWarnings("rawtypes")
-public class ActionBinaryDictionaryType<T extends Map> extends ActionBinary<T> {
+public class ActionBinaryDictionaryType extends ActionBinary<Map> {
 
-	public ActionBinaryDictionaryType(Class<? super T> type, BinaryMarshaller b) {
-		super(type, b);
+	public ActionBinaryDictionaryType(BinaryMarshaller b) {
+		super(b);
 	}
 
 	@Override
-	protected void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
-		boolean isDejaVu = writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
-		try {
-			if(!isDejaVu){
-					writeInt(((Map) objetASerialiser).size());
-				for (Object entry : ((Map)objetASerialiser).entrySet()) {
-					Object key = ((Entry)entry).getKey();
-					Object value = ((Entry)entry).getValue();
-					traiteObject(key, typeRelation, true);
-					traiteObject(value, typeRelation, true);
-				}
-			}else if(!isCompleteMarshalling && typeRelation == TypeRelation.COMPOSITION){//deja vu, donc on passe ici qd la relation est de type COMPOSITION
-				for(Object entry : ((Map)objetASerialiser).entrySet()){
-					traiteObject(((Entry)entry).getKey(), typeRelation, true);
-					traiteObject(((Entry)entry).getValue(), typeRelation, true);
-				}
+	protected void ecritValeur(Map map, TypeRelation typeRelation) throws IOException {
+		Stack<Comportement> tmp = new Stack<>();
+		if(!isDejaTotalementSerialise(map)){
+			setDejaTotalementSerialise(map);
+			writeInt(map.size());
+			for (Object entry : map.entrySet()) {
+				tmp.push(new ComportementMarshallValue(((Entry)entry).getKey(), typeRelation, false));
+				tmp.push(new ComportementMarshallValue(((Entry)entry).getValue(), typeRelation, false));
 			}
-		} catch (IOException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | NotImplementedSerializeException e) {
-			e.printStackTrace();
+		}else if(!isCompleteMarshalling() && typeRelation == TypeRelation.COMPOSITION){//deja vu, donc on passe ici qd la relation est de type COMPOSITION
+			for(Object entry : map.entrySet()){
+				tmp.push(new ComportementMarshallValue(((Entry)entry).getKey(), typeRelation, false));
+				tmp.push(new ComportementMarshallValue(((Entry)entry).getValue(), typeRelation, false));
+			}
 		}
 	}
 }

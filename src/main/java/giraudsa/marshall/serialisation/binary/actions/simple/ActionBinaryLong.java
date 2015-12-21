@@ -7,18 +7,13 @@ import java.io.IOException;
 
 public class ActionBinaryLong  extends ActionBinarySimple<Long>{
 
-	public ActionBinaryLong(Class<? super Long> type, BinaryMarshaller b) {
-		super(type, b);
+	public ActionBinaryLong(BinaryMarshaller b) {
+		super(b);
 	}
 	
 	@Override
-	public void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
-		writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
-		try {
-			writeLong((long)objetASerialiser);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	public void ecritValeur(Long objetASerialiser, TypeRelation typeRelation) throws IOException {
+		writeLong(objetASerialiser);
 	}
 
 }

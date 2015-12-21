@@ -3,7 +3,6 @@ package giraudsa.marshall.serialisation.binary;
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
-import giraudsa.marshall.serialisation.binary.ActionBinary.Comportement;
 import giraudsa.marshall.serialisation.binary.actions.ActionBinaryCollectionType;
 import giraudsa.marshall.serialisation.binary.actions.ActionBinaryDate;
 import giraudsa.marshall.serialisation.binary.actions.ActionBinaryDictionaryType;
@@ -29,23 +28,16 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
-import java.util.zip.DeflaterOutputStream;
-
 import utils.Constants;
 
 public class BinaryMarshaller extends Marshaller{
-	boolean isCompleteSerialisation;
 	private DataOutputStream output;
-	@SuppressWarnings("rawtypes")
-	Deque<Comportement> aFaire = new LinkedList<>();
 	
 	/////METHODES STATICS PUBLICS
 	public static <U> void toBinary(U obj, OutputStream  output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException  {
@@ -65,45 +57,44 @@ public class BinaryMarshaller extends Marshaller{
 	}
 	
 	private BinaryMarshaller(DataOutputStream  output, boolean isCompleteSerialisation) throws IOException {
+		super(isCompleteSerialisation);
 		this.output = output;
-		this.isCompleteSerialisation = isCompleteSerialisation ;
 		output.writeBoolean(isCompleteSerialisation);
-		//Sans referencement
-		dicoTypeToAction.put(void.class, new ActionBinaryVoid(Boolean.class, this));
-		dicoTypeToAction.put(Boolean.class, new ActionBinaryBoolean(Boolean.class, this));
-		dicoTypeToAction.put(Integer.class, new ActionBinaryInteger(Integer.class, this));
-		dicoTypeToAction.put(Byte.class, new ActionBinaryByte(Byte.class, this));
-		dicoTypeToAction.put(Float.class, new ActionBinaryFloat(Float.class, this));
-		dicoTypeToAction.put(Double.class, new ActionBinaryDouble(Double.class, this));
-		dicoTypeToAction.put(Long.class, new ActionBinaryLong(Long.class, this));
-		dicoTypeToAction.put(Short.class, new ActionBinaryShort(Short.class, this));
-		dicoTypeToAction.put(Character.class, new ActionBinaryChar(Character.class, this));
-		//Avec referencement
-		dicoTypeToAction.put(UUID.class, new ActionBinaryUUID(UUID.class, this));
-		dicoTypeToAction.put(String.class, new ActionBinaryString(String.class, this));
-		dicoTypeToAction.put(Date.class, new ActionBinaryDate<>(Date.class, this));
-		dicoTypeToAction.put(Enum.class, new ActionBinaryEnum<>(Enum.class, this));
-		dicoTypeToAction.put(Collection.class, new ActionBinaryCollectionType<>(Collection.class, this));
-		dicoTypeToAction.put(Map.class, new ActionBinaryDictionaryType<>(Map.class, this));
-		dicoTypeToAction.put(Object.class, new ActionBinaryObject<>(Object.class, this));
+	}
+	
+	@Override protected void initialiseDico() {
+		dicoTypeToAction.put(void.class, new ActionBinaryVoid(this));
+		dicoTypeToAction.put(Boolean.class, new ActionBinaryBoolean(this));
+		dicoTypeToAction.put(Integer.class, new ActionBinaryInteger(this));
+		dicoTypeToAction.put(Byte.class, new ActionBinaryByte(this));
+		dicoTypeToAction.put(Float.class, new ActionBinaryFloat(this));
+		dicoTypeToAction.put(Double.class, new ActionBinaryDouble(this));
+		dicoTypeToAction.put(Long.class, new ActionBinaryLong(this));
+		dicoTypeToAction.put(Short.class, new ActionBinaryShort(this));
+		dicoTypeToAction.put(Character.class, new ActionBinaryChar(this));
+		dicoTypeToAction.put(UUID.class, new ActionBinaryUUID(this));
+		dicoTypeToAction.put(String.class, new ActionBinaryString(this));
+		dicoTypeToAction.put(Date.class, new ActionBinaryDate(this));
+		dicoTypeToAction.put(Enum.class, new ActionBinaryEnum(this));
+		dicoTypeToAction.put(Collection.class, new ActionBinaryCollectionType(this));
+		dicoTypeToAction.put(Map.class, new ActionBinaryDictionaryType(this));
+		dicoTypeToAction.put(Object.class, new ActionBinaryObject(this));
 	}
 	
 
 
 	/////METHODES 
 	private <T> void marshall(T obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
-		long debut = System.nanoTime();
-		marshallSpecialise(obj, TypeRelation.COMPOSITION, true);
+		marshallSpecialise(obj, TypeRelation.COMPOSITION, null, false);
 		while(!aFaire.isEmpty()){
-			aFaire.pop().evalue();
+			DeserialisePile();
 		}
-		long fin = System.nanoTime();
-		System.out.println("temps de sérialisation = " + + (fin - debut)/1e9 + "secondes" );
 	}
-	
-	byte[] calculHeader(Object o, TypeRelation relation, boolean laRelationAuraitPuEtreMoinsSpecifique, byte debutHeader, boolean estDejaVu) throws IOException{
+
+	byte[] calculHeader(Object o, TypeRelation relation, byte debutHeader, boolean estDejaVu) throws IOException{
 		Class<?> typeObj = o.getClass();
-		boolean isTypeAutre = debutHeader == Constants.Type.AUTRE;
+		boolean isTypeAutre = debutHeader == Constants.Type.AUTRE || debutHeader== Constants.Type.DEVINABLE;
+		boolean typeDevinable = debutHeader== Constants.Type.DEVINABLE;
 		int smallId = _getSmallIdAndStockObj(o);
 		byte typeOfSmallId = getTypeOfSmallId(smallId);
 		debutHeader |= typeOfSmallId;
@@ -140,7 +131,7 @@ public class BinaryMarshaller extends Marshaller{
 			}
 			if(isTypeAutre){
 			///////write type if necessary
-				if(!estDejaVu && laRelationAuraitPuEtreMoinsSpecifique){
+				if(!estDejaVu && !typeDevinable){
 					switch (typeOfSmallIdTypeObj) {
 					case Constants.Type.CODAGE_BYTE:
 						dataOut.writeByte((byte)smallIdTypeObj);
@@ -162,9 +153,9 @@ public class BinaryMarshaller extends Marshaller{
 		}
 	}
 
-	protected <T> void marshallSpecialise(T obj, TypeRelation relation, boolean laRelationAuraitPuEtreMoinsSpecifique) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException{
+	protected <T> void marshallSpecialise(T obj, TypeRelation relation, String nom, boolean typeDevinable) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException{
 		ActionBinary<?> action = (ActionBinary<?>) getAction(obj);
-		action.serialise(obj, relation, laRelationAuraitPuEtreMoinsSpecifique);
+		action.marshall(obj, relation, typeDevinable);
 	}
 
 	private byte getTypeOfSmallId(int smallId) {

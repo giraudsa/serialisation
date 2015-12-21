@@ -9,17 +9,14 @@ import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
 
 public class ActionBinaryUUID extends ActionBinary<UUID> {
 
-	public ActionBinaryUUID(Class<? super UUID> type, BinaryMarshaller b) {
-		super(type, b);
+	public ActionBinaryUUID(BinaryMarshaller b) {
+		super(b);
 	}
 	@Override
-	protected void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
-		boolean isDejaVu = writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
-		try {
-			if(!isDejaVu)
-				writeUTF(objetASerialiser.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
+	protected void ecritValeur(UUID id, TypeRelation typeRelation) throws IOException {
+		if(!isDejaTotalementSerialise(id)){
+			setDejaTotalementSerialise(id);
+			writeUTF(id.toString());
 		}
 	}
 

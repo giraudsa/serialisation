@@ -7,28 +7,24 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
 
 public abstract class ActionBinary<T> extends ActionAbstrait<T>{
+	protected TypeRelation relation;
+	protected int smallId;
 	
-	protected boolean deserialisationComplete;
+	protected boolean isDeserialisationComplete(){
+		return getBinaryUnmarshaller().isDeserialisationComplete();
+	}
 
-	public ActionBinary(Class<? extends T> type, Unmarshaller<?> unmarshaller){
+	protected ActionBinary(Class<T> type, BinaryUnmarshaller<?> unmarshaller){
 		super(type, unmarshaller);
-		deserialisationComplete = getBinaryUnmarshaller().isDeserialisationComplete();
 	}
 	
 	
 	protected BinaryUnmarshaller<?> getBinaryUnmarshaller() {
 		return (BinaryUnmarshaller<?>)unmarshaller;
 	}
-	
-	
-	@SuppressWarnings("unchecked")
-	T unmarshall(Class<?> typeADeserialiser, TypeRelation typeRelation, int smallId) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException{
-		return readObject((Class<? extends T>) typeADeserialiser, typeRelation, smallId);
-	}
-	
-	protected abstract T readObject(Class<? extends T> typeADeserialiser, TypeRelation typeRelation, int smallId) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException;
 	
 	protected boolean readBoolean() throws IOException {
 		return getBinaryUnmarshaller().readBoolean();
@@ -58,40 +54,50 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 		return getBinaryUnmarshaller().readUTF();
 	}
 
-	protected Object litObject(TypeRelation relation, Class<?> typeProbable) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException{
-		return getBinaryUnmarshaller().litObject(readByte(), relation, typeProbable);
+	protected void litObject(TypeRelation relation, Class<?> typeProbable) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException{
+		getBinaryUnmarshaller().litObject(readByte(), relation, typeProbable);
 	}
 	
-	protected boolean isDejaVu(int smallId) {
+	protected boolean isDejaVu() {
 		return getBinaryUnmarshaller().isDejaVu(smallId);
 	}
 	
-	protected Object getObjet(int smallId) {
+	protected Object getObjetDejaVu() {
 		return getBinaryUnmarshaller().getObject(smallId);
 	}
 
-	protected void stockeObjetId(int smallId, Object objetADeserialiser) {
-		getBinaryUnmarshaller().stockObjectSmallId(smallId, objetADeserialiser);
-	}
-
-
-	protected void pushComportement(Object objetADeserialiser, TypeRelation typeRelation) {
-		getBinaryUnmarshaller().pushComportement(new Comportement(objetADeserialiser, typeRelation));
+	protected void stockeObjetId() {
+		getBinaryUnmarshaller().stockObjectSmallId(smallId, obj);
 	}
 	
-
-	public void traiteChampsRestant(Object objetADserialiser, TypeRelation typeRelation) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException {}
-	
-	class Comportement{
-		private Object objetADserialiser;
-		private TypeRelation typeRelation;
-		Comportement(Object objetADserialiser, TypeRelation typeRelation) {
-			super();
-			this.objetADserialiser = objetADserialiser;
-			this.typeRelation = typeRelation;
-		}
-		void finiDeserialisation() throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException{
-			traiteChampsRestant(objetADserialiser, typeRelation);
-		}
+	protected void exporteObject() throws IllegalArgumentException, IllegalAccessException{
+		getBinaryUnmarshaller().integreObject(obj);
 	}
+
+	void set(TypeRelation relation, int smallId) throws IOException, InstantiationException, IllegalAccessException {
+		this.relation = relation;
+		this.smallId = smallId;
+		initialise();
+	}
+
+	protected abstract void initialise() throws IOException, InstantiationException, IllegalAccessException;
+
+	public abstract void integreObject(Object obj) throws IllegalArgumentException, IllegalAccessException;
+
+	public abstract void deserialisePariellement() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException;
+	
+	protected boolean isDejaTotalementDeSerialise() {
+		return getBinaryUnmarshaller().isDejaTotalementDeSerialise(obj);
+	}
+	protected void setDejaTotalementDeSerialise() {
+		getBinaryUnmarshaller().setDejaTotalementDeSerialise(obj);
+	}
+	
+	//methode inutiles en binary
+	@Override
+	protected void rempliData(String donnees){}
+	@Override
+	protected void construitObjet(){}
+	@Override
+	protected <W> void integreObjet(String nomAttribut, W objet) {}
 }

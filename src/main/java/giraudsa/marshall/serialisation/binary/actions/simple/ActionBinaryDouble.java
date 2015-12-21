@@ -7,17 +7,12 @@ import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
 
 public class ActionBinaryDouble  extends ActionBinarySimple<Double> {
 
-	public ActionBinaryDouble(Class<? super Double> type, BinaryMarshaller b) {
-		super(type, b);
+	public ActionBinaryDouble(BinaryMarshaller b) {
+		super(b);
 	}
 
 	@Override
-	public void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
-		writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
-		try {
-			writeDouble((double)objetASerialiser);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	public void ecritValeur(Double objetASerialiser, TypeRelation typeRelation) throws IOException {
+		writeDouble(objetASerialiser);
 	}
 }

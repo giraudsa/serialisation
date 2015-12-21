@@ -1,27 +1,33 @@
 package giraudsa.marshall.deserialisation.binary.actions.simple;
 
-import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
-import giraudsa.marshall.deserialisation.binary.ActionBinary;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
-
+import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
-public class ActionBinaryString extends ActionBinary<String> {
+public class ActionBinaryString extends ActionBinarySimple<String> {
 
-	public ActionBinaryString(Class<? extends String> type, Unmarshaller<?> unmarshaller) {
+	public static ActionAbstrait<String> getInstance(BinaryUnmarshaller<?> bu){
+		return new ActionBinaryString(String.class, bu);
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public <U extends String> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
+		return (ActionAbstrait<U>) new ActionBinaryString(String.class, (BinaryUnmarshaller<?>) unmarshaller);
+	}
+	
+	private ActionBinaryString(Class<String> type, BinaryUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);
 	}
 
 	@Override
-	protected String readObject(Class<? extends String> typeADeserialiser, TypeRelation typeRelation, int smallId) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException {
-		boolean isDejaVu = isDejaVu(smallId);
-		if(isDejaVu) return (String) getObjet(smallId);
-		String s = readUTF();
-		stockeObjetId(smallId, s);
-		return s;
+	protected void initialise() throws IOException{
+		boolean isDejaVu = isDejaVu();
+		if(isDejaVu) obj = getObjetDejaVu();
+		else{
+			obj = readUTF();
+			stockeObjetId();
+		}
 	}
-
 }

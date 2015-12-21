@@ -1,12 +1,14 @@
 package giraudsa.marshall.deserialisation.binary;
 
 import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryCollection;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryDictionary;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryEnum;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryObject;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryBoolean;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryByte;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryChar;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryDate;
@@ -26,12 +28,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Deque;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 import java.util.UUID;
-import java.util.zip.InflaterInputStream;
-
 import org.xml.sax.SAXException;
 
 import utils.Constants;
@@ -56,8 +58,8 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	private int sizeDicoObject = 16;
 	private int sizeDicoClazz = 16;
 	private Object[] dicoSmallIdToObject = new Object[sizeDicoObject];
+	@SuppressWarnings("rawtypes")
 	private Class[] dicoSmallIdToClazz = new Class[sizeDicoClazz];
-	private Deque<ActionBinary<?>.Comportement> resteADeserialiser = new LinkedList<>();
 	boolean deserialisationComplete;
 	
 
@@ -83,6 +85,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	private void grossiDicoClazzSiNeccessaire(int smallId) {
 		if(smallId < sizeDicoClazz) return;
 		sizeDicoClazz = sizeDicoClazz * 2;
+		@SuppressWarnings("rawtypes")
 		Class[] tmp = new Class[sizeDicoClazz];
 		for(int i = 0 ; i < dicoSmallIdToClazz.length ; i++){
 			tmp[i] = dicoSmallIdToClazz[i];
@@ -90,12 +93,10 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		dicoSmallIdToClazz = tmp;
 	}
 	
-	public void pushComportement(ActionBinary<?>.Comportement comportement) {
-		resteADeserialiser.push(comportement);
-	}
-	
 	private Class<?> getTypeToUnmarshall(byte header, int smallId, Class<?> typeCandidat) throws ClassNotFoundException, IOException {
 		if(TypeExtension.isSimple(typeCandidat)) return typeCandidat;
+		boolean typeDevinable = Constants.Type.isTypeDevinable(header);
+		if (typeDevinable) return typeCandidat;
 		return isDejaVu(smallId) ? getObject(smallId).getClass() : readType(header, typeCandidat);
 	}
 	
@@ -136,31 +137,27 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	
 	@SuppressWarnings("unchecked")
 	private T parse() throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException {
-		long debut = System.nanoTime();
-		T ret = (T) litObject(readByte(), TypeRelation.COMPOSITION, Object.class);
-		while(!resteADeserialiser.isEmpty()){
-			resteADeserialiser.pop().finiDeserialisation();
+		litObject(readByte(), TypeRelation.COMPOSITION, Object.class);
+		while(!pileAction.isEmpty()){
+			((ActionBinary<?>)getActionEnCours()).deserialisePariellement();
 		}
-		long fin = System.nanoTime();
-		System.out.println("temps de désérialisation = " + (fin - debut)/1e9 + " secondes" );
-		return ret;
+		return obj;
 	}
 	
-	Object litObject(byte header, TypeRelation relation, Class<?> typeProbable) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException {
-		if(header == Constants.IS_NULL) return null;
-		if(header == Constants.BOOL_VALUE.TRUE) return true;
-		if(header == Constants.BOOL_VALUE.FALSE) return false;
+	void litObject(byte header, TypeRelation relation, Class<?> typeProbable) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException {
+		Class<?> typeCandidat = null;
 		
-		Class<?> typeCandidat = Constants.Type.getSimpleType(header, typeProbable);
-		///bool
-		if(typeCandidat == Boolean.class){
-			System.out.println("problème dans le header");
-			return false;
-		}
+		if(header == Constants.IS_NULL) typeCandidat = Void.class;
+		if(header == Constants.BOOL_VALUE.TRUE || header == Constants.BOOL_VALUE.FALSE) typeCandidat = Boolean.class;
 		
+		if(typeCandidat == null) typeCandidat = Constants.Type.getSimpleType(header, typeProbable);
+	
 		int smallId = getSmallId(header, typeCandidat);
 		Class<?> typeADeserialiser = getTypeToUnmarshall(header, smallId, typeCandidat);
-		return ((ActionBinary<?>)getAction(typeADeserialiser)).unmarshall(typeADeserialiser, relation, smallId);
+		ActionAbstrait<?> action = getAction(typeADeserialiser);
+		if(typeADeserialiser == Boolean.class) ((ActionBinaryBoolean)action).setBool(header);
+		((ActionBinary<?>)action).set(relation, smallId);
+		pileAction.push(action);
 	}
 
 	
@@ -191,20 +188,21 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 
 	private void initialiseActions() throws IOException {
 		deserialisationComplete = readBoolean();
-		actions.put(Byte.class, new ActionBinaryByte(Byte.class, this));
-		actions.put(Short.class, new ActionBinaryShort(Short.class, this));
-		actions.put(Integer.class, new ActionBinaryInteger(Integer.class, this));
-		actions.put(Long.class, new ActionBinaryLong(Long.class, this));
-		actions.put(Float.class, new ActionBinaryFloat(Float.class, this));
-		actions.put(Double.class, new ActionBinaryDouble(Double.class, this));
-		actions.put(String.class, new ActionBinaryString(String.class, this));
-		actions.put(Date.class, new ActionBinaryDate(Date.class, this));
-		actions.put(UUID.class, new ActionBinaryUUID(UUID.class, this));
-		actions.put(Character.class, new ActionBinaryChar(Character.class, this));
-		actions.put(Constants.collectionType, new ActionBinaryCollection(Collection.class, this));
-		actions.put(Constants.dictionaryType, new ActionBinaryDictionary(Map.class, this));
-		actions.put(Constants.objectType, new ActionBinaryObject(Object.class, this));
-		actions.put(Constants.enumType, new ActionBinaryEnum(Enum.class, this));
+		actions.put(Byte.class, ActionBinaryBoolean.getInstance(this));
+		actions.put(Byte.class, ActionBinaryByte.getInstance(this));
+		actions.put(Short.class, ActionBinaryShort.getInstance(this));
+		actions.put(Integer.class, ActionBinaryInteger.getInstance(this));
+		actions.put(Long.class, ActionBinaryLong.getInstance(this));
+		actions.put(Float.class, ActionBinaryFloat.getInstance(this));
+		actions.put(Double.class, ActionBinaryDouble.getInstance(this));
+		actions.put(String.class, ActionBinaryString.getInstance(this));
+		actions.put(Date.class, ActionBinaryDate.getInstance(this));
+		actions.put(UUID.class, ActionBinaryUUID.getInstance(this));
+		actions.put(Character.class, ActionBinaryChar.getInstance(this));
+		actions.put(Constants.collectionType, ActionBinaryCollection.getInstance(this));
+		actions.put(Constants.dictionaryType, ActionBinaryDictionary.getInstance(this));
+		actions.put(Constants.objectType, ActionBinaryObject.getInstance(this));
+		actions.put(Constants.enumType, ActionBinaryEnum.getInstance(this));
 	}
 	
 	boolean readBoolean() throws IOException {
@@ -233,6 +231,24 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 	String readUTF() throws IOException {
 		return input.readUTF();
+	}
+
+	@SuppressWarnings("unchecked")
+	public void integreObject(Object obj) throws IllegalArgumentException, IllegalAccessException {
+		pileAction.pop();
+		ActionBinary<?> action = (ActionBinary<?>)getActionEnCours();
+		if(action == null) this.obj = (T) obj;
+		else action.integreObject(obj);
+	}
+	
+	private Set<Object> isDejaTotalementDeSerialise = new HashSet<>();
+
+	boolean isDejaTotalementDeSerialise(Object o) {
+		return isDejaTotalementDeSerialise.contains(o);
+	}
+
+	void setDejaTotalementDeSerialise(Object o) {
+		isDejaTotalementDeSerialise.add(o);
 	}
 
 }

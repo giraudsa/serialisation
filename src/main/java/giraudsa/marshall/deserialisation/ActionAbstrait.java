@@ -9,30 +9,30 @@ import java.text.ParseException;
 
 public abstract class ActionAbstrait<T> {
 	
-	protected Class<? extends T> type;
-	protected T obj;
-	protected String nom;
+	protected Class<T> type;
+	protected Object obj;
 	protected Unmarshaller<?> unmarshaller;
 	protected TypeRelation relation;
-	protected boolean leTypeEstEvident;
+	protected boolean typeDevinable;
 	
-	public ActionAbstrait(Class<? extends T> type, String nom, Unmarshaller<?> b){
-		this.type = type;
-		this.nom = nom;
-		this.unmarshaller = b;
-	}
-	public ActionAbstrait(Class<? extends T> type, TypeRelation relation, Unmarshaller<?> b) throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
-		this.type = type;
+	
+	
+	void setRelation (TypeRelation relation){
 		this.relation = relation;
-		this.unmarshaller = b;
-		construitObjet();
-	}
-	public ActionAbstrait(Class<? extends T> type, Unmarshaller<?> un){
-		this.type = type;
-		this.unmarshaller = un;
 	}
 	
-	protected void construitObjet() throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {}
+	void  setTypeDevinable(boolean typeDevinable){
+		this.typeDevinable = typeDevinable;
+	}
+	
+	public abstract <U extends T>  ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller);
+	
+	protected ActionAbstrait(Class<T> type, Unmarshaller<?> unmarshaller){
+		this.type = type;
+		this.unmarshaller = unmarshaller;
+	}
+	
+	protected abstract void construitObjet() throws InstantiationException, IllegalAccessException;
 	
 	
 	protected <W> W getObject(String id, Class<W> type, boolean isFakeId) throws InstantiationException, IllegalAccessException{
@@ -41,17 +41,13 @@ public abstract class ActionAbstrait<T> {
 	
 
 	
-	protected String getNom() {
-		return nom;
-	}
 	
-	protected T getObjet(){
+	
+	protected Object getObjetDejaVu(){
 		return obj;
 	}
+		
+	protected abstract <W> void integreObjet(String nomAttribut, W objet);
+	protected abstract void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException;
 
-	
-	protected <W> void integreObjet(String nomAttribut, W objet){}
-	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException{}
-	protected <U> void construitObjet(Unmarshaller<U> unmarshaller) throws InstantiationException, IllegalAccessException{}
-	
 }

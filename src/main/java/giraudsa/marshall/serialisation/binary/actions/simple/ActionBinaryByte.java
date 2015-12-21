@@ -8,17 +8,12 @@ import java.io.IOException;
 public class ActionBinaryByte extends ActionBinarySimple<Byte> {
 
 	
-	public ActionBinaryByte(Class<? super Byte> type, BinaryMarshaller b) {
-		super(type, b);
+	public ActionBinaryByte(BinaryMarshaller b) {
+		super(b);
 	}
 	
 	@Override
-	public void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific){
-		writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
-		try {
-			writeByte((byte)objetASerialiser);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	public void ecritValeur(Byte objetASerialiser, TypeRelation typeRelation) throws IOException{
+		writeByte(objetASerialiser);
 	}
 }

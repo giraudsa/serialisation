@@ -4,14 +4,31 @@ import java.text.DateFormat;
 
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 
-public class ActionText<T> extends ActionAbstrait<T> {
+public abstract class ActionText<T> extends ActionAbstrait<T> {
+	
+	protected String nom;
+	
+	void setNom(String nom){
+		this.nom = nom;
+	}
+	String getNom() {
+		return nom;
+	}
 	
 	protected DateFormat getDateFormat(){
 		return ((TextUnmarshaller<?>)unmarshaller).df;
 	}
 
-	public ActionText(Class<T> type, String nom, TextUnmarshaller<?> textUnmarshaller) {
-		super(type, nom, textUnmarshaller);
+	protected ActionText(Class<T> type, TextUnmarshaller<?> unmarshaller) {
+		super(type, unmarshaller);
+	}
+	
+
+	Class<?> getType(String nomAttribut) {
+		return getTypeAttribute(nomAttribut);
+	}
+	protected Class<?> getTypeAttribute(String nomAttribut) {
+		return null;
 	}
 
 }

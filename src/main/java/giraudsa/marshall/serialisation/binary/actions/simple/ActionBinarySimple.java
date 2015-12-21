@@ -1,18 +1,20 @@
 package giraudsa.marshall.serialisation.binary.actions.simple;
 
+import java.io.IOException;
+
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
 import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
 
 public class ActionBinarySimple<T> extends ActionBinary<T> {
 
-	public ActionBinarySimple(Class<? super T> type, BinaryMarshaller b) {
-		super(type, b);
+	public ActionBinarySimple(BinaryMarshaller b) {
+		super(b);
 	}
 	
 	@Override
-	protected byte[] calculHeaders(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific, boolean isDejaVu) {
-		return headerConstant;
+	protected byte[] calculHeaders(T objetASerialiser, TypeRelation typeRelation, boolean typeDevinable, boolean isDejaVu) {
+		return getHeaderConstant(getType(objetASerialiser), typeDevinable);
 	}
 	
 	@Override
@@ -21,8 +23,7 @@ public class ActionBinarySimple<T> extends ActionBinary<T> {
 	}
 
 	@Override
-	public void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
-		boolean isDejaVu = writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
+	public void ecritValeur(T objetASerialiser, TypeRelation typeRelation) throws IOException {
 	}
 
 }

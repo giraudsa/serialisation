@@ -1,11 +1,11 @@
 package giraudsa.marshall.serialisation.text.xml;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.text.TextMarshaller;
 import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlCollectionType;
 import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlDate;
 import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlDictionaryType;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlObject;
 import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlSimpleComportement;
 import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlVoid;
 
@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
-import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -26,7 +25,7 @@ import utils.Constants;
 public class XmlMarshaller extends TextMarshaller {
 	/////METHODES STATICS PUBLICS
 	public static <U> void toXml(U obj, Writer output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException  {
-		XmlMarshaller v = new XmlMarshaller(output, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"));
+		XmlMarshaller v = new XmlMarshaller(output, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"), false);
 		v.marshall(obj);
 	}
 	public static <U> String ToXml(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
@@ -36,7 +35,7 @@ public class XmlMarshaller extends TextMarshaller {
 		}
 	}
 	public static <U> void toXml(U obj, Writer output, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException  {
-		XmlMarshaller v = new XmlMarshaller(output, df);
+		XmlMarshaller v = new XmlMarshaller(output, df, false);
 		v.marshall(obj);
 	}
 	public static <U> String ToXml(U obj, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
@@ -45,9 +44,9 @@ public class XmlMarshaller extends TextMarshaller {
 			return sw.toString();
 		}
 	}	
-	public static <U> void toCompleteXml(U obj, StringWriter output) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
-		XmlMarshaller v = new XmlMarshaller(output, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"));
-		v.marshallAll(obj);
+	public static <U> void toCompleteXml(U obj, Writer output) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
+		XmlMarshaller v = new XmlMarshaller(output, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"), true);
+		v.marshall(obj);
 	}
 	public static <U> String toCompleteXml(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException{
 		try(StringWriter sw = new StringWriter()){
@@ -57,8 +56,8 @@ public class XmlMarshaller extends TextMarshaller {
 	}
 
 	public static <U> void toCompleteXml(U obj, StringWriter output, DateFormat df) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
-		XmlMarshaller v = new XmlMarshaller(output, df);
-		v.marshallAll(obj);
+		XmlMarshaller v = new XmlMarshaller(output, df, true);
+		v.marshall(obj);
 	}
 	public static <U> String toCompleteXml(U obj, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException{
 		try(StringWriter sw = new StringWriter()){
@@ -68,52 +67,30 @@ public class XmlMarshaller extends TextMarshaller {
 	}
 	
 	//////CONSTRUCTEUR
-	private XmlMarshaller(Writer output, DateFormat df) throws IOException {
-		super(output, df);
+	private XmlMarshaller(Writer output, DateFormat df, boolean isCompleteSerialisation) throws IOException {
+		super(output, df, isCompleteSerialisation);
 		writeHeader();
-		dicoTypeToTypeAction.put(Date.class, ActionXmlDate.class);
-		dicoTypeToTypeAction.put(Timestamp.class, ActionXmlDate.class);
-		dicoTypeToTypeAction.put(Boolean.class, ActionXmlSimpleComportement.class);
-		dicoTypeToTypeAction.put(Collection.class, ActionXmlCollectionType.class);
-		dicoTypeToTypeAction.put(Map.class, ActionXmlDictionaryType.class);
-		dicoTypeToTypeAction.put(Object.class, ActionXml.class);
-		dicoTypeToTypeAction.put(void.class, ActionXmlVoid.class);
-		dicoTypeToTypeAction.put(Integer.class, ActionXmlSimpleComportement.class);
-		dicoTypeToTypeAction.put(Enum.class, ActionXmlSimpleComportement.class);
-		dicoTypeToTypeAction.put(UUID.class, ActionXmlSimpleComportement.class);
-		dicoTypeToTypeAction.put(String.class, ActionXmlSimpleComportement.class);
-		dicoTypeToTypeAction.put(Byte.class, ActionXmlSimpleComportement.class);
-		dicoTypeToTypeAction.put(Float.class, ActionXmlSimpleComportement.class);
-		dicoTypeToTypeAction.put(Double.class, ActionXmlSimpleComportement.class);
-		dicoTypeToTypeAction.put(Long.class, ActionXmlSimpleComportement.class);
-		dicoTypeToTypeAction.put(Short.class, ActionXmlSimpleComportement.class);
 	}
+	
+	@SuppressWarnings("rawtypes")
+	@Override protected void initialiseDico() {
+		dicoTypeToAction.put(Date.class, new ActionXmlDate(this));
+		dicoTypeToAction.put(Boolean.class, new ActionXmlSimpleComportement<Boolean>(this));
+		dicoTypeToAction.put(Collection.class, new ActionXmlCollectionType(this));
+		dicoTypeToAction.put(Map.class, new ActionXmlDictionaryType(this));
+		dicoTypeToAction.put(Object.class, new ActionXmlObject(this));
+		dicoTypeToAction.put(void.class, new ActionXmlVoid(this));
+		dicoTypeToAction.put(Integer.class, new ActionXmlSimpleComportement<Integer>(this));
+		dicoTypeToAction.put(Enum.class, new ActionXmlSimpleComportement<Enum>(this));
+		dicoTypeToAction.put(UUID.class, new ActionXmlSimpleComportement<UUID>(this));
+		dicoTypeToAction.put(String.class, new ActionXmlSimpleComportement<String>(this));
+		dicoTypeToAction.put(Byte.class, new ActionXmlSimpleComportement<Byte>(this));
+		dicoTypeToAction.put(Float.class, new ActionXmlSimpleComportement<Float>(this));
+		dicoTypeToAction.put(Double.class, new ActionXmlSimpleComportement<Double>(this));
+		dicoTypeToAction.put(Long.class, new ActionXmlSimpleComportement<Long>(this));
+		dicoTypeToAction.put(Short.class, new ActionXmlSimpleComportement<Short>(this));
+	};
 
-	
-	/////METHODES 
-	private <T> void marshall(T obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
-		if (obj == null) return ;
-		marshallSpecialise(obj, TypeRelation.COMPOSITION, null);
-	}
-	
-	private <T> void marshallAll(T obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException{
-		if (obj == null) return ;
-		aSerialiser = new SetQueue<>();
-		marshallSpecialise(obj, TypeRelation.COMPOSITION, null);
-		while(!aSerialiser.isEmpty()){
-			marshallSpecialise(aSerialiser.poll(), TypeRelation.COMPOSITION, null);
-		}
-	}
-	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected <T> void marshallSpecialise(T obj, TypeRelation relation, String nom) throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, NoSuchMethodException, SecurityException, IOException {
-		Class<T> typeObj = (Class<T>) obj.getClass();
-		Class<? extends ActionXml> behaviorXml = (Class<? extends ActionXml>)getTypeAction(obj);
-		ActionXml<T> action =  (ActionXml<T>)behaviorXml.getConstructor(Class.class, XmlMarshaller.class, String.class).newInstance(typeObj, this, nom);
-		action.marshall(obj, relation);
-	}
-	
 	private void writeHeader() throws IOException {
 		writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 	}
@@ -121,9 +98,12 @@ public class XmlMarshaller extends TextMarshaller {
 	void openTag(String name, Class<?> type) throws IOException {
 		writer.write("<");
 		writer.write(name);
-		writer.write(" type=\"");
-		writer.write(Constants.getSmallNameType(type));
-		writer.write("\">");
+		if(type != null){
+			writer.write(" type=\"");
+			writer.write(Constants.getSmallNameType(type));
+			writer.write("\"");
+		}
+		writer.write(">");
 	}
 
 	void closeTag(String name) throws IOException {

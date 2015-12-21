@@ -9,30 +9,28 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Stack;
 
 @SuppressWarnings("rawtypes")
-public class ActionXmlCollectionType<T extends Collection> extends ActionXml<T> {
-
+public class ActionXmlCollectionType extends ActionXml<Collection> {
 	
-	private Class<?> _type = null;
 	@Override
-	protected Class<?> getType() {
-		if(_type != null) return _type;
-		if(type.getName().toLowerCase().indexOf("hibernate") != -1) _type = ArrayList.class;
-		else _type = type;
-		return _type;
+	protected Class<?> getType(Collection obj) {
+		return (obj.getClass().getName().toLowerCase().indexOf("hibernate") != -1) ? ArrayList.class : obj.getClass();
 	}
-	public ActionXmlCollectionType(Class<T> type, XmlMarshaller xmlM, String nomBalise) {
-		super(type, xmlM, nomBalise);
-		if(nomBalise == null) balise = "liste";
+
+	public ActionXmlCollectionType(XmlMarshaller xmlM) {
+		super(xmlM);
 	}
 
 	@Override
-	protected void ecritValeur(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+	protected void ecritValeur(Collection obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+		Stack<Comportement> tmp = new Stack<>();
 		Collection<?> collection = (Collection<?>) obj;
 		for (Object value : collection) {
-			marshallValue(value, "V", relation);
+			tmp.push(new ComportementMarshallValue(value, "V", relation, false));
 		}
+		pushComportements(tmp);
 	}
 
 }

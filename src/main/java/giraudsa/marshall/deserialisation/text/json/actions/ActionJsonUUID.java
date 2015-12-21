@@ -1,20 +1,32 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
-import giraudsa.marshall.deserialisation.text.json.ActionJson;
+import giraudsa.marshall.deserialisation.ActionAbstrait;
+import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
+import utils.Constants;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.UUID;
 
-public class ActionJsonUUID extends ActionJson<UUID> {
+public class ActionJsonUUID extends ActionJsonSimpleComportement<UUID> {
 
-	public ActionJsonUUID(Class<UUID> type, String nom, JsonUnmarshaller<?> jsonUnmarshaller) {
-		super(type, nom, jsonUnmarshaller);
+	public static ActionAbstrait<?> getInstance(JsonUnmarshaller<?> unmarshaller){
+		return new ActionJsonUUID(UUID.class, unmarshaller);
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public <U extends UUID> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
+		return (ActionAbstrait<U>) new ActionJsonUUID(UUID.class, (JsonUnmarshaller<?>)unmarshaller);
+	}
+	
+	private ActionJsonUUID(Class<UUID> type, JsonUnmarshaller<?> jsonUnmarshaller) {
+		super(type, jsonUnmarshaller);
 	}
 
-	@Override
-	protected Class<?> getType(String clefEnCours) {
-		return type;
+	@Override protected Class<?> getTypeAttribute(String nomAttribut) {
+		if(Constants.VALEUR.equals(nomAttribut)) return UUID.class;
+		return null;
 	}
 	
 	@Override

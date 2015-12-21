@@ -8,17 +8,14 @@ import java.io.IOException;
 
 public class ActionBinaryString extends ActionBinary<String> {
 
-	public ActionBinaryString(Class<? super String> type, BinaryMarshaller b) {
-		super(type, b);
+	public ActionBinaryString(BinaryMarshaller b) {
+		super(b);
 	}
 	@Override
-	protected void serialise(Object objetASerialiser, TypeRelation typeRelation, boolean couldBeLessSpecific) {
-		boolean isDejaVu = writeHeaders(objetASerialiser, typeRelation, couldBeLessSpecific);
-		try {
-			if(!isDejaVu)
-				writeUTF(objetASerialiser.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
+	protected void ecritValeur(String string, TypeRelation relation) throws IOException {
+		if(!isDejaTotalementSerialise(string)){
+			setDejaTotalementSerialise(string);
+			writeUTF(string.toString());
 		}
 	}
 }

@@ -1,23 +1,29 @@
 package giraudsa.marshall.deserialisation.binary.actions.simple;
 
-import giraudsa.marshall.annotations.TypeRelation;
-import giraudsa.marshall.deserialisation.Unmarshaller;
-import giraudsa.marshall.deserialisation.binary.ActionBinary;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
-
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
-public class ActionBinaryFloat extends ActionBinary<Float> {
+import giraudsa.marshall.deserialisation.ActionAbstrait;
+import giraudsa.marshall.deserialisation.Unmarshaller;
+import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 
-	public ActionBinaryFloat(Class<? extends Float> type, Unmarshaller<?> unmarshaller) {
+public class ActionBinaryFloat extends ActionBinarySimple<Float> {
+
+	public static ActionAbstrait<Float> getInstance(BinaryUnmarshaller<?> bu){
+		return new ActionBinaryFloat(Float.class, bu);
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public <U extends Float> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
+		return (ActionAbstrait<U>) new ActionBinaryFloat(Float.class, (BinaryUnmarshaller<?>)unmarshaller);
+	}
+	
+	private ActionBinaryFloat(Class<Float> type, BinaryUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);
 	}
 
 	@Override
-	protected Float readObject(Class<? extends Float> typeADeserialiser, TypeRelation typeRelation, int smallId) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException {
-		return readFloat();
+	protected void initialise() throws IOException {
+		obj = readFloat();
 	}
-
 }
