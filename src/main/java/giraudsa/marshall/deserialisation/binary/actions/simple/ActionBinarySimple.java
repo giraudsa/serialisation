@@ -9,7 +9,7 @@ public abstract class ActionBinarySimple<T> extends ActionBinary<T>{
 		super(type, unmarshaller);
 	}
 	
-	public void deserialisePariellement() throws IllegalArgumentException, IllegalAccessException{
+	public void deserialisePariellement() throws IllegalArgumentException, IllegalAccessException, InstantiationException{
 		exporteObject();
 	}
 	

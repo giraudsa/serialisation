@@ -20,6 +20,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	private List<Champ> listeChamps = null;
 	private Iterator<Champ> iteratorChamp = null;
 	private Champ champEnAttente = null;
+	private Champ champId = null;
 		
 	public static ActionAbstrait<?> getInstance(BinaryUnmarshaller<?> binaryUnmarshaller) {
 		return new ActionBinaryObject<>(Object.class, binaryUnmarshaller);
@@ -38,13 +39,13 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 
 	@Override
 	protected void initialise() throws IOException, InstantiationException, IllegalAccessException {
+		champId = TypeExtension.getChampId(type);
 		boolean isDejaVu = isDejaVu();
 		if(isDejaVu) obj = getObjetDejaVu();
-		else{
+		else if(champId.isFakeId()){
 			obj = type.newInstance();
 			stockeObjetId();
 		}
-		Champ champId = TypeExtension.getChampId(type);		
 		boolean deserialiseToutSaufId = (isDeserialisationComplete() && ! isDejaTotalementDeSerialise()) ||
 				(!isDeserialisationComplete() && relation == TypeRelation.COMPOSITION && !isDejaTotalementDeSerialise());
 		boolean deserialiseId = !champId.isFakeId() &&
@@ -59,7 +60,6 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	private void initialiseListeChamps(boolean deserialiseToutSaufId, boolean deserialiseId) {
-		Champ champId = TypeExtension.getChampId(type);
 		if(deserialiseId && !deserialiseToutSaufId){
 			listeChamps = new ArrayList<>();
 			listeChamps.add(champId);
@@ -87,7 +87,12 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	@Override
-	public void integreObject(Object objet) throws IllegalArgumentException, IllegalAccessException {
+	public void integreObject(Object objet) throws IllegalArgumentException, IllegalAccessException, InstantiationException {
+		if(champEnAttente == champId){
+			String id = objet.toString();
+			obj = getObject(id, type, champId.isFakeId());
+			stockeObjetId();
+		}
 		if(champEnAttente.get(obj) != objet && !champEnAttente.isFakeId())
 			champEnAttente.set(obj, objet);
 		if (iteratorChamp.hasNext()) champEnAttente = iteratorChamp.next();

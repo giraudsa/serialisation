@@ -57,7 +57,7 @@ public class TypeExtension {
 		return null;
 	}
 	
-	public static  Champ getChamp(Object objetParent, Object objetEnfant){
+	public static Champ getChamp(Object objetParent, Object objetEnfant){
 		Class<?> typeObjetParent = objetParent.getClass();
 		List<Champ> champs = getSerializableFields(typeObjetParent);
 		for(Champ champ : champs){
@@ -94,7 +94,7 @@ public class TypeExtension {
 		return lRet;
 	}
 	
-	public static List<Champ> getSerializableFields(Class<?> typeObj) {
+	public synchronized static List<Champ> getSerializableFields(Class<?> typeObj) {
 		List<Champ> fields = serializablefieldsOfType.get(typeObj);
 		if (fields == null){
 			fields = new LinkedList<Champ>();
@@ -126,7 +126,7 @@ public class TypeExtension {
 		return fields;
 	}
 	
-	public static Champ getChampId(Class<?> typeObjetParent){
+	public synchronized static Champ getChampId(Class<?> typeObjetParent){
 		Champ champId = dicoTypeTochampId.get(typeObjetParent);
 		if(champId == null){
 			for (Champ champ : TypeExtension.getSerializableFields(typeObjetParent)){

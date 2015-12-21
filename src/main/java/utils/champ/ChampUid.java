@@ -22,7 +22,7 @@ public class ChampUid extends Champ {
 	}
 
 	@Override
-	public UUID get(Object obj) {
+	public synchronized UUID get(Object obj) {
 		if(!dicoObjToFakeId.containsKey(obj))
 			dicoObjToFakeId.put(obj, UUID.randomUUID());
 		return dicoObjToFakeId.get(obj);

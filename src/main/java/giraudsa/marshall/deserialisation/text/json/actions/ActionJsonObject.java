@@ -66,9 +66,6 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 
 	@Override
 	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		// TODO Auto-generated method stub
-		
-	}
+			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {}
 
 }

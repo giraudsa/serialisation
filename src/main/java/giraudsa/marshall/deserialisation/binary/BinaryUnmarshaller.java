@@ -25,14 +25,9 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
 import java.util.Date;
-import java.util.Deque;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 import java.util.UUID;
 import org.xml.sax.SAXException;
 
@@ -135,7 +130,6 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		dicoSmallIdToObject[smallId] =  obj;
 	}
 	
-	@SuppressWarnings("unchecked")
 	private T parse() throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException {
 		litObject(readByte(), TypeRelation.COMPOSITION, Object.class);
 		while(!pileAction.isEmpty()){
@@ -234,7 +228,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void integreObject(Object obj) throws IllegalArgumentException, IllegalAccessException {
+	public void integreObject(Object obj) throws IllegalArgumentException, IllegalAccessException, InstantiationException {
 		pileAction.pop();
 		ActionBinary<?> action = (ActionBinary<?>)getActionEnCours();
 		if(action == null) this.obj = (T) obj;
