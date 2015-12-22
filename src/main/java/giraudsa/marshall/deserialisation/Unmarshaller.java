@@ -68,28 +68,41 @@ public class Unmarshaller<T> {
 	@SuppressWarnings("unchecked")
     <W> W getObject(String id, Class<W> type, boolean isFake) throws InstantiationException, IllegalAccessException{
 		if (id == null) return type.newInstance();
-		W obj = (W) dicoIdToObject.get(id);
-		if(obj == null){
-			if(entity != null && !isFake)
-				obj = entity.findObject(id, type);
-			if(obj == null){
-				try{
-					obj = type.newInstance();
-				}catch (SecurityException | IllegalArgumentException | InstantiationException | IllegalAccessException e){
-					try {
-						Constructor<?> constr = type.getDeclaredConstructor(Constants.classVide);
-						constr.setAccessible(true);
-						obj = (W) constr.newInstance(Constants.nullArgument);
-					} catch (NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException e1) {
-						//TODO récupérer le premier constructeur public et mettre des arguments bidons
-						e1.printStackTrace();
-					}
+		W objet = (W) dicoIdToObject.get(id);
+		if(objet == null){
+			if(entity != null && !isFake){
+				synchronized (entity) {
+					objet = entity.findObject(id, type);
+					if(objet == null){
+						objet = newInstance(type);
+						entity.metEnCache(id, objet);
+					}	
 				}
+			}else{
+				objet = newInstance(type);
 			}
-			if(entity != null && !isFake) entity.metEnCache(id, obj);
-			dicoIdToObject.put(id, obj);
+			dicoIdToObject.put(id, objet);
 		}
-		return obj;
+		return objet;
+	}
+
+
+	@SuppressWarnings("unchecked")
+	private <W> W newInstance(Class<W> type) throws InstantiationException, IllegalAccessException {
+		W objet = null;
+		try{
+			objet = type.newInstance();
+		}catch (SecurityException | IllegalArgumentException | InstantiationException | IllegalAccessException e){
+			try {
+				Constructor<?> constr = type.getDeclaredConstructor(Constants.classVide);
+				constr.setAccessible(true);
+				objet = (W) constr.newInstance(Constants.nullArgument);
+			} catch (NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException e1) {
+				//TODO récupérer le premier constructeur public et mettre des arguments bidons
+				e1.printStackTrace();
+			}
+		}
+		return objet;
 	}
 	
 	protected Object getObjet(ActionAbstrait<?> action) {
