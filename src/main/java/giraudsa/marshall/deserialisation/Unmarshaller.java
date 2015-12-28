@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
+import utils.BiHashMap;
 import utils.Constants;
 
 
@@ -24,7 +25,8 @@ public class Unmarshaller<T> {
 		return pileAction.peek();
 	}
 	
-	protected final Map<String, Object>  dicoIdToObject = new HashMap<>();
+	protected final BiHashMap<String, Class<?>, Object>  dicoIdAndTypeToObject = new BiHashMap<>();
+	protected final Object nullObject = new Object();
 
 	protected Map<Class<?>, ActionAbstrait<?>> actions = new HashMap<>();
 
@@ -46,7 +48,8 @@ public class Unmarshaller<T> {
 				Class<?> genericType = type;
 				if (type.isEnum())
 					genericType = Constants.enumType;
-				//TODO ajouter pour les dates
+				else if(Constants.dateType.isAssignableFrom(type))
+					genericType = Constants.dateType;
 				else if (Constants.dictionaryType.isAssignableFrom(type))
 					genericType = Constants.dictionaryType;
 				else if (type != Constants.stringType && Constants.collectionType.isAssignableFrom(type))
@@ -68,7 +71,7 @@ public class Unmarshaller<T> {
 	@SuppressWarnings("unchecked")
     <W> W getObject(String id, Class<W> type, boolean isFake) throws InstantiationException, IllegalAccessException{
 		if (id == null) return type.newInstance();
-		W objet = (W) dicoIdToObject.get(id);
+		W objet = (W) dicoIdAndTypeToObject.get(id, type);
 		if(objet == null){
 			if(entity != null && !isFake){
 				synchronized (entity) {
@@ -81,25 +84,26 @@ public class Unmarshaller<T> {
 			}else{
 				objet = newInstance(type);
 			}
-			dicoIdToObject.put(id, objet);
+			if(objet != null)
+				dicoIdAndTypeToObject.put(id, type,  objet);
 		}
 		return objet;
 	}
 
 
 	@SuppressWarnings("unchecked")
-	private <W> W newInstance(Class<W> type) throws InstantiationException, IllegalAccessException {
+	private <W> W newInstance(Class<W> type) {
 		W objet = null;
 		try{
 			objet = type.newInstance();
 		}catch (SecurityException | IllegalArgumentException | InstantiationException | IllegalAccessException e){
 			try {
+				//System.out.println("la plan A n'a pas fonctionné pour " + type.toString() + ", on passe au plan B !");
 				Constructor<?> constr = type.getDeclaredConstructor(Constants.classVide);
 				constr.setAccessible(true);
 				objet = (W) constr.newInstance(Constants.nullArgument);
-			} catch (NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException e1) {
-				//TODO récupérer le premier constructeur public et mettre des arguments bidons
-				e1.printStackTrace();
+			} catch (NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException | InstantiationException | IllegalAccessException e1) {
+				//System.out.println("pas de création d'instance possible meme avec le plan B pour " + type.toString());
 			}
 		}
 		return objet;

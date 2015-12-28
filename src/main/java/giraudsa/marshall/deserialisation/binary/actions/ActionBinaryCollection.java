@@ -48,7 +48,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 			obj = newInstance();
 			stockeObjetId();
 			tailleCollection = readInt();
-			deserialisationFini = index < tailleCollection;
+			deserialisationFini = index >= tailleCollection;
 		}
 	}
 
@@ -56,7 +56,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException {
 		if(!deserialisationFini){
 			litObject(relation, null);
-			deserialisationFini = ++index < tailleCollection;
+			deserialisationFini = ++index >= tailleCollection;
 		}else{
 			exporteObject();
 		}

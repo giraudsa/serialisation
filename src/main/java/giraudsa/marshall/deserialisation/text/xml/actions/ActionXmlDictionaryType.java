@@ -22,12 +22,16 @@ public class ActionXmlDictionaryType<T extends Map> extends ActionXmlComplexeObj
 	
 	private ActionXmlDictionaryType(Class<T> type, XmlUnmarshaller<?> xmlUnmarshaller){
 		super(type, xmlUnmarshaller);
-		try {
-			obj = type.newInstance();
-		} catch (InstantiationException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
+		if(!type.isInterface()){
+			try {
+				obj = type.newInstance();
+			} catch (InstantiationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 

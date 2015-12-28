@@ -23,11 +23,11 @@ public class ActionXmlCollectionType<CollectionType extends Collection> extends 
 	private ActionXmlCollectionType(Class<CollectionType> type, XmlUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);
 		Class<?> _type = type;
-		if(type.getName().toLowerCase().indexOf("hibernate") != -1) _type = ArrayList.class;
+		if(type.getName().toLowerCase().indexOf("hibernate") != -1 || type.isInterface()) _type = ArrayList.class;
 		try {
 			obj = _type.newInstance();
 		} catch (InstantiationException e) {
-			e.printStackTrace();
+			obj = new ArrayList<>();
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 		}

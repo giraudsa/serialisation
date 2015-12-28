@@ -28,6 +28,7 @@ public class ActionXmlEnum<T extends Enum> extends ActionXml<T>  {
 	@SuppressWarnings("unchecked")
 	private ActionXmlEnum(Class<T> type, XmlUnmarshaller<?> xmlUnmarshaller) {
 		super(type, xmlUnmarshaller);
+		if(type == Enum.class) return;
 		Method values;
 		try {
 			values = type.getDeclaredMethod("values");

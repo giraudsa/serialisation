@@ -55,6 +55,8 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
     @Override
 	protected Class<?> getTypeAttribute(String nomAttribut) {
 		Champ champ = TypeExtension.getChampByName(type, nomAttribut);
+		if (champ.isSimple)
+			return TypeExtension.getTypeEnveloppe(champ.valueType);//on renvoie Integer à la place de int, Double au lieu de double, etc...
 		return champ.valueType;
 	}
 }

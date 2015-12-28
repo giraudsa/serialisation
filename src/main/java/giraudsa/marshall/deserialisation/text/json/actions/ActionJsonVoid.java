@@ -18,6 +18,11 @@ public class ActionJsonVoid extends ActionJsonSimpleComportement<Void> {
 	private ActionJsonVoid(Class<Void> type, JsonUnmarshaller<?> jsonUnmarshaller) {
 		super(type, jsonUnmarshaller);
 	}
+	
+	@Override protected <W> void integreObjet(String nomAttribut, W objet) {};
+	
+	@Override protected void rempliData(String donnees) {};
+	
 	@Override
 	protected Void getObjetDejaVu() {
 		return null;

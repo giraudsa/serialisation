@@ -25,8 +25,8 @@ public class Champ implements Comparable<Champ> {
 	}
 
 	public void set(Object obj, Object value) throws IllegalArgumentException, IllegalAccessException {
-		
-		info.set(obj, value);
+		if(obj != null)
+			info.set(obj, value);
 	}
 	
 	public boolean isFakeId(){

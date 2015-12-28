@@ -45,7 +45,7 @@ public class JsonUnmarshallerHandler {
 		}
 	}
 	
-	private void deuxPoints() throws JsonHandlerException{
+	private void deuxPoints() throws JsonHandlerException, InstantiationException, IllegalAccessException, ClassNotFoundException, NotImplementedSerializeException{
 		if(!isBetweenQuote) setClef();
 		else buff.add(':');
 	}
@@ -60,7 +60,10 @@ public class JsonUnmarshallerHandler {
 	}
 	
 	private void ouvreAccolade(){
-		if(!isBetweenQuote) buff.clear();
+		if(!isBetweenQuote){
+			buff.clear();
+			jsonUnmarshaller.ouvreAccolade();
+		}
 		else buff.add('{');
 	}
 
@@ -78,9 +81,13 @@ public class JsonUnmarshallerHandler {
 		else buff.add('[');
 	}
 	
-	private void fermeCrochet() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException{
-		if(!isBetweenQuote) jsonUnmarshaller.fermeCrocher();
-		else buff.add(']');
+	private void fermeCrochet() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException, ParseException{
+		if(!isBetweenQuote){
+			if(!buff.isEmpty()){
+				setValeur();
+			}
+			jsonUnmarshaller.fermeCrocher();
+		}else buff.add(']');
 	}
 
 	private void comportement(char c) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, JsonHandlerException, ClassNotFoundException, ParseException {
@@ -161,7 +168,7 @@ public class JsonUnmarshallerHandler {
 		}
 	}
 	
-	private void setClef() throws JsonHandlerException {
+	private void setClef() throws JsonHandlerException, InstantiationException, IllegalAccessException, ClassNotFoundException, NotImplementedSerializeException {
 		if(enleveGuillemets()){
 			String clef = getString();
 			jsonUnmarshaller.setClef(clef);	

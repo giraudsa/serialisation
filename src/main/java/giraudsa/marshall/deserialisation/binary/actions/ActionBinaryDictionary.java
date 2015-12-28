@@ -51,7 +51,7 @@ public class ActionBinaryDictionary<Dico extends Map> extends ActionBinary<Dico>
 			obj = type.newInstance();
 			stockeObjetId();
 			tailleCollection = readInt();
-			deserialisationFini = index < tailleCollection;
+			deserialisationFini = index >= tailleCollection;
 		}
 	}
 
@@ -59,7 +59,7 @@ public class ActionBinaryDictionary<Dico extends Map> extends ActionBinary<Dico>
 	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException{
 		if(!deserialisationFini){
 			litObject(relation, null);
-			deserialisationFini = clefTampon != null && ++index < tailleCollection;
+			deserialisationFini = clefTampon != null && ++index >= tailleCollection;
 		}else{
 			exporteObject();
 		}

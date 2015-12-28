@@ -19,6 +19,7 @@ import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryLong;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryShort;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryString;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryUUID;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryVoid;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 
 import java.io.DataInputStream;
@@ -182,7 +183,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 
 	private void initialiseActions() throws IOException {
 		deserialisationComplete = readBoolean();
-		actions.put(Byte.class, ActionBinaryBoolean.getInstance(this));
+		actions.put(Boolean.class, ActionBinaryBoolean.getInstance(this));
 		actions.put(Byte.class, ActionBinaryByte.getInstance(this));
 		actions.put(Short.class, ActionBinaryShort.getInstance(this));
 		actions.put(Integer.class, ActionBinaryInteger.getInstance(this));
@@ -192,6 +193,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		actions.put(String.class, ActionBinaryString.getInstance(this));
 		actions.put(Date.class, ActionBinaryDate.getInstance(this));
 		actions.put(UUID.class, ActionBinaryUUID.getInstance(this));
+		actions.put(Void.class, ActionBinaryVoid.getInstance(this));
 		actions.put(Character.class, ActionBinaryChar.getInstance(this));
 		actions.put(Constants.collectionType, ActionBinaryCollection.getInstance(this));
 		actions.put(Constants.dictionaryType, ActionBinaryDictionary.getInstance(this));

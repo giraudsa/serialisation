@@ -9,6 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.text.ParseException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -39,7 +40,8 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 
 	@Override protected Class<?> getTypeAttribute(String nomAttribut) {
 		Champ champ = TypeExtension.getChampByName(type, nomAttribut);
-		if (champ.isSimple) return TypeExtension.getTypeEnveloppe(champ.valueType);//on renvoie Integer à la place de int, Double au lieu de double, etc...
+		if (champ.isSimple)
+			return TypeExtension.getTypeEnveloppe(champ.valueType);//on renvoie Integer à la place de int, Double au lieu de double, etc...
 		return champ.valueType;
 	}
 	
@@ -53,11 +55,16 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 	protected void construitObjet() throws InstantiationException, IllegalAccessException {
 		String id = dicoChampToValue.get(champId).toString();
 		obj = getObject(id, type, champId.isFakeId());
+		if (obj == null) return;
 		for(Entry<Champ, Object> entry : dicoChampToValue.entrySet()){
 			Champ champ = entry.getKey();
 			if (!champ.isFakeId()){
 				if(!Modifier.isFinal(champ.info.getModifiers())){//on ne modifie pas les attributs finaux
+					try{
 					champ.set(obj, entry.getValue());
+					}catch(Exception e){
+						e.getMessage();
+					}
 				}
 			}
 		}

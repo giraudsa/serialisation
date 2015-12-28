@@ -27,14 +27,16 @@ public class ActionJsonDictionaryType<T extends Map> extends ActionJson<T> {
 
 	private ActionJsonDictionaryType(Class<T> type, JsonUnmarshaller<?> jsonUnmarshaller){
 		super(type, jsonUnmarshaller);
-		try {
-			obj = type.newInstance();
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if(!type.isInterface()){
+			try {
+				obj = type.newInstance();
+			} catch (InstantiationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -46,12 +48,22 @@ public class ActionJsonDictionaryType<T extends Map> extends ActionJson<T> {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected <W> void integreObjet(String nomAttribut, W objet) {
-		for(Object o : (ArrayList<?>)objet){
+		if(nomAttribut == null){
 			if(clefTampon == null){
-				clefTampon = o;
+				clefTampon = objet;
 			}else{
-				((Map)obj).put(clefTampon, o);
+				((Map)obj).put(clefTampon, objet);
 				clefTampon = null;
+			}
+
+		}else{
+			for(Object o : (ArrayList<?>)objet){
+				if(clefTampon == null){
+					clefTampon = o;
+				}else{
+					((Map)obj).put(clefTampon, o);
+					clefTampon = null;
+				}
 			}
 		}
 	}

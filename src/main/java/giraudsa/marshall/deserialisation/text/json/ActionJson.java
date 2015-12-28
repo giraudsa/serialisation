@@ -8,4 +8,9 @@ public abstract class ActionJson<T> extends ActionText<T> {
 		super(type,jsonUnmarshaller);
 	}
 
+	public void setIsTypeConnu(boolean isTypeConnu) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

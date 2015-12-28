@@ -20,6 +20,10 @@ public class ActionXmlVoid extends ActionXmlSimpleComportement<Void> {
 		super(type, xmlUnmarshaller);
 	}
 	
+	@Override protected <W> void integreObjet(String nomAttribut, W objet) {};
+	
+	@Override protected void rempliData(String donnees) {};
+	
 	@Override
 	protected Void getObjetDejaVu() {
 		return null;

@@ -19,4 +19,13 @@ public class ActionJsonVoid extends ActionJsonSimpleWithoutQuote<Void> {
 			InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
 		write("null");
 	}
+	
+	@Override
+	protected boolean ouvreAccolade(Void obj, boolean notApplicableHere) throws IOException {
+		return false;
+	}
+	
+	@Override
+	protected void fermeAccolade(Void obj, boolean notApplicableHere) throws IOException {
+	}
 }

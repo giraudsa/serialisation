@@ -32,7 +32,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 		return (ActionAbstrait<U>) new ActionBinaryObject<>(type, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 
-	public ActionBinaryObject(Class<O> type, BinaryUnmarshaller<?> b){
+	private ActionBinaryObject(Class<O> type, BinaryUnmarshaller<?> b){
 		super(type, b);
 	}
 

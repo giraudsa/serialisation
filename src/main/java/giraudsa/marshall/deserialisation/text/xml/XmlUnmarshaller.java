@@ -107,7 +107,11 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		parser.setContentHandler(handler);
 		InputSource source = new InputSource(reader);
 		source.setEncoding("UTF-8");
-		parser.parse(source);
+		try {
+			parser.parse(source);
+		} catch (SAXException e) {
+			e.printStackTrace();
+		}
 		return obj;
 	}
 

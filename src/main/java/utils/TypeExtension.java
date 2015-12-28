@@ -4,6 +4,7 @@ package utils;
 import giraudsa.marshall.annotations.IgnoreSerialise;
 import giraudsa.marshall.annotations.TypeRelation;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -97,7 +98,7 @@ public class TypeExtension {
 	public synchronized static List<Champ> getSerializableFields(Class<?> typeObj) {
 		List<Champ> fields = serializablefieldsOfType.get(typeObj);
 		if (fields == null){
-			fields = new LinkedList<Champ>();
+			fields = new ArrayList<Champ>();
 			Boolean hasUid = false;
 			Class<?> parent = typeObj;
 			Field[] fieldstmp = new Field[0];
@@ -107,7 +108,7 @@ public class TypeExtension {
 			}
 			for (Field info : fieldstmp) {
 				info.setAccessible(true);
-				if (info.getAnnotation(IgnoreSerialise.class)==null && !Modifier.isFinal(info.getModifiers()) && info.getType().getName().indexOf("org.apache.log4j.Logger") == -1) {
+				if (!isTransient(info) && !Modifier.isFinal(info.getModifiers()) && info.getType().getName().indexOf("org.apache.log4j.Logger") == -1) {
 					//on ne sérialise pas les attributs finaux ni ceux a ne pas sérialiser ni les attributs techniques de log4j.
 					Champ champ = FabriqueChamp.createChamp(info);
 					fields.add(champ);
@@ -124,6 +125,18 @@ public class TypeExtension {
 			serializablefieldsOfType.put(typeObj, fields) ;
 		}
 		return fields;
+	}
+
+	private static boolean isTransient(Field info) {
+		boolean isTransient = false;
+		Annotation[] annotations = info.getAnnotations();
+		for(int i=0 ; i<annotations.length; ++i){
+			if(annotations[i].getClass() == IgnoreSerialise.class){
+				isTransient = false;
+				break;
+			}
+		}
+		return isTransient;
 	}
 	
 	public synchronized static Champ getChampId(Class<?> typeObjetParent){

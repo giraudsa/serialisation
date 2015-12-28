@@ -25,32 +25,34 @@ public class ActionJsonEnum<T extends Enum> extends ActionJson<T>  {
 		return new ActionJsonEnum<>(type, (JsonUnmarshaller<?>)unmarshaller);
 	}
 
-	
+
 	@SuppressWarnings("unchecked")
 	private ActionJsonEnum(Class<T> type, JsonUnmarshaller<?> jsonUnmarshaller){
 		super(type, jsonUnmarshaller);
-		Method values;
-		try {
-			values = type.getDeclaredMethod("values");
-			T[] listeEnum = (T[]) values.invoke(null);
-			for(T objEnum : listeEnum){
-				dicoStringEnumToObjEnum.put(objEnum.toString(), objEnum);
+		if(type != Enum.class){
+			Method values;
+			try {
+				values = type.getDeclaredMethod("values");
+				T[] listeEnum = (T[]) values.invoke(null);
+				for(T objEnum : listeEnum){
+					dicoStringEnumToObjEnum.put(objEnum.toString(), objEnum);
+				}
+			} catch (NoSuchMethodException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InvocationTargetException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 	}
 

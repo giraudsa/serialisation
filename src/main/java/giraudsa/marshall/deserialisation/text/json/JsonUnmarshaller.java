@@ -1,6 +1,7 @@
 package giraudsa.marshall.deserialisation.text.json;
 
 import giraudsa.marshall.deserialisation.EntityManager;
+import giraudsa.marshall.deserialisation.text.ActionText;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonCollectionType;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonDate;
@@ -33,6 +34,7 @@ import utils.Constants;
 public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	/////ATTRIBUTS
 	private boolean waitingForType;
+	private boolean waitingForAction;
 	private String clefEnCours;
 
 	public static <U> U fromJson(Reader reader, EntityManager entity) throws IOException, SAXException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, JsonHandlerException, ParseException{
@@ -88,14 +90,13 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 
 	private void initDico() {
 		actions.put(Date.class, ActionJsonDate.getInstance(this));
-		actions.put(Iterable.class, ActionJsonCollectionType.getInstance(this));
 		actions.put(Collection.class, ActionJsonCollectionType.getInstance(this));
-		actions.put(List.class, ActionJsonCollectionType.getInstance(this));
 		actions.put(Map.class, ActionJsonDictionaryType.getInstance(this));
 		actions.put(Object.class, ActionJsonObject.getInstance(this));
 		actions.put(void.class, ActionJsonVoid.getInstance(this));
 		actions.put(UUID.class, ActionJsonUUID.getInstance(this));
 		actions.put(Enum.class, ActionJsonEnum.getInstance(this));
+		actions.put(Void.class, ActionJsonVoid.getInstance(this));
 		
 		actions.put(String.class, ActionJsonSimpleComportement.getInstance(String.class, this));
 		actions.put(Boolean.class, ActionJsonSimpleComportement.getInstance(Boolean.class, this));
@@ -114,10 +115,15 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		return obj;
 	}
 
-	void setClef(String clef) {
+	void setClef(String clef) throws InstantiationException, IllegalAccessException, ClassNotFoundException, NotImplementedSerializeException {
 		if(clef.equals(Constants.CLEF_TYPE)){
 			waitingForType = true;
 		}else if(!pileAction.isEmpty()){
+			if(waitingForAction){
+				pileAction.push(getAction(getType((ActionJson<?>)getActionEnCours(), clefEnCours)));
+				setNom((ActionText<?>) getActionEnCours(), clefEnCours);
+				waitingForAction = false;
+			}
 			clefEnCours = clef;			
 		}
 	}
@@ -130,7 +136,9 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		}else{
 			type2 = getType((ActionJson<?>)getActionEnCours(), clefEnCours);
 		}
-		type = type2 != null ? type2 : type;
+		if(type2 != null && !type2.isAssignableFrom(type)){
+			type = type2;
+		}
 		ActionJson<?> action = (ActionJson<?>) getAction(type);
 		setNom(action, clefEnCours);
 		clefEnCours = null;
@@ -140,6 +148,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 			integreObject();
 		}
 		waitingForType = false;
+		waitingForAction = false;
 	}
 
 	void fermeAccolade() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
@@ -175,5 +184,9 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 			Object objet = getObjet(actionATraiter);
 			integreObjet(getActionEnCours(), nom, objet);
 		}
+	}
+
+	public void ouvreAccolade() {
+		waitingForAction = true;
 	}
 }

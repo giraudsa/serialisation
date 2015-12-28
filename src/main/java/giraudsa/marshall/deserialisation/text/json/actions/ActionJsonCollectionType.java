@@ -24,13 +24,15 @@ public class ActionJsonCollectionType<T extends Collection> extends ActionJsonCo
 	private ActionJsonCollectionType(Class<T> type, JsonUnmarshaller<?> jsonUnmarshaller){
 		super(type, jsonUnmarshaller);
 		Class<?> _type = type;
-		if(type.getName().toLowerCase().indexOf("hibernate") != -1) _type = ArrayList.class;
-		try {
-			obj = _type.newInstance();
-		} catch (InstantiationException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
+		if(type.getName().toLowerCase().indexOf("hibernate") != -1 || type.isInterface()) _type = ArrayList.class;
+		if(!_type.isInterface()){
+			try {
+				obj = _type.newInstance();
+			} catch (InstantiationException e) {
+				obj = new ArrayList<>();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
