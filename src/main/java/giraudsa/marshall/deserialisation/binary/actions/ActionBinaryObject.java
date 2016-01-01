@@ -90,7 +90,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	public void integreObject(Object objet) throws IllegalArgumentException, IllegalAccessException, InstantiationException {
 		if(champEnAttente == champId){
 			String id = objet.toString();
-			obj = getObject(id, type, champId.isFakeId());
+			obj = getObject(id, type);
 			stockeObjetId();
 		}
 		if(champEnAttente.get(obj) != objet && !champEnAttente.isFakeId())

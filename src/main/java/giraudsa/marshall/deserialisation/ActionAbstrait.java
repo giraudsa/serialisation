@@ -35,8 +35,8 @@ public abstract class ActionAbstrait<T> {
 	protected abstract void construitObjet() throws InstantiationException, IllegalAccessException;
 	
 	
-	protected <W> W getObject(String id, Class<W> type, boolean isFakeId) throws InstantiationException, IllegalAccessException{
-		return unmarshaller.getObject(id, type, isFakeId);
+	protected <W> W getObject(String id, Class<W> type) throws InstantiationException, IllegalAccessException{
+		return unmarshaller.getObject(id, type);
 	}
 	
 

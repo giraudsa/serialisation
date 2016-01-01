@@ -35,7 +35,7 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 
 	@Override
 	protected  void construitObjet() throws InstantiationException, IllegalAccessException {
-		obj = getObject(dicoChampToValue.get(champId).toString(), type, champId.isFakeId());
+		obj = getObject(dicoChampToValue.get(champId).toString(), type);
 		for(Entry<Champ, Object> entry : dicoChampToValue.entrySet()){
 			Champ champ = entry.getKey();
 			if (!champ.isFakeId()){

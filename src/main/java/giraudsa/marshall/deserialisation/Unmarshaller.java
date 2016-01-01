@@ -69,11 +69,11 @@ public class Unmarshaller<T> {
 
 	
 	@SuppressWarnings("unchecked")
-    <W> W getObject(String id, Class<W> type, boolean isFake) throws InstantiationException, IllegalAccessException{
+    <W> W getObject(String id, Class<W> type) throws InstantiationException, IllegalAccessException{
 		if (id == null) return type.newInstance();
 		W objet = (W) dicoIdAndTypeToObject.get(id, type);
 		if(objet == null){
-			if(entity != null && !isFake){
+			if(entity != null){
 				synchronized (entity) {
 					objet = entity.findObject(id, type);
 					if(objet == null){
