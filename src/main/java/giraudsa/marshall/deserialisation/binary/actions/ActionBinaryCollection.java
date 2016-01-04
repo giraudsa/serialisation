@@ -55,7 +55,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 	@Override
 	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException {
 		if(!deserialisationFini){
-			litObject(relation, null);
+			litObject(relation, Object.class);
 			deserialisationFini = ++index >= tailleCollection;
 		}else{
 			exporteObject();

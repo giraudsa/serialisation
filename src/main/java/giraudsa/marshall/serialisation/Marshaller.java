@@ -28,11 +28,8 @@ public abstract class Marshaller {
 
 	//////ATTRIBUT
 	public boolean isCompleteSerialisation;
-	protected Map<Object, Integer> dejaVu = new HashMap<>();
 	protected Set<Object> dejaTotalementSerialise = new HashSet<>();
-	protected Map<Class<?>, Integer> dejaVuType = new HashMap<>();
-	Integer compteur = 0;
-	Integer compteurType = 1;	
+	private Set<Object> dejaVu = new HashSet<>();
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected <T> ActionAbstrait getAction(T obj) throws NotImplementedSerializeException {
@@ -73,11 +70,11 @@ public abstract class Marshaller {
 	}
 	
 	<T> boolean isDejaVu(T obj){
-		return dejaVu.containsKey(obj);
+		return dejaVu.contains(obj);
 	}
 	
 	<T> void setDejaVu(T obj){
-		if(!isDejaVu(obj)) dejaVu.put(obj, compteur++);
+		dejaVu.add(obj);
 	}
 	
 	<T> boolean isDejaTotalementSerialise(T obj){
@@ -94,35 +91,6 @@ public abstract class Marshaller {
 		aFaire.pop().evalue();
 	}
 	
-	protected boolean isDejaVuType(Class<?> typeObj) {
-		return dejaVuType.containsKey(typeObj);
-	}
-	
-	<T> void stockDejaVu(T obj, int smallId){
-		dejaVu.put(obj, smallId);
-	}
-	
-	int getSmallIdAndStockObj(Object obj){
-		if(!isDejaVu(obj)){
-			dejaVu.put(obj, compteur++);
-		}
-		 return dejaVu.get(obj);
-	}
-	
-	
-	protected int _getSmallIdAndStockObj(Object o) {
-		return getSmallIdAndStockObj(o);
-	}
-	
-	protected int _getSmallIdTypeAndStockType(Class<?> typeObj) {
-		if(!isDejaVuType(typeObj)){
-			dejaVuType.put(typeObj, compteurType++);
-		}
-		return dejaVuType.get(typeObj);
-	}
-	
-
-
 	protected abstract <T> void marshallSpecialise(T value, TypeRelation typeRelation, String nom, boolean typeDevinable) throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException;
 	
 }

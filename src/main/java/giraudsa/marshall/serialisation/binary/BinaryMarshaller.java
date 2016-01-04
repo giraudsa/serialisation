@@ -38,7 +38,10 @@ import utils.Constants;
 
 public class BinaryMarshaller extends Marshaller{
 	private DataOutputStream output;
-	
+	private Map<Object, Integer> smallIds = new HashMap<>();
+	private Map<Class<?>, Integer> dejaVuType = new HashMap<>();
+	private int compteur = 0;
+	private int compteurType = 1;	
 	/////METHODES STATICS PUBLICS
 	public static <U> void toBinary(U obj, OutputStream  output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException  {
 		try(DataOutputStream stream = new DataOutputStream(output)){
@@ -95,7 +98,7 @@ public class BinaryMarshaller extends Marshaller{
 		Class<?> typeObj = o.getClass();
 		boolean isTypeAutre = debutHeader == Constants.Type.AUTRE || debutHeader== Constants.Type.DEVINABLE;
 		boolean typeDevinable = debutHeader== Constants.Type.DEVINABLE;
-		int smallId = _getSmallIdAndStockObj(o);
+		int smallId = getSmallIdAndStockObj(o);
 		byte typeOfSmallId = getTypeOfSmallId(smallId);
 		debutHeader |= typeOfSmallId;
 		boolean isDejaVuTypeObj = true;
@@ -110,7 +113,7 @@ public class BinaryMarshaller extends Marshaller{
 				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedMap") != -1) typeObj = TreeMap.class;
 				
 				isDejaVuTypeObj = isDejaVuType(typeObj);
-				smallIdTypeObj = _getSmallIdTypeAndStockType(typeObj);
+				smallIdTypeObj = getSmallIdTypeAndStockType(typeObj);
 				typeOfSmallIdTypeObj = getTypeOfSmallIdTypeObj(smallIdTypeObj);
 				debutHeader |= typeOfSmallIdTypeObj;
 			}
@@ -169,6 +172,27 @@ public class BinaryMarshaller extends Marshaller{
 		if( ((int)((short)smallId) & 0x0000FFFF) == smallId) return Constants.Type.CODAGE_SHORT;
 		return Constants.Type.CODAGE_INT;
 	}
+	
+	private int getSmallIdAndStockObj(Object obj){
+		if(!smallIds.containsKey(obj)){
+			smallIds.put(obj, compteur++);
+		}
+		 return smallIds.get(obj);
+	}
+	
+	protected boolean isDejaVuType(Class<?> typeObj) {
+		return dejaVuType.containsKey(typeObj);
+	}
+	
+	private int getSmallIdTypeAndStockType(Class<?> typeObj) {
+		if(!isDejaVuType(typeObj)){
+			dejaVuType.put(typeObj, compteurType++);
+		}
+		return dejaVuType.get(typeObj);
+	}
+	
+
+
 	
 	//////////
 	boolean writeBoolean(boolean v) throws IOException {

@@ -58,7 +58,7 @@ public class ActionBinaryDictionary<Dico extends Map> extends ActionBinary<Dico>
 	@Override
 	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException{
 		if(!deserialisationFini){
-			litObject(relation, null);
+			litObject(relation, Object.class);
 			deserialisationFini = clefTampon != null && ++index >= tailleCollection;
 		}else{
 			exporteObject();

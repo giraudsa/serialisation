@@ -30,8 +30,9 @@ public class ActionXmlObject extends ActionXml<Object> {
 		boolean serialiseTout = (isCompleteMarshalling() && ! isDejaVu(obj)) ||
 									(!isCompleteMarshalling() && relation == TypeRelation.COMPOSITION && !isDejaTotalementSerialise(obj));
 		tmp.push(traiteChamp(obj, champId));
+		setDejaVu(obj);
 		if(serialiseTout){
-			getSmallIdAndStockObj(obj);
+			setDejaTotalementSerialise(obj);
 			for (Champ champ : champs){
 				if (champ != champId){
 					Comportement comportement = traiteChamp(obj, champ);

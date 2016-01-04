@@ -39,14 +39,6 @@ public abstract class ActionAbstrait<T> {
 		marshaller.setDejaTotalementSerialise(object);
 	}
 	
-	void stockeDejaVu(Object obj, int smallId){
-		marshaller.stockDejaVu(obj, smallId);
-	}
-	
-	protected <U> int getSmallIdAndStockObj(U obj){
-		return marshaller.getSmallIdAndStockObj(obj);
-	}
-	
 	
 	protected boolean isTypeDevinable(Object value, Champ champ){
 		if (value == null) return false;
