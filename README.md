@@ -1,4 +1,5 @@
-# serialisation-désérialisation multi-format (json - xml)
+# serialisation-désérialisation multi-format
+#JSON - XML - Binaire
 
 Petite bibliothèque de sérialisation - deserialisation orienté simplicité d'utilisation et supportant le polymorphisme.
 
