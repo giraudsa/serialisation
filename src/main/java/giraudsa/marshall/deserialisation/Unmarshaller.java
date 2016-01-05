@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
-import utils.BiHashMap;
 import utils.Constants;
 
 
@@ -25,7 +24,7 @@ public class Unmarshaller<T> {
 		return pileAction.peek();
 	}
 	
-	protected final BiHashMap<String, Class<?>, Object>  dicoIdAndTypeToObject = new BiHashMap<>();
+	protected final Map<String, Object>  dicoIdAndTypeToObject = new HashMap<>();
 	protected final Object nullObject = new Object();
 
 	protected Map<Class<?>, ActionAbstrait<?>> actions = new HashMap<>();
@@ -71,7 +70,7 @@ public class Unmarshaller<T> {
 	@SuppressWarnings("unchecked")
     <W> W getObject(String id, Class<W> type) throws InstantiationException, IllegalAccessException{
 		if (id == null) return type.newInstance();
-		W objet = (W) dicoIdAndTypeToObject.get(id, type);
+		W objet = (W) dicoIdAndTypeToObject.get(id);
 		if(objet == null){
 			if(entity != null){
 				synchronized (entity) {
@@ -85,7 +84,7 @@ public class Unmarshaller<T> {
 				objet = newInstance(type);
 			}
 			if(objet != null)
-				dicoIdAndTypeToObject.put(id, type,  objet);
+				dicoIdAndTypeToObject.put(id, objet);
 		}
 		return objet;
 	}
