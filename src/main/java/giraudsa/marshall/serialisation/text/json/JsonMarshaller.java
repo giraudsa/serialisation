@@ -41,7 +41,7 @@ public class JsonMarshaller extends TextMarshaller {
 		LOGGER.debug("fin de sérialisation de " + obj.getClass());
 	}
 
-	public static <U> String ToJson(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException,
+	public static <U> String toJson(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException,
 	IOException, NotImplementedSerializeException {
 		try (StringWriter sw = new StringWriter()) {
 			toJson(obj, sw);
@@ -55,7 +55,7 @@ public class JsonMarshaller extends TextMarshaller {
 		v.marshall(obj);
 	}
 
-	public static <U> String ToJson(U obj, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException,
+	public static <U> String toJson(U obj, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException,
 	IOException, NotImplementedSerializeException {
 		try (StringWriter sw = new StringWriter()) {
 			toJson(obj, sw, df);

@@ -28,7 +28,7 @@ public class XmlMarshaller extends TextMarshaller {
 		XmlMarshaller v = new XmlMarshaller(output, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"), false);
 		v.marshall(obj);
 	}
-	public static <U> String ToXml(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
+	public static <U> String toXml(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
 		try(StringWriter sw = new StringWriter()){
 			toXml(obj, sw);
 			return sw.toString();
@@ -38,7 +38,7 @@ public class XmlMarshaller extends TextMarshaller {
 		XmlMarshaller v = new XmlMarshaller(output, df, false);
 		v.marshall(obj);
 	}
-	public static <U> String ToXml(U obj, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
+	public static <U> String toXml(U obj, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
 		try(StringWriter sw = new StringWriter()){
 			toXml(obj, sw, df);
 			return sw.toString();
