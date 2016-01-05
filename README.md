@@ -93,26 +93,26 @@ il y a 8 méthodes public static à la sérialisation en xml et 8 pour la désé
 2.1 - Sérialisation
 -------------------
 
-XmlMarshaller.toXml(U, Writer)
-XmlMarshaller.toXml(U)
-XmlMarshaller.toXml(U, Writer, DateFormat)
-XmlMarshaller.toXml(U, DateFormat)
-XmlMarshaller.toCompleteXml(U, Writer)
-XmlMarshaller.toCompleteXml(U)
-XmlMarshaller.toCompleteXml(U, StringWriter, DateFormat)
-XmlMarshaller.toCompleteXml(U, DateFormat)
+	XmlMarshaller.toXml(U, Writer)
+	XmlMarshaller.toXml(U)
+	XmlMarshaller.toXml(U, Writer, DateFormat)
+	XmlMarshaller.toXml(U, DateFormat)
+	XmlMarshaller.toCompleteXml(U, Writer)
+	XmlMarshaller.toCompleteXml(U)
+	XmlMarshaller.toCompleteXml(U, StringWriter, DateFormat)
+	XmlMarshaller.toCompleteXml(U, DateFormat)
 
 2.2 - Désérialisation
 ---------------------
 		
-XmlUnmarshaller.fromXml(Reader, EntityManager)
-XmlUnmarshaller.fromXml(Reader)
-XmlUnmarshaller.fromXml(String)
-XmlUnmarshaller.fromXml(String, EntityManager)
-XmlUnmarshaller.fromXml(Reader, EntityManager, DateFormat)
-XmlUnmarshaller.fromXml(Reader, DateFormat)
-XmlUnmarshaller.fromXml(String, DateFormat)
-XmlUnmarshaller.fromXml(String, EntityManager, DateFormat)
+	XmlUnmarshaller.fromXml(Reader, EntityManager)
+	XmlUnmarshaller.fromXml(Reader)
+	XmlUnmarshaller.fromXml(String)
+	XmlUnmarshaller.fromXml(String, EntityManager)
+	XmlUnmarshaller.fromXml(Reader, EntityManager, DateFormat)
+	XmlUnmarshaller.fromXml(Reader, DateFormat)
+	XmlUnmarshaller.fromXml(String, DateFormat)
+	XmlUnmarshaller.fromXml(String, EntityManager, DateFormat)
 
 
 3 - Format JSON
@@ -125,26 +125,26 @@ il y a 8 méthodes public static à la sérialisation en json et 8 pour la dés�
 3.1 - Sérialisation
 -------------------
 
-JsonMarshaller.toJson(U, Writer)
-JsonMarshaller.toJson(U)
-JsonMarshaller.toJson(U, Writer, DateFormat)
-JsonMarshaller.toJson(U, DateFormat)
-JsonMarshaller.toCompleteJson(U, Writer)
-JsonMarshaller.toCompleteJson(U)
-JsonMarshaller.toCompleteJson(U, Writer, DateFormat)
-JsonMarshaller.toCompleteJson(U, DateFormat)
-
+	JsonMarshaller.toJson(U, Writer)
+	JsonMarshaller.toJson(U)
+	JsonMarshaller.toJson(U, Writer, DateFormat)
+	JsonMarshaller.toJson(U, DateFormat)
+	JsonMarshaller.toCompleteJson(U, Writer)
+	JsonMarshaller.toCompleteJson(U)
+	JsonMarshaller.toCompleteJson(U, Writer, DateFormat)
+	JsonMarshaller.toCompleteJson(U, DateFormat)
+	
 3.2 - Désérialisation
 ---------------------
 	
-JsonUnmarshaller.fromJson(Reader, EntityManager)
-JsonUnmarshaller.fromJson(Reader)
-JsonUnmarshaller.fromJson(String)
-JsonUnmarshaller.fromJson(String, EntityManager)
-JsonUnmarshaller.fromJson(Reader, EntityManager, DateFormat)
-JsonUnmarshaller.fromJson(Reader, DateFormat)
-JsonUnmarshaller.fromJson(String, DateFormat)
-JsonUnmarshaller.fromJson(String, EntityManager, DateFormat)
+	JsonUnmarshaller.fromJson(Reader, EntityManager)
+	JsonUnmarshaller.fromJson(Reader)
+	JsonUnmarshaller.fromJson(String)
+	JsonUnmarshaller.fromJson(String, EntityManager)
+	JsonUnmarshaller.fromJson(Reader, EntityManager, DateFormat)
+	JsonUnmarshaller.fromJson(Reader, DateFormat)
+	JsonUnmarshaller.fromJson(String, DateFormat)
+	JsonUnmarshaller.fromJson(String, EntityManager, DateFormat)
 
 
 4 - Format Binaire
@@ -153,10 +153,12 @@ il y a 2 méthodes public static à la sérialisation en binaire et 2 pour la d�
 	
 4.1 - Sérialisation
 -------------------
-BinaryMarshaller.toBinary(U, OutputStream)
-BinaryMarshaller.toCompleteBinary(U, OutputStream)
+
+	BinaryMarshaller.toBinary(U, OutputStream)
+	BinaryMarshaller.toCompleteBinary(U, OutputStream)
 
 4.2 - Désérialisation
 ---------------------
-BinaryUnmarshaller.fromBinary(InputStream, EntityManager)
+
+	BinaryUnmarshaller.fromBinary(InputStream, EntityManager)
 BinaryUnmarshaller.fromBinary(InputStream)
