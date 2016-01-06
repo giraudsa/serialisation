@@ -8,7 +8,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Stack;
 
-import utils.TypeExtension;
 import utils.champ.Champ;
 
 public abstract class ActionAbstrait<T> {
@@ -31,6 +30,10 @@ public abstract class ActionAbstrait<T> {
 		marshaller.setDejaVu(objet);
 	}
 	
+	protected boolean isUniversalId(){
+		return true;
+	}
+	
 	protected <U> boolean isDejaTotalementSerialise(U object){
 		return marshaller.isDejaTotalementSerialise(object);
 	}
@@ -42,7 +45,7 @@ public abstract class ActionAbstrait<T> {
 	
 	protected boolean isTypeDevinable(Object value, Champ champ){
 		if (value == null) return false;
-		if(isDejaVu(value)) return true;
+		if(isDejaVu(value) && isUniversalId()) return true;
 		Class<?> valueType = value.getClass();
 		boolean typeDevinable = true;
 		if(!champ.isSimple && champ.valueType != valueType) typeDevinable = false;
@@ -59,7 +62,7 @@ public abstract class ActionAbstrait<T> {
 		Object value = champ.get(obj);
 		boolean typeDevinable = isTypeDevinable(value, champ);
 		if(aTraiter(value)){
-			return new ComportementMarshallValue(obj, champ, value, nom, relation, typeDevinable, ecrisSeparateur);
+			return new ComportementMarshallValue(value, nom, relation, typeDevinable, ecrisSeparateur);
 		}
 		return null;
 	}
@@ -99,27 +102,13 @@ public abstract class ActionAbstrait<T> {
 	}
 	
 	protected class ComportementMarshallValue extends Comportement{
-
-		private Object obj;
-		private Champ champ;
 		private Object value;
 		private String nom;
 		private TypeRelation relation;
 		private boolean typeDevinable;
 		private boolean writeSeparateur;
 		
-		public ComportementMarshallValue(Object obj, Champ champ, Object value, String nom, TypeRelation relation, boolean typeDevinable, boolean writeSeparateur) {
-			super();
-			this.obj = obj;
-			this.champ = champ;
-			this.value = value;
-			this.nom = nom;
-			this.relation = relation;
-			this.typeDevinable = typeDevinable;
-			this.writeSeparateur = writeSeparateur;
-		}
-		
-		public ComportementMarshallValue(Object value, String nom, TypeRelation relation, boolean typeDevinable, boolean writeSeparateur) {//Json Collection et Dictionnaire
+		public ComportementMarshallValue(Object value, String nom, TypeRelation relation, boolean typeDevinable, boolean writeSeparateur) {
 			super();
 			this.value = value;
 			this.nom = nom;

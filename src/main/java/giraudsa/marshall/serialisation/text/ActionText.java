@@ -12,6 +12,11 @@ public abstract class ActionText<T> extends ActionAbstrait<T> {
 	protected DateFormat getDateFormat(){
 		return getTextMarshaller().df;
 	}
+	
+	@Override
+	protected boolean isUniversalId() {
+		return getTextMarshaller().isUniversalId;
+	}
 
 	protected TextMarshaller getTextMarshaller(){
 		return (TextMarshaller)marshaller;

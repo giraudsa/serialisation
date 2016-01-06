@@ -10,9 +10,14 @@ import java.text.DateFormat;
 import java.util.TimeZone;
 
 public abstract class TextMarshaller extends Marshaller {
-	protected Writer writer;
-	protected DateFormat df;
-	private static TimeZone  tz = TimeZone.getTimeZone("UTC");
+	protected final Writer writer;
+	protected final DateFormat df;
+	final boolean isUniversalId;
+	
+	private static boolean idEstUniversel = true;
+	public static void setIdDependantDuType(){
+		idEstUniversel = false;
+	}
 	
 	void write(String string) throws IOException {
 		writer.write(string);
@@ -26,7 +31,8 @@ public abstract class TextMarshaller extends Marshaller {
 		super(isCompleteSerialisation);
 		this.writer = writer;
 		this.df = df;
-		df.setTimeZone(tz);
+		df.setTimeZone(TimeZone.getTimeZone("UTC"));
+		this.isUniversalId = idEstUniversel;
 	}
 	
 	protected <U> void marshall(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
