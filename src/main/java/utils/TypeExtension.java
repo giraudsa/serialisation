@@ -128,16 +128,9 @@ public class TypeExtension {
 	}
 
 	private static boolean isTransient(Field info) {
-		boolean isTransient = false;
-		Annotation[] annotations = info.getAnnotations();
-		for(int i=0 ; i<annotations.length; ++i){
-			if(annotations[i].getClass() == IgnoreSerialise.class){
-				isTransient = false;
-				break;
-			}
-		}
-		return isTransient;
-	}
+        return (info.getAnnotation(IgnoreSerialise.class) != null);
+   }
+
 	
 	public synchronized static Champ getChampId(Class<?> typeObjetParent){
 		Champ champId = dicoTypeTochampId.get(typeObjetParent);
