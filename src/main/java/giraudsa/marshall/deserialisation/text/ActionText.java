@@ -15,8 +15,12 @@ public abstract class ActionText<T> extends ActionAbstrait<T> {
 		return nom;
 	}
 	
+	protected TextUnmarshaller<?> getTextUnarshaller(){
+		return (TextUnmarshaller<?>)unmarshaller;
+	}
+	
 	protected DateFormat getDateFormat(){
-		return ((TextUnmarshaller<?>)unmarshaller).df;
+		return getTextUnarshaller().df;
 	}
 
 	protected ActionText(Class<T> type, TextUnmarshaller<?> unmarshaller) {

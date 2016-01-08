@@ -3,21 +3,19 @@ package giraudsa.marshall.serialisation.text;
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
+import utils.ConfigurationMarshalling;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
-import java.util.TimeZone;
+import java.text.SimpleDateFormat;
 
 public abstract class TextMarshaller extends Marshaller {
 	protected final Writer writer;
 	protected final DateFormat df;
 	final boolean isUniversalId;
 	
-	private static boolean idEstUniversel = true;
-	public static void setIdDependantDuType(){
-		idEstUniversel = false;
-	}
 	
 	void write(String string) throws IOException {
 		writer.write(string);
@@ -27,12 +25,13 @@ public abstract class TextMarshaller extends Marshaller {
 		writer.close();	
 	}
 	
-	protected TextMarshaller(Writer writer, DateFormat df, boolean isCompleteSerialisation) {
+	protected TextMarshaller(Writer writer, boolean isCompleteSerialisation, SimpleDateFormat dateFormat) {
 		super(isCompleteSerialisation);
 		this.writer = writer;
-		this.df = df;
-		df.setTimeZone(TimeZone.getTimeZone("UTC"));
-		this.isUniversalId = idEstUniversel;
+		df = new SimpleDateFormat(dateFormat.toPattern());
+		df.setTimeZone(dateFormat.getTimeZone());
+		this.isUniversalId = ConfigurationMarshalling.getEstIdUniversel();
+		
 	}
 	
 	protected <U> void marshall(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {

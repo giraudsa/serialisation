@@ -1,9 +1,6 @@
 package giraudsa.marshall.deserialisation;
 
 import giraudsa.marshall.annotations.TypeRelation;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
-
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 
@@ -25,6 +22,7 @@ public abstract class ActionAbstrait<T> {
 		this.typeDevinable = typeDevinable;
 	}
 	
+	@SuppressWarnings("rawtypes")
 	public abstract <U extends T>  ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller);
 	
 	protected ActionAbstrait(Class<T> type, Unmarshaller<?> unmarshaller){
@@ -49,5 +47,9 @@ public abstract class ActionAbstrait<T> {
 		
 	protected abstract <W> void integreObjet(String nomAttribut, W objet);
 	protected abstract void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException;
+
+	protected boolean isUniversalId() {
+		return true;
+	}
 
 }

@@ -8,6 +8,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
+import utils.ConfigurationMarshalling;
 import utils.Constants;
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
@@ -25,28 +26,27 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
-import java.util.Stack;
 import java.util.UUID;
 
 public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
+	
+	
 	//////METHODES STATICS PUBLICS
 	public static <U> U fromXml(Reader reader, EntityManager entity) throws IOException, SAXException, ClassNotFoundException{
-		XmlUnmarshaller<U> w = new XmlUnmarshaller<U>(reader, entity, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")){};
+		XmlUnmarshaller<U> w = new XmlUnmarshaller<U>(reader, entity);
 		return w.parse();
 	}
 	public static <U> U fromXml(Reader reader) throws IOException, SAXException, ClassNotFoundException{
-		return fromXml(reader, null, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"));
+		return fromXml(reader, null);
 	}
 	public static <U> U fromXml(String stringToUnmarshall)  throws IOException, SAXException, ClassNotFoundException{
 		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) return null;
 		try(StringReader sr = new StringReader(stringToUnmarshall)){
-			return fromXml(sr, null, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"));
+			return fromXml(sr, null);
 		}
 	}
 	public static  <U> U fromXml(String stringToUnmarshall, EntityManager entity)  throws IOException, SAXException, ClassNotFoundException{
@@ -55,32 +55,16 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 			return fromXml(sr, entity);
 		}
 	}
-	public static <U> U fromXml(Reader reader, EntityManager entity, DateFormat df) throws IOException, SAXException, ClassNotFoundException{
-		XmlUnmarshaller<U> w = new XmlUnmarshaller<U>(reader, entity, df){};
-		return w.parse();
-	}
-	public static <U> U fromXml(Reader reader, DateFormat df) throws IOException, SAXException, ClassNotFoundException{
-		return fromXml(reader, null, df);
-	}
-	public static <U> U fromXml(String stringToUnmarshall, DateFormat df)  throws IOException, SAXException, ClassNotFoundException{
-		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) return null;
-		try(StringReader sr = new StringReader(stringToUnmarshall)){
-			return fromXml(sr, null, df);
-		}
-	}
-	public static  <U> U fromXml(String stringToUnmarshall, EntityManager entity, DateFormat df)  throws IOException, SAXException, ClassNotFoundException{
-		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) return null;
-		try(StringReader sr = new StringReader(stringToUnmarshall)){
-			return fromXml(sr, entity, df);
-		}
-	}
-	
 	/////ATTRIBUTS
 	private boolean isFirst = true;
 
 	/////CONSTRUCTEUR
-	private XmlUnmarshaller(Reader reader, EntityManager entity, DateFormat df) throws ClassNotFoundException {
-		super(reader, entity, df);
+	private XmlUnmarshaller(Reader reader, EntityManager entity) throws ClassNotFoundException, IOException {
+		super(reader, entity, ConfigurationMarshalling.getDateFormatXml());
+	}
+	
+	@Override
+	protected void initialiseActions() throws IOException {
 		actions.put(Date.class, ActionXmlDate.getInstance(this));
 		actions.put(Collection.class, ActionXmlCollectionType.getInstance(this));
 		actions.put(Map.class, ActionXmlDictionaryType.getInstance(this));
@@ -97,7 +81,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		actions.put(Double.class, ActionXmlSimpleComportement.getInstance(Double.class,this));
 		actions.put(Long.class, ActionXmlSimpleComportement.getInstance(Long.class,this));
 		actions.put(Short.class, ActionXmlSimpleComportement.getInstance(Short.class,this));
-		actions.put(Character.class, ActionXmlSimpleComportement.getInstance(Character.class,this));
+		actions.put(Character.class, ActionXmlSimpleComportement.getInstance(Character.class,this));	
 	}
 	
 	//////METHODES PRIVEES

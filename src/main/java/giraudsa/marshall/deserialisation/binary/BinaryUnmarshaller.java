@@ -2,6 +2,7 @@ package giraudsa.marshall.deserialisation.binary;
 
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
+import giraudsa.marshall.deserialisation.CacheIdUniversel;
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryCollection;
@@ -176,12 +177,11 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 	
 	protected BinaryUnmarshaller(DataInputStream input, EntityManager entity) throws ClassNotFoundException, IOException {
-		super(entity);
+		super(entity, false);
 		this.input = input;
-		initialiseActions();		
 	}
 
-	private void initialiseActions() throws IOException {
+	@Override protected void initialiseActions() throws IOException {
 		deserialisationComplete = readBoolean();
 		actions.put(Boolean.class, ActionBinaryBoolean.getInstance(this));
 		actions.put(Byte.class, ActionBinaryByte.getInstance(this));

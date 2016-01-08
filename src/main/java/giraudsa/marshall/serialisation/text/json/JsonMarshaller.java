@@ -17,8 +17,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -27,15 +25,15 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import utils.ConfigurationMarshalling;
 import utils.Constants;
 
 public class JsonMarshaller extends TextMarshaller {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonMarshaller.class);
-
 	// /////METHODES PUBLIQUES STATIQUES
 	public static <U> void toJson(U obj, Writer output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
 	SecurityException, IOException, NotImplementedSerializeException {
-		JsonMarshaller v = new JsonMarshaller(output, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"), false);
+		JsonMarshaller v = new JsonMarshaller(output, false);
 		LOGGER.debug("debut de sérialisation de " + obj.getClass());
 		v.marshall(obj);
 		LOGGER.debug("fin de sérialisation de " + obj.getClass());
@@ -48,22 +46,8 @@ public class JsonMarshaller extends TextMarshaller {
 			return sw.toString();
 		}
 	}
-
-	public static <U> void toJson(U obj, Writer output, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
-	SecurityException, IOException, NotImplementedSerializeException {
-		JsonMarshaller v = new JsonMarshaller(output, df, false);
-		v.marshall(obj);
-	}
-
-	public static <U> String toJson(U obj, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException,
-	IOException, NotImplementedSerializeException {
-		try (StringWriter sw = new StringWriter()) {
-			toJson(obj, sw, df);
-			return sw.toString();
-		}
-	}
 	public static <U> void toCompleteJson(U obj, Writer output) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		JsonMarshaller v = new JsonMarshaller(output, new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"), true);
+		JsonMarshaller v = new JsonMarshaller(output, true);
 		v.marshall(obj);
 	}
 
@@ -75,20 +59,9 @@ public class JsonMarshaller extends TextMarshaller {
 		}
 	}
 
-	public static <U> void toCompleteJson(U obj, Writer output, DateFormat df) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		JsonMarshaller v = new JsonMarshaller(output, df, true);
-		v.marshall(obj);
-	}
-	public static <U> String toCompleteJson(U obj, DateFormat df) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException{
-		try(StringWriter sw = new StringWriter()){
-			toCompleteJson(obj, sw, df);
-			return sw.toString();
-		}
-	}
-
 	// ///CONSTRUCTEUR
-	private JsonMarshaller(Writer output, DateFormat df, boolean isCompleteSerialisation) throws IOException {
-		super(output, df, isCompleteSerialisation);
+	private JsonMarshaller(Writer output, boolean isCompleteSerialisation) throws IOException {
+		super(output, isCompleteSerialisation, ConfigurationMarshalling.getDatFormatJson());
 	}
 
 	@SuppressWarnings("rawtypes")

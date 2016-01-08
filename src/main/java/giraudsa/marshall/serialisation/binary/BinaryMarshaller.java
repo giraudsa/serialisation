@@ -38,17 +38,17 @@ import utils.Constants;
 
 public class BinaryMarshaller extends Marshaller{
 	private DataOutputStream output;
-	private Map<Object, Integer> smallIds = new HashMap<>();
-	private Map<Class<?>, Integer> dejaVuType = new HashMap<>();
+	private Map<Object, Integer> smallIds = new HashMap<Object, Integer>();
+	private Map<Class<?>, Integer> dejaVuType = new HashMap<Class<?>, Integer>();
 	private int compteur = 0;
 	private int compteurType = 1;	
 	/////METHODES STATICS PUBLICS
 	public static <U> void toBinary(U obj, OutputStream  output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException  {
-		try(DataOutputStream stream = new DataOutputStream(output)){
+		DataOutputStream stream = new DataOutputStream(output);
 			BinaryMarshaller v = new BinaryMarshaller(stream, false);
 			v.marshall(obj);
 			stream.flush();
-		}
+		stream.close();
 	}
 
 	public static <U> void toCompleteBinary(U obj, OutputStream  output) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{

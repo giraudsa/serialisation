@@ -2,31 +2,23 @@ package giraudsa.marshall.deserialisation.text;
 
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.Unmarshaller;
-import giraudsa.marshall.deserialisation.text.xml.ActionXml;
+import utils.ConfigurationMarshalling;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.text.DateFormat;
-import java.util.TimeZone;
+import java.text.SimpleDateFormat;
 
-public class TextUnmarshaller<T> extends Unmarshaller<T> {
+public abstract class TextUnmarshaller<T> extends Unmarshaller<T> {
 
 	protected final Reader reader;
-	protected DateFormat df;
-	private static TimeZone  tz = TimeZone.getTimeZone("UTC");
+	protected final DateFormat df;
 	
-	protected TextUnmarshaller(Reader reader, DateFormat df) throws ClassNotFoundException {
-		super();
+	protected TextUnmarshaller(Reader reader, EntityManager entity, SimpleDateFormat dateFormat) throws ClassNotFoundException, IOException {
+		super(entity, ConfigurationMarshalling.getEstIdUniversel());
 		this.reader = reader;
-		this.df = df;
-		df.setTimeZone(tz);
-	}
-	
-	protected TextUnmarshaller(Reader reader, EntityManager entity, DateFormat df) throws ClassNotFoundException {
-		super(entity);
-		this.reader = reader;
-		this.df = df;
-		df.setTimeZone(tz);
+		df = new SimpleDateFormat(dateFormat.toPattern());
+		df.setTimeZone(dateFormat.getTimeZone());
 	}
 	
 	public void dispose() throws IOException {

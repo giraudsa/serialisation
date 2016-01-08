@@ -89,19 +89,15 @@ Le nom d'un attribut tel qu'il apparaîtra dans le format de sortie peut être a
 
 Le schéma de sérialisation est le suivant : <nomBalise type="type.objet">liste des attributs suivant le meme schémat</nomBalise>
 Le type est mis optionnellement par le sérialiseur si celui ci est ambigu.
-il y a 8 méthodes public static à la sérialisation en xml et 8 pour la désérialisation.
+il y a 4 méthodes public static à la sérialisation en xml et 4 pour la désérialisation.
 
 ###2.1 - Sérialisation
 -------------------
 
 	XmlMarshaller.toXml(U, Writer)
 	XmlMarshaller.toXml(U)
-	XmlMarshaller.toXml(U, Writer, DateFormat)
-	XmlMarshaller.toXml(U, DateFormat)
 	XmlMarshaller.toCompleteXml(U, Writer)
 	XmlMarshaller.toCompleteXml(U)
-	XmlMarshaller.toCompleteXml(U, StringWriter, DateFormat)
-	XmlMarshaller.toCompleteXml(U, DateFormat)
 
 ###2.2 - Désérialisation
 ---------------------
@@ -110,10 +106,6 @@ il y a 8 méthodes public static à la sérialisation en xml et 8 pour la désé
 	XmlUnmarshaller.fromXml(Reader)
 	XmlUnmarshaller.fromXml(String)
 	XmlUnmarshaller.fromXml(String, EntityManager)
-	XmlUnmarshaller.fromXml(Reader, EntityManager, DateFormat)
-	XmlUnmarshaller.fromXml(Reader, DateFormat)
-	XmlUnmarshaller.fromXml(String, DateFormat)
-	XmlUnmarshaller.fromXml(String, EntityManager, DateFormat)
 
 
 ##3 - Format JSON
@@ -121,31 +113,21 @@ il y a 8 méthodes public static à la sérialisation en xml et 8 pour la désé
 
 le schéma de sérialisation est le suivant : {"__type"="type.objet",attributs...}
 le type est mis optionnellement si celui-ci est ambigu.
-il y a 8 méthodes public static à la sérialisation en json et 8 pour la désérialisation.
+il y a 4 méthodes public static à la sérialisation en json et 4 pour la désérialisation.
 
 ###3.1 - Sérialisation
--------------------
 
 	JsonMarshaller.toJson(U, Writer)
 	JsonMarshaller.toJson(U)
-	JsonMarshaller.toJson(U, Writer, DateFormat)
-	JsonMarshaller.toJson(U, DateFormat)
 	JsonMarshaller.toCompleteJson(U, Writer)
 	JsonMarshaller.toCompleteJson(U)
-	JsonMarshaller.toCompleteJson(U, Writer, DateFormat)
-	JsonMarshaller.toCompleteJson(U, DateFormat)
 	
 ###3.2 - Désérialisation
----------------------
 	
 	JsonUnmarshaller.fromJson(Reader, EntityManager)
 	JsonUnmarshaller.fromJson(Reader)
 	JsonUnmarshaller.fromJson(String)
 	JsonUnmarshaller.fromJson(String, EntityManager)
-	JsonUnmarshaller.fromJson(Reader, EntityManager, DateFormat)
-	JsonUnmarshaller.fromJson(Reader, DateFormat)
-	JsonUnmarshaller.fromJson(String, DateFormat)
-	JsonUnmarshaller.fromJson(String, EntityManager, DateFormat)
 
 
 ##4 - Format Binaire
@@ -153,13 +135,30 @@ il y a 8 méthodes public static à la sérialisation en json et 8 pour la dés�
 il y a 2 méthodes public static à la sérialisation en binaire et 2 pour la désérialisation.
 	
 ###4.1 - Sérialisation
--------------------
 
 	BinaryMarshaller.toBinary(U, OutputStream)
 	BinaryMarshaller.toCompleteBinary(U, OutputStream)
 
 ###4.2 - Désérialisation
----------------------
 
 	BinaryUnmarshaller.fromBinary(InputStream, EntityManager)
 	BinaryUnmarshaller.fromBinary(InputStream)
+	
+##5 - Customisation
+-------------------
+
+Il est possible de personnaliser le pattern des Dates et de racourcir les flux xml et json en précisant si les id sont de type universel. Cela en effet permet de ne pas écrire à nouveau le type si l'id a déjà été vu au cours de la désérialisation.
+
+###5.1 - Format de date
+Par défaut, le format de date respecte la norme RFC822 avec la TimeZone UTC. Cependant, il est possible de modifier en utilisant la configuration suivante :
+
+	ConfigurationMarshalling.setDateFormatJson(new SimpleDateFormat());
+	ConfigurationMarshalling.setDateFormatXml(new SimpleDateFormat());
+Attention, il convient bien d'utiliser le même format entre la sérialisation et la désérialisation qui peuvent être sur des serveurs différents.
+
+###5.2 - le type d'id
+Les id sont souvent des incrémentation automatique de base de données donc ne sont pas universel. Il est donc nécéssaire d'avoir l'information du type lorsqu'il n'est pas devinable. Cependant, lorsque les id utilisés sont de type UUID par exemple, lorsqu'un objet a déjà été vu lors de la sérialisation et qu'il est fait a nouveau référence à lui, il n'y a pas besoin d'indiquer à nouveau son type d'où une amélioration de la performance. Pour indiquer à la librairie qu'il s'agit d'un id de type universel
+
+	ConfigurationMarshalling.setIdUniversel();
+
+Attention de bien indiquer cette option aussi sur le serveur qui désérialise si le sérialiseur et le désérialiseur ne sont pas sur la même JVM.

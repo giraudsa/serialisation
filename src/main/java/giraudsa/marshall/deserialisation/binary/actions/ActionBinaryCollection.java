@@ -22,7 +22,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 	private int index = 0;
 	
 	public static ActionAbstrait<?> getInstance(BinaryUnmarshaller<?> bu){
-		return new ActionBinaryCollection<>(Collection.class, bu);
+		return new ActionBinaryCollection<Collection>(Collection.class, bu);
 	}
 	
 	@Override
