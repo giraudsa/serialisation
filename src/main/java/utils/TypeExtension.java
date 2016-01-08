@@ -4,7 +4,6 @@ package utils;
 import giraudsa.marshall.annotations.IgnoreSerialise;
 import giraudsa.marshall.annotations.TypeRelation;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -14,7 +13,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -128,7 +126,7 @@ public class TypeExtension {
 	}
 
 	private static boolean isTransient(Field info) {
-        return (info.getAnnotation(IgnoreSerialise.class) != null);
+        return (info.getAnnotation(ConfigurationMarshalling.getAnnotationIgnoreSerialise()) != null);
    }
 
 	

@@ -1,12 +1,17 @@
 package utils;
 
+import java.lang.annotation.Annotation;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
+
+import giraudsa.marshall.annotations.IgnoreSerialise;
 
 public class ConfigurationMarshalling {
 	private static SimpleDateFormat dateFormatJson;
 	private static SimpleDateFormat dateFormatXml;
 	private static boolean idEstUniversel;
+	
+	private static Class<? extends Annotation> annotationIgnoreSerialise;
 	static{
 		idEstUniversel = false;
 		TimeZone tz = TimeZone.getTimeZone("UTC");
@@ -14,6 +19,7 @@ public class ConfigurationMarshalling {
 		dateFormatXml = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 		dateFormatJson.setTimeZone(tz);
 		dateFormatXml.setTimeZone(tz);
+		annotationIgnoreSerialise = IgnoreSerialise.class;
 		
 	}
 	public static void setIdUniversel(){
@@ -25,6 +31,15 @@ public class ConfigurationMarshalling {
 	
 	public static void setDateFormatXml(SimpleDateFormat dateFormatXml){
 		ConfigurationMarshalling.dateFormatXml = dateFormatXml;
+	}
+	
+	public static <T extends Annotation> void setAnnotationIgnoreSerialise(Class<T> ignoreSerialiseAnnotation){
+		if(ignoreSerialiseAnnotation != null) 
+			annotationIgnoreSerialise = ignoreSerialiseAnnotation;
+	}
+	
+	public static Class<? extends Annotation> getAnnotationIgnoreSerialise(){
+		return annotationIgnoreSerialise;
 	}
 	
 	public static SimpleDateFormat getDatFormatJson(){

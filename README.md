@@ -147,7 +147,7 @@ il y a 2 méthodes public static à la sérialisation en binaire et 2 pour la d�
 ##5 - Customisation
 -------------------
 
-Il est possible de personnaliser le pattern des Dates et de racourcir les flux xml et json en précisant si les id sont de type universel. Cela en effet permet de ne pas écrire à nouveau le type si l'id a déjà été vu au cours de la désérialisation.
+Il est possible de personnaliser le pattern des Dates et de racourcir les flux xml et json en précisant si les id sont de type universel. Cela en effet permet de ne pas écrire à nouveau le type si l'id a déjà été vu au cours de la désérialisation. Par ailleurs, il est possible d'utiliser une annotation différente pour indiqué les attributs à ne pas sérialiser. Par défaut, @IgnoreSerialise est utilisé.
 
 ###5.1 - Format de date
 Par défaut, le format de date respecte la norme RFC822 avec la TimeZone UTC. Cependant, il est possible de modifier en utilisant la configuration suivante :
@@ -162,3 +162,7 @@ Les id sont souvent des incrémentation automatique de base de données donc ne 
 	ConfigurationMarshalling.setIdUniversel();
 
 Attention de bien indiquer cette option aussi sur le serveur qui désérialise si le sérialiseur et le désérialiseur ne sont pas sur la même JVM.
+
+###5.3 - Changement d'annotation Transcient
+
+	ConfigurationMarshalling.setAnnotationIgnoreSerialise(@Transcient.class);
