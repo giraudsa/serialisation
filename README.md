@@ -1,9 +1,6 @@
-# serialisation-désérialisation multi-format
-#JSON - XML - Binaire
+# serialisation-désérialisation  Java multi-format
 
-Petite bibliothèque de sérialisation - deserialisation orienté simplicité d'utilisation et supportant le polymorphisme.
-
-Elle propose un outil de sérialisation vers le format xml, json et en binaire
+Bibliothèque Java de sérialisation - deserialisation orienté supportant le polymorphisme. Les formats supportés sont xml, json et  binaire
 
 ##0 - Exemple
 -----------
@@ -18,13 +15,13 @@ Un exemple simple :
 ##1 - Préalable
 -------------
 D'une manière générale, le polymorphisme (classe dérivée) et les cycles sont autorisés dans les graphes d'objets sérialisés. L'identification des objets est implémentée de la manière suivante: 
-	- chaque objet sérialisé doit avoir un identifiant unique (attribut "id") renseigné et unique à travers le graphe
-	- si un objet est instance d'une classe qui ne dispose pas de cet attribut "id", un UUID lui est automatiquement affecté (création d'un pseudo-attribut "id").
-Pour la désérialisation, il est nécessaire d'avoir un constructure de classe sans argument.
+	* chaque objet sérialisé doit avoir un identifiant unique (attribut "id") renseigné et unique à travers le graphe
+	* si un objet est instance d'une classe qui ne dispose pas de cet attribut "id", un UUID lui est automatiquement affecté (création d'un pseudo-attribut "id").
+Pour la désérialisation, il est nécessaire d'avoir un constructeur de classe sans argument.
 
-Il y a deux méthode de sérialisation :
-	- complete
-	- au niveau de l'objet
+Il y a deux méthodes de sérialisation :
+	* complete
+	* au niveau de l'objet
 
 En termes d'interface de programmation, il y a deux niveaux d'utilisation: 
 
@@ -42,45 +39,37 @@ b) API fine: offre les mêmes fonctionnalités, mais travaille sur des flux bina
 Cela permet par exemple le cas d'utilisation d'export XML/JSON/Binaire vers un flux réseau sans construire de string intermédiaire (indispensable sur un serveur de service ou pour un graphe volumineux).
 	
 ###1.1 - sérialisation complète
-----------------------------
-
 La sérialisation complète parcours la grappe d'objet complètement et sérialise l'objet en profondeur. Il faut cependant faire attention avec le comportement attendu car si la connexité est grande, l'objet sérialisé peut être d'une taille très importante.
 Toute référence ultérieure à un objet est remplacée par son id pour éviter un débordement de pile et permettre une représentation hiérarchique d'un graphe.
 	
 ###1.2 - sérialisation au niveau de l'objet
-----------------------------------------
-
 La méthodologie de sérialisation est la suivante : en UML un objet est en "relation" avec un autre objet de 3 façons différentes : 
 	- par Composition ("je suis composé de ...")
 	- par Agrégation ("j'ai ...")
 	- par Association ("je connais ...")
-Le langage Java ne fait pas la différence entre ces liens. La volonté de cette librairie est de définir des comportement automatique de sérialisation en fonction de la sémantique. Pour cette raison la librairie défini l'annotation "TypeRelation" qui permet de définir si le lien est parmi {AGGREGATION, COMPOSITION, ASSOCIATION}
+Le langage Java ne fait pas la différence entre ces liens. La volonté de cette librairie est de définir des comportements automatiques de sérialisation en fonction de la sémantique. Pour cette raison la librairie défini l'annotation "TypeRelation" qui permet de spécifier si le lien est parmi {AGGREGATION, COMPOSITION, ASSOCIATION}
 
 exemple :
 
 	@Relation(type=TypeRelation.COMPOSITION)
 	private Etat etatEnComposition
 
-Si aucune annotation n'est indiqué, le comportement est celui d'une association.
+Si aucune annotation n'est indiquée, le comportement est celui d'une association.
 
 Dans le processus de sérialisation au niveau de l'objet :
 	les attributs d'un objet sont sérialisés.
 	Un objet en composition est sérialisé
-	Les objets en Association ou en agrégation sont juste référencés par leur id.
+	Les objets en Association ou en agrégation sont simplement référencés par leurs id.
 
 ###1.3 - EntityManager
--------------------
-
 A la désérialisation, il faut pouvoir éventuellement s'interfacer avec les objets déjà existant afin d'affecter les bonnes instances en fonction des id. Pour cette raison, il est possible de passer au désérialiseur un EntityManager, c'est-à-dire une classe qui implémente l'interface EntityManager. Elle offre donc deux méthodes :
 
 	U findObject(String, Class<U>)
 	<U> metEnCache(String, U)
 
-Ces deux méthodes permettent au désérialiseur de trouver un objet préexistant et de mettre en cache un objet qu'il aurait lui même créé.
+Ces deux méthodes permettent au désérialiseur de trouver un objet préexistant et de mettre en cache un objet qu'il aurait lui-même créé.
 
 ###1.4	- Divers
------------
-		
 Un attribut peut être exclu de la sérialisation en le préfixant de @IgnoreSerialise
 Le nom d'un attribut tel qu'il apparaîtra dans le format de sortie peut être adapté par @MarshallAs("NomPublicIci")
 
@@ -92,16 +81,12 @@ Le type est mis optionnellement par le sérialiseur si celui ci est ambigu.
 il y a 4 méthodes public static à la sérialisation en xml et 4 pour la désérialisation.
 
 ###2.1 - Sérialisation
--------------------
-
 	XmlMarshaller.toXml(U, Writer)
 	XmlMarshaller.toXml(U)
 	XmlMarshaller.toCompleteXml(U, Writer)
 	XmlMarshaller.toCompleteXml(U)
 
 ###2.2 - Désérialisation
----------------------
-		
 	XmlUnmarshaller.fromXml(Reader, EntityManager)
 	XmlUnmarshaller.fromXml(Reader)
 	XmlUnmarshaller.fromXml(String)
@@ -147,7 +132,7 @@ il y a 2 méthodes public static à la sérialisation en binaire et 2 pour la d�
 ##5 - Customisation
 -------------------
 
-Il est possible de personnaliser le pattern des Dates et de racourcir les flux xml et json en précisant si les id sont de type universel. Cela en effet permet de ne pas écrire à nouveau le type si l'id a déjà été vu au cours de la désérialisation. Par ailleurs, il est possible d'utiliser une annotation différente pour indiqué les attributs à ne pas sérialiser. Par défaut, @IgnoreSerialise est utilisé.
+Il est possible de personnaliser le pattern des Dates et de racourcir les flux xml et json en précisant si les id sont universels. Cela permet en effet de ne pas écrire à nouveau le type si l'id a déjà été vu au cours de la sérialisation. Par ailleurs, il est possible d'utiliser une annotation différente pour indiquer les attributs à ne pas sérialiser. Par défaut, @IgnoreSerialise est utilisé.
 
 ###5.1 - Format de date
 Par défaut, le format de date respecte la norme RFC822 avec la TimeZone UTC. Cependant, il est possible de modifier en utilisant la configuration suivante :
@@ -157,12 +142,14 @@ Par défaut, le format de date respecte la norme RFC822 avec la TimeZone UTC. Ce
 Attention, il convient bien d'utiliser le même format entre la sérialisation et la désérialisation qui peuvent être sur des serveurs différents.
 
 ###5.2 - le type d'id
-Les id sont souvent des incrémentation automatique de base de données donc ne sont pas universel. Il est donc nécéssaire d'avoir l'information du type lorsqu'il n'est pas devinable. Cependant, lorsque les id utilisés sont de type UUID par exemple, lorsqu'un objet a déjà été vu lors de la sérialisation et qu'il est fait a nouveau référence à lui, il n'y a pas besoin d'indiquer à nouveau son type d'où une amélioration de la performance. Pour indiquer à la librairie qu'il s'agit d'un id de type universel
+Les id sont souvent des incrémentations automatiques de base de données donc ne sont pas universel mais spécifique à une classe. Il est donc nécéssaire d'avoir l'information du type lorsqu'il n'est pas devinable. Cependant, lorsque les id utilisés sont de type UUID par exemple, lorsqu'un objet a déjà été vu lors de la sérialisation et qu'il est fait à nouveau référence à lui, il n'y a pas besoin d'indiquer à nouveau son type d'où une amélioration de la performance. Pour indiquer à la librairie qu'il s'agit d'un id de type universel :
 
 	ConfigurationMarshalling.setIdUniversel();
 
 Attention de bien indiquer cette option aussi sur le serveur qui désérialise si le sérialiseur et le désérialiseur ne sont pas sur la même JVM.
 
 ###5.3 - Changement d'annotation Transcient
+
+Pour éviter d'annoter un attribut d'une classe de plusieurs librairies (JAXB, hibernate...), il est possible de redéfinir l'annotation qui permet de ne pas sérialiser un attribut.
 
 	ConfigurationMarshalling.setAnnotationIgnoreSerialise(@Transcient.class);
