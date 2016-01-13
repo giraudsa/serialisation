@@ -2,7 +2,6 @@ package giraudsa.marshall.serialisation.text;
 
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.serialisation.ActionAbstrait;
-import utils.ConfigurationMarshalling;
 import utils.champ.FieldInformations;
 
 import java.io.IOException;
