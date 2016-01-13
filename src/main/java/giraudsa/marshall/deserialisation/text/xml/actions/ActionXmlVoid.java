@@ -6,6 +6,10 @@ import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 
 public class ActionXmlVoid extends ActionXmlSimpleComportement<Void> {
 
+	private ActionXmlVoid(Class<Void> type, XmlUnmarshaller<?> xmlUnmarshaller) {
+		super(type, xmlUnmarshaller);
+	}
+
 	public static ActionAbstrait<Void> getInstance(XmlUnmarshaller<?> u) {	
 		return new ActionXmlVoid(Void.class, u);
 	}
@@ -16,13 +20,13 @@ public class ActionXmlVoid extends ActionXmlSimpleComportement<Void> {
 		return (ActionAbstrait<U>) new ActionXmlVoid(Void.class, (XmlUnmarshaller<?>)unmarshaller);
 	}
 	
-	private ActionXmlVoid(Class<Void> type, XmlUnmarshaller<?> xmlUnmarshaller) {
-		super(type, xmlUnmarshaller);
+	@Override protected <W> void integreObjet(String nomAttribut, W objet) {
+		//rien à faire avec un objet null
 	}
 	
-	@Override protected <W> void integreObjet(String nomAttribut, W objet) {};
-	
-	@Override protected void rempliData(String donnees) {};
+	@Override protected void rempliData(String donnees) {
+		//rien à faire avec un objet null
+	}
 	
 	@Override
 	protected Void getObjetDejaVu() {

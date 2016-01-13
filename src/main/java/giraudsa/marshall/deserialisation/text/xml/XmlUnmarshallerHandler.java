@@ -15,20 +15,11 @@ public class XmlUnmarshallerHandler extends DefaultHandler2 {
 		this.xmlUnmarshaller = xmlUnmarshaller;
 	}
 
-	@Override
-	public void startDocument() throws SAXException{
-		try {
-			xmlUnmarshaller.startDocument();
-		} catch (Exception e) {
-			throw new SAXException(e);			
-		}		
-	}
-	
 	
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 		try {
-			xmlUnmarshaller.startElement(uri, localName, qName, attributes);
+			xmlUnmarshaller.startElement(qName, attributes);
 		} catch (Exception e) {
 			throw new SAXException(e);			
 		}
@@ -38,7 +29,7 @@ public class XmlUnmarshallerHandler extends DefaultHandler2 {
 	@Override
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 		try {
-			xmlUnmarshaller.endElement(uri, localName, qName);
+			xmlUnmarshaller.endElement();
 		} catch (Exception e) {
 			throw new SAXException(e);			
 		}
@@ -55,12 +46,6 @@ public class XmlUnmarshallerHandler extends DefaultHandler2 {
 		} catch (Exception e) {
 			throw new SAXException(e);			
 		}
-	}
-
-	 
-	@Override
-	public void endDocument(){
-		xmlUnmarshaller.endDocument();
 	}
 
 	 

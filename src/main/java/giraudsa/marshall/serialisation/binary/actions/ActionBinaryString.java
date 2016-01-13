@@ -1,8 +1,8 @@
 package giraudsa.marshall.serialisation.binary.actions;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
 import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
+import utils.champ.FieldInformations;
 
 import java.io.IOException;
 
@@ -12,10 +12,10 @@ public class ActionBinaryString extends ActionBinary<String> {
 		super(b);
 	}
 	@Override
-	protected void ecritValeur(String string, TypeRelation relation) throws IOException {
+	protected void ecritValeur(String string, FieldInformations fieldInformations) throws IOException {
 		if(!isDejaTotalementSerialise(string)){
 			setDejaTotalementSerialise(string);
-			writeUTF(string.toString());
+			writeUTF(string);
 		}
 	}
 }

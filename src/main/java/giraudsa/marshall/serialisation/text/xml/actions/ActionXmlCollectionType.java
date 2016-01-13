@@ -1,34 +1,43 @@
 package giraudsa.marshall.serialisation.text.xml.actions;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
 import giraudsa.marshall.serialisation.text.xml.XmlMarshaller;
+import utils.champ.FakeChamp;
+import utils.champ.FieldInformations;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Stack;
+import java.util.Deque;
 
 @SuppressWarnings("rawtypes")
 public class ActionXmlCollectionType extends ActionXml<Collection> {
 	
-	@Override
-	protected Class<?> getType(Collection obj) {
-		return (obj.getClass().getName().toLowerCase().indexOf("hibernate") != -1) ? ArrayList.class : obj.getClass();
-	}
-
 	public ActionXmlCollectionType(XmlMarshaller xmlM) {
 		super(xmlM);
 	}
 
 	@Override
-	protected void ecritValeur(Collection obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		Stack<Comportement> tmp = new Stack<>();
+	protected Class<?> getType(Collection obj) {
+		return (obj.getClass().getName().toLowerCase().indexOf("hibernate") != -1) ? ArrayList.class : obj.getClass();
+	}
+
+	@Override
+	protected void ecritValeur(Collection obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+		Type[] types = fieldInformations.getParametreType();
+		Type genericType = Object.class;
+		if(types != null && types.length > 0){
+			genericType = types[0];
+		}
+		FakeChamp fakeChamp = new FakeChamp("V", genericType, fieldInformations.getRelation());
+		Deque<Comportement> tmp = new ArrayDeque<>();
 		Collection<?> collection = (Collection<?>) obj;
 		for (Object value : collection) {
-			tmp.push(new ComportementMarshallValue(value, "V", relation, false));
+			tmp.push(traiteChamp(value, fakeChamp));
 		}
 		pushComportements(tmp);
 	}

@@ -149,7 +149,11 @@ Les id sont souvent des incrémentations automatiques de base de données donc n
 Attention de bien indiquer cette option aussi sur le serveur qui désérialise si le sérialiseur et le désérialiseur ne sont pas sur la même JVM.
 
 ###5.3 - Changement d'annotation Transcient
-
 Pour éviter d'annoter un attribut d'une classe de plusieurs librairies (JAXB, hibernate...), il est possible de redéfinir l'annotation qui permet de ne pas sérialiser un attribut.
 
 	ConfigurationMarshalling.setAnnotationIgnoreSerialise(@Transcient.class);
+	
+###5.4 - Formattage des XML
+Il est possible de formatter les xml pour une lecture humaine.
+
+	ConfigurationMarshalling.setPrettyPrint();

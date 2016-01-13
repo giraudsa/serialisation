@@ -1,5 +1,6 @@
 package giraudsa.marshall.serialisation.text.json;
 
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.text.TextMarshaller;
 import giraudsa.marshall.serialisation.text.json.actions.ActionJsonCollectionType;
@@ -30,38 +31,50 @@ import utils.Constants;
 
 public class JsonMarshaller extends TextMarshaller {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonMarshaller.class);
-	// /////METHODES PUBLIQUES STATIQUES
-	public static <U> void toJson(U obj, Writer output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
-	SecurityException, IOException, NotImplementedSerializeException {
-		JsonMarshaller v = new JsonMarshaller(output, false);
-		LOGGER.debug("debut de sérialisation de " + obj.getClass());
-		v.marshall(obj);
-		LOGGER.debug("fin de sérialisation de " + obj.getClass());
-	}
-
-	public static <U> String toJson(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException,
-	IOException, NotImplementedSerializeException {
-		try (StringWriter sw = new StringWriter()) {
-			toJson(obj, sw);
-			return sw.toString();
-		}
-	}
-	public static <U> void toCompleteJson(U obj, Writer output) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-		JsonMarshaller v = new JsonMarshaller(output, true);
-		v.marshall(obj);
-	}
-
-
-	public static <U> String toCompleteJson(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException{
-		try(StringWriter sw = new StringWriter()){
-			toCompleteJson(obj, sw);
-			return sw.toString();
-		}
-	}
-
 	// ///CONSTRUCTEUR
 	private JsonMarshaller(Writer output, boolean isCompleteSerialisation) throws IOException {
 		super(output, isCompleteSerialisation, ConfigurationMarshalling.getDatFormatJson());
+	}
+
+	// /////METHODES PUBLIQUES STATIQUES
+	public static <U> void toJson(U obj, Writer output) throws MarshallExeption {
+		try {
+			JsonMarshaller v = new JsonMarshaller(output, false);
+			v.marshall(obj);
+		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+			LOGGER.debug("probleme de sérialisation json de " + obj.toString(), e);
+			throw new MarshallExeption(e);
+		}
+	}
+
+	public static <U> String toJson(U obj) throws MarshallExeption{
+		try (StringWriter sw = new StringWriter()) {
+			toJson(obj, sw);
+			return sw.toString();
+		} catch (IOException e) {
+			LOGGER.debug("Problème à la création d'un StringWriter", e);
+			throw new MarshallExeption(e);
+		}
+	}
+	public static <U> void toCompleteJson(U obj, Writer output) throws MarshallExeption{
+		try {
+			JsonMarshaller v = new JsonMarshaller(output, true);
+			v.marshall(obj);
+		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+			LOGGER.debug("probleme de sérialisation complète en json de " + obj.toString(), e);
+			throw new MarshallExeption(e);
+		}
+	}
+
+
+	public static <U> String toCompleteJson(U obj) throws MarshallExeption{
+		try(StringWriter sw = new StringWriter()){
+			toCompleteJson(obj, sw);
+			return sw.toString();
+		} catch (IOException e) {
+			LOGGER.debug("Problème à la création d'un StringWriter", e);
+			throw new MarshallExeption(e);
+		}
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -86,21 +99,22 @@ public class JsonMarshaller extends TextMarshaller {
 
 	// ///ME
 	
-	void ecritClef(String nomClef) throws IOException {
-		if(nomClef != null)	writer.write("\"" + nomClef + "\":");
+	protected void ecritClef(String nomClef) throws IOException {
+		if(nomClef != null)
+			writer.write("\"" + nomClef + "\":");
 	}
 
-	void ecritType(Class<?> type) throws IOException {
+	protected void ecritType(Class<?> type) throws IOException {
 		ecritClef(Constants.CLEF_TYPE);
 		String stringType = Constants.getSmallNameType(type);
 		writeWithQuote(stringType);
 	}
 
-	public void writeWithQuote(String string) throws IOException {
+	protected void writeWithQuote(String string) throws IOException {
 		writer.write("\"" + string + "\"");
 	}
 
-	public void writeSeparator() throws IOException {
+	protected void writeSeparator() throws IOException {
 		writer.write(",");
 	}
 }

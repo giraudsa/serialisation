@@ -2,6 +2,8 @@ package giraudsa.marshall.deserialisation.text.xml;
 
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -9,7 +11,6 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import utils.ConfigurationMarshalling;
-import utils.Constants;
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlCollectionType;
@@ -23,6 +24,7 @@ import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlUUID;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlVoid;
 import giraudsa.marshall.exception.BadTypeUnmarshallException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -33,35 +35,43 @@ import java.util.Map;
 import java.util.UUID;
 
 public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
-	
-	
-	//////METHODES STATICS PUBLICS
-	public static <U> U fromXml(Reader reader, EntityManager entity) throws IOException, SAXException, ClassNotFoundException{
-		XmlUnmarshaller<U> w = new XmlUnmarshaller<U>(reader, entity);
-		return w.parse();
+	private static final Logger LOGGER = LoggerFactory.getLogger(XmlUnmarshaller.class);
+	/////ATTRIBUTS
+	private boolean isFirst = true;
+    /////CONSTRUCTEUR
+	private XmlUnmarshaller(Reader reader, EntityManager entity) throws ClassNotFoundException, IOException {
+		super(reader, entity, ConfigurationMarshalling.getDateFormatXml());
 	}
-	public static <U> U fromXml(Reader reader) throws IOException, SAXException, ClassNotFoundException{
+	//////METHODES STATICS PUBLICS
+	public static <U> U fromXml(Reader reader, EntityManager entity) throws UnmarshallExeption{
+		XmlUnmarshaller<U> w;
+		try {
+			w = new XmlUnmarshaller<>(reader, entity);
+			return w.parse();
+		} catch (ClassNotFoundException | IOException | SAXException e) {
+			LOGGER.error("Impossible de désérialiser", e);
+			throw new UnmarshallExeption(e);
+		}
+		
+	}
+	public static <U> U fromXml(Reader reader) throws UnmarshallExeption{
 		return fromXml(reader, null);
 	}
-	public static <U> U fromXml(String stringToUnmarshall)  throws IOException, SAXException, ClassNotFoundException{
-		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) return null;
+	public static <U> U fromXml(String stringToUnmarshall) throws UnmarshallExeption{
+		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0)
+			return null;
 		try(StringReader sr = new StringReader(stringToUnmarshall)){
 			return fromXml(sr, null);
 		}
 	}
-	public static  <U> U fromXml(String stringToUnmarshall, EntityManager entity)  throws IOException, SAXException, ClassNotFoundException{
-		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) return null;
+	public static  <U> U fromXml(String stringToUnmarshall, EntityManager entity) throws UnmarshallExeption {
+		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) 
+			return null;
 		try(StringReader sr = new StringReader(stringToUnmarshall)){
 			return fromXml(sr, entity);
 		}
 	}
-	/////ATTRIBUTS
-	private boolean isFirst = true;
 
-	/////CONSTRUCTEUR
-	private XmlUnmarshaller(Reader reader, EntityManager entity) throws ClassNotFoundException, IOException {
-		super(reader, entity, ConfigurationMarshalling.getDateFormatXml());
-	}
 	
 	@Override
 	protected void initialiseActions() throws IOException {
@@ -91,11 +101,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		parser.setContentHandler(handler);
 		InputSource source = new InputSource(reader);
 		source.setEncoding("UTF-8");
-		try {
-			parser.parse(source);
-		} catch (SAXException e) {
-			e.printStackTrace();
-		}
+		parser.parse(source);
 		return obj;
 	}
 
@@ -103,42 +109,43 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		Class<?> typeToUnmarshall;
 		String typeEcrit = attributes.getValue("type");
 		if(typeEcrit != null){
-			typeToUnmarshall =  Class.forName(Constants.getNameType(attributes.getValue("type")));
-			if(isFirst) checkType(typeToUnmarshall);
+			typeToUnmarshall = getTypeDepuisNom(attributes.getValue("type"));
+			if(isFirst) 
+				checkType(typeToUnmarshall);
 		}else{
-			typeToUnmarshall = getType((ActionXml<?>)getActionEnCours(), nomAttribut);
+			typeToUnmarshall = getType(nomAttribut);
 		}
 		return typeToUnmarshall;
 	}
 
-	@SuppressWarnings({ "unchecked", "unused" })
+	@SuppressWarnings("unchecked")
 	private <T> void checkType(Class<T> typeToUnmarshall) throws BadTypeUnmarshallException {
 		isFirst = false;
 		try {
 			U test = (U)typeToUnmarshall.newInstance();
+			test.getClass();
 		} catch (Exception e) {
+			LOGGER.error("le type attendu n'est pas celui du XML ou n'est pas instanciable", e);
 			throw new BadTypeUnmarshallException("not instanciable from " + typeToUnmarshall.getName());
 		}
 	}
 
 	/////XML EVENT
-	void startDocument() {}
-
-	void startElement(String uri, String localName, String qName,
-			Attributes attributes) throws Exception {
+	void startElement(String qName, Attributes attributes) throws ClassNotFoundException, BadTypeUnmarshallException, InstantiationException, IllegalAccessException, NotImplementedSerializeException {
 		Class<?> type = getType(attributes, qName);
 		if(type != null){
 			ActionXml<?> action = (ActionXml<?>) getAction(type);
 			setNom(action, qName);
+			setFieldInformation(action);
 			pileAction.push(action);
 		}
 	}
 
-	void characters(String donnees) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ParseException {
+	void characters(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ParseException {
 		rempliData(getActionEnCours(), donnees);
 	}
 
-	@SuppressWarnings("unchecked") void endElement(String uri, String localName, String qName) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, ClassNotFoundException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
+	@SuppressWarnings("unchecked") void endElement() throws InstantiationException, InvocationTargetException, ClassNotFoundException, NoSuchMethodException, IOException, NotImplementedSerializeException, IllegalAccessException {
 		construitObjet(getActionEnCours());
 		ActionXml<?> actionATraiter = (ActionXml<?>) pileAction.pop();
 		if(pileAction.isEmpty()){
@@ -149,8 +156,6 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 			integreObjet(getActionEnCours(), nom, objet);
 		}
 	}
-
-	void endDocument() {}
 }
 
 

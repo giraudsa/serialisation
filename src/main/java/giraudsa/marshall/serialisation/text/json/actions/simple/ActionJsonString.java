@@ -18,6 +18,7 @@ public class ActionJsonString extends ActionJsonSimpleWithQuote<String> {
 	
 	@Override
 	protected void fermeAccolade(String obj, boolean notApplicableHere) throws IOException {
+		//pas d'accolade fermante pour un objet simple
 	}
 
 

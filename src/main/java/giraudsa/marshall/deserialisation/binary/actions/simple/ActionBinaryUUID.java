@@ -8,7 +8,11 @@ import java.util.UUID;
 
 public class ActionBinaryUUID extends ActionBinarySimple<UUID> {
 
-	public static ActionAbstrait<?> getInstance(BinaryUnmarshaller<?> bu){
+	private ActionBinaryUUID(Class<UUID> type, BinaryUnmarshaller<?> unmarshaller) {
+		super(type, unmarshaller);
+	}
+
+	public static ActionAbstrait<UUID> getInstance(BinaryUnmarshaller<?> bu){
 		return new ActionBinaryUUID(UUID.class, bu);
 	}
 
@@ -19,14 +23,11 @@ public class ActionBinaryUUID extends ActionBinarySimple<UUID> {
 	}
 
 	
-	private ActionBinaryUUID(Class<UUID> type, BinaryUnmarshaller<?> unmarshaller) {
-		super(type, unmarshaller);
-	}
-
 	@Override
 	protected void initialise() throws IOException {
 		boolean isDejaVu = isDejaVu();
-		if(isDejaVu) obj = getObjetDejaVu();
+		if(isDejaVu)
+			obj = getObjetDejaVu();
 		else{
 			obj = UUID.fromString(readUTF());
 			stockeObjetId();

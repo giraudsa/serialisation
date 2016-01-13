@@ -1,27 +1,27 @@
 package giraudsa.marshall.deserialisation.binary;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.exception.SmallIdTypeException;
+import utils.champ.FieldInformations;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 public abstract class ActionBinary<T> extends ActionAbstrait<T>{
-	protected TypeRelation relation;
 	protected int smallId;
 	
+	protected ActionBinary(Class<T> type, BinaryUnmarshaller<?> unmarshaller){
+		super(type, unmarshaller);
+	}
+
 	protected boolean isDeserialisationComplete(){
 		return getBinaryUnmarshaller().isDeserialisationComplete();
 	}
 
-	protected ActionBinary(Class<T> type, BinaryUnmarshaller<?> unmarshaller){
-		super(type, unmarshaller);
-	}
-	
-	
-	protected BinaryUnmarshaller<?> getBinaryUnmarshaller() {
-		return (BinaryUnmarshaller<?>)unmarshaller;
+	@SuppressWarnings("unchecked")
+	protected <U> BinaryUnmarshaller<U> getBinaryUnmarshaller() {
+		return (BinaryUnmarshaller<U>)unmarshaller;
 	}
 	
 	protected boolean readBoolean() throws IOException {
@@ -52,14 +52,15 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 		return getBinaryUnmarshaller().readUTF();
 	}
 
-	protected void litObject(TypeRelation relation, Class<?> typeProbable) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException{
-		getBinaryUnmarshaller().litObject(readByte(), relation, typeProbable);
+	protected void litObject(FieldInformations f) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException{
+		getBinaryUnmarshaller().litObject(readByte(), f);
 	}
 	
 	protected boolean isDejaVu() {
 		return getBinaryUnmarshaller().isDejaVu(smallId);
 	}
 	
+	@Override
 	protected Object getObjetDejaVu() {
 		return getBinaryUnmarshaller().getObject(smallId);
 	}
@@ -68,22 +69,20 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 		getBinaryUnmarshaller().stockObjectSmallId(smallId, obj);
 	}
 	
-	protected void exporteObject() throws IllegalArgumentException, IllegalAccessException, InstantiationException{
+	protected void exporteObject() throws IllegalAccessException, InstantiationException{
 		getBinaryUnmarshaller().integreObject(obj);
 	}
 
-	void set(TypeRelation relation, int smallId) throws IOException, InstantiationException, IllegalAccessException {
-		this.relation = relation;
+	void set(FieldInformations fieldInformations, int smallId) throws IOException, InstantiationException, IllegalAccessException {
+		this.fieldInformations = fieldInformations;
 		this.smallId = smallId;
 		initialise();
 	}
 
 	protected abstract void initialise() throws IOException, InstantiationException, IllegalAccessException;
 
-	public abstract void integreObject(Object obj) throws IllegalArgumentException, IllegalAccessException, InstantiationException;
+	protected abstract void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException;
 
-	public abstract void deserialisePariellement() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException;
-	
 	protected boolean isDejaTotalementDeSerialise() {
 		return getBinaryUnmarshaller().isDejaTotalementDeSerialise(obj);
 	}
@@ -96,6 +95,4 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 	protected void rempliData(String donnees){}
 	@Override
 	protected void construitObjet(){}
-	@Override
-	protected <W> void integreObjet(String nomAttribut, W objet) {}
 }

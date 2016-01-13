@@ -20,5 +20,6 @@ public class ActionJsonBoolean extends ActionJsonSimpleWithoutQuote<Boolean> {
 	
 	@Override
 	protected void fermeAccolade(Boolean obj, boolean notApplicableHere) throws IOException {
+		//pas d'accolade fermante pour un booleen
 	}
 }

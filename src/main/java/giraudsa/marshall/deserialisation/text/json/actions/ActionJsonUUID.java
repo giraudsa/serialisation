@@ -10,7 +10,11 @@ import java.util.UUID;
 
 public class ActionJsonUUID extends ActionJsonSimpleComportement<UUID> {
 
-	public static ActionAbstrait<?> getInstance(JsonUnmarshaller<?> unmarshaller){
+	private ActionJsonUUID(Class<UUID> type, JsonUnmarshaller<?> jsonUnmarshaller) {
+		super(type, jsonUnmarshaller);
+	}
+
+	public static ActionAbstrait<UUID> getInstance(JsonUnmarshaller<?> unmarshaller){
 		return new ActionJsonUUID(UUID.class, unmarshaller);
 	}
 	
@@ -20,23 +24,22 @@ public class ActionJsonUUID extends ActionJsonSimpleComportement<UUID> {
 		return (ActionAbstrait<U>) new ActionJsonUUID(UUID.class, (JsonUnmarshaller<?>)unmarshaller);
 	}
 	
-	private ActionJsonUUID(Class<UUID> type, JsonUnmarshaller<?> jsonUnmarshaller) {
-		super(type, jsonUnmarshaller);
-	}
-
 	@Override protected Class<?> getTypeAttribute(String nomAttribut) {
-		if(Constants.VALEUR.equals(nomAttribut)) return UUID.class;
+		if(Constants.VALEUR.equals(nomAttribut))
+			return UUID.class;
 		return null;
 	}
 	
 	@Override
 	protected <W> void integreObjet(String nomAttribut, W objet) {
-		if(objet instanceof String) obj = UUID.fromString((String) objet);
-		else if (objet instanceof UUID) obj = (UUID)objet;
+		if(objet instanceof String) 
+			obj = UUID.fromString((String) objet);
+		else if (objet instanceof UUID) 
+			obj = (UUID)objet;
 	}
 	
 	@Override
-	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		obj = UUID.fromString(donnees);
 	}
 }

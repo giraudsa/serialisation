@@ -1,8 +1,11 @@
 package giraudsa.marshall.deserialisation.text;
 
+import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import utils.ConfigurationMarshalling;
+import utils.champ.FakeChamp;
+import utils.champ.FieldInformations;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -21,6 +24,7 @@ public abstract class TextUnmarshaller<T> extends Unmarshaller<T> {
 		df.setTimeZone(dateFormat.getTimeZone());
 	}
 	
+	@Override
 	public void dispose() throws IOException {
 		reader.close();	
 	}
@@ -29,12 +33,25 @@ public abstract class TextUnmarshaller<T> extends Unmarshaller<T> {
 		action.setNom(nom);
 	}
 	
+	protected void setFieldInformation(ActionText<?> action){
+		FieldInformations fi;
+		String nom = action.getNom();
+		ActionText<?> actionEnCours = (ActionText<?>)getActionEnCours();
+		if(actionEnCours != null){
+			fi = actionEnCours.getFieldInformation(nom);
+		}else{
+			fi = new FakeChamp(nom, Object.class, TypeRelation.COMPOSITION);
+		}
+		action.setFieldInformation(fi);
+	}
+	
 	protected String getNom(ActionText<?> action){
 		return action.getNom();
 	}
 	
-	protected Class<?> getType(ActionText<?> action, String nomAttribut) {
-		return action.getType(nomAttribut);
+	protected Class<?> getType(String nomAttribut) {
+		ActionText<?> action = (ActionText<?>) getActionEnCours(); 
+		return action == null ? Object.class : action.getType(nomAttribut);
 	}
 
 }

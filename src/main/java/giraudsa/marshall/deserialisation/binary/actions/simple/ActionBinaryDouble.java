@@ -6,6 +6,10 @@ import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import java.io.IOException;
 
 public class ActionBinaryDouble extends ActionBinarySimple<Double> {
+	private ActionBinaryDouble(Class<Double> type, BinaryUnmarshaller<?> unmarshaller) {
+		super(type, unmarshaller);
+	}
+
 	public static ActionAbstrait<Double> getInstance(BinaryUnmarshaller<?> bu){
 		return new ActionBinaryDouble(Double.class, bu);
 	}
@@ -16,10 +20,6 @@ public class ActionBinaryDouble extends ActionBinarySimple<Double> {
 		return (ActionAbstrait<U>) new ActionBinaryDouble(Double.class, (BinaryUnmarshaller<?>)unmarshaller);
 	}
 	
-	private ActionBinaryDouble(Class<Double> type, BinaryUnmarshaller<?> unmarshaller) {
-		super(type, unmarshaller);
-	}
-
 	@Override
 	protected void initialise() throws IOException{
 		obj = readDouble();

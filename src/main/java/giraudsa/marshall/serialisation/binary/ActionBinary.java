@@ -1,16 +1,22 @@
 package giraudsa.marshall.serialisation.binary;
 
-import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.ActionAbstrait;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+
 import utils.Constants;
+import utils.champ.FieldInformations;
 
 
 public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	
+	protected ActionBinary(BinaryMarshaller b){
+		super(b);
+	}
+
 	protected byte getHeaderType(Class<?> type, boolean typeDevinable){
 		return Constants.Type.getByteHeader(type, typeDevinable);
 	}
@@ -23,24 +29,15 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 		return (BinaryMarshaller)marshaller;
 	}
 	
-	public ActionBinary(BinaryMarshaller b){
-		super(b);
-	}
-	
-	protected boolean writeHeaders(T objetASerialiser, TypeRelation typeRelation, boolean typeDevinable){
-		try {
-			boolean isDejaVu = isDejaVu(objetASerialiser);
-			getBinaryMarshaller().writeByteArray(calculHeaders(objetASerialiser, typeRelation, typeDevinable, isDejaVu));
-			return isDejaVu;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return false;
+	protected boolean writeHeaders(T objetASerialiser, boolean typeDevinable) throws MarshallExeption, IOException{
+		boolean isDejaVu = isDejaVu(objetASerialiser);
+		getBinaryMarshaller().writeByteArray(calculHeaders(objetASerialiser, typeDevinable, isDejaVu));
+		return isDejaVu;
 	}
 
-	protected byte[] calculHeaders(T objetASerialiser, TypeRelation typeRelation, boolean typeDevinable, boolean isDejaVu) throws IOException {
+	protected byte[] calculHeaders(T objetASerialiser, boolean typeDevinable, boolean isDejaVu) throws IOException, MarshallExeption {
 		byte headerType = getHeaderType(objetASerialiser.getClass(), typeDevinable);
-		return getBinaryMarshaller().calculHeader(objetASerialiser, typeRelation, headerType, isDejaVu);
+		return getBinaryMarshaller().calculHeader(objetASerialiser, headerType, isDejaVu);
 	}
 	protected void writeBoolean(boolean v) throws IOException {
 		getBinaryMarshaller().writeBoolean(v);
@@ -74,56 +71,51 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected void marshall(Object objetASerialiser, TypeRelation typeRelation, boolean typeDevinable){
-		pushComportement(new ComportementEcrisValeur((T) objetASerialiser, typeRelation));
-		pushComportement(new ComportementWriteHeader(objetASerialiser, typeRelation, typeDevinable));
+	@Override protected void marshall(Object objetASerialiser, FieldInformations fieldInformation){
+		pushComportement(new ComportementEcrisValeur((T) objetASerialiser, fieldInformation));
+		pushComportement(new ComportementWriteHeader(objetASerialiser, fieldInformation));
 	}
 	
-	abstract protected void ecritValeur(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException;
+	protected abstract void ecritValeur(T obj, FieldInformations fieldInformation) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption;
 	
 	protected class ComportementWriteHeader extends Comportement{
 
 		private Object objetASerialiser;
-		private TypeRelation typeRelation;
-		private boolean typeDevinable;
+		private FieldInformations fieldInformation;
 
-		public ComportementWriteHeader(Object objetASerialiser, TypeRelation typeRelation, boolean typeDevinable) {
+		protected ComportementWriteHeader(Object objetASerialiser, FieldInformations fieldInformation) {
 			super();
 			this.objetASerialiser = objetASerialiser;
-			this.typeRelation = typeRelation;
-			this.typeDevinable = typeDevinable;
+			this.fieldInformation = fieldInformation;
 		}
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public void evalue()
-				throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException,
-				InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-			writeHeaders((T) objetASerialiser, typeRelation, typeDevinable);
+		protected void evalue() throws MarshallExeption, IOException{
+			boolean typeDevinable = isTypeDevinable(objetASerialiser, fieldInformation);
+			writeHeaders((T) objetASerialiser, typeDevinable);
 		}
 		
 	}
 	protected class ComportementEcrisValeur extends Comportement{
 
 		private T obj;
-		private TypeRelation relation;
+		private FieldInformations fieldInformations;
 
-		public ComportementEcrisValeur(T obj, TypeRelation relation) {
+		protected ComportementEcrisValeur(T obj, FieldInformations fieldInformations) {
 			super();
 			this.obj = obj;
-			this.relation = relation;
+			this.fieldInformations = fieldInformations;
 		}
 
 		@Override
-		public void evalue()
-				throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException,
-				InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
-			ecritValeur(obj, relation);
+		protected void evalue() throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
+			ecritValeur(obj, fieldInformations);
 		}
 	}
 	
 	@Override
-	protected <TypeValue> boolean aTraiter(TypeValue value) throws IOException {
+	protected <V> boolean aTraiter(V value, FieldInformations f){
 		return true;
 	}
 }

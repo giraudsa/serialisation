@@ -18,15 +18,15 @@ public class JsonUnmarshallerHandler {
 	private boolean ignoreNextchar = false;
 	private boolean isBetweenQuote = false;
 	
-	private static final char quote = '\"';
+	private static final char QUOTE = '\"';
 	
-	public JsonUnmarshaller<?> jsonUnmarshaller;
+	private JsonUnmarshaller<?> jsonUnmarshaller;
 	
 	JsonUnmarshallerHandler(JsonUnmarshaller<?> jsonUnmarshaller) {
 		this.jsonUnmarshaller = jsonUnmarshaller;
 	}
 	
-	void parse(Reader reader) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException{
+	void parse(Reader reader) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException{
 		int t = reader.read();
 		while (t != -1){
 			traiteCaractere(t);
@@ -35,7 +35,7 @@ public class JsonUnmarshallerHandler {
 		
 	}
 
-	private void traiteCaractere(int t) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException {
+	private void traiteCaractere(int t) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException {
 		if(!ignoreNextchar){
 			char c = (char)t;
 			comportement(c);
@@ -46,12 +46,14 @@ public class JsonUnmarshallerHandler {
 	}
 	
 	private void deuxPoints() throws JsonHandlerException, InstantiationException, IllegalAccessException, ClassNotFoundException, NotImplementedSerializeException{
-		if(!isBetweenQuote) setClef();
+		if(!isBetweenQuote) 
+			setClef();
 		else buff.add(':');
 	}
 	
-	private void virgule() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException {
-		if(!isBetweenQuote)	setValeur();
+	private void virgule() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException {
+		if(!isBetweenQuote)
+			setValeur();
 		else buff.add(',');
 	}
 	
@@ -67,7 +69,7 @@ public class JsonUnmarshallerHandler {
 		else buff.add('{');
 	}
 
-	private void fermeAccolade() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException{
+	private void fermeAccolade() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException{
 		if(!isBetweenQuote){
 			if(!buff.isEmpty()){
 				setValeur();
@@ -76,12 +78,13 @@ public class JsonUnmarshallerHandler {
 		}
 		else buff.add('}');
 	}
-	private void ouvreCrochet() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
-		if(!isBetweenQuote) jsonUnmarshaller.ouvreChrochet();
+	private void ouvreCrochet() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
+		if(!isBetweenQuote) 
+			jsonUnmarshaller.ouvreChrochet();
 		else buff.add('[');
 	}
 	
-	private void fermeCrochet() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException, ParseException{
+	private void fermeCrochet() throws InstantiationException, IllegalAccessException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, ParseException{
 		if(!isBetweenQuote){
 			if(!buff.isEmpty()){
 				setValeur();
@@ -90,7 +93,7 @@ public class JsonUnmarshallerHandler {
 		}else buff.add(']');
 	}
 
-	private void comportement(char c) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, JsonHandlerException, ClassNotFoundException, ParseException {
+	private void comportement(char c) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, JsonHandlerException, ClassNotFoundException, ParseException {
 		switch (c) {
 		case '{':
 			ouvreAccolade();
@@ -116,6 +119,8 @@ public class JsonUnmarshallerHandler {
 			break;
 		case '\\':
 			ignoreNextchar = true;
+			buff.add(c);
+			break;
 		case '/':
 		case ';':
 		case '#':
@@ -131,7 +136,7 @@ public class JsonUnmarshallerHandler {
 	}
 	
 
-	private void setValeur() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException{
+	private void setValeur() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException{
 		if(!buff.isEmpty()){
 			Class<?> type = String.class;
 			if(!enleveGuillemets()){
@@ -142,7 +147,7 @@ public class JsonUnmarshallerHandler {
 	}
 
 	private boolean enleveGuillemets() {
-		if(!buff.isEmpty() && buff.get(0) == quote && buff.get(buff.size()-1) == quote){
+		if(!buff.isEmpty() && buff.get(0) == QUOTE && buff.get(buff.size()-1) == QUOTE){
 			buff.remove(0);
 			buff.remove(buff.size()-1);
 			return true;

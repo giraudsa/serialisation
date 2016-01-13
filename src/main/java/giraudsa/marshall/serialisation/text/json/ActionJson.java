@@ -1,33 +1,34 @@
 package giraudsa.marshall.serialisation.text.json;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.text.ActionText;
+import utils.champ.FieldInformations;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 public abstract class ActionJson<T> extends ActionText<T>  {
 	
+	protected ActionJson(JsonMarshaller jsonM) {
+		super(jsonM);
+	}
+
 	protected JsonMarshaller getJsonMarshaller(){
 		return (JsonMarshaller)marshaller;
 	}
 	
-	public ActionJson(JsonMarshaller jsonM) {
-		super(jsonM);
-	}
-
-	@Override public void marshall(Object obj, TypeRelation relation, String nomClef, boolean typeDevinable) throws IOException, InstantiationException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+	@Override protected void marshall(Object obj, FieldInformations fieldInformations){
+		String nomClef = fieldInformations.getName();
+		boolean typeDevinable = isTypeDevinable(obj, fieldInformations);
 		pushComportement(new ComportementFermeAccolade(obj, typeDevinable));
-		pushComportement(new ComportementEcritClefOuvreAccoladeEtEcrisValeur(nomClef, typeDevinable, relation, obj));
+		pushComportement(new ComportementEcritClefOuvreAccoladeEtEcrisValeur(nomClef, typeDevinable, fieldInformations, obj));
 	}
 	
-	abstract protected void ecritValeur(T obj, TypeRelation relation, boolean ecrisSeparateur) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException;
+	protected abstract void ecritValeur(T obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException;
 
-	abstract protected void fermeAccolade(T obj, boolean typeDevinable) throws IOException;
+	protected abstract void fermeAccolade(T obj, boolean typeDevinable) throws IOException;
 
-	abstract protected boolean ouvreAccolade(T obj, boolean typeDevinable) throws IOException;
+	protected abstract boolean ouvreAccolade(T obj, boolean typeDevinable) throws IOException;
 
 	protected void ecritClef(String clef) throws IOException{
 		getJsonMarshaller().ecritClef(clef);
@@ -48,26 +49,26 @@ public abstract class ActionJson<T> extends ActionText<T>  {
 	protected class ComportementEcritClefOuvreAccoladeEtEcrisValeur extends Comportement{
 		private String nomClef;
 		private boolean typeDevinable;
-		private TypeRelation relation;
+		private FieldInformations fieldInformations;
 		private Object obj;
 		
 
-		public ComportementEcritClefOuvreAccoladeEtEcrisValeur(String nomClef, boolean typeDevinable,
-				TypeRelation relation, Object obj) {
+		protected ComportementEcritClefOuvreAccoladeEtEcrisValeur(String nomClef, boolean typeDevinable,
+				FieldInformations fieldInformations, Object obj) {
 			super();
 			this.nomClef = nomClef;
 			this.typeDevinable = typeDevinable;
-			this.relation = relation;
+			this.fieldInformations = fieldInformations;
 			this.obj = obj;
 		}
 
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public void evalue() throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+		protected void evalue() throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
 			ecritClef(nomClef);
 			boolean separateurAEcrire = ouvreAccolade((T)obj, typeDevinable);
-			ecritValeur((T)obj, relation, separateurAEcrire);
+			ecritValeur((T)obj, fieldInformations, separateurAEcrire);
 		}
 	}
 
@@ -77,7 +78,7 @@ public abstract class ActionJson<T> extends ActionText<T>  {
 		private Object obj;
 		private boolean typeDevinable;
 		
-		public ComportementFermeAccolade(Object obj, boolean typeDevinable) {
+		protected ComportementFermeAccolade(Object obj, boolean typeDevinable) {
 			super();
 			this.obj = obj;
 			this.typeDevinable = typeDevinable;
@@ -85,7 +86,7 @@ public abstract class ActionJson<T> extends ActionText<T>  {
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public void evalue() throws IOException{
+		protected void evalue() throws IOException{
 			fermeAccolade((T)obj, typeDevinable);		
 		}
 		

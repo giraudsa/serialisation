@@ -1,14 +1,19 @@
 package giraudsa.marshall.serialisation.text;
 
 import giraudsa.marshall.annotations.TypeRelation;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.ActionAbstrait;
+import utils.ConfigurationMarshalling;
+import utils.champ.FieldInformations;
+
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 
 public abstract class ActionText<T> extends ActionAbstrait<T> {
 	
+	protected ActionText(TextMarshaller textM) {
+		super(textM);
+	}
+
 	protected DateFormat getDateFormat(){
 		return getTextMarshaller().df;
 	}
@@ -22,17 +27,14 @@ public abstract class ActionText<T> extends ActionAbstrait<T> {
 		return (TextMarshaller)marshaller;
 	}
 	
-	public ActionText(TextMarshaller textM) {
-		super(textM);
-	}
-
 	protected void write(String s) throws IOException {
 		getTextMarshaller().write(s);
 	}
-
-	public abstract void marshall(Object obj, TypeRelation relation, String nomClef,
-			boolean typeDevinable) throws IOException, InstantiationException,
-					IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
-					SecurityException, NotImplementedSerializeException;
 	
+	protected boolean serialiseTout(Object obj, FieldInformations fieldInformations) {
+		if (isCompleteMarshalling() && ! isDejaVu(obj))
+			return true;
+		return !isCompleteMarshalling() && fieldInformations.getRelation() == TypeRelation.COMPOSITION && !isDejaTotalementSerialise(obj);
+	}
+
 }

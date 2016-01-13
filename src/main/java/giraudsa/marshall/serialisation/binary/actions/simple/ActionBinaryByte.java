@@ -1,7 +1,7 @@
 package giraudsa.marshall.serialisation.binary.actions.simple;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
+import utils.champ.FieldInformations;
 
 import java.io.IOException;
 
@@ -13,7 +13,7 @@ public class ActionBinaryByte extends ActionBinarySimple<Byte> {
 	}
 	
 	@Override
-	public void ecritValeur(Byte objetASerialiser, TypeRelation typeRelation) throws IOException{
+	protected void ecritValeur(Byte objetASerialiser, FieldInformations fieldInformations) throws IOException{
 		writeByte(objetASerialiser);
 	}
 }

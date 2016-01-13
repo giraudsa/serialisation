@@ -1,12 +1,10 @@
 package giraudsa.marshall.serialisation.text.xml.actions;
 
-import giraudsa.marshall.annotations.TypeRelation;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
 import giraudsa.marshall.serialisation.text.xml.XmlMarshaller;
+import utils.champ.FieldInformations;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
 public class ActionXmlVoid extends ActionXml<Void> {
 
@@ -15,9 +13,7 @@ public class ActionXmlVoid extends ActionXml<Void> {
 	}
 
 	@Override
-	protected void ecritValeur(Void obj, TypeRelation relation)
-			throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+	protected void ecritValeur(Void obj, FieldInformations fieldInformations) throws IOException{
 		write("null");
 	}
 	

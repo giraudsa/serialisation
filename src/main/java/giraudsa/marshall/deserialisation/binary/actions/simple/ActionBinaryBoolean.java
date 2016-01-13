@@ -7,6 +7,10 @@ import utils.Constants;
 
 public class ActionBinaryBoolean extends ActionBinarySimple<Boolean> {
 
+	private ActionBinaryBoolean(Class<Boolean> type, BinaryUnmarshaller<?> unmarshaller) {
+		super(type, unmarshaller);
+	}
+
 	public static ActionAbstrait<Boolean> getInstance(BinaryUnmarshaller<?> bu){
 		return new ActionBinaryBoolean(Boolean.class, bu);
 	}
@@ -17,12 +21,8 @@ public class ActionBinaryBoolean extends ActionBinarySimple<Boolean> {
 		return (ActionAbstrait<U>) new ActionBinaryBoolean(Boolean.class, (BinaryUnmarshaller<?>)unmarshaller);
 	}
 	
-	private ActionBinaryBoolean(Class<Boolean> type, BinaryUnmarshaller<?> unmarshaller) {
-		super(type, unmarshaller);
-	}
-
 	public void setBool(byte header) {
-		obj = (header == Constants.BOOL_VALUE.TRUE)? true : false;
+		obj = (header == Constants.BoolValue.TRUE)? true : false;
 	}
 
 	@Override

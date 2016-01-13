@@ -6,6 +6,7 @@ import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.ActionBinary;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.exception.SmallIdTypeException;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -22,7 +23,11 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	private Champ champEnAttente = null;
 	private Champ champId = null;
 		
-	public static ActionAbstrait<?> getInstance(BinaryUnmarshaller<?> binaryUnmarshaller) {
+	private ActionBinaryObject(Class<O> type, BinaryUnmarshaller<?> b){
+		super(type, b);
+	}
+
+	public static ActionAbstrait<Object> getInstance(BinaryUnmarshaller<?> binaryUnmarshaller) {
 		return new ActionBinaryObject<>(Object.class, binaryUnmarshaller);
 	}
 	
@@ -32,41 +37,45 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 		return (ActionAbstrait<U>) new ActionBinaryObject<>(type, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 
-	private ActionBinaryObject(Class<O> type, BinaryUnmarshaller<?> b){
-		super(type, b);
-	}
-
-
 	@Override
 	protected void initialise() throws IOException, InstantiationException, IllegalAccessException {
 		champId = TypeExtension.getChampId(type);
 		boolean isDejaVu = isDejaVu();
-		if(isDejaVu) obj = getObjetDejaVu();
+		if(isDejaVu) 
+			obj = getObjetDejaVu();
 		else if(champId.isFakeId()){
 			obj = type.newInstance();
 			stockeObjetId();
 		}
-		boolean deserialiseToutSaufId = (isDeserialisationComplete() && ! isDejaTotalementDeSerialise()) ||
-				(!isDeserialisationComplete() && relation == TypeRelation.COMPOSITION && !isDejaTotalementDeSerialise());
-		boolean deserialiseId = !champId.isFakeId() &&
-			((isDeserialisationComplete() && ! isDejaTotalementDeSerialise())||
-					(!isDeserialisationComplete() && !isDejaVu));
+		boolean deserialiseToutSaufId = deserialiseToutSaufId();
+		boolean deserialiseId = deserialiseId(isDejaVu);
 		
 		initialiseListeChamps(deserialiseToutSaufId, deserialiseId);
-		if(listeChamps != null){
+		if(listeChamps != null && !listeChamps.isEmpty()){
 			iteratorChamp = listeChamps.iterator();
 			champEnAttente = iteratorChamp.next();
 		}
 	}
 
+	private boolean deserialiseId(boolean isDejaVu) {
+		if(champId.isFakeId())
+			return false;
+		return (isDeserialisationComplete() && ! isDejaTotalementDeSerialise())||
+				(!isDeserialisationComplete() && !isDejaVu);
+			
+	}
+
+	private boolean deserialiseToutSaufId() {
+		if (isDeserialisationComplete() && ! isDejaTotalementDeSerialise())
+			return true;
+		return !isDeserialisationComplete() && fieldInformations.getRelation() == TypeRelation.COMPOSITION && !isDejaTotalementDeSerialise();
+	}
+
 	private void initialiseListeChamps(boolean deserialiseToutSaufId, boolean deserialiseId) {
-		if(deserialiseId && !deserialiseToutSaufId){
-			listeChamps = new ArrayList<>();
+		listeChamps = new ArrayList<>();
+		if(deserialiseId)
 			listeChamps.add(champId);
-		}else if(deserialiseId && deserialiseToutSaufId){
-			listeChamps = TypeExtension.getSerializableFields(type);
-		}else if(!deserialiseId && deserialiseToutSaufId){
-			listeChamps = new ArrayList<>();
+		if(deserialiseToutSaufId){
 			for(Champ champ : TypeExtension.getSerializableFields(type)){
 				if(champ != champId)
 					listeChamps.add(champ);
@@ -75,19 +84,18 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	@Override
-	public void deserialisePariellement() throws InstantiationException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException,
-			ClassNotFoundException, IOException, NotImplementedSerializeException {
+	protected void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException{
 		if(champEnAttente != null){
-			if(champEnAttente != TypeExtension.getChampId(type)) setDejaTotalementDeSerialise();
-			litObject(champEnAttente.relation, champEnAttente.valueType);
+			if(champEnAttente != TypeExtension.getChampId(type))
+				setDejaTotalementDeSerialise();
+			litObject(champEnAttente);
 		}else{
 			exporteObject();
 		}
 	}
 
 	@Override
-	public void integreObject(Object objet) throws IllegalArgumentException, IllegalAccessException, InstantiationException {
+	protected void integreObjet(String nom, Object objet) throws IllegalAccessException, InstantiationException {
 		if(champEnAttente == champId){
 			String id = objet.toString();
 			obj = getObject(id, type);
@@ -95,7 +103,9 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 		}
 		if(champEnAttente.get(obj) != objet && !champEnAttente.isFakeId())
 			champEnAttente.set(obj, objet);
-		if (iteratorChamp.hasNext()) champEnAttente = iteratorChamp.next();
-		else champEnAttente = null;
+		if (iteratorChamp.hasNext())
+			champEnAttente = iteratorChamp.next();
+		else 
+			champEnAttente = null;
 	}
 }

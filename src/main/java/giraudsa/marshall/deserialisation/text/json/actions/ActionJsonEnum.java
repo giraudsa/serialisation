@@ -11,20 +11,14 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @SuppressWarnings("rawtypes")
 public class ActionJsonEnum<T extends Enum> extends ActionJson<T>  {
-
+	private static final Logger LOGGER = LoggerFactory.getLogger(ActionJsonEnum.class);
 	private Map<String, T> dicoStringEnumToObjEnum = new HashMap<>();
 	
-
-	public static ActionAbstrait<Enum> getInstance(JsonUnmarshaller<?> jsonUnmarshaller){
-		return new ActionJsonEnum<>(Enum.class, jsonUnmarshaller);
-	}
-	@Override
-	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionJsonEnum<>(type, (JsonUnmarshaller<?>)unmarshaller);
-	}
-
 
 	@SuppressWarnings("unchecked")
 	private ActionJsonEnum(Class<T> type, JsonUnmarshaller<?> jsonUnmarshaller){
@@ -37,32 +31,28 @@ public class ActionJsonEnum<T extends Enum> extends ActionJson<T>  {
 				for(T objEnum : listeEnum){
 					dicoStringEnumToObjEnum.put(objEnum.toString(), objEnum);
 				}
-			} catch (NoSuchMethodException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InvocationTargetException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			} catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				LOGGER.error("T n'est pas un Enum... étrange", e);
+			} 
 		}
 	}
+	public static ActionAbstrait<Enum> getInstance(JsonUnmarshaller<?> jsonUnmarshaller){
+		return new ActionJsonEnum<>(Enum.class, jsonUnmarshaller);
+	}
+	@Override
+	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
+		return new ActionJsonEnum<>(type, (JsonUnmarshaller<?>)unmarshaller);
+	}
+
 
 	@Override
-	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		obj = dicoStringEnumToObjEnum.get(donnees);
 	}
 	
 	@Override protected Class<?> getTypeAttribute(String nomAttribut) {
-		if(Constants.VALEUR.equals(nomAttribut)) return type;
+		if(Constants.VALEUR.equals(nomAttribut))
+			return type;
 		return null;
 	}
 	
@@ -74,8 +64,7 @@ public class ActionJsonEnum<T extends Enum> extends ActionJson<T>  {
 
 	@Override
 	protected void construitObjet() throws InstantiationException, IllegalAccessException {
-		// TODO Auto-generated method stub
-		
+		//les instances des enum sont déjà construit au chargement de la jvm
 	}
 	
 }

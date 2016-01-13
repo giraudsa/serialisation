@@ -6,41 +6,43 @@ import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.ActionBinary;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.exception.SmallIdTypeException;
+import utils.champ.FakeChamp;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 
 @SuppressWarnings("rawtypes")
-public class ActionBinaryDictionary<Dico extends Map> extends ActionBinary<Dico> {
+public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 
 	private boolean deserialisationFini = false;
 	private int tailleCollection;
 	private int index = 0;
 	private Object clefTampon;
+	private FakeChamp fakeChampKey;
+	private FakeChamp fakeChampValue;
 	
-	public static ActionAbstrait<?> getInstance(BinaryUnmarshaller<?> bu){
+	private ActionBinaryDictionary(Class<D> type, BinaryUnmarshaller<?> b) {
+		super(type, b);
+	}
+
+
+	public static ActionAbstrait<Map> getInstance(BinaryUnmarshaller<?> bu){
 		return new ActionBinaryDictionary<>(Map.class, bu);
 	}
 	
 
 	@Override
-	public <U extends Dico> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
+	public <U extends D> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
 		return new ActionBinaryDictionary<>(type, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 	
-	private ActionBinaryDictionary(Class<Dico> type, BinaryUnmarshaller<?> b) {
-		super(type, b);
-	}
-
-	
-	
-	
-	
 	@Override
 	protected void initialise() throws InstantiationException, IllegalAccessException, IOException{
-		if (isDejaVu() && !isDeserialisationComplete() && relation == TypeRelation.COMPOSITION){
+		if (isDejaVu() && !isDeserialisationComplete() && fieldInformations.getRelation() == TypeRelation.COMPOSITION){
 			obj = getObjetDejaVu();
 			tailleCollection = ((Map)obj).size();
 			deserialisationFini = index < tailleCollection;
@@ -53,13 +55,26 @@ public class ActionBinaryDictionary<Dico extends Map> extends ActionBinary<Dico>
 			tailleCollection = readInt();
 			deserialisationFini = index >= tailleCollection;
 		}
+		Type[] types = fieldInformations.getParametreType();
+		Type parametreTypeKey = Object.class;
+		Type parametreTypeValue = Object.class;
+		if(types.length > 1){
+			parametreTypeKey = types[0];
+			parametreTypeValue = types[1];
+		}
+		fakeChampKey = new FakeChamp(null, parametreTypeKey, fieldInformations.getRelation());
+		fakeChampValue = new FakeChamp(null, parametreTypeValue, fieldInformations.getRelation());
 	}
 
 	@Override
-	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, IOException, NotImplementedSerializeException{
+	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException{
 		if(!deserialisationFini){
-			litObject(relation, Object.class);
-			deserialisationFini = clefTampon != null && ++index >= tailleCollection;
+			if(clefTampon == null) 
+				litObject(fakeChampKey);
+			else{
+				litObject(fakeChampValue);
+				deserialisationFini = ++index >= tailleCollection;
+			}
 		}else{
 			exporteObject();
 		}
@@ -69,8 +84,9 @@ public class ActionBinaryDictionary<Dico extends Map> extends ActionBinary<Dico>
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void integreObject(Object objet) {
-		if(clefTampon == null) clefTampon = objet;
+	protected void integreObjet(String name, Object objet) {
+		if(clefTampon == null) 
+			clefTampon = objet;
 		else if(((Collection)obj).size() < index){
 			((Map)obj).put(clefTampon, objet);
 			clefTampon = null;

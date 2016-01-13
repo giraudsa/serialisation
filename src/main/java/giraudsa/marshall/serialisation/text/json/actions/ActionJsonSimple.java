@@ -7,7 +7,7 @@ import utils.Constants;
 
 public abstract class ActionJsonSimple<T> extends ActionJson<T> {
 
-	public ActionJsonSimple(JsonMarshaller b) {
+	protected ActionJsonSimple(JsonMarshaller b) {
 		super(b);
 	}
 	

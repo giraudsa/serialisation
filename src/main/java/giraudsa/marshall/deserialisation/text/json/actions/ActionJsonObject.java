@@ -6,22 +6,30 @@ import giraudsa.marshall.deserialisation.text.json.ActionJson;
 import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
 import java.text.ParseException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import utils.TypeExtension;
 import utils.champ.Champ;
+import utils.champ.FieldInformations;
 
 public class ActionJsonObject<T> extends ActionJson<T> {
-
+	private static final Logger LOGGER = LoggerFactory.getLogger(ActionJsonObject.class);
 	private Champ champId;
 	private Map<Champ, Object> dicoChampToValue;
 	
-	public static ActionAbstrait<?> getInstance(JsonUnmarshaller<?> jsonUnmarshaller){
+	private ActionJsonObject(Class<T> type, JsonUnmarshaller<?> jsonUnmarshaller) {
+		super(type, jsonUnmarshaller);
+		champId = TypeExtension.getChampId(type);
+		dicoChampToValue = new HashMap<>();
+	}
+
+	public static ActionAbstrait<Object> getInstance(JsonUnmarshaller<?> jsonUnmarshaller){
 		return new ActionJsonObject<>(Object.class, jsonUnmarshaller);
 	}
 
@@ -32,17 +40,11 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 	}
 
 	
-	private ActionJsonObject(Class<T> type, JsonUnmarshaller<?> jsonUnmarshaller) {
-		super(type, jsonUnmarshaller);
-		champId = TypeExtension.getChampId(type);
-		dicoChampToValue = new HashMap<>();
-	}
-
 	@Override protected Class<?> getTypeAttribute(String nomAttribut) {
 		Champ champ = TypeExtension.getChampByName(type, nomAttribut);
-		if (champ.isSimple)
-			return TypeExtension.getTypeEnveloppe(champ.valueType);//on renvoie Integer à la place de int, Double au lieu de double, etc...
-		return champ.valueType;
+		if (champ.isSimple())
+			return TypeExtension.getTypeEnveloppe(champ.getValueType());//on renvoie Integer à la place de int, Double au lieu de double, etc...
+		return champ.getValueType();
 	}
 	
 	@Override
@@ -55,24 +57,26 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 	protected void construitObjet() throws InstantiationException, IllegalAccessException {
 		String id = dicoChampToValue.get(champId).toString();
 		obj = getObject(id, type);
-		if (obj == null) return;
+		if (obj == null) 
+			return;
 		for(Entry<Champ, Object> entry : dicoChampToValue.entrySet()){
 			Champ champ = entry.getKey();
-			if (!champ.isFakeId()){
-				if(!Modifier.isFinal(champ.info.getModifiers())){//on ne modifie pas les attributs finaux
-					try{
-					champ.set(obj, entry.getValue());
-					}catch(Exception e){
-						e.getMessage();
-					}
-				}
-			}
+			if (!champ.isFakeId())
+				champ.set(obj, entry.getValue());
 		}
+	}
+	
+	@Override 
+    protected FieldInformations getFieldInformationSpecialise(String nomAttribut){
+		return TypeExtension.getChampByName(type, nomAttribut);
 	}
 
 
 	@Override
 	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {}
+			InvocationTargetException, NoSuchMethodException {
+		LOGGER.error("on est pas supposé avoir de données avec un objet.");
+		//rien a faire avec un objet, il n'y a pas de data
+	}
 
 }

@@ -9,26 +9,68 @@ import java.util.UUID;
 
 public class Constants {
 	
-	public static final Class[] classVide = new Class[0];
-	public static final Object[] nullArgument = new Object[0];
+	@SuppressWarnings("rawtypes")
+	private static final Class[] classVide = new Class[0];
+	private static final Object[] nullArgument = new Object[0];
 	
-	public static final byte[] TABLEAU_DE_BYTE_VIDE = new byte[0];
+	private static final Map<String, String> dicoSimpleNameToName = new HashMap<>();
+	private static final Map<Class<?>, String> dicoClassToSimpleName = new HashMap<>();
 	
-	public static final byte IS_NULL = 					(byte) 0x00;//0b 0000 0000
+	public static final Class<?> dictionaryType = Map.class;
+	public static final Class<?> collectionType = Collection.class;
+	public static final Class<?> objectType = Object.class;
+	public static final Class<?> enumType = Enum.class;
+	public static final Class<?> stringType = String.class;
+	public static final Class<?> dateType = Date.class;
 	
-	public static final class SMALL_ID_TYPE{
+	public static final String MAP_CLEF = "__map__clef";
+	public static final String MAP_VALEUR = "__map__valeur";
+	public static final String MAP_TYPE = "__entry__set";
+	public static final String CLEF_TYPE = "__type";
+	public static final String VALEUR = "__valeur";
+	private static final String DICTIONNAIRE_TYPE = "map";
+	private static final String COLLECTION_TYPE = "list";
+	private static final String INTEGER_TYPE = "int";
+	private static final String DOUBLE_TYPE = "double";
+	private static final String FLOAT_TYPE = "float";
+	private static final String BOOLEAN_TYPE = "bool";
+	private static final String SHORT_TYPE = "short";
+	private static final String BYTE_TYPE = "byte";
+	private static final String LONG_TYPE = "long";
+	private static final String UUID_TYPE = "uuid";
+	private static final String STRING_TYPE = "string";
+	private static final String DATE_TYPE = "date";
+	private static final String VOID_TYPE = "void";
+	
+	public static final byte IS_NULL = (byte) 0x00;//0b 0000 0000
+	
+	private Constants(){
+		//private constructueur to hide implicit public one
+	}
+	
+	@SuppressWarnings("rawtypes")
+	public static final Class[] getClassVide(){
+		return classVide;
+	}
+	public static final Object[] getNullArgument(){
+		return nullArgument;
+	}
+
+	public static final class SmallIdType{
 		public static final byte NEXT_IS_SMALL_ID_BYTE =	(byte) 0x01;//0b 0000 0001
 		public static final byte NEXT_IS_SMALL_ID_SHORT =	(byte) 0x02;//0b 0000 0010
 		public static final byte NEXT_IS_SMALL_ID_INT =		(byte) 0x03;//0b 0000 0011
 		private static final byte MASK_SID_TYPE = 			(byte) 0x03;//0b 0000 0011
-		
+		private SmallIdType(){
+			//private constructueur to hide implicit public one
+		}
 		public static byte getSmallId(byte candidat){
 			return (byte) (candidat & MASK_SID_TYPE);
 		}
 		
 	}
 	
-	public static final class BOOL_VALUE{
+	public static final class BoolValue{
 		private static final byte B_MASQUE = 		(byte) 0x0c;//0b 0000 1100
 		public static final byte B_NULL =			(byte) 0x04;//0b 0000 0100	
 		public static final byte TRUE = 			(byte) 0x48;//0b 0100 1000	
@@ -36,6 +78,9 @@ public class Constants {
 		
 		private static final Map<Boolean, Byte> dicoBoolToByte = new HashMap<>();
 		private static final Map<Byte, Boolean> dicoByteToBool = new HashMap<>();
+		private BoolValue(){
+			//private constructueur to hide implicit public one
+		}
 		static {
 			dicoBoolToByte.put(null, B_NULL);
 			dicoBoolToByte.put(true, TRUE);
@@ -55,7 +100,10 @@ public class Constants {
 	}
 
 	
-	public final static class Type{
+	public static final class Type{
+		private static final Map<Byte, Class<?>> dicoByteToTypeSimple = new HashMap<>();
+		private static final Map<Class<?>, Byte> dicoTypeSimpleToByte = new HashMap<>();
+		
 		private static final byte MASQUE = 		(byte) 0xf0;
 		public static final byte CODAGE_INT = 	(byte) 0x10;
 		public static final byte CODAGE_BYTE =	(byte) 0x20;
@@ -74,6 +122,10 @@ public class Constants {
 		public static final byte DEVINABLE = 	(byte) 0xf0;
 		public static final byte AUTRE = 		(byte) 0x00;
 		
+		private Type(){
+			//hide the public implicit constructor
+		}
+		
 		public static byte getLongueurCodageType(byte header){
 			return (byte) (header & MASQUE);
 		}
@@ -82,9 +134,6 @@ public class Constants {
 			byte typeDevinable = (byte) (header & MASQUE);
 			return typeDevinable == DEVINABLE;
 		}
-		
-		private static final Map<Byte, Class<?>> dicoByteToTypeSimple = new HashMap<>();
-		private static final Map<Class<?>, Byte> dicoTypeSimpleToByte = new HashMap<>();
 		
 		static {
 			dicoByteToTypeSimple.put(BOOL, Boolean.class);
@@ -114,49 +163,21 @@ public class Constants {
 		public static byte getByteHeader(Class<?> type, boolean typeDevinable){
 			Class<?> typeSimple = TypeExtension.getTypeEnveloppe(type);
 			Byte ret = dicoTypeSimpleToByte.get(typeSimple);
-			if (ret == null) ret = typeDevinable ? DEVINABLE : AUTRE;
+			if (ret == null) 
+				ret = typeDevinable ? DEVINABLE : AUTRE;
 			return ret;
 		}
 		
 		public static Class<?> getSimpleType(byte b, Class<?> typeProbable){
 			byte t = (byte) (b & MASQUE);
 			Class<?> ret = dicoByteToTypeSimple.get(t);
-			if(ret == null) ret = typeProbable;
+			if(ret == null) 
+				ret = typeProbable;
 			return ret;
 		}
 		
 	}
 	
-	
-	public static final String MAP_CLEF = "__map__clef";
-	public static final String MAP_VALEUR = "__map__valeur";
-	public static final String MAP_TYPE = "__entry__set";
-	public static final String CLEF_TYPE = "__type";
-	public static final String VALEUR = "__valeur";
-	
-	public static Class<?> dictionaryType = Map.class;
-	public static Class<?> collectionType = Collection.class;
-	public static Class<?> objectType = Object.class;
-	public static Class<?> enumType = Enum.class;
-	public static Class<?> stringType = String.class;
-	public static Class<?> dateType = Date.class;
-	
-	private static String DICTIONNAIRE_TYPE = "map";
-	private static String COLLECTION_TYPE = "list";
-	private static String INTEGER_TYPE = "int";
-	private static String DOUBLE_TYPE = "double";
-	private static String FLOAT_TYPE = "float";
-	private static String BOOLEAN_TYPE = "bool";
-	private static String SHORT_TYPE = "short";
-	private static String BYTE_TYPE = "byte";
-	private static String LONG_TYPE = "long";
-	private static String UUID_TYPE = "uuid";
-	private static String STRING_TYPE = "string";
-	private static String DATE_TYPE = "date";
-	private static String VOID_TYPE = "void";
-	
-	private static Map<String, String> dicoSimpleNameToName = new HashMap<>();
-	private static Map<Class<?>, String> dicoClassToSimpleName = new HashMap<>();
 	static{
 		dicoSimpleNameToName.put(DICTIONNAIRE_TYPE, HashMap.class.getName());
 		dicoSimpleNameToName.put(COLLECTION_TYPE, ArrayList.class.getName());
@@ -188,13 +209,15 @@ public class Constants {
 	
 	public static String getSmallNameType(Class<?> clazz){
 		String smallName = dicoClassToSimpleName.get(clazz);
-		if (smallName == null) smallName = clazz.getName();
+		if (smallName == null) 
+			smallName = clazz.getName();
 		return smallName;
 	}
 	
 	public static String getNameType(String smallName){
 		String typeName = dicoSimpleNameToName.get(smallName);
-		if (typeName == null) typeName = smallName;
+		if (typeName == null) 
+			typeName = smallName;
 		return typeName;
 	}
 }

@@ -7,6 +7,10 @@ import java.io.IOException;
 
 public class ActionBinaryInteger extends ActionBinarySimple<Integer> {
 
+	private ActionBinaryInteger(Class<Integer> type, BinaryUnmarshaller<?> unmarshaller) {
+		super(type, unmarshaller);
+	}
+
 	public static ActionAbstrait<Integer> getInstance(BinaryUnmarshaller<?> bu){
 		return new ActionBinaryInteger(Integer.class, bu);
 	}
@@ -17,10 +21,6 @@ public class ActionBinaryInteger extends ActionBinarySimple<Integer> {
 		return (ActionAbstrait<U>) new ActionBinaryInteger(Integer.class, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 	
-	private ActionBinaryInteger(Class<Integer> type, BinaryUnmarshaller<?> unmarshaller) {
-		super(type, unmarshaller);
-	}
-
 	@Override
 	protected void initialise() throws IOException {
 		obj = readInt();

@@ -6,7 +6,11 @@ import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
 
 public class ActionJsonVoid extends ActionJsonSimpleComportement<Void> {
 
-	public static ActionAbstrait<?> getInstance(JsonUnmarshaller<?> jsonUnmarshaller){
+	private ActionJsonVoid(Class<Void> type, JsonUnmarshaller<?> jsonUnmarshaller) {
+		super(type, jsonUnmarshaller);
+	}
+
+	public static ActionAbstrait<Void> getInstance(JsonUnmarshaller<?> jsonUnmarshaller){
 		return new ActionJsonVoid(Void.class, jsonUnmarshaller);
 	}
 	
@@ -15,13 +19,13 @@ public class ActionJsonVoid extends ActionJsonSimpleComportement<Void> {
 	public <U extends Void> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
 		return (ActionAbstrait<U>) new ActionJsonVoid(Void.class, (JsonUnmarshaller<?>)unmarshaller);
 	}
-	private ActionJsonVoid(Class<Void> type, JsonUnmarshaller<?> jsonUnmarshaller) {
-		super(type, jsonUnmarshaller);
+	@Override protected <W> void integreObjet(String nomAttribut, W objet) {
+		//rien a faire avec un objet null
 	}
 	
-	@Override protected <W> void integreObjet(String nomAttribut, W objet) {};
-	
-	@Override protected void rempliData(String donnees) {};
+	@Override protected void rempliData(String donnees) {
+		//rien a faire avec un objet null
+	}
 	
 	@Override
 	protected Void getObjetDejaVu() {

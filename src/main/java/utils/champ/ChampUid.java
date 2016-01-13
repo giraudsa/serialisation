@@ -6,13 +6,16 @@ import java.util.UUID;
 
 public class ChampUid extends Champ {
 
-	public static String uidFieldName = "id";
+	public static final String UID_FIELD_NAME = "id";
 	
-	private static Map<Object, UUID> dicoObjToFakeId = new HashMap<>();
+	private static final Map<Object, UUID> dicoObjToFakeId = new HashMap<>();
 	
-	ChampUid() {
+	private Class<?> typeObject;
+	
+	ChampUid(Class<?> typeObject) {
 		super(null, true);
-		name = uidFieldName;
+		this.typeObject = typeObject;
+		name = UID_FIELD_NAME;
 		valueType = UUID.class;
 	}
 	
@@ -31,5 +34,17 @@ public class ChampUid extends Champ {
 	@Override
 	public int compareTo(Champ other) {
 		return other instanceof ChampUid ? 0 : -1;
+	}
+	
+	@Override
+	public int hashCode() {
+		return typeObject.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof ChampUid)
+			return other == this;
+		return false;
 	}
 }

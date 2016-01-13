@@ -2,8 +2,8 @@ package giraudsa.marshall.serialisation.binary.actions.simple;
 
 import java.io.IOException;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
+import utils.champ.FieldInformations;
 
 public class ActionBinaryDouble  extends ActionBinarySimple<Double> {
 
@@ -12,7 +12,7 @@ public class ActionBinaryDouble  extends ActionBinarySimple<Double> {
 	}
 
 	@Override
-	public void ecritValeur(Double objetASerialiser, TypeRelation typeRelation) throws IOException {
+	protected void ecritValeur(Double objetASerialiser, FieldInformations fieldInformations) throws IOException {
 		writeDouble(objetASerialiser);
 	}
 }

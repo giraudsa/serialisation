@@ -8,6 +8,10 @@ import java.io.IOException;
 
 public class ActionBinaryByte extends ActionBinarySimple<Byte> {
 	
+	private ActionBinaryByte(Class<Byte> type,  BinaryUnmarshaller<?> unmarshaller) {
+		super(type, unmarshaller);
+	}
+
 	public static ActionAbstrait<Byte> getInstance(BinaryUnmarshaller<?> bu){
 		return new ActionBinaryByte(Byte.class, bu);
 	}
@@ -18,10 +22,6 @@ public class ActionBinaryByte extends ActionBinarySimple<Byte> {
 		return (ActionAbstrait<U>) new ActionBinaryByte(Byte.class, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 	
-	private ActionBinaryByte(Class<Byte> type,  BinaryUnmarshaller<?> unmarshaller) {
-		super(type, unmarshaller);
-	}
-
 	@Override
 	protected void initialise() throws IOException {
 		obj = readByte();

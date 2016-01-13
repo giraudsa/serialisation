@@ -8,6 +8,10 @@ import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 
 public class ActionBinaryFloat extends ActionBinarySimple<Float> {
 
+	private ActionBinaryFloat(Class<Float> type, BinaryUnmarshaller<?> unmarshaller) {
+		super(type, unmarshaller);
+	}
+
 	public static ActionAbstrait<Float> getInstance(BinaryUnmarshaller<?> bu){
 		return new ActionBinaryFloat(Float.class, bu);
 	}
@@ -18,10 +22,6 @@ public class ActionBinaryFloat extends ActionBinarySimple<Float> {
 		return (ActionAbstrait<U>) new ActionBinaryFloat(Float.class, (BinaryUnmarshaller<?>)unmarshaller);
 	}
 	
-	private ActionBinaryFloat(Class<Float> type, BinaryUnmarshaller<?> unmarshaller) {
-		super(type, unmarshaller);
-	}
-
 	@Override
 	protected void initialise() throws IOException {
 		obj = readFloat();

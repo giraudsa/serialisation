@@ -1,8 +1,8 @@
 package giraudsa.marshall.serialisation.text.xml.actions;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
 import giraudsa.marshall.serialisation.text.xml.XmlMarshaller;
+import utils.champ.FieldInformations;
 
 import java.io.IOException;
 import java.util.Date;
@@ -16,7 +16,7 @@ public class ActionXmlDate extends ActionXml<Date>{
 	
 
 	@Override
-	protected void ecritValeur(Date date, TypeRelation relation) throws IOException  {
+	protected void ecritValeur(Date date, FieldInformations f) throws IOException  {
 		write(getDateFormat().format(date));
 	}
 }

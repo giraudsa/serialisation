@@ -5,11 +5,14 @@ import java.lang.reflect.Field;
 import utils.TypeExtension;
 
 public abstract class FabriqueChamp {
+	private FabriqueChamp(){
+		//private constructor to hide implicit public one
+	}
 	public static Champ createChamp(Field info) {
 		return new Champ(info, TypeExtension.isSimple(info.getType()));
 	}
 	
-	public static ChampUid createChampId(){
-		return new ChampUid();
+	public static ChampUid createChampId(Class<?> typeObject){
+		return new ChampUid(typeObject);
 	}
 }

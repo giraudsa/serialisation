@@ -18,6 +18,7 @@ public class ActionJsonInteger  extends ActionJsonSimpleWithoutQuote<Integer>{
 	
 	@Override
 	protected void fermeAccolade(Integer obj, boolean notApplicableHere) throws IOException {
+		//pas d'accolade fermante pour un entier
 	}
 
 }

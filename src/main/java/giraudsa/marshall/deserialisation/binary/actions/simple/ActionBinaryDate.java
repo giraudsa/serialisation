@@ -8,6 +8,10 @@ import java.util.Date;
 
 public class ActionBinaryDate<DateType extends Date> extends ActionBinarySimple<DateType> {
 
+	private ActionBinaryDate(Class<DateType> type, BinaryUnmarshaller<?> unmarshaller) {
+		super(type, unmarshaller);
+	}
+
 	public static ActionAbstrait<Date> getInstance(BinaryUnmarshaller<?> bu){
 		return new ActionBinaryDate<Date>(Date.class, bu);
 	}
@@ -18,14 +22,11 @@ public class ActionBinaryDate<DateType extends Date> extends ActionBinarySimple<
 		return new ActionBinaryDate<U>(type, (BinaryUnmarshaller<?>)unmarshaller);
 	}
 	
-	private ActionBinaryDate(Class<DateType> type, BinaryUnmarshaller<?> unmarshaller) {
-		super(type, unmarshaller);
-	}
-
 	@Override
 	protected void initialise() throws IOException, InstantiationException, IllegalAccessException {
 		boolean isDejaVu = isDejaVu();
-		if(isDejaVu) obj = getObjetDejaVu();
+		if(isDejaVu)
+			obj = getObjetDejaVu();
 		else{
 			obj = type.newInstance();
 			((Date)obj).setTime(readLong());

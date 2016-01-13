@@ -1,33 +1,32 @@
 package giraudsa.marshall.serialisation.text.xml;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.text.ActionText;
+import utils.champ.FieldInformations;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 public abstract class ActionXml<T> extends ActionText<T> {
-	protected XmlMarshaller getXmlMarshaller(){
-		return (XmlMarshaller)marshaller;
-	}
-	
 	public ActionXml(XmlMarshaller xmlMarshaller){
 		super(xmlMarshaller);
 	}
 
+	protected XmlMarshaller getXmlMarshaller(){
+		return (XmlMarshaller)marshaller;
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void marshall(Object obj, TypeRelation relation, String nomBalise, boolean typeDevinable) 
-					throws IOException, InstantiationException,
-					IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
-					SecurityException, NotImplementedSerializeException {
-		if (nomBalise == null) nomBalise = getType((T)obj).getSimpleName();
+	protected void marshall(Object obj,FieldInformations fieldInformations){
+		String nomBalise = fieldInformations.getName();
+		if (nomBalise == null) 
+			nomBalise = getType((T)obj).getSimpleName();
 		pushComportement(new ComportementFermeBalise(nomBalise));
-		pushComportement(new ComportementOuvreBaliseEtEcrisValeur((T)obj, nomBalise, typeDevinable, relation));
+		pushComportement(new ComportementOuvreBaliseEtEcrisValeur((T)obj, nomBalise, fieldInformations));
 	}
 
-	protected abstract void ecritValeur(T obj, TypeRelation relation) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException;
+	protected abstract void ecritValeur(T obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException;
 
 	private void ouvreBalise(T obj, String nomBalise, boolean typeDevinable) throws IOException{
 		Class<?> classeAEcrire = classeAEcrire(obj, typeDevinable);
@@ -47,24 +46,20 @@ public abstract class ActionXml<T> extends ActionText<T> {
 
 		private T obj;
 		private String nomBalise;
-		private boolean typeDevinable;
-		private TypeRelation relation;
+		private FieldInformations fieldInformations;
 		
-		public ComportementOuvreBaliseEtEcrisValeur(T obj, String nomBalise, boolean typeDevinable,
-				TypeRelation relation) {
+		protected ComportementOuvreBaliseEtEcrisValeur(T obj, String nomBalise, FieldInformations fieldInformations) {
 			super();
 			this.obj = obj;
 			this.nomBalise = nomBalise;
-			this.typeDevinable = typeDevinable;
-			this.relation = relation;
+			this.fieldInformations = fieldInformations;
 		}
 
 		@Override
-		public void evalue()
-				throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException,
-				InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+		protected void evalue() throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
+			boolean typeDevinable = isTypeDevinable(obj, fieldInformations);
 			ouvreBalise(obj, nomBalise, typeDevinable);
-			ecritValeur(obj, relation);
+			ecritValeur(obj, fieldInformations);
 		}
 		
 	}
@@ -72,15 +67,13 @@ public abstract class ActionXml<T> extends ActionText<T> {
 
 		private String nomBalise;
 		
-		public ComportementFermeBalise(String nomBalise) {
+		protected ComportementFermeBalise(String nomBalise) {
 			super();
 			this.nomBalise = nomBalise;
 		}
 
 		@Override
-		public void evalue()
-				throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException,
-				InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+		protected void evalue() throws IOException{
 			fermeBalise(nomBalise);
 		}
 		

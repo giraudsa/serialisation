@@ -1,10 +1,11 @@
 package giraudsa.marshall.serialisation.text;
 
 import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import utils.ConfigurationMarshalling;
-
+import utils.champ.FakeChamp;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
@@ -14,16 +15,8 @@ import java.text.SimpleDateFormat;
 public abstract class TextMarshaller extends Marshaller {
 	protected final Writer writer;
 	protected final DateFormat df;
-	final boolean isUniversalId;
+	protected final boolean isUniversalId;
 	
-	
-	void write(String string) throws IOException {
-		writer.write(string);
-	}
-	
-	protected void dispose() throws IOException {
-		writer.close();	
-	}
 	
 	protected TextMarshaller(Writer writer, boolean isCompleteSerialisation, SimpleDateFormat dateFormat) {
 		super(isCompleteSerialisation);
@@ -33,18 +26,26 @@ public abstract class TextMarshaller extends Marshaller {
 		this.isUniversalId = ConfigurationMarshalling.getEstIdUniversel();
 		
 	}
+
+	protected void write(String string) throws IOException {
+		writer.write(string);
+	}
 	
-	protected <U> void marshall(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
-		if (obj == null) return;
-		marshallSpecialise(obj, TypeRelation.COMPOSITION, null, false);
+	protected void dispose() throws IOException {
+		writer.close();	
+	}
+	
+	protected <U> void marshall(U obj) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, MarshallExeption{
+		if (obj == null)
+			return;
+		FakeChamp fieldsInfo = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION);
+		marshallSpecialise(obj, fieldsInfo);
 		while(!aFaire.isEmpty()){
-			DeserialisePile();
+			deserialisePile();
 		}
 	}
-
-	public <T> void marshallSpecialise(T obj, TypeRelation relation, String nom, boolean typeDevinable) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
-		ActionText<?> action = (ActionText<?>) getAction(obj);
-		action.marshall(obj, relation, nom, typeDevinable);
+	
+	protected boolean isPrettyPrint(){
+		return ConfigurationMarshalling.isPrettyPrint();
 	}
-
 }

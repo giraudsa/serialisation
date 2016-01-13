@@ -10,6 +10,10 @@ import org.apache.commons.lang3.StringEscapeUtils;
 
 public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 
+	protected ActionXmlSimpleComportement(Class<T> type, XmlUnmarshaller<?> xmlUnmarshaller) {
+		super(type, xmlUnmarshaller);
+	}
+
 	public static <U> ActionAbstrait<U> getInstance(Class<U> type, XmlUnmarshaller<?> u) {	
 			return new ActionXmlSimpleComportement<>(type, u);
 		}
@@ -20,13 +24,8 @@ public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 		return new ActionXmlSimpleComportement<>(type, (XmlUnmarshaller<?>)unmarshaller);
 	}
 	
-	protected ActionXmlSimpleComportement(Class<T> type, XmlUnmarshaller<?> xmlUnmarshaller) {
-		super(type, xmlUnmarshaller);
-	}
-	
-
 	@Override
-	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		obj = type.getConstructor(String.class).newInstance(StringEscapeUtils.unescapeXml(donnees));
 	}
 

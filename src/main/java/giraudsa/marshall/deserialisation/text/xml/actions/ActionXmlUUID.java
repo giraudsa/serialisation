@@ -11,6 +11,10 @@ import java.util.UUID;
 public class ActionXmlUUID extends ActionXmlSimpleComportement<UUID>{
 
 	
+	private ActionXmlUUID(Class<UUID> type, XmlUnmarshaller<?> xmlUnmarshaller) {
+		super(type, xmlUnmarshaller);
+	}
+
 	public static ActionAbstrait<UUID> getInstance(XmlUnmarshaller<?> u) {	
 		return new ActionXmlUUID(UUID.class, u);
 	}
@@ -21,12 +25,8 @@ public class ActionXmlUUID extends ActionXmlSimpleComportement<UUID>{
 		return (ActionAbstrait<U>) new ActionXmlUUID(UUID.class, (XmlUnmarshaller<?>)unmarshaller);
 	}
 	
-	private ActionXmlUUID(Class<UUID> type, XmlUnmarshaller<?> xmlUnmarshaller) {
-		super(type, xmlUnmarshaller);
-	}
-	
 	@Override
-	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		obj = UUID.fromString(donnees);
 	}
 

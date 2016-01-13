@@ -1,5 +1,6 @@
 package giraudsa.marshall.serialisation.text.xml;
 
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.text.TextMarshaller;
 import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlCollectionType;
@@ -18,37 +19,59 @@ import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import utils.ConfigurationMarshalling;
 import utils.Constants;
 
 public class XmlMarshaller extends TextMarshaller {
-	
-	/////METHODES STATICS PUBLICS
-	public static <U> void toXml(U obj, Writer output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException  {
-		XmlMarshaller v = new XmlMarshaller(output, false);
-		v.marshall(obj);
-	}
-	public static <U> String toXml(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
-		try(StringWriter sw = new StringWriter()){
-			toXml(obj, sw);
-			return sw.toString();
-		}
-	}
-	public static <U> void toCompleteXml(U obj, Writer output) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
-		XmlMarshaller v = new XmlMarshaller(output, true);
-		v.marshall(obj);
-	}
-	public static <U> String toCompleteXml(U obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException{
-		try(StringWriter sw = new StringWriter()){
-			toCompleteXml(obj, sw);
-			return sw.toString();
-		}
-	}
-	
+	private static final Logger LOGGER = LoggerFactory.getLogger(XmlMarshaller.class);
+	//prettyPrint 
+	private int niveau = 0;
+	private boolean lastIsOpen = false;
 	//////CONSTRUCTEUR
 	private XmlMarshaller(Writer output, boolean isCompleteSerialisation) throws IOException {
 		super(output, isCompleteSerialisation, ConfigurationMarshalling.getDateFormatXml());
 		writeHeader();
+	}
+	/////METHODES STATICS PUBLICS
+	public static <U> void toXml(U obj, Writer output) throws MarshallExeption {
+		try {
+			XmlMarshaller v = new XmlMarshaller(output, false);
+			v.marshall(obj);
+		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+			LOGGER.error("impossible de sérialiser " + obj.toString(), e);
+			throw new MarshallExeption(e);
+		}
+		
+	}
+	public static <U> String toXml(U obj) throws MarshallExeption{
+		try(StringWriter sw = new StringWriter()){
+			toXml(obj, sw);
+			return sw.toString();
+		} catch (IOException e) {
+			LOGGER.error("impossible de sérialiser en String " + obj.toString(), e);
+			throw new MarshallExeption(e);
+		}
+	}
+	public static <U> void toCompleteXml(U obj, Writer output) throws MarshallExeption{
+		try {
+			XmlMarshaller v = new XmlMarshaller(output, true);
+			v.marshall(obj);
+		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+			LOGGER.error("impossible de sérialiser completement " + obj.toString(), e);
+			throw new MarshallExeption(e);
+		}
+	}
+	public static <U> String toCompleteXml(U obj) throws MarshallExeption{
+		try(StringWriter sw = new StringWriter()){
+			toCompleteXml(obj, sw);
+			return sw.toString();
+		} catch (IOException e) {
+			LOGGER.error("impossible de sérialiser completement en String " + obj.toString(), e);
+			throw new MarshallExeption(e);
+		}
 	}
 	
 	@SuppressWarnings("rawtypes")
@@ -68,13 +91,16 @@ public class XmlMarshaller extends TextMarshaller {
 		dicoTypeToAction.put(Double.class, new ActionXmlSimpleComportement<Double>(this));
 		dicoTypeToAction.put(Long.class, new ActionXmlSimpleComportement<Long>(this));
 		dicoTypeToAction.put(Short.class, new ActionXmlSimpleComportement<Short>(this));
-	};
+	}
 
 	private void writeHeader() throws IOException {
 		writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 	}
 
-	void openTag(String name, Class<?> type) throws IOException {
+	protected void openTag(String name, Class<?> type) throws IOException {
+		if(isPrettyPrint()){
+			prettyPrintOpenTag();
+		}
 		writer.write("<");
 		writer.write(name);
 		if(type != null){
@@ -84,11 +110,31 @@ public class XmlMarshaller extends TextMarshaller {
 		}
 		writer.write(">");
 	}
-
-	void closeTag(String name) throws IOException {
+	protected void closeTag(String name) throws IOException {
+		if(isPrettyPrint()){
+			prettyPrintCloseTag();
+		}
 		writer.write("</");
 		writer.write(name);
 		writer.write('>');
+	}
+	private void prettyPrintOpenTag() throws IOException {
+		writer.write(System.lineSeparator());
+		for(int j = 0; j < niveau ; j++){
+			writer.write("   ");
+		}
+		++niveau;
+		lastIsOpen = true;
+	}
+	private void prettyPrintCloseTag() throws IOException {
+		--niveau;
+		if(!lastIsOpen){
+			writer.write(System.lineSeparator());
+			for(int j = 0; j < niveau ; j++){
+				writer.write("   ");
+			}
+		}
+		lastIsOpen = false;
 	}
 
 }

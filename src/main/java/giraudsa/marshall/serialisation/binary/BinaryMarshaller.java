@@ -1,6 +1,7 @@
 package giraudsa.marshall.serialisation.binary;
 
 import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.actions.ActionBinaryCollectionType;
@@ -34,37 +35,88 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import utils.Constants;
+import utils.champ.FakeChamp;
 
 public class BinaryMarshaller extends Marshaller{
+	private static final Logger LOGGER = LoggerFactory.getLogger(BinaryMarshaller.class);
 	private DataOutputStream output;
-	private Map<Object, Integer> smallIds = new HashMap<Object, Integer>();
-	private Map<Class<?>, Integer> dejaVuType = new HashMap<Class<?>, Integer>();
+	private Map<Object, Integer> smallIds = new HashMap<>();
+	private Map<Class<?>, Integer> dejaVuType = new HashMap<>();
 	private int compteur = 0;
 	private int compteurType = 1;	
-	/////METHODES STATICS PUBLICS
-	public static <U> void toBinary(U obj, OutputStream  output) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException  {
-		DataOutputStream stream = new DataOutputStream(output);
-			BinaryMarshaller v = new BinaryMarshaller(stream, false);
-			v.marshall(obj);
-			stream.flush();
-		stream.close();
-	}
-
-	public static <U> void toCompleteBinary(U obj, OutputStream  output) throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException{
-		try(DataOutputStream stream = new DataOutputStream(output)){
-			BinaryMarshaller v = new BinaryMarshaller(stream,true);
-			v.marshall(obj);
-			stream.flush();
-		}
-	}
-	
 	private BinaryMarshaller(DataOutputStream  output, boolean isCompleteSerialisation) throws IOException {
 		super(isCompleteSerialisation);
 		this.output = output;
 		output.writeBoolean(isCompleteSerialisation);
 	}
+
+	/////METHODES STATICS PUBLICS
+	public static <U> void toBinary(U obj, OutputStream  output) throws MarshallExeption{
+		try(DataOutputStream stream = new DataOutputStream(output)){
+			BinaryMarshaller v = new BinaryMarshaller(stream, false);
+			v.marshall(obj);
+			stream.flush();
+		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+			LOGGER.error("Problème lors de la sérialisation binaire", e);
+			throw new MarshallExeption(e);
+		}
+	}
+
+	public static <U> void toCompleteBinary(U obj, OutputStream  output) throws MarshallExeption{
+		try(DataOutputStream stream = new DataOutputStream(output)){
+			BinaryMarshaller v = new BinaryMarshaller(stream,true);
+			v.marshall(obj);
+			stream.flush();
+		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+			LOGGER.error("Problème lors de la sérialisation binaire complète", e);
+			throw new MarshallExeption(e);
+		}
+	}
 	
+	/////METHODES 
+	private <T> void marshall(T obj) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, MarshallExeption{
+		FakeChamp fieldsInfo = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION);
+		marshallSpecialise(obj, fieldsInfo);
+		while(!aFaire.isEmpty()){
+			deserialisePile();
+		}
+	}
+
+	private static byte getTypeOfSmallId(int smallId) {
+		if( ((int)((byte)smallId) & 0x000000FF) == smallId)
+			return Constants.SmallIdType.NEXT_IS_SMALL_ID_BYTE;
+		if( ((int)((short)smallId) & 0x0000FFFF) == smallId)
+			return Constants.SmallIdType.NEXT_IS_SMALL_ID_SHORT;
+		return Constants.SmallIdType.NEXT_IS_SMALL_ID_INT;
+	}
+	
+	private static byte getTypeOfSmallIdTypeObj(int smallId) {
+		if( ((int)((byte)smallId) & 0x000000FF) == smallId)
+			return Constants.Type.CODAGE_BYTE;
+		if( ((int)((short)smallId) & 0x0000FFFF) == smallId) 
+			return Constants.Type.CODAGE_SHORT;
+		return Constants.Type.CODAGE_INT;
+	}
+	
+	private int getSmallIdAndStockObj(Object obj){
+		if(!smallIds.containsKey(obj)){
+			smallIds.put(obj, compteur++);
+		}
+		 return smallIds.get(obj);
+	}
+	
+	private int getSmallIdTypeAndStockType(Class<?> typeObj) {
+		if(!isDejaVuType(typeObj)){
+			dejaVuType.put(typeObj, compteurType++);
+		}
+		return dejaVuType.get(typeObj);
+	}
+
 	@Override protected void initialiseDico() {
 		dicoTypeToAction.put(void.class, new ActionBinaryVoid(this));
 		dicoTypeToAction.put(Boolean.class, new ActionBinaryBoolean(this));
@@ -83,18 +135,8 @@ public class BinaryMarshaller extends Marshaller{
 		dicoTypeToAction.put(Map.class, new ActionBinaryDictionaryType(this));
 		dicoTypeToAction.put(Object.class, new ActionBinaryObject(this));
 	}
-	
 
-
-	/////METHODES 
-	private <T> void marshall(T obj) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, NotImplementedSerializeException {
-		marshallSpecialise(obj, TypeRelation.COMPOSITION, null, false);
-		while(!aFaire.isEmpty()){
-			DeserialisePile();
-		}
-	}
-
-	byte[] calculHeader(Object o, TypeRelation relation, byte debutHeader, boolean estDejaVu) throws IOException{
+	protected byte[] calculHeader(Object o, byte debutHeader, boolean estDejaVu) throws IOException, MarshallExeption{
 		Class<?> typeObj = o.getClass();
 		boolean isTypeAutre = debutHeader == Constants.Type.AUTRE || debutHeader== Constants.Type.DEVINABLE;
 		boolean typeDevinable = debutHeader== Constants.Type.DEVINABLE;
@@ -104,126 +146,97 @@ public class BinaryMarshaller extends Marshaller{
 		boolean isDejaVuTypeObj = true;
 		int smallIdTypeObj = 0;
 		byte typeOfSmallIdTypeObj = 0;
-		if(isTypeAutre){
-			if(!estDejaVu){
-				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentBag") != -1) typeObj = ArrayList.class;
-				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSet") != -1) typeObj = HashSet.class;
-				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentMap") != -1) typeObj = HashMap.class;
-				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedSet") != -1) typeObj = TreeSet.class;
-				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedMap") != -1) typeObj = TreeMap.class;
+		if(isTypeAutre && !estDejaVu){
+				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentBag") != -1) 
+					typeObj = ArrayList.class;
+				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSet") != -1) 
+					typeObj = HashSet.class;
+				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentMap") != -1) 
+					typeObj = HashMap.class;
+				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedSet") != -1) 
+					typeObj = TreeSet.class;
+				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedMap") != -1) 
+					typeObj = TreeMap.class;
 				
 				isDejaVuTypeObj = isDejaVuType(typeObj);
 				smallIdTypeObj = getSmallIdTypeAndStockType(typeObj);
 				typeOfSmallIdTypeObj = getTypeOfSmallIdTypeObj(smallIdTypeObj);
 				debutHeader |= typeOfSmallIdTypeObj;
-			}
 		}
-		try(ByteArrayOutputStream byteOut = new ByteArrayOutputStream()){
-			DataOutputStream dataOut = new DataOutputStream(byteOut);
+		try(ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+				DataOutputStream dataOut = new DataOutputStream(byteOut)){
 			dataOut.writeByte(debutHeader);
 			switch (typeOfSmallId) {
-			case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_BYTE:
+			case Constants.SmallIdType.NEXT_IS_SMALL_ID_BYTE:
 				dataOut.writeByte((byte)smallId);
 				break;
-			case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_SHORT:
+			case Constants.SmallIdType.NEXT_IS_SMALL_ID_SHORT:
 				dataOut.writeShort((short)smallId);
 				break;
-			case Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_INT:
+			case Constants.SmallIdType.NEXT_IS_SMALL_ID_INT:
 				dataOut.writeInt(smallId);
 				break;
+			default :
+				throw new MarshallExeption("trop d'objets");
 			}
-			if(isTypeAutre){
 			///////write type if necessary
-				if(!estDejaVu && !typeDevinable){
-					switch (typeOfSmallIdTypeObj) {
-					case Constants.Type.CODAGE_BYTE:
-						dataOut.writeByte((byte)smallIdTypeObj);
-						break;
-					case Constants.Type.CODAGE_SHORT:
-						dataOut.writeShort((short)smallIdTypeObj);
-						break;
-					case Constants.Type.CODAGE_INT:
-						dataOut.writeInt(smallIdTypeObj);
-						break;
-					}
-					if(!isDejaVuTypeObj){
-						dataOut.writeUTF(typeObj.getName());
-						
-					}
+			if(isTypeAutre && !estDejaVu && !typeDevinable){
+				switch (typeOfSmallIdTypeObj) {
+				case Constants.Type.CODAGE_BYTE:
+					dataOut.writeByte((byte)smallIdTypeObj);
+					break;
+				case Constants.Type.CODAGE_SHORT:
+					dataOut.writeShort((short)smallIdTypeObj);
+					break;
+				case Constants.Type.CODAGE_INT:
+					dataOut.writeInt(smallIdTypeObj);
+					break;
+				default :
+					throw new MarshallExeption("trop de type");
+				}
+				if(!isDejaVuTypeObj){
+					dataOut.writeUTF(typeObj.getName());
+					
 				}
 			}
 			return byteOut.toByteArray();
 		}
 	}
 
-	protected <T> void marshallSpecialise(T obj, TypeRelation relation, String nom, boolean typeDevinable) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException{
-		ActionBinary<?> action = (ActionBinary<?>) getAction(obj);
-		action.marshall(obj, relation, typeDevinable);
-	}
-
-	private byte getTypeOfSmallId(int smallId) {
-		if( ((int)((byte)smallId) & 0x000000FF) == smallId) return Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_BYTE;
-		if( ((int)((short)smallId) & 0x0000FFFF) == smallId) return Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_SHORT;
-		return Constants.SMALL_ID_TYPE.NEXT_IS_SMALL_ID_INT;
-	}
-	
-	private byte getTypeOfSmallIdTypeObj(int smallId) {
-		if( ((int)((byte)smallId) & 0x000000FF) == smallId) return Constants.Type.CODAGE_BYTE;
-		if( ((int)((short)smallId) & 0x0000FFFF) == smallId) return Constants.Type.CODAGE_SHORT;
-		return Constants.Type.CODAGE_INT;
-	}
-	
-	private int getSmallIdAndStockObj(Object obj){
-		if(!smallIds.containsKey(obj)){
-			smallIds.put(obj, compteur++);
-		}
-		 return smallIds.get(obj);
-	}
-	
 	protected boolean isDejaVuType(Class<?> typeObj) {
 		return dejaVuType.containsKey(typeObj);
 	}
 	
-	private int getSmallIdTypeAndStockType(Class<?> typeObj) {
-		if(!isDejaVuType(typeObj)){
-			dejaVuType.put(typeObj, compteurType++);
-		}
-		return dejaVuType.get(typeObj);
-	}
-	
-
-
-	
 	//////////
-	boolean writeBoolean(boolean v) throws IOException {
+	protected boolean writeBoolean(boolean v) throws IOException {
 		output.writeBoolean(v);
 		return v;
 	}
-	void writeByte(byte v) throws IOException {
+	protected void writeByte(byte v) throws IOException {
 		output.writeByte((int)v);
 	}
-	void writeByteArray(byte[] v) throws IOException{
+	protected void writeByteArray(byte[] v) throws IOException{
 		output.write(v);
 	}
-	void writeShort(short v) throws IOException {
+	protected void writeShort(short v) throws IOException {
 		output.writeShort((int)v);
 	}
-	void writeChar(char v) throws IOException {
+	protected void writeChar(char v) throws IOException {
 		output.writeChar((int)v);
 	}
-	void writeInt(int v) throws IOException {
+	protected void writeInt(int v) throws IOException {
 		output.writeInt(v);
 	}
-	void writeLong(long v) throws IOException {
+	protected void writeLong(long v) throws IOException {
 		output.writeLong(v);
 	}
-	void writeFloat(float v) throws IOException {
+	protected void writeFloat(float v) throws IOException {
 		output.writeFloat(v);
 	}
-	void writeDouble(double v) throws IOException {
+	protected void writeDouble(double v) throws IOException {
 		output.writeDouble(v);
 	}
-	void writeUTF(String s) throws IOException {
+	protected void writeUTF(String s) throws IOException {
 		output.writeUTF(s);
 	}
 }

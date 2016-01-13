@@ -10,25 +10,20 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @SuppressWarnings("rawtypes")
 public class ActionXmlEnum<T extends Enum> extends ActionXml<T>  {
-
+	private static final Logger LOGGER = LoggerFactory.getLogger(ActionXmlEnum.class);
 	private Map<String, T> dicoStringEnumToObjEnum = new HashMap<>();
 	private StringBuilder sb = new StringBuilder();
 	
-	public static ActionAbstrait<?> getInstance(XmlUnmarshaller<?> u) {	
-		return new ActionXmlEnum<Enum>(Enum.class, u);
-	}
-	
-	@Override
-	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionXmlEnum<U>(type, (XmlUnmarshaller<?>)unmarshaller);
-	}
-
 	@SuppressWarnings("unchecked")
 	private ActionXmlEnum(Class<T> type, XmlUnmarshaller<?> xmlUnmarshaller) {
 		super(type, xmlUnmarshaller);
-		if(type == Enum.class) return;
+		if(type == Enum.class)
+			return;
 		Method values;
 		try {
 			values = type.getDeclaredMethod("values");
@@ -36,21 +31,22 @@ public class ActionXmlEnum<T extends Enum> extends ActionXml<T>  {
 			for(T objEnum : listeEnum){
 				dicoStringEnumToObjEnum.put(objEnum.toString(), objEnum);
 			}
-		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			e.printStackTrace();
-		}
+		} catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			LOGGER.error("T n'est pas un Enum... étrange", e);
+		} 
+	}
+
+	public static ActionAbstrait<Enum> getInstance(XmlUnmarshaller<?> u) {	
+		return new ActionXmlEnum<>(Enum.class, u);
+	}
+	
+	@Override
+	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
+		return new ActionXmlEnum<>(type, (XmlUnmarshaller<?>)unmarshaller);
 	}
 
 	@Override
-	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		sb.append(donnees);
 	}
 	

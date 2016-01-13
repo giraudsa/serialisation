@@ -1,6 +1,6 @@
 package giraudsa.marshall.serialisation.binary.actions;
 
-import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
 import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
 
@@ -10,25 +10,32 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import utils.Constants;
+import utils.champ.FieldInformations;
 
 @SuppressWarnings("rawtypes")
 public class ActionBinaryEnum extends ActionBinary<Enum> {
-	
+	private static final Logger LOGGER = LoggerFactory.getLogger(ActionBinaryEnum.class);
+	private static final Map<Class<? extends Enum>, Byte> dicoEnumToCodage = new HashMap<>();
+	private static final Map<Class<? extends Enum>, Map<Object, Integer>> dicoObjToInteger = new HashMap<>();
+
 	public ActionBinaryEnum(BinaryMarshaller b) {
 		super(b);
 	}
 
-	private static final Map<Class<? extends Enum>, Byte> dicoEnumToCodage = new HashMap<>();
-	private static final Map<Class<? extends Enum>, Map<Object, Integer>> dicoObjToInteger = new HashMap<>();
-
-	protected void ecritValeur(Enum enumASerialiser, TypeRelation typeRelation) throws IOException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	@Override
+	protected void ecritValeur(Enum enumASerialiser, FieldInformations fieldInformations) throws IOException, MarshallExeption {
 		if(!isDejaTotalementSerialise(enumASerialiser)){
 				setDejaTotalementSerialise(enumASerialiser);
 				rempliDictionnaire(enumASerialiser);
 				Integer objInt = dicoObjToInteger.get(enumASerialiser.getClass()).get(enumASerialiser);
-				if(dicoEnumToCodage.get(enumASerialiser.getClass()) == Constants.Type.CODAGE_BYTE) writeByte(objInt.byteValue());
-				else if(dicoEnumToCodage.get(enumASerialiser.getClass()) == Constants.Type.CODAGE_SHORT) writeShort(objInt.shortValue());
+				if(dicoEnumToCodage.get(enumASerialiser.getClass()) == Constants.Type.CODAGE_BYTE) 
+					writeByte(objInt.byteValue());
+				else if(dicoEnumToCodage.get(enumASerialiser.getClass()) == Constants.Type.CODAGE_SHORT)
+					writeShort(objInt.shortValue());
 				else writeInt(objInt);
 		}
 	}
@@ -39,18 +46,29 @@ public class ActionBinaryEnum extends ActionBinary<Enum> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private  void rempliDictionnaire(Object objetASerialiser) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	private static synchronized void rempliDictionnaire(Object objetASerialiser) throws MarshallExeption{
 		Map<Object, Integer> map = dicoObjToInteger.get(objetASerialiser.getClass());
 		if(map == null){
 			map = new HashMap<>();
-			dicoObjToInteger.put((Class<? extends Enum>) objetASerialiser.getClass(), map);
+			Class<? extends Enum> clazz = (Class<? extends Enum>) objetASerialiser.getClass();
+			dicoObjToInteger.put(clazz , map);
 			
-			Method values = objetASerialiser.getClass().getDeclaredMethod("values");
-			Enum[] listeEnum = (Enum[]) values.invoke(null);
+			Method values;
+			Enum[] listeEnum = null;
+			try {
+				values = clazz.getDeclaredMethod("values");
+				listeEnum = (Enum[]) values.invoke(null);
+			} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				LOGGER.error("impossible de récupérer les valeurs de l'enum", e);
+				throw new MarshallExeption(e);
+			}
 			int size = listeEnum.length;
-			if((int)(byte)size == size) dicoEnumToCodage.put((Class<? extends Enum>) objetASerialiser.getClass(), Constants.Type.CODAGE_BYTE);
-			else if((int)(short)size == size) dicoEnumToCodage.put((Class<? extends Enum>) objetASerialiser.getClass(), Constants.Type.CODAGE_SHORT);
-			else dicoEnumToCodage.put((Class<? extends Enum>) objetASerialiser.getClass(), Constants.Type.CODAGE_INT);
+			if((int)(byte)size == size)
+				dicoEnumToCodage.put(clazz, Constants.Type.CODAGE_BYTE);
+			else if((int)(short)size == size)
+				dicoEnumToCodage.put(clazz, Constants.Type.CODAGE_SHORT);
+			else 
+				dicoEnumToCodage.put(clazz, Constants.Type.CODAGE_INT);
 			int i=0;
 			for (Enum objEnum : listeEnum){
 				map.put(objEnum, i++);

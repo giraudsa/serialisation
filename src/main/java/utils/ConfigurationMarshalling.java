@@ -7,30 +7,30 @@ import java.util.TimeZone;
 import giraudsa.marshall.annotations.IgnoreSerialise;
 
 public class ConfigurationMarshalling {
-	private static SimpleDateFormat dateFormatJson;
-	private static SimpleDateFormat dateFormatXml;
-	private static boolean idEstUniversel;
+	private SimpleDateFormat dateFormatJson;
+	private SimpleDateFormat dateFormatXml;
+	private static boolean idEstUniversel = false;
+	private static boolean prettyPrint = false;
+	private static Class<? extends Annotation> annotationIgnoreSerialise= IgnoreSerialise.class;
+	private static final ConfigurationMarshalling instance = new ConfigurationMarshalling();
 	
-	private static Class<? extends Annotation> annotationIgnoreSerialise;
-	static{
-		idEstUniversel = false;
+	private ConfigurationMarshalling(){
 		TimeZone tz = TimeZone.getTimeZone("UTC");
 		dateFormatJson = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 		dateFormatXml = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 		dateFormatJson.setTimeZone(tz);
 		dateFormatXml.setTimeZone(tz);
-		annotationIgnoreSerialise = IgnoreSerialise.class;
-		
 	}
+	
 	public static void setIdUniversel(){
 		idEstUniversel = true;
 	}
-	public static void setDateFormatJson(SimpleDateFormat dateFormatJson){
-		ConfigurationMarshalling.dateFormatJson = dateFormatJson;
+	public static synchronized void setDateFormatJson(SimpleDateFormat dateFormatJson){
+		instance.dateFormatJson = dateFormatJson;
 	}
 	
-	public static void setDateFormatXml(SimpleDateFormat dateFormatXml){
-		ConfigurationMarshalling.dateFormatXml = dateFormatXml;
+	public static synchronized void setDateFormatXml(SimpleDateFormat dateFormatXml){
+		instance.dateFormatXml = dateFormatXml;
 	}
 	
 	public static <T extends Annotation> void setAnnotationIgnoreSerialise(Class<T> ignoreSerialiseAnnotation){
@@ -42,14 +42,20 @@ public class ConfigurationMarshalling {
 		return annotationIgnoreSerialise;
 	}
 	
-	public static SimpleDateFormat getDatFormatJson(){
-		return dateFormatJson;
+	public static synchronized SimpleDateFormat getDatFormatJson(){
+		return instance.dateFormatJson;
 	}
-	public static SimpleDateFormat getDateFormatXml(){
-		return dateFormatXml;
+	public static synchronized SimpleDateFormat getDateFormatXml(){
+		return instance.dateFormatXml;
 	}
 	public static boolean getEstIdUniversel(){
 		return idEstUniversel;
+	}
+	public static void setPrettyPrint(){
+		prettyPrint = true;
+	}
+	public static boolean isPrettyPrint(){
+		return prettyPrint;
 	}
 
 }

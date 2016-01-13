@@ -12,6 +12,10 @@ import java.text.ParseException;
 public class ActionJsonSimpleComportement<T> extends ActionJson<T> {
 
 	
+	protected ActionJsonSimpleComportement(Class<T> type, JsonUnmarshaller<?> jsonUnmarshaller) {
+		super(type, jsonUnmarshaller);
+	}
+
 	public static <U> ActionAbstrait<U> getInstance(Class<U> type, JsonUnmarshaller<?> u) {	
 		return new ActionJsonSimpleComportement<>(type, u);
 	}
@@ -23,12 +27,9 @@ public class ActionJsonSimpleComportement<T> extends ActionJson<T> {
 	}
 
 
-	protected ActionJsonSimpleComportement(Class<T> type, JsonUnmarshaller<?> jsonUnmarshaller) {
-		super(type, jsonUnmarshaller);
-	}
-
 	@Override protected Class<?> getTypeAttribute(String nomAttribut) {
-		if(Constants.VALEUR.equals(nomAttribut)) return type;
+		if(Constants.VALEUR.equals(nomAttribut)) 
+			return type;
 		return null;
 	}
 	
@@ -38,8 +39,7 @@ public class ActionJsonSimpleComportement<T> extends ActionJson<T> {
 	}
 	
 	@Override
-	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
-			SecurityException {
+	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		obj = type.getConstructor(String.class).newInstance(donnees);
 	}
 	

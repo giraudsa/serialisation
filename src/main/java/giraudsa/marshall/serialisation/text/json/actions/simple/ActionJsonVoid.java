@@ -1,12 +1,9 @@
 package giraudsa.marshall.serialisation.text.json.actions.simple;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-
-import giraudsa.marshall.annotations.TypeRelation;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.text.json.JsonMarshaller;
 import giraudsa.marshall.serialisation.text.json.actions.ActionJsonSimpleWithoutQuote;
+import utils.champ.FieldInformations;
 
 public class ActionJsonVoid extends ActionJsonSimpleWithoutQuote<Void> {
 
@@ -14,9 +11,7 @@ public class ActionJsonVoid extends ActionJsonSimpleWithoutQuote<Void> {
 		super(b);
 	}
 	
-	@Override protected void ecritValeur(Void obj, TypeRelation relation, boolean ecrisSeparateur)
-			throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException {
+	@Override protected void ecritValeur(Void obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IOException{
 		write("null");
 	}
 	
@@ -27,5 +22,6 @@ public class ActionJsonVoid extends ActionJsonSimpleWithoutQuote<Void> {
 	
 	@Override
 	protected void fermeAccolade(Void obj, boolean notApplicableHere) throws IOException {
+		//pas d'accolade fermante pour un objet null
 	}
 }

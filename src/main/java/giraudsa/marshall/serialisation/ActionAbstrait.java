@@ -2,26 +2,30 @@ package giraudsa.marshall.serialisation;
 
 
 import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
-import java.util.Stack;
+import java.util.Deque;
 
-import utils.champ.Champ;
+import utils.champ.FakeChamp;
+import utils.champ.FieldInformations;
 
 public abstract class ActionAbstrait<T> {
-
 	protected Marshaller marshaller;
+	protected ActionAbstrait(Marshaller marshaller){
+		this.marshaller = marshaller;
+	}
+
 	protected Class<?> getType(T obj){
-		if (obj == null) return Void.class;
+		if (obj == null)
+			return Void.class;
 		return obj.getClass();
 	}
 	
-	public ActionAbstrait(Marshaller marshaller){
-		this.marshaller = marshaller;
-	}
-	
+	protected abstract void marshall(Object obj, FieldInformations fieldInformations);
+
 	protected <U> boolean isDejaVu(U objet){
 		return marshaller.isDejaVu(objet);
 	}
@@ -43,40 +47,37 @@ public abstract class ActionAbstrait<T> {
 	}
 	
 	
-	protected boolean isTypeDevinable(Object value, Champ champ){
-		if (value == null) return false;
-		if(isDejaVu(value) && isUniversalId()) return true;
-		Class<?> valueType = value.getClass();
-		boolean typeDevinable = true;
-		if(!champ.isSimple && champ.valueType != valueType) typeDevinable = false;
-		return typeDevinable;
+	protected boolean isTypeDevinable(Object value, FieldInformations fieldInformations){
+		if (value == null)
+			return false;
+		if(isDejaVu(value) && isUniversalId())
+			return true;
+		return fieldInformations.isTypeDevinable(value);
 	}
 	
-	protected <TypeValue> void marshallValue(TypeValue value, String nom, TypeRelation relation, boolean typeDevinable ) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException{
-		marshaller.marshall(value, relation, nom, typeDevinable);
+	protected <V> void marshallValue(V value, FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+		marshaller.marshall(value, fieldInformations);
 	}
 	
-	protected Comportement traiteChamp(T obj, Champ champ, boolean ecrisSeparateur) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException {
-		String nom = champ.name;
-		TypeRelation relation = champ.relation;
-		Object value = champ.get(obj);
-		boolean typeDevinable = isTypeDevinable(value, champ);
-		if(aTraiter(value)){
-			return new ComportementMarshallValue(value, nom, relation, typeDevinable, ecrisSeparateur);
+	protected Comportement traiteChamp(Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, IllegalAccessException {
+		Object value = fieldInformations.get(obj);
+		if(aTraiter(value, fieldInformations)){
+			return new ComportementMarshallValue(value, fieldInformations, ecrisSeparateur);
 		}
 		return null;
 	}
-	
-	protected Comportement traiteChamp(T obj, Champ champ) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException{
-		return traiteChamp(obj, champ, true);
+
+	protected Comportement traiteChamp(Object obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+		return traiteChamp(obj, fieldInformations, true);
 	}
 	
 	@SuppressWarnings("rawtypes")
-	protected <TypeValue> boolean aTraiter(TypeValue value) throws IOException {
-		boolean aTraiter = value != null
-				&& !(value instanceof String && ((String)value).isEmpty()) 
-				&& !(value instanceof Collection && ((Collection)value).isEmpty());
-		return aTraiter;
+	protected <V> boolean aTraiter(V value, FieldInformations fieldInformations) throws IOException {
+		if(fieldInformations instanceof FakeChamp)
+			return true;
+		if(value != null && !(value instanceof String && ((String)value).isEmpty())) 
+				return !(value instanceof Collection && ((Collection)value).isEmpty());
+		return false;
 	}
 
 	protected void writeSeparator() throws IOException {}
@@ -87,7 +88,7 @@ public abstract class ActionAbstrait<T> {
 		marshaller.aFaire.push(comportement);
 	}
 	
-	protected void pushComportements(Stack<Comportement> comportements){
+	protected void pushComportements(Deque<Comportement> comportements){
 		while(!comportements.isEmpty()){
 			pushComportement(comportements.pop());
 		}
@@ -98,46 +99,35 @@ public abstract class ActionAbstrait<T> {
 	}
 	
 	protected abstract class Comportement {
-		public abstract void evalue() throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException;
+		protected abstract void evalue() throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption;
 	}
 	
 	protected class ComportementMarshallValue extends Comportement{
 		private Object value;
-		private String nom;
-		private TypeRelation relation;
-		private boolean typeDevinable;
+		private FieldInformations fieldInformations;
 		private boolean writeSeparateur;
 		
-		public ComportementMarshallValue(Object value, String nom, TypeRelation relation, boolean typeDevinable, boolean writeSeparateur) {
+		protected ComportementMarshallValue(Object value, FieldInformations fieldInformations, boolean writeSeparateur) {
 			super();
 			this.value = value;
-			this.nom = nom;
-			this.relation = relation;
-			this.typeDevinable = typeDevinable;
+			this.fieldInformations = fieldInformations;
 			this.writeSeparateur = writeSeparateur;
 		}
 
-		public ComportementMarshallValue(Object value, String nom, TypeRelation relation, boolean typeDevinable) {//XML Collection et Dictionnaire
+		protected ComportementMarshallValue(Object value, FieldInformations fieldInformations) {//XML Collection et Dictionnaire
 			super();
 			this.value = value;
-			this.nom = nom;
-			this.relation = relation;
-			this.typeDevinable = typeDevinable;
+			this.fieldInformations = fieldInformations;
 			this.writeSeparateur = false;
 		}
 		
-		public ComportementMarshallValue(Object value, TypeRelation relation, boolean typeDevinable) {//Binary Collection et Dictionnaire
-			super();
-			this.value = value;
-			this.relation = relation;
-			this.typeDevinable = typeDevinable;
-			this.writeSeparateur = false;
-		}
 		
 		@Override
-		public void evalue() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, NotImplementedSerializeException, IOException{
-			if(writeSeparateur) writeSeparator();
-			marshallValue(value, nom, relation, typeDevinable);
+		protected void evalue() throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
+			if(writeSeparateur)
+					writeSeparator();
+			marshallValue(value, fieldInformations);
+			
 		}
 		
 	}

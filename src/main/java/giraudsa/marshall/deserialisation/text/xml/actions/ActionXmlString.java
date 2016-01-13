@@ -10,6 +10,10 @@ public class ActionXmlString extends ActionXmlSimpleComportement<String>{
 
 	StringBuilder sb = new StringBuilder();
 	
+	private ActionXmlString(Class<String> type, XmlUnmarshaller<?> xmlUnmarshaller) {
+		super(type, xmlUnmarshaller);
+	}
+
 	public static ActionAbstrait<String> getInstance(XmlUnmarshaller<?> u) {	
 		return new ActionXmlString(String.class, u);
 	}
@@ -20,11 +24,7 @@ public class ActionXmlString extends ActionXmlSimpleComportement<String>{
 		return (ActionAbstrait<U>) new ActionXmlString(String.class, (XmlUnmarshaller<?>)unmarshaller);
 	}
 	
-	private ActionXmlString(Class<String> type, XmlUnmarshaller<?> xmlUnmarshaller) {
-		super(type, xmlUnmarshaller);
-	}
-	
-	@Override protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	@Override protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		sb.append(donnees);
 	}
 	

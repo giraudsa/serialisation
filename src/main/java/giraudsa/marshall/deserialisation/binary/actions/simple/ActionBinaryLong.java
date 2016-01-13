@@ -7,6 +7,10 @@ import java.io.IOException;
 
 public class ActionBinaryLong extends ActionBinarySimple<Long> {
 
+	private ActionBinaryLong(Class<Long> type, BinaryUnmarshaller<?> unmarshaller) {
+		super(type, unmarshaller);
+	}
+
 	public static ActionAbstrait<Long> getInstance(BinaryUnmarshaller<?> bu){
 		return new ActionBinaryLong(Long.class, bu);
 	}
@@ -15,10 +19,6 @@ public class ActionBinaryLong extends ActionBinarySimple<Long> {
 	@Override
 	public <U extends Long> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
 		return (ActionAbstrait<U>) new ActionBinaryLong(Long.class, (BinaryUnmarshaller<?>) unmarshaller);
-	}
-
-	private ActionBinaryLong(Class<Long> type, BinaryUnmarshaller<?> unmarshaller) {
-		super(type, unmarshaller);
 	}
 
 	@Override
