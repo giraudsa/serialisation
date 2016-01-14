@@ -45,25 +45,26 @@ public class ActionJsonDictionary extends ActionJson<Map> {
 	}
 	
 	@Override
-	protected boolean ouvreAccolade(Map obj, boolean typeDevinable) throws IOException {
+	protected boolean commenceObject(Map obj, boolean typeDevinable) throws IOException {
 		if(typeDevinable){
-			write("[");
+			ouvreCrochet();
 		}else{
-			write("{");
+			ouvreAccolade();
 			ecritType(obj);
 			writeSeparator();
 			ecritClef(Constants.VALEUR);
-			write("[");	
+			ouvreCrochet();
 		}
 		return false;
 	}
 	
 	@Override
-	protected void fermeAccolade(Map obj, boolean typeDevinable) throws IOException {
+	protected void clotureObject(Map obj, boolean typeDevinable) throws IOException {
 		if(typeDevinable){
-			write("]");
+			fermeCrochet();
 		}else{
-			write("]}");
+			fermeCrochet();
+			fermeAccolade();
 		}
 	}
 }

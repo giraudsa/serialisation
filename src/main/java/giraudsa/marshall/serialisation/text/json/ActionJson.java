@@ -26,10 +26,25 @@ public abstract class ActionJson<T> extends ActionText<T>  {
 	
 	protected abstract void ecritValeur(T obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException;
 
-	protected abstract void fermeAccolade(T obj, boolean typeDevinable) throws IOException;
+	protected abstract void clotureObject(T obj, boolean typeDevinable) throws IOException;
 
-	protected abstract boolean ouvreAccolade(T obj, boolean typeDevinable) throws IOException;
+	protected abstract boolean commenceObject(T obj, boolean typeDevinable) throws IOException;
+	
+	protected void ouvreAccolade() throws IOException{
+		getJsonMarshaller().ouvreAccolade();
+	}
+	
+	protected void fermeAccolade() throws IOException{
+		getJsonMarshaller().fermeAccolade();
+	}
 
+	protected void ouvreCrochet() throws IOException{
+		getJsonMarshaller().ouvreCrochet();
+	}
+	protected void fermeCrochet() throws IOException{
+		getJsonMarshaller().fermeCrochet();
+	}
+	
 	protected void ecritClef(String clef) throws IOException{
 		getJsonMarshaller().ecritClef(clef);
 	}
@@ -67,7 +82,7 @@ public abstract class ActionJson<T> extends ActionText<T>  {
 		@Override
 		protected void evalue() throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
 			ecritClef(nomClef);
-			boolean separateurAEcrire = ouvreAccolade((T)obj, typeDevinable);
+			boolean separateurAEcrire = commenceObject((T)obj, typeDevinable);
 			ecritValeur((T)obj, fieldInformations, separateurAEcrire);
 		}
 	}
@@ -87,7 +102,7 @@ public abstract class ActionJson<T> extends ActionText<T>  {
 		@SuppressWarnings("unchecked")
 		@Override
 		protected void evalue() throws IOException{
-			fermeAccolade((T)obj, typeDevinable);		
+			clotureObject((T)obj, typeDevinable);		
 		}
 		
 	}

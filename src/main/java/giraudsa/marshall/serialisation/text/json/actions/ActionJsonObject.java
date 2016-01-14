@@ -42,12 +42,12 @@ public class ActionJsonObject extends ActionJson<Object> {
 		pushComportements(tmp);
 	}
 	
-	@Override protected void fermeAccolade(Object obj, boolean typeDevinable) throws IOException {
-		write("}");
+	@Override protected void clotureObject(Object obj, boolean typeDevinable) throws IOException {
+		fermeAccolade();
 	}
 
-	@Override protected boolean ouvreAccolade(Object obj, boolean typeDevinable) throws IOException {
-		write("{");
+	@Override protected boolean commenceObject(Object obj, boolean typeDevinable) throws IOException {
+		ouvreAccolade();
 		if(!typeDevinable) {
 			ecritType(obj);
 			return true;

@@ -16,12 +16,12 @@ public class ActionJsonVoid extends ActionJsonSimpleWithoutQuote<Void> {
 	}
 	
 	@Override
-	protected boolean ouvreAccolade(Void obj, boolean notApplicableHere) throws IOException {
+	protected boolean commenceObject(Void obj, boolean notApplicableHere) throws IOException {
 		return false;
 	}
 	
 	@Override
-	protected void fermeAccolade(Void obj, boolean notApplicableHere) throws IOException {
+	protected void clotureObject(Void obj, boolean notApplicableHere) throws IOException {
 		//pas d'accolade fermante pour un objet null
 	}
 }

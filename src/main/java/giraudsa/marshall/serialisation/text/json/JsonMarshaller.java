@@ -32,6 +32,8 @@ import utils.Constants;
 public class JsonMarshaller extends TextMarshaller {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonMarshaller.class);
 	private final String clefType;
+	private boolean isFirst = true;
+	
 	// ///CONSTRUCTEUR
 	private JsonMarshaller(Writer output, boolean isCompleteSerialisation) throws IOException {
 		super(output, isCompleteSerialisation, ConfigurationMarshalling.getDatFormatJson());
@@ -102,8 +104,12 @@ public class JsonMarshaller extends TextMarshaller {
 	// ///ME
 	
 	protected void ecritClef(String nomClef) throws IOException {
-		if(nomClef != null)
+		if(isPrettyPrint()){
+			aLaLigne();
+		}
+		if(nomClef != null){
 			writer.write("\"" + nomClef + "\":");
+		}
 	}
 
 	protected void ecritType(Class<?> type) throws IOException {
@@ -118,5 +124,43 @@ public class JsonMarshaller extends TextMarshaller {
 
 	protected void writeSeparator() throws IOException {
 		writer.write(",");
+	}
+
+	protected void ouvreAccolade() throws IOException {
+		++niveau;
+		writer.write("{");
+	}
+
+	protected void fermeAccolade() throws IOException {
+		--niveau;
+		if(isPrettyPrint()){
+			aLaLigne();
+		}
+		writer.write("}");
+	}
+
+	protected void ouvreCrochet() throws IOException {
+		++niveau;
+		writer.write("[");
+	}
+
+	protected void fermeCrochet() throws IOException {
+		niveau--;
+		if(isPrettyPrint()){
+			aLaLigne();
+		}
+		writer.write("]");
+	}
+
+	///prettyPrint methode
+	private void aLaLigne() throws IOException {
+		if(isFirst ){
+			isFirst = false;
+			return;
+		}
+		writer.write(System.lineSeparator());
+		for(int j = 0; j < niveau; j++){
+			writer.write("   ");
+		}
 	}
 }

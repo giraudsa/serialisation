@@ -17,6 +17,10 @@ public abstract class TextMarshaller extends Marshaller {
 	protected final DateFormat df;
 	protected final boolean isUniversalId;
 	
+	//prettyPrint 
+	protected int niveau = 0;
+	protected boolean lastIsOpen = false;
+	
 	
 	protected TextMarshaller(Writer writer, boolean isCompleteSerialisation, SimpleDateFormat dateFormat) {
 		super(isCompleteSerialisation);

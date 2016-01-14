@@ -27,9 +27,6 @@ import utils.Constants;
 
 public class XmlMarshaller extends TextMarshaller {
 	private static final Logger LOGGER = LoggerFactory.getLogger(XmlMarshaller.class);
-	//prettyPrint 
-	private int niveau = 0;
-	private boolean lastIsOpen = false;
 	
 	//info id universal
 	private boolean isWrittenUniversal = false;
@@ -137,7 +134,8 @@ public class XmlMarshaller extends TextMarshaller {
 		writer.write(Constants.getSmallNameType(type));
 		writer.write("\"");
 	}
-	private void prettyPrintOpenTag() throws IOException {
+	
+	protected void prettyPrintOpenTag() throws IOException {
 		writer.write(System.lineSeparator());
 		for(int j = 0; j < niveau ; j++){
 			writer.write("   ");
@@ -145,7 +143,8 @@ public class XmlMarshaller extends TextMarshaller {
 		++niveau;
 		lastIsOpen = true;
 	}
-	private void prettyPrintCloseTag() throws IOException {
+	
+	protected void prettyPrintCloseTag() throws IOException {
 		--niveau;
 		if(!lastIsOpen){
 			writer.write(System.lineSeparator());

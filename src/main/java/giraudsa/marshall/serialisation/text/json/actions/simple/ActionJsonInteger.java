@@ -12,12 +12,12 @@ public class ActionJsonInteger  extends ActionJsonSimpleWithoutQuote<Integer>{
 	}
 	
 	@Override
-	protected boolean ouvreAccolade(Integer obj, boolean notApplicableHere) throws IOException {
+	protected boolean commenceObject(Integer obj, boolean notApplicableHere) throws IOException {
 		return false;
 	}
 	
 	@Override
-	protected void fermeAccolade(Integer obj, boolean notApplicableHere) throws IOException {
+	protected void clotureObject(Integer obj, boolean notApplicableHere) throws IOException {
 		//pas d'accolade fermante pour un entier
 	}
 

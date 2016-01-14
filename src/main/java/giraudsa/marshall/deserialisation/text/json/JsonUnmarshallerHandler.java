@@ -19,14 +19,15 @@ public class JsonUnmarshallerHandler {
 	private boolean isBetweenQuote = false;
 	
 	private static final char QUOTE = '\"';
+	private static final char ESPACE = ' ';
 	
 	private JsonUnmarshaller<?> jsonUnmarshaller;
 	
-	JsonUnmarshallerHandler(JsonUnmarshaller<?> jsonUnmarshaller) {
+	protected JsonUnmarshallerHandler(JsonUnmarshaller<?> jsonUnmarshaller) {
 		this.jsonUnmarshaller = jsonUnmarshaller;
 	}
 	
-	void parse(Reader reader) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException{
+	protected void parse(Reader reader) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException{
 		int t = reader.read();
 		while (t != -1){
 			traiteCaractere(t);
@@ -140,16 +141,36 @@ public class JsonUnmarshallerHandler {
 		if(!buff.isEmpty()){
 			Class<?> type = String.class;
 			if(!enleveGuillemets()){
+				enleveEspaceEtSautDeLigne();
+				if(buff.isEmpty())
+					return;
 				type = guessType(); 
 			}
 			jsonUnmarshaller.setValeur(getString(), type);
 		}
 	}
 
+	private void enleveEspaceEtSautDeLigne() {
+		while(buff.indexOf(ESPACE) != -1){
+			buff.remove(buff.indexOf(ESPACE));
+		}
+		while(buff.indexOf('\r') != -1){
+			buff.remove(buff.indexOf('\r'));
+			buff.remove(buff.indexOf('\n'));
+		}
+	}
+
 	private boolean enleveGuillemets() {
-		if(!buff.isEmpty() && buff.get(0) == QUOTE && buff.get(buff.size()-1) == QUOTE){
-			buff.remove(0);
-			buff.remove(buff.size()-1);
+		int firstQuote = buff.indexOf(QUOTE);
+		int lastQuote = buff.lastIndexOf(QUOTE);
+		int size = buff.size();
+		if(!buff.isEmpty() && firstQuote != -1 && lastQuote != firstQuote){
+			for(int i = 0; i <= firstQuote; i++){
+				buff.remove(0);
+			}
+			for(int i = 0; i < size - lastQuote; i++){
+				buff.remove(buff.size()-1);
+			}
 			return true;
 		}
 		return false;

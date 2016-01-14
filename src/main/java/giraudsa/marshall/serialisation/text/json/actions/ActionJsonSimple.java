@@ -12,9 +12,9 @@ public abstract class ActionJsonSimple<T> extends ActionJson<T> {
 	}
 	
 	@Override
-	protected boolean ouvreAccolade(T obj, boolean typeDevinable) throws IOException {
+	protected boolean commenceObject(T obj, boolean typeDevinable) throws IOException {
 		if(!typeDevinable){
-			write("{");
+			ouvreAccolade();
 			ecritType(obj);
 			writeSeparator();
 			ecritClef(Constants.VALEUR);
@@ -24,9 +24,9 @@ public abstract class ActionJsonSimple<T> extends ActionJson<T> {
 	}
 	
 	@Override
-	protected void fermeAccolade(T obj, boolean typeDevinable) throws IOException {
+	protected void clotureObject(T obj, boolean typeDevinable) throws IOException {
 		if(!typeDevinable){
-			write("}");
+			fermeAccolade();
 		}
 	}
 }

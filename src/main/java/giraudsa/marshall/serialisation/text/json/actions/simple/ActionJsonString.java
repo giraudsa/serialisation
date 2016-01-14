@@ -12,12 +12,12 @@ public class ActionJsonString extends ActionJsonSimpleWithQuote<String> {
 	}
 	
 	@Override
-	protected boolean ouvreAccolade(String obj, boolean notApplicableHere) throws IOException {
+	protected boolean commenceObject(String obj, boolean notApplicableHere) throws IOException {
 		return false;
 	}
 	
 	@Override
-	protected void fermeAccolade(String obj, boolean notApplicableHere) throws IOException {
+	protected void clotureObject(String obj, boolean notApplicableHere) throws IOException {
 		//pas d'accolade fermante pour un objet simple
 	}
 

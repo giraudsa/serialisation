@@ -28,24 +28,25 @@ public class ActionJsonCollectionType extends ActionJson<Collection> {
 	}
 
 	@Override
-	protected boolean ouvreAccolade(Collection obj, boolean typeDevinable) throws IOException {
+	protected boolean commenceObject(Collection obj, boolean typeDevinable) throws IOException {
 		if(typeDevinable || obj instanceof ArrayList){
-			write("[");
+			ouvreCrochet();
 		}else{//type inconnu pour deserialisation
-			write("{");
+			ouvreAccolade();
 			ecritType(obj);
 			writeSeparator();
 			ecritClef(Constants.VALEUR);
-			write("[");
+			ouvreCrochet();
 		}
 		return false;
 	}
 	@Override
-	protected void fermeAccolade(Collection obj, boolean typeDevinable) throws IOException {
+	protected void clotureObject(Collection obj, boolean typeDevinable) throws IOException {
 		if(typeDevinable || obj instanceof ArrayList){
-			write("]");
+			fermeCrochet();
 		}else{
-			write("]}");
+			fermeCrochet();
+			fermeAccolade();
 		}
 	}
 

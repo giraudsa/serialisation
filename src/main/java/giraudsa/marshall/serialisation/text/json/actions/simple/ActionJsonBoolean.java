@@ -14,12 +14,12 @@ public class ActionJsonBoolean extends ActionJsonSimpleWithoutQuote<Boolean> {
 	}
 	
 	@Override
-	protected boolean ouvreAccolade(Boolean obj, boolean notApplicableHere) throws IOException {
+	protected boolean commenceObject(Boolean obj, boolean notApplicableHere) throws IOException {
 		return false;
 	}
 	
 	@Override
-	protected void fermeAccolade(Boolean obj, boolean notApplicableHere) throws IOException {
+	protected void clotureObject(Boolean obj, boolean notApplicableHere) throws IOException {
 		//pas d'accolade fermante pour un booleen
 	}
 }
