@@ -31,9 +31,11 @@ import utils.Constants;
 
 public class JsonMarshaller extends TextMarshaller {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonMarshaller.class);
+	private final String clefType;
 	// ///CONSTRUCTEUR
 	private JsonMarshaller(Writer output, boolean isCompleteSerialisation) throws IOException {
 		super(output, isCompleteSerialisation, ConfigurationMarshalling.getDatFormatJson());
+		clefType = ConfigurationMarshalling.getEstIdUniversel() ? Constants.CLEF_TYPE_ID_UNIVERSEL : Constants.CLEF_TYPE;
 	}
 
 	// /////METHODES PUBLIQUES STATIQUES
@@ -105,7 +107,7 @@ public class JsonMarshaller extends TextMarshaller {
 	}
 
 	protected void ecritType(Class<?> type) throws IOException {
-		ecritClef(Constants.CLEF_TYPE);
+		ecritClef(clefType);
 		String stringType = Constants.getSmallNameType(type);
 		writeWithQuote(stringType);
 	}

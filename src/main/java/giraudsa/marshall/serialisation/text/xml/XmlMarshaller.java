@@ -30,6 +30,10 @@ public class XmlMarshaller extends TextMarshaller {
 	//prettyPrint 
 	private int niveau = 0;
 	private boolean lastIsOpen = false;
+	
+	//info id universal
+	private boolean isWrittenUniversal = false;
+	
 	//////CONSTRUCTEUR
 	private XmlMarshaller(Writer output, boolean isCompleteSerialisation) throws IOException {
 		super(output, isCompleteSerialisation, ConfigurationMarshalling.getDateFormatXml());
@@ -104,11 +108,21 @@ public class XmlMarshaller extends TextMarshaller {
 		writer.write("<");
 		writer.write(name);
 		if(type != null){
-			writer.write(" type=\"");
-			writer.write(Constants.getSmallNameType(type));
-			writer.write("\"");
+			writeType(type);
+		}
+		if(!isWrittenUniversal){
+			writeInfoUniversal();
 		}
 		writer.write(">");
+	}
+	private void writeInfoUniversal() throws IOException {
+		isWrittenUniversal = true;
+		boolean isUniversal = ConfigurationMarshalling.getEstIdUniversel();
+		if(isUniversal){
+			writer.write(" typeId=\"");
+			writer.write("universal");
+			writer.write("\"");
+		}
 	}
 	protected void closeTag(String name) throws IOException {
 		if(isPrettyPrint()){
@@ -117,6 +131,11 @@ public class XmlMarshaller extends TextMarshaller {
 		writer.write("</");
 		writer.write(name);
 		writer.write('>');
+	}
+	private void writeType(Class<?> type) throws IOException {
+		writer.write(" type=\"");
+		writer.write(Constants.getSmallNameType(type));
+		writer.write("\"");
 	}
 	private void prettyPrintOpenTag() throws IOException {
 		writer.write(System.lineSeparator());

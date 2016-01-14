@@ -37,6 +37,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	private boolean waitingForType;
 	private boolean waitingForAction;
 	private String clefEnCours;
+	private String clefType;
 	
 	///////methodes public de désérialisation
 
@@ -106,7 +107,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	}
 
 	void setClef(String clef) throws InstantiationException, IllegalAccessException, ClassNotFoundException, NotImplementedSerializeException {
-		if(clef.equals(Constants.CLEF_TYPE)){
+		if(isClefType(clef)){
 			waitingForType = true;
 		}else if(!pileAction.isEmpty()){
 			if(waitingForAction){
@@ -119,6 +120,20 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 			clefEnCours = clef;
 		}
 	}
+
+	private boolean isClefType(String clef) {
+		if(clef.equals(clefType) || clef.equals(Constants.CLEF_TYPE) || clef.equals(Constants.CLEF_TYPE_ID_UNIVERSEL)){
+			if(clefType == null){
+				//récuperation de la configuration idUniversel de celui qui a encodé
+				boolean isIdUniversel = clef.equals(Constants.CLEF_TYPE_ID_UNIVERSEL) ? true : false;
+				clefType = clef;
+				setCache(isIdUniversel);
+			}
+			return true;
+		}
+		return false;
+	}
+
 
 	void setValeur(String valeur, Class<?> type) throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
 	ParseException, ClassNotFoundException, IOException {

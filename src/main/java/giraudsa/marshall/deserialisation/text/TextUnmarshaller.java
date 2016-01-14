@@ -3,7 +3,6 @@ package giraudsa.marshall.deserialisation.text;
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.Unmarshaller;
-import utils.ConfigurationMarshalling;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
@@ -18,7 +17,7 @@ public abstract class TextUnmarshaller<T> extends Unmarshaller<T> {
 	protected final DateFormat df;
 	
 	protected TextUnmarshaller(Reader reader, EntityManager entity, SimpleDateFormat dateFormat) throws ClassNotFoundException, IOException {
-		super(entity, ConfigurationMarshalling.getEstIdUniversel());
+		super(entity);
 		this.reader = reader;
 		df = new SimpleDateFormat(dateFormat.toPattern());
 		df.setTimeZone(dateFormat.getTimeZone());

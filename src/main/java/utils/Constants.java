@@ -27,6 +27,7 @@ public class Constants {
 	public static final String MAP_VALEUR = "__map__valeur";
 	public static final String MAP_TYPE = "__entry__set";
 	public static final String CLEF_TYPE = "__type";
+	public static final String CLEF_TYPE_ID_UNIVERSEL = "@type";
 	public static final String VALEUR = "__valeur";
 	private static final String DICTIONNAIRE_TYPE = "map";
 	private static final String COLLECTION_TYPE = "list";

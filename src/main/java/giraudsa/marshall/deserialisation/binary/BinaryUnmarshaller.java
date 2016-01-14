@@ -54,7 +54,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 
 
 	protected BinaryUnmarshaller(DataInputStream input, EntityManager entity) throws ClassNotFoundException, IOException {
-		super(entity, false);
+		super(entity);
 		this.input = input;
 		deserialisationComplete = readBoolean();
 	}

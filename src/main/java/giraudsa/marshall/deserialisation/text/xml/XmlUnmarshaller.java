@@ -120,7 +120,6 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 
 	@SuppressWarnings("unchecked")
 	private <T> void checkType(Class<T> typeToUnmarshall) throws BadTypeUnmarshallException {
-		isFirst = false;
 		try {
 			U test = (U)typeToUnmarshall.newInstance();
 			test.getClass();
@@ -131,8 +130,10 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	}
 
 	/////XML EVENT
-	void startElement(String qName, Attributes attributes) throws ClassNotFoundException, BadTypeUnmarshallException, InstantiationException, IllegalAccessException, NotImplementedSerializeException {
+	protected void startElement(String qName, Attributes attributes) throws ClassNotFoundException, BadTypeUnmarshallException, InstantiationException, IllegalAccessException, NotImplementedSerializeException {
+		setCache(attributes);
 		Class<?> type = getType(attributes, qName);
+		isFirst = false;
 		if(type != null){
 			ActionXml<?> action = (ActionXml<?>) getAction(type);
 			setNom(action, qName);
@@ -141,11 +142,20 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		}
 	}
 
-	void characters(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ParseException {
+	private void setCache(Attributes attributes) {
+		if(isFirst){
+			String typeId = attributes.getValue("typeId");
+			boolean isIdUniversal = typeId != null ? true : false;
+			setCache(isIdUniversal);
+		}
+	}
+	
+	protected void characters(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ParseException {
 		rempliData(getActionEnCours(), donnees);
 	}
 
-	@SuppressWarnings("unchecked") void endElement() throws InstantiationException, InvocationTargetException, ClassNotFoundException, NoSuchMethodException, IOException, NotImplementedSerializeException, IllegalAccessException {
+	@SuppressWarnings("unchecked") 
+	protected void endElement() throws InstantiationException, InvocationTargetException, ClassNotFoundException, NoSuchMethodException, IOException, NotImplementedSerializeException, IllegalAccessException {
 		construitObjet(getActionEnCours());
 		ActionXml<?> actionATraiter = (ActionXml<?>) pileAction.pop();
 		if(pileAction.isEmpty()){

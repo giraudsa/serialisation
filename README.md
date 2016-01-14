@@ -146,7 +146,7 @@ Les id sont souvent des incrémentations automatiques de base de données donc n
 
 	ConfigurationMarshalling.setIdUniversel();
 
-Attention de bien indiquer cette option aussi sur le serveur qui désérialise si le sérialiseur et le désérialiseur ne sont pas sur la même JVM.
+Le désérialiseur détecte automatiquement la configuration utilisée via le sérialiseur par une balise dans le premier TAG du xml et via la manière de sérialiser le type dans le Json
 
 ###5.3 - Changement d'annotation Transcient
 Pour éviter d'annoter un attribut d'une classe de plusieurs librairies (JAXB, hibernate...), il est possible de redéfinir l'annotation qui permet de ne pas sérialiser un attribut.

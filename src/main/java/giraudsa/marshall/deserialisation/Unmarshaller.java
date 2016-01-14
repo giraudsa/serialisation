@@ -19,16 +19,20 @@ import utils.Constants;
 public abstract class Unmarshaller<T> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Unmarshaller.class);
 	protected T obj;
-	protected EntityManager entity;
-	protected Deque<ActionAbstrait<?>> pileAction = new ArrayDeque<>();
-	protected final CacheObject  cacheObject;
-	protected Map<Class<?>, ActionAbstrait<?>> actions = new HashMap<>();
+	protected final EntityManager entity;
+	protected final Deque<ActionAbstrait<?>> pileAction = new ArrayDeque<>();
+	protected CacheObject  cacheObject;
+	protected final Map<Class<?>, ActionAbstrait<?>> actions = new HashMap<>();
 
 
-	protected Unmarshaller(EntityManager entity, boolean isUniversalId) throws ClassNotFoundException, IOException {
+	protected Unmarshaller(EntityManager entity) throws ClassNotFoundException, IOException {
 		this.entity = entity;
-		cacheObject = isUniversalId ? new CacheIdUniversel() : new CacheIdNonUniversel();
+		cacheObject = new CacheEmpty();
 		initialiseActions();
+	}
+	
+	protected void setCache(boolean isIdUniversel) {
+		cacheObject = isIdUniversel ? new CacheIdUniversel() : new CacheIdNonUniversel();
 	}
 
 
