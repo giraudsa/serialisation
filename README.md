@@ -154,6 +154,6 @@ Pour éviter d'annoter un attribut d'une classe de plusieurs librairies (JAXB, h
 	ConfigurationMarshalling.setAnnotationIgnoreSerialise(@Transcient.class);
 	
 ###5.4 - Formattage des XML
-Il est possible de formatter les xml pour une lecture humaine.
+Il est possible de formatter les XML et les JSON pour une lecture humaine.
 
 	ConfigurationMarshalling.setPrettyPrint();
