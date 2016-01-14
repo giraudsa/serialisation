@@ -138,68 +138,91 @@ public class BinaryMarshaller extends Marshaller{
 
 	protected byte[] calculHeader(Object o, byte debutHeader, boolean estDejaVu) throws IOException, MarshallExeption{
 		Class<?> typeObj = o.getClass();
+		byte debut = debutHeader;
 		boolean isTypeAutre = debutHeader == Constants.Type.AUTRE || debutHeader== Constants.Type.DEVINABLE;
 		boolean typeDevinable = debutHeader== Constants.Type.DEVINABLE;
 		int smallId = getSmallIdAndStockObj(o);
 		byte typeOfSmallId = getTypeOfSmallId(smallId);
-		debutHeader |= typeOfSmallId;
+		debut |= typeOfSmallId;
 		boolean isDejaVuTypeObj = true;
 		int smallIdTypeObj = 0;
 		byte typeOfSmallIdTypeObj = 0;
 		if(isTypeAutre && !estDejaVu){
-				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentBag") != -1) 
-					typeObj = ArrayList.class;
-				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSet") != -1) 
-					typeObj = HashSet.class;
-				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentMap") != -1) 
-					typeObj = HashMap.class;
-				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedSet") != -1) 
-					typeObj = TreeSet.class;
-				if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedMap") != -1) 
-					typeObj = TreeMap.class;
-				
+				typeObj = problemeHibernate(typeObj);
 				isDejaVuTypeObj = isDejaVuType(typeObj);
 				smallIdTypeObj = getSmallIdTypeAndStockType(typeObj);
 				typeOfSmallIdTypeObj = getTypeOfSmallIdTypeObj(smallIdTypeObj);
-				debutHeader |= typeOfSmallIdTypeObj;
+				debut |= typeOfSmallIdTypeObj;
 		}
 		try(ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
 				DataOutputStream dataOut = new DataOutputStream(byteOut)){
-			dataOut.writeByte(debutHeader);
-			switch (typeOfSmallId) {
-			case Constants.SmallIdType.NEXT_IS_SMALL_ID_BYTE:
-				dataOut.writeByte((byte)smallId);
-				break;
-			case Constants.SmallIdType.NEXT_IS_SMALL_ID_SHORT:
-				dataOut.writeShort((short)smallId);
-				break;
-			case Constants.SmallIdType.NEXT_IS_SMALL_ID_INT:
-				dataOut.writeInt(smallId);
-				break;
-			default :
-				throw new MarshallExeption("trop d'objets");
-			}
-			///////write type if necessary
-			if(isTypeAutre && !estDejaVu && !typeDevinable){
-				switch (typeOfSmallIdTypeObj) {
-				case Constants.Type.CODAGE_BYTE:
-					dataOut.writeByte((byte)smallIdTypeObj);
-					break;
-				case Constants.Type.CODAGE_SHORT:
-					dataOut.writeShort((short)smallIdTypeObj);
-					break;
-				case Constants.Type.CODAGE_INT:
-					dataOut.writeInt(smallIdTypeObj);
-					break;
-				default :
-					throw new MarshallExeption("trop de type");
-				}
-				if(!isDejaVuTypeObj){
-					dataOut.writeUTF(typeObj.getName());
-					
-				}
-			}
+			dataOut.writeByte(debut);
+			writeSmallId(smallId, typeOfSmallId, dataOut);
+			if(!estDejaVu)
+				ecritTypeSiNecessaire(typeObj, isTypeAutre, typeDevinable, isDejaVuTypeObj, smallIdTypeObj,
+					typeOfSmallIdTypeObj, dataOut);
 			return byteOut.toByteArray();
+		}
+	}
+	
+	private Class<?> problemeHibernate(Class<?> typeObj) {
+		Class<?> ret = typeObj;
+		if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentBag") != -1) 
+			ret = ArrayList.class;
+		if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSet") != -1) 
+			ret = HashSet.class;
+		if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentMap") != -1) 
+			ret = HashMap.class;
+		if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedSet") != -1) 
+			ret = TreeSet.class;
+		if(typeObj.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedMap") != -1) 
+			ret = TreeMap.class;
+		return ret;
+	}
+
+	private static void writeSmallId(int smallId, byte typeOfSmallId, DataOutputStream dataOut)
+			throws IOException, MarshallExeption {
+		switch (typeOfSmallId) {
+		case Constants.SmallIdType.NEXT_IS_SMALL_ID_BYTE:
+			dataOut.writeByte((byte)smallId);
+			break;
+		case Constants.SmallIdType.NEXT_IS_SMALL_ID_SHORT:
+			dataOut.writeShort((short)smallId);
+			break;
+		case Constants.SmallIdType.NEXT_IS_SMALL_ID_INT:
+			dataOut.writeInt(smallId);
+			break;
+		default :
+			throw new MarshallExeption("trop d'objets");
+		}
+	}
+
+	private static void ecritTypeSiNecessaire(Class<?> typeObj, boolean isTypeAutre, boolean typeDevinable,
+			boolean isDejaVuTypeObj, int smallIdTypeObj, byte typeOfSmallIdTypeObj, DataOutputStream dataOut)
+					throws IOException, MarshallExeption {
+		if(isTypeAutre && !typeDevinable){
+			writeSmallIdType(smallIdTypeObj, typeOfSmallIdTypeObj, dataOut);
+			if(!isDejaVuTypeObj){
+				dataOut.writeUTF(typeObj.getName());
+				
+			}
+		}
+	}
+
+	private static void writeSmallIdType(int smallIdTypeObj, byte typeOfSmallIdTypeObj, DataOutputStream dataOut)
+			throws IOException, MarshallExeption {
+		switch (typeOfSmallIdTypeObj) {
+		case Constants.Type.CODAGE_BYTE:
+			dataOut.writeByte((byte)smallIdTypeObj);
+			break;
+		case Constants.Type.CODAGE_SHORT:
+			dataOut.writeShort((short)smallIdTypeObj);
+			break;
+		case Constants.Type.CODAGE_INT:
+			dataOut.writeInt(smallIdTypeObj);
+			break;
+		default :
+			throw new MarshallExeption("trop de type");
 		}
 	}
 
