@@ -3,6 +3,7 @@ package giraudsa.marshall.deserialisation.text.json;
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.text.ActionText;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
+import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonArrayType;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonCollectionType;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonDate;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonDictionaryType;
@@ -18,6 +19,7 @@ import giraudsa.marshall.exception.UnmarshallExeption;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -30,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.ConfigurationMarshalling;
 import utils.Constants;
+import utils.TypeExtension;
 
 public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUnmarshaller.class);
@@ -82,6 +85,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	protected void initialiseActions() throws IOException {
 		actions.put(Date.class, ActionJsonDate.getInstance(this));
 		actions.put(Collection.class, ActionJsonCollectionType.getInstance(this));
+		actions.put(Array.class, ActionJsonArrayType.getInstance(this));
 		actions.put(Map.class, ActionJsonDictionaryType.getInstance(this));
 		actions.put(Object.class, ActionJsonObject.getInstance(this));
 		actions.put(void.class, ActionJsonVoid.getInstance(this));
@@ -100,7 +104,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		actions.put(Character.class, ActionJsonSimpleComportement.getInstance(Character.class,this));
 	}
 
-	private T parse() throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException {
+	private T parse() throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException, UnmarshallExeption {
 		JsonUnmarshallerHandler handler = new JsonUnmarshallerHandler(this);
 		handler.parse(reader);
 		return obj;
@@ -111,7 +115,9 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 			waitingForType = true;
 		}else if(!pileAction.isEmpty()){
 			if(waitingForAction){
-				ActionText<?> action = (ActionText<?>) getAction(getType(clefEnCours));
+				Class<?> typeToUnmarshall = getType(clefEnCours);
+				typeToUnmarshall = TypeExtension.getTypeEnveloppe(typeToUnmarshall);
+				ActionText<?> action = (ActionText<?>) getAction(typeToUnmarshall);
 				setNom(action, clefEnCours);
 				setFieldInformation(action);
 				pileAction.push(action);

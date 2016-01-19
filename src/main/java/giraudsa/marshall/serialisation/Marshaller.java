@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -21,7 +20,6 @@ public abstract class Marshaller {
 	protected boolean isCompleteSerialisation;
 	protected Set<Object> dejaTotalementSerialise = new HashSet<>();
 	private Set<Object> dejaVu = new HashSet<>();
-	protected Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new HashMap<>();
 	@SuppressWarnings("rawtypes")
 	protected Deque<Comportement> aFaire = new ArrayDeque<>();
 
@@ -29,11 +27,11 @@ public abstract class Marshaller {
 	//////Constructeur
 	protected Marshaller(boolean isCompleteSerialisation){
 		this.isCompleteSerialisation = isCompleteSerialisation;
-		initialiseDico();
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected <T> ActionAbstrait getAction(T obj) throws NotImplementedSerializeException {
+		Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = getDicoTypeToAction();
 		ActionAbstrait action;
 		if (obj == null) {
 			action = dicoTypeToAction.get(void.class);
@@ -50,8 +48,11 @@ public abstract class Marshaller {
 
 
 
+	protected abstract Map<Class<?>, ActionAbstrait<?>> getDicoTypeToAction();
+
 	@SuppressWarnings("rawtypes")
 	private <T> ActionAbstrait choisiAction(Class<T> type) throws NotImplementedSerializeException {
+		Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = getDicoTypeToAction();
 		ActionAbstrait action;
 		Class<?> genericType = type;
 		if (type.isEnum())
@@ -60,8 +61,14 @@ public abstract class Marshaller {
 			genericType = Constants.dictionaryType;
 		else if(Constants.dateType.isAssignableFrom(type))
 			genericType = Constants.dateType;
-		else if (type != Constants.stringType && Constants.collectionType.isAssignableFrom(type))
+		else if (Constants.collectionType.isAssignableFrom(type))
 			genericType = Constants.collectionType;
+		else if(type.isArray())
+			genericType = Constants.arrayType;
+		else if(Constants.inetAdress.isAssignableFrom(type))
+			genericType = Constants.inetAdress;
+		else if(Constants.calendarType.isAssignableFrom(type))
+			genericType = Constants.calendarType;
 		else if (type.getPackage() == null || ! type.getPackage().getName().startsWith("System"))
 			genericType = Constants.objectType;
 		action = dicoTypeToAction.get(genericType);
@@ -94,15 +101,13 @@ public abstract class Marshaller {
 	protected <T> void setDejaTotalementSerialise(T obj){
 		dejaTotalementSerialise.add(obj);
 	}
-	
-	protected void initialiseDico(){}
-	
+		
 	protected void deserialisePile() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, MarshallExeption{
-		aFaire.pop().evalue();
+		aFaire.pop().evalue(this);
 	}
 	
 	protected <T> void marshallSpecialise(T value, FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException {
 		ActionAbstrait<?> action = getAction(value);
-		action.marshall(value, fieldInformations);
+		action.marshall(this, value, fieldInformations);
 	}
 }

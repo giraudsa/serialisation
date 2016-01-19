@@ -3,10 +3,10 @@ package giraudsa.marshall.deserialisation.text.xml.actions;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.ActionXml;
+import giraudsa.marshall.deserialisation.text.xml.XmlEscapeUtil;
 import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 
 import java.lang.reflect.InvocationTargetException;
-import org.apache.commons.lang3.StringEscapeUtils;
 
 public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 
@@ -26,7 +26,7 @@ public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 	
 	@Override
 	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-		obj = type.getConstructor(String.class).newInstance(StringEscapeUtils.unescapeXml(donnees));
+		obj = type.getConstructor(String.class).newInstance(unescapeXml(donnees));
 	}
 
 	@Override
@@ -38,4 +38,9 @@ public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 	protected <W> void integreObjet(String nomAttribut, W objet) {
 		//rien a faire
 	}
+	
+	private String unescapeXml(final String text) {
+        // The chosen symbols (1.0 or 1.1) don't really matter, as both contain the same CERs
+        return XmlEscapeUtil.unescape(text);
+    }
 }

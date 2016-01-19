@@ -2,29 +2,25 @@ package giraudsa.marshall.serialisation.binary.actions.simple;
 
 import java.io.IOException;
 
+import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
-import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
+
 import utils.champ.FieldInformations;
 
 public class ActionBinarySimple<T> extends ActionBinary<T> {
 
-	public ActionBinarySimple(BinaryMarshaller b) {
-		super(b);
+	public ActionBinarySimple() {
+		super();
 	}
 	
 	@Override
-	protected byte[] calculHeaders(T objetASerialiser, boolean typeDevinable, boolean isDejaVu) {
-		return getHeaderConstant(getType(objetASerialiser), typeDevinable);
-	}
-	
-	@Override
-	protected <U> boolean isDejaVu(U objet) {
+	protected <U> boolean isDejaVu(Marshaller marshaller, U objet) {
 		return false;
 	}
 
 	@Override
-	protected void ecritValeur(T objetASerialiser, FieldInformations fieldInformations) throws IOException {
-		//rien a faire
+	protected void ecritValeur(Marshaller marshaller, T objetASerialiser, FieldInformations fieldInformations) throws IOException {
+		writeUTF(marshaller, objetASerialiser.toString());
 	}
 
 }

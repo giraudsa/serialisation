@@ -1,8 +1,8 @@
 package giraudsa.marshall.serialisation.text.xml.actions;
 
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
-import giraudsa.marshall.serialisation.text.xml.XmlMarshaller;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
@@ -17,11 +17,11 @@ import java.util.Map.Entry;
 @SuppressWarnings("rawtypes")
 public class ActionXmlDictionaryType extends ActionXml<Map> {
 	
-	public ActionXmlDictionaryType(XmlMarshaller xmlM) {
-		super(xmlM);
+	public ActionXmlDictionaryType() {
+		super();
 	}
 	@Override
-	protected void ecritValeur(Map obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	protected void ecritValeur(Marshaller marshaller, Map obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
 		Type[] types = fieldInformations.getParametreType();
 		Type genericTypeKey = Object.class;
 		Type genericTypeValue = Object.class;
@@ -36,9 +36,9 @@ public class ActionXmlDictionaryType extends ActionXml<Map> {
 		Map<?,?> map = (Map<?,?>) obj;
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		for (Entry<?, ?> entry : map.entrySet()) {
-			tmp.push(traiteChamp(entry.getKey(), fakeChampKey));
-			tmp.push(traiteChamp(entry.getValue(), fakeChampValue));
+			tmp.push(traiteChamp(marshaller, entry.getKey(), fakeChampKey));
+			tmp.push(traiteChamp(marshaller, entry.getValue(), fakeChampValue));
 		}
-		pushComportements(tmp);
+		pushComportements(marshaller, tmp);
 	}
 }

@@ -4,6 +4,7 @@ import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.Unmarshaller;
+import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryArray;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryCollection;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryDictionary;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryEnum;
@@ -208,6 +209,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		actions.put(Void.class, ActionBinaryVoid.getInstance(this));
 		actions.put(Character.class, ActionBinaryChar.getInstance(this));
 		actions.put(Constants.collectionType, ActionBinaryCollection.getInstance(this));
+		actions.put(Constants.arrayType, ActionBinaryArray.getInstance(this));
 		actions.put(Constants.dictionaryType, ActionBinaryDictionary.getInstance(this));
 		actions.put(Constants.objectType, ActionBinaryObject.getInstance(this));
 		actions.put(Constants.enumType, ActionBinaryEnum.getInstance(this));

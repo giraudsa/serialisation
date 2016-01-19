@@ -7,49 +7,49 @@ import java.util.Deque;
 import java.util.List;
 
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.json.ActionJson;
-import giraudsa.marshall.serialisation.text.json.JsonMarshaller;
 import utils.TypeExtension;
 import utils.champ.Champ;
 import utils.champ.FieldInformations;
 
 public class ActionJsonObject extends ActionJson<Object> {
 
-	public ActionJsonObject(JsonMarshaller b) {
-		super(b);
+	public ActionJsonObject() {
+		super();
 	}
 
 
-	@Override protected void ecritValeur(Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	@Override protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
 		Class<?> typeObj = (Class<?>) obj.getClass();
 		List<Champ> champs = TypeExtension.getSerializableFields(typeObj);
 		Champ champId = TypeExtension.getChampId(typeObj);
-		boolean serialiseTout = serialiseTout(obj, fieldInformations);
-		setDejaVu(obj);
+		boolean serialiseTout = serialiseTout(marshaller, obj, fieldInformations);
+		setDejaVu(marshaller, obj);
 		if(!serialiseTout){
-			pushComportement(traiteChamp(obj, champId, ecrisSeparateur));
+			pushComportement(marshaller, traiteChamp(marshaller, obj, champId, ecrisSeparateur));
 			return;
 		}
-		setDejaTotalementSerialise(obj);
+		setDejaTotalementSerialise(marshaller, obj);
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		boolean virgule = ecrisSeparateur;
 		for (Champ champ : champs){
-			Comportement comportement = traiteChamp(obj, champ, virgule);
+			Comportement comportement = traiteChamp(marshaller, obj, champ, virgule);
 			virgule = true;
 			if(comportement != null) 
 				tmp.push(comportement);
 		}
-		pushComportements(tmp);
+		pushComportements(marshaller, tmp);
 	}
 	
-	@Override protected void clotureObject(Object obj, boolean typeDevinable) throws IOException {
-		fermeAccolade();
+	@Override protected void clotureObject(Marshaller marshaller, Object obj, boolean typeDevinable) throws IOException {
+		fermeAccolade(marshaller);
 	}
 
-	@Override protected boolean commenceObject(Object obj, boolean typeDevinable) throws IOException {
-		ouvreAccolade();
+	@Override protected boolean commenceObject(Marshaller marshaller, Object obj, boolean typeDevinable) throws IOException {
+		ouvreAccolade(marshaller);
 		if(!typeDevinable) {
-			ecritType(obj);
+			ecritType(marshaller, obj);
 			return true;
 		}
 		return false;

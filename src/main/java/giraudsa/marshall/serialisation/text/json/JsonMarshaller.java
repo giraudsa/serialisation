@@ -2,26 +2,52 @@ package giraudsa.marshall.serialisation.text.json;
 
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.serialisation.ActionAbstrait;
 import giraudsa.marshall.serialisation.text.TextMarshaller;
+import giraudsa.marshall.serialisation.text.json.actions.ActionJsonArrayType;
+import giraudsa.marshall.serialisation.text.json.actions.ActionJsonAtomicArrayIntegerType;
+import giraudsa.marshall.serialisation.text.json.actions.ActionJsonAtomicArrayLongType;
+import giraudsa.marshall.serialisation.text.json.actions.ActionJsonBitSet;
+import giraudsa.marshall.serialisation.text.json.actions.ActionJsonCalendar;
 import giraudsa.marshall.serialisation.text.json.actions.ActionJsonCollectionType;
 import giraudsa.marshall.serialisation.text.json.actions.ActionJsonDictionary;
 import giraudsa.marshall.serialisation.text.json.actions.ActionJsonObject;
 import giraudsa.marshall.serialisation.text.json.actions.ActionJsonSimpleWithQuote;
 import giraudsa.marshall.serialisation.text.json.actions.ActionJsonSimpleWithoutQuote;
 import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonBoolean;
+import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonCurrency;
 import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonDate;
+import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonInetAddress;
 import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonInteger;
 import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonString;
+import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonUri;
+import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonUrl;
 import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonVoid;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URL;
+import java.util.BitSet;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Currency;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLongArray;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +57,43 @@ import utils.Constants;
 
 public class JsonMarshaller extends TextMarshaller {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonMarshaller.class);
+	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
+
+	static {
+		dicoTypeToAction.put(Date.class, new ActionJsonDate());
+		dicoTypeToAction.put(Boolean.class, new ActionJsonBoolean());
+		dicoTypeToAction.put(Collection.class, new ActionJsonCollectionType());
+		dicoTypeToAction.put(Array.class, new ActionJsonArrayType());
+		dicoTypeToAction.put(Map.class, new ActionJsonDictionary());
+		dicoTypeToAction.put(Object.class, new ActionJsonObject());
+		dicoTypeToAction.put(void.class, new ActionJsonVoid());
+		dicoTypeToAction.put(Integer.class, new ActionJsonInteger());
+		dicoTypeToAction.put(Enum.class, new ActionJsonSimpleWithQuote<Enum>());
+		dicoTypeToAction.put(UUID.class, new ActionJsonSimpleWithQuote<UUID>());
+		dicoTypeToAction.put(String.class, new ActionJsonString());
+		dicoTypeToAction.put(Byte.class, new ActionJsonSimpleWithoutQuote<Byte>());
+		dicoTypeToAction.put(Float.class, new ActionJsonSimpleWithoutQuote<Float>());
+		dicoTypeToAction.put(Double.class, new ActionJsonSimpleWithoutQuote<Double>());
+		dicoTypeToAction.put(Long.class, new ActionJsonSimpleWithoutQuote<Long>());
+		dicoTypeToAction.put(Short.class, new ActionJsonSimpleWithoutQuote<Short>());
+		dicoTypeToAction.put(AtomicBoolean.class, new ActionJsonSimpleWithoutQuote<AtomicBoolean>());
+		dicoTypeToAction.put(AtomicInteger.class, new ActionJsonSimpleWithoutQuote<AtomicInteger>());
+		dicoTypeToAction.put(AtomicLong.class, new ActionJsonSimpleWithoutQuote<AtomicLong>());
+		dicoTypeToAction.put(AtomicIntegerArray.class, new ActionJsonAtomicArrayIntegerType());
+		dicoTypeToAction.put(AtomicLongArray.class, new ActionJsonAtomicArrayLongType());
+		dicoTypeToAction.put(BigDecimal.class, new ActionJsonSimpleWithoutQuote<BigDecimal>());
+		dicoTypeToAction.put(BigInteger.class, new ActionJsonSimpleWithoutQuote<BigInteger>());
+		dicoTypeToAction.put(URI.class, new ActionJsonUri());
+		dicoTypeToAction.put(URL.class, new ActionJsonUrl());
+		dicoTypeToAction.put(Currency.class, new ActionJsonCurrency());
+		dicoTypeToAction.put(Locale.class, new ActionJsonSimpleWithQuote<Locale>());
+		dicoTypeToAction.put(InetAddress.class, new ActionJsonInetAddress());
+		dicoTypeToAction.put(BitSet.class, new ActionJsonBitSet());
+		dicoTypeToAction.put(Calendar.class, new ActionJsonCalendar());
+		dicoTypeToAction.put(StringBuilder.class, new ActionJsonSimpleWithQuote<StringBuilder>());
+		dicoTypeToAction.put(StringBuffer.class, new ActionJsonSimpleWithQuote<StringBuffer>());
+	}
+
 	private final String clefType;
 	private boolean isFirst = true;
 	
@@ -81,25 +144,7 @@ public class JsonMarshaller extends TextMarshaller {
 		}
 	}
 
-	@SuppressWarnings("rawtypes")
-	@Override
-	protected void initialiseDico() {
-		dicoTypeToAction.put(Date.class, new ActionJsonDate(this));
-		dicoTypeToAction.put(Boolean.class, new ActionJsonBoolean(this));
-		dicoTypeToAction.put(Collection.class, new ActionJsonCollectionType(this));
-		dicoTypeToAction.put(Map.class, new ActionJsonDictionary(this));
-		dicoTypeToAction.put(Object.class, new ActionJsonObject(this));
-		dicoTypeToAction.put(void.class, new ActionJsonVoid(this));
-		dicoTypeToAction.put(Integer.class, new ActionJsonInteger(this));
-		dicoTypeToAction.put(Enum.class, new ActionJsonSimpleWithQuote<Enum>(this));
-		dicoTypeToAction.put(UUID.class, new ActionJsonSimpleWithQuote<UUID>(this));
-		dicoTypeToAction.put(String.class, new ActionJsonString(this));
-		dicoTypeToAction.put(Byte.class, new ActionJsonSimpleWithoutQuote<Byte>(this));
-		dicoTypeToAction.put(Float.class, new ActionJsonSimpleWithoutQuote<Float>(this));
-		dicoTypeToAction.put(Double.class, new ActionJsonSimpleWithoutQuote<Double>(this));
-		dicoTypeToAction.put(Long.class, new ActionJsonSimpleWithoutQuote<Long>(this));
-		dicoTypeToAction.put(Short.class, new ActionJsonSimpleWithoutQuote<Short>(this));
-	}
+	
 
 	// ///ME
 	
@@ -119,7 +164,13 @@ public class JsonMarshaller extends TextMarshaller {
 	}
 
 	protected void writeWithQuote(String string) throws IOException {
-		writer.write("\"" + string + "\"");
+		writeQuote();
+		writer.write(string);
+		writeQuote();
+	}
+	
+	protected void writeQuote() throws IOException{
+		writer.write("\"");
 	}
 
 	protected void writeSeparator() throws IOException {
@@ -162,5 +213,10 @@ public class JsonMarshaller extends TextMarshaller {
 		for(int j = 0; j < niveau; j++){
 			writer.write("   ");
 		}
+	}
+
+	@Override
+	protected Map<Class<?>, ActionAbstrait<?>> getDicoTypeToAction() {
+		return dicoTypeToAction;
 	}
 }

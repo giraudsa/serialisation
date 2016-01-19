@@ -1,6 +1,9 @@
 package utils;
 
+import java.lang.reflect.Array;
+import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -22,6 +25,9 @@ public class Constants {
 	public static final Class<?> enumType = Enum.class;
 	public static final Class<?> stringType = String.class;
 	public static final Class<?> dateType = Date.class;
+	public static final Class<?> arrayType = Array.class;
+	public static final Class<?> inetAdress = InetAddress.class;
+	public static final Class<?> calendarType = Calendar.class;
 	
 	public static final String MAP_CLEF = "__map__clef";
 	public static final String MAP_VALEUR = "__map__valeur";

@@ -2,8 +2,9 @@ package giraudsa.marshall.serialisation.binary.actions;
 
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
-import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
+
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -19,28 +20,28 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 
 
 
-	public ActionBinaryObject(BinaryMarshaller b) {
-		super(b);
+	public ActionBinaryObject() {
+		super();
 	}
 
 	@Override
-	protected void ecritValeur(Object objetASerialiser, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	protected void ecritValeur(Marshaller marshaller, Object objetASerialiser, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		
-		boolean serialiseToutSaufId = serialiseToutSaufId(objetASerialiser, fieldInformations);
-		boolean serialiseId = serialiseId(objetASerialiser);
+		boolean serialiseToutSaufId = serialiseToutSaufId(marshaller, objetASerialiser, fieldInformations);
+		boolean serialiseId = serialiseId(marshaller, objetASerialiser);
 		
-		setDejaVu(objetASerialiser);
+		setDejaVu(marshaller, objetASerialiser);
 		List<Champ> champs = getListeChamp(objetASerialiser, serialiseId, serialiseToutSaufId);
 		Champ champId = TypeExtension.getChampId(objetASerialiser.getClass());
 		for(Champ champ : champs){
-			Comportement comportement = traiteChamp(objetASerialiser, champ);
+			Comportement comportement = traiteChamp(marshaller, objetASerialiser, champ);
 			if(comportement != null)
 				tmp.push(comportement);
 			if(champ != champId)
-				setDejaTotalementSerialise(objetASerialiser);
+				setDejaTotalementSerialise(marshaller, objetASerialiser);
 		}
-		pushComportements(tmp);
+		pushComportements(marshaller, tmp);
 	}
 
 	private List<Champ> getListeChamp(Object objetASerialiser, boolean serialiseId, boolean serialiseToutSaufId) {
@@ -54,17 +55,17 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 		return ret;
 	}
 
-	private boolean serialiseToutSaufId(Object objetASerialiser, FieldInformations fieldInformations) {
-		if (isCompleteMarshalling() && ! isDejaTotalementSerialise(objetASerialiser)) 
+	private boolean serialiseToutSaufId(Marshaller marshaller, Object objetASerialiser, FieldInformations fieldInformations) {
+		if (isCompleteMarshalling(marshaller) && ! isDejaTotalementSerialise(marshaller, objetASerialiser)) 
 			return true;
-		return !isCompleteMarshalling() && fieldInformations.getRelation() == TypeRelation.COMPOSITION && !isDejaTotalementSerialise(objetASerialiser);
+		return !isCompleteMarshalling(marshaller) && fieldInformations.getRelation() == TypeRelation.COMPOSITION && !isDejaTotalementSerialise(marshaller, objetASerialiser);
 	}
 
-	private boolean serialiseId(Object objetASerialiser) {
+	private boolean serialiseId(Marshaller marshaller, Object objetASerialiser) {
 		Class<?> typeObj = (Class<?>) objetASerialiser.getClass();
 		if(!TypeExtension.getChampId(typeObj).isFakeId())
-			return (isCompleteMarshalling() && ! isDejaTotalementSerialise(objetASerialiser))||
-										(!isCompleteMarshalling() && !isDejaVu(objetASerialiser));
+			return (isCompleteMarshalling(marshaller) && ! isDejaTotalementSerialise(marshaller, objetASerialiser))||
+										(!isCompleteMarshalling(marshaller) && !isDejaVu(marshaller, objetASerialiser));
 		return false;
 	}
 

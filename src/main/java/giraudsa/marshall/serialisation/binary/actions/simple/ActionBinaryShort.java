@@ -1,19 +1,26 @@
 package giraudsa.marshall.serialisation.binary.actions.simple;
 
-import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
+
 import utils.champ.FieldInformations;
 
 import java.io.IOException;
 
+import giraudsa.marshall.serialisation.Marshaller;
+
 public class ActionBinaryShort extends ActionBinarySimple<Short>{
 
-	public ActionBinaryShort(BinaryMarshaller b) {
-		super(b);
+	public ActionBinaryShort() {
+		super();
 	}
 	
 	@Override
-	protected void ecritValeur(Short objetASerialiser, FieldInformations fieldInformations) throws IOException {
-		writeShort(objetASerialiser);
+	protected void ecritValeur(Marshaller marshaller, Short objetASerialiser, FieldInformations fieldInformations) throws IOException {
+		writeShort(marshaller, objetASerialiser);
+	}
+	
+	@Override
+	protected byte[] calculHeaders(Marshaller marshaller, Short objetASerialiser, boolean typeDevinable, boolean isDejaVu) {
+		return getHeaderConstant(getType(objetASerialiser), typeDevinable);
 	}
 
 }

@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.apache.commons.lang3.ArrayUtils;
 import utils.champ.Champ;
 import utils.champ.ChampUid;
 import utils.champ.FabriqueChamp;
@@ -51,9 +50,9 @@ public class TypeExtension {
 			fields = new ArrayList<>();
 			Boolean hasUid = false;
 			Class<?> parent = typeObj;
-			Field[] fieldstmp = new Field[0];
+			List<Field> fieldstmp = new ArrayList<>();
 			while(parent != Object.class){
-				fieldstmp = ArrayUtils.addAll(fieldstmp, parent.getDeclaredFields());
+				Collections.addAll(fieldstmp, parent.getDeclaredFields());
 				parent = parent.getSuperclass();
 			}
 			for (Field info : fieldstmp) {

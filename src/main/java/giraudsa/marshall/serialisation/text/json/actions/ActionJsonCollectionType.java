@@ -1,8 +1,8 @@
 package giraudsa.marshall.serialisation.text.json.actions;
 
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.json.ActionJson;
-import giraudsa.marshall.serialisation.text.json.JsonMarshaller;
 import utils.Constants;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
@@ -18,8 +18,8 @@ import java.util.Deque;
 @SuppressWarnings("rawtypes")
 public class ActionJsonCollectionType extends ActionJson<Collection> {
 		
-	public ActionJsonCollectionType(JsonMarshaller jsonM) {
-		super(jsonM);
+	public ActionJsonCollectionType() {
+		super();
 	}
 
 	@Override
@@ -28,30 +28,30 @@ public class ActionJsonCollectionType extends ActionJson<Collection> {
 	}
 
 	@Override
-	protected boolean commenceObject(Collection obj, boolean typeDevinable) throws IOException {
+	protected boolean commenceObject(Marshaller marshaller, Collection obj, boolean typeDevinable) throws IOException {
 		if(typeDevinable || obj instanceof ArrayList){
-			ouvreCrochet();
+			ouvreCrochet(marshaller);
 		}else{//type inconnu pour deserialisation
-			ouvreAccolade();
-			ecritType(obj);
-			writeSeparator();
-			ecritClef(Constants.VALEUR);
-			ouvreCrochet();
+			ouvreAccolade(marshaller);
+			ecritType(marshaller, obj);
+			writeSeparator(marshaller);
+			ecritClef(marshaller, Constants.VALEUR);
+			ouvreCrochet(marshaller);
 		}
 		return false;
 	}
 	@Override
-	protected void clotureObject(Collection obj, boolean typeDevinable) throws IOException {
+	protected void clotureObject(Marshaller marshaller, Collection obj, boolean typeDevinable) throws IOException {
 		if(typeDevinable || obj instanceof ArrayList){
-			fermeCrochet();
+			fermeCrochet(marshaller);
 		}else{
-			fermeCrochet();
-			fermeAccolade();
+			fermeCrochet(marshaller);
+			fermeAccolade(marshaller);
 		}
 	}
 
 	@Override
-	protected void ecritValeur(Collection obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, NotImplementedSerializeException, IOException {
+	protected void ecritValeur(Marshaller marshaller, Collection obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, NotImplementedSerializeException, IOException {
 		
 		Type[] types = fieldInformations.getParametreType();
 		Type genericType = Object.class;
@@ -62,9 +62,9 @@ public class ActionJsonCollectionType extends ActionJson<Collection> {
 		
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		for (Object value : obj) {
-			tmp.push(traiteChamp(value, fakeChamp, ecrisSeparateur));
+			tmp.push(traiteChamp(marshaller, value, fakeChamp, ecrisSeparateur));
 			ecrisSeparateur = true;
 		}
-		pushComportements(tmp);//on remet dans l'ordre
+		pushComportements(marshaller, tmp);//on remet dans l'ordre
 	}
 }

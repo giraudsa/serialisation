@@ -3,6 +3,7 @@ package giraudsa.marshall.deserialisation.text;
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.Unmarshaller;
+import utils.TypeExtension;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
@@ -50,7 +51,7 @@ public abstract class TextUnmarshaller<T> extends Unmarshaller<T> {
 	
 	protected Class<?> getType(String nomAttribut) {
 		ActionText<?> action = (ActionText<?>) getActionEnCours(); 
-		return action == null ? Object.class : action.getType(nomAttribut);
+		return action == null ? Object.class : TypeExtension.getTypeEnveloppe(action.getType(nomAttribut));
 	}
 
 }

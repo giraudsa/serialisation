@@ -14,6 +14,10 @@ public class UnmarshallExeption extends Exception {
 	public UnmarshallExeption(String explication) {
 		this.explication = explication;
 	}
+	public UnmarshallExeption(String message, Exception e2) {
+		explication = message;
+		e = e2;
+	}
 	@Override
 	public String getMessage() {
 		return explication + e.getMessage();

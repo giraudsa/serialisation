@@ -11,8 +11,10 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import utils.ConfigurationMarshalling;
+import utils.TypeExtension;
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
+import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlArrayType;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlCollectionType;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlDate;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlDictionaryType;
@@ -27,12 +29,15 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
+
+import javax.lang.model.type.ArrayType;
 
 public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	private static final Logger LOGGER = LoggerFactory.getLogger(XmlUnmarshaller.class);
@@ -77,6 +82,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	protected void initialiseActions() throws IOException {
 		actions.put(Date.class, ActionXmlDate.getInstance(this));
 		actions.put(Collection.class, ActionXmlCollectionType.getInstance(this));
+		actions.put(Array.class, ActionXmlArrayType.getInstance(this));
 		actions.put(Map.class, ActionXmlDictionaryType.getInstance(this));
 		actions.put(Object.class, ActionXmlObject.getInstance(this));
 		actions.put(Void.class, ActionXmlVoid.getInstance(this));
@@ -114,6 +120,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 				checkType(typeToUnmarshall);
 		}else{
 			typeToUnmarshall = getType(nomAttribut);
+			typeToUnmarshall = TypeExtension.getTypeEnveloppe(typeToUnmarshall);
 		}
 		return typeToUnmarshall;
 	}

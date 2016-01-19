@@ -53,8 +53,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void integreObjet(String nom, Object objet) {
-		if(((Collection)obj).size() < index) 
-			((Collection)obj).add(objet);
+		((Collection)obj).add(objet);
 	}
 
 	@Override

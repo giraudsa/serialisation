@@ -1,7 +1,6 @@
 package giraudsa.marshall.deserialisation.text;
 
 import java.text.DateFormat;
-
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import utils.champ.FieldInformations;
 
@@ -42,6 +41,4 @@ public abstract class ActionText<T> extends ActionAbstrait<T> {
 		return getFieldInformationSpecialise(nom);
 	}
 	protected abstract FieldInformations getFieldInformationSpecialise(String nom);
-	
-
 }

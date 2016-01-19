@@ -66,8 +66,10 @@ public abstract class Unmarshaller<T> {
 			genericType = Constants.dateType;
 		else if (Constants.dictionaryType.isAssignableFrom(type))
 			genericType = Constants.dictionaryType;
-		else if (type != Constants.stringType && Constants.collectionType.isAssignableFrom(type))
+		else if (Constants.collectionType.isAssignableFrom(type))
 			genericType = Constants.collectionType;
+		else if(type.isArray())
+			genericType = Constants.arrayType;
 		else if (type.getPackage() == null || ! type.getPackage().getName().startsWith("System"))
 			genericType = Constants.objectType;
 		behavior = actions.get(genericType);

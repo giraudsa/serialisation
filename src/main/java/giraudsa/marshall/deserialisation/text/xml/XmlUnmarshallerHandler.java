@@ -47,6 +47,5 @@ public class XmlUnmarshallerHandler extends DefaultHandler2 {
 			throw new SAXException(e);			
 		}
 	}
-
 	 
 }

@@ -2,38 +2,61 @@ package giraudsa.marshall.serialisation.text;
 
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.serialisation.ActionAbstrait;
+import giraudsa.marshall.serialisation.Marshaller;
 import utils.champ.FieldInformations;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.text.DateFormat;
+import java.util.Map;
 
 public abstract class ActionText<T> extends ActionAbstrait<T> {
-	
-	protected ActionText(TextMarshaller textM) {
-		super(textM);
+	protected ActionText() {
+		super();
 	}
 
-	protected DateFormat getDateFormat(){
-		return getTextMarshaller().df;
+	protected DateFormat getDateFormat(Marshaller marshaller){
+		return getTextMarshaller(marshaller).df;
 	}
 	
 	@Override
-	protected boolean isUniversalId() {
-		return getTextMarshaller().isUniversalId;
+	protected boolean isUniversalId(Marshaller marshaller) {
+		return getTextMarshaller(marshaller).isUniversalId;
 	}
 
-	protected TextMarshaller getTextMarshaller(){
+	private TextMarshaller getTextMarshaller(Marshaller marshaller){
 		return (TextMarshaller)marshaller;
 	}
 	
-	protected void write(String s) throws IOException {
-		getTextMarshaller().write(s);
+	protected void write(Marshaller marshaller, String s) throws IOException {
+		getTextMarshaller(marshaller).write(s);
 	}
 	
-	protected boolean serialiseTout(Object obj, FieldInformations fieldInformations) {
-		if (isCompleteMarshalling() && ! isDejaVu(obj))
+	protected void write(Marshaller marshaller, char s) 
+			throws IOException {
+		getTextMarshaller(marshaller).write(s);
+	}
+	
+	protected boolean serialiseTout(Marshaller marshaller, Object obj, FieldInformations fieldInformations) {
+		if (isCompleteMarshalling(marshaller) && ! isDejaVu(marshaller, obj))
 			return true;
-		return !isCompleteMarshalling() && fieldInformations.getRelation() == TypeRelation.COMPOSITION && !isDejaTotalementSerialise(obj);
+		return !isCompleteMarshalling(marshaller) && fieldInformations.getRelation() == TypeRelation.COMPOSITION && !isDejaTotalementSerialise(marshaller, obj);
+	}
+
+	protected abstract Map<Character, String> getRemplacementChar();
+	protected void writeEscape(Marshaller marshaller, String toBeEscaped) throws IOException{
+		if (toBeEscaped.isEmpty())
+			write(marshaller, toBeEscaped);
+		StringReader sr = new StringReader(toBeEscaped);
+		int i = sr.read();
+		while(i != -1){
+			String r = getRemplacementChar().get((char)i);
+			if(r == null)
+				write(marshaller, (char)i);
+			else
+				write(marshaller, r);
+			i = sr.read();
+		}
 	}
 
 }

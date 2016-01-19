@@ -1,8 +1,8 @@
 package giraudsa.marshall.serialisation.text.xml.actions;
 
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
-import giraudsa.marshall.serialisation.text.xml.XmlMarshaller;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
@@ -17,8 +17,8 @@ import java.util.Deque;
 @SuppressWarnings("rawtypes")
 public class ActionXmlCollectionType extends ActionXml<Collection> {
 	
-	public ActionXmlCollectionType(XmlMarshaller xmlM) {
-		super(xmlM);
+	public ActionXmlCollectionType() {
+		super();
 	}
 
 	@Override
@@ -27,7 +27,7 @@ public class ActionXmlCollectionType extends ActionXml<Collection> {
 	}
 
 	@Override
-	protected void ecritValeur(Collection obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	protected void ecritValeur(Marshaller marshaller,Collection obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
 		Type[] types = fieldInformations.getParametreType();
 		Type genericType = Object.class;
 		if(types != null && types.length > 0){
@@ -37,9 +37,9 @@ public class ActionXmlCollectionType extends ActionXml<Collection> {
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		Collection<?> collection = (Collection<?>) obj;
 		for (Object value : collection) {
-			tmp.push(traiteChamp(value, fakeChamp));
+			tmp.push(traiteChamp(marshaller,value, fakeChamp));
 		}
-		pushComportements(tmp);
+		pushComportements(marshaller, tmp);
 	}
 
 }

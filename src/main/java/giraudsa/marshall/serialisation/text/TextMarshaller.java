@@ -34,6 +34,9 @@ public abstract class TextMarshaller extends Marshaller {
 	protected void write(String string) throws IOException {
 		writer.write(string);
 	}
+	protected void write(char c) throws IOException {
+		writer.write(c);
+	}
 	
 	protected void dispose() throws IOException {
 		writer.close();	
@@ -52,4 +55,5 @@ public abstract class TextMarshaller extends Marshaller {
 	protected boolean isPrettyPrint(){
 		return ConfigurationMarshalling.isPrettyPrint();
 	}
+
 }

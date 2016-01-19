@@ -1,7 +1,7 @@
 package giraudsa.marshall.serialisation.text.xml.actions;
 
+import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
-import giraudsa.marshall.serialisation.text.xml.XmlMarshaller;
 import utils.champ.FieldInformations;
 
 import java.io.IOException;
@@ -10,13 +10,13 @@ import java.util.Date;
 
 public class ActionXmlDate extends ActionXml<Date>{
 	
-	public ActionXmlDate(XmlMarshaller xmlM){
-		super(xmlM);
+	public ActionXmlDate(){
+		super();
 	}
 	
 
 	@Override
-	protected void ecritValeur(Date date, FieldInformations f) throws IOException  {
-		write(getDateFormat().format(date));
+	protected void ecritValeur(Marshaller marshaller, Date date, FieldInformations f) throws IOException  {
+		write(marshaller, getDateFormat(marshaller).format(date));
 	}
 }

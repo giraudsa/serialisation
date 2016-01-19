@@ -1,8 +1,9 @@
 package giraudsa.marshall.serialisation.binary.actions;
 
 import giraudsa.marshall.exception.MarshallExeption;
+import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
-import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
+
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -22,26 +23,26 @@ public class ActionBinaryEnum extends ActionBinary<Enum> {
 	private static final Map<Class<? extends Enum>, Byte> dicoEnumToCodage = new HashMap<>();
 	private static final Map<Class<? extends Enum>, Map<Object, Integer>> dicoObjToInteger = new HashMap<>();
 
-	public ActionBinaryEnum(BinaryMarshaller b) {
-		super(b);
+	public ActionBinaryEnum() {
+		super();
 	}
 
 	@Override
-	protected void ecritValeur(Enum enumASerialiser, FieldInformations fieldInformations) throws IOException, MarshallExeption {
-		if(!isDejaTotalementSerialise(enumASerialiser)){
-				setDejaTotalementSerialise(enumASerialiser);
+	protected void ecritValeur(Marshaller marshaller, Enum enumASerialiser, FieldInformations fieldInformations) throws IOException, MarshallExeption {
+		if(!isDejaTotalementSerialise(marshaller, enumASerialiser)){
+				setDejaTotalementSerialise(marshaller, enumASerialiser);
 				rempliDictionnaire(enumASerialiser);
 				Integer objInt = dicoObjToInteger.get(enumASerialiser.getClass()).get(enumASerialiser);
 				if(dicoEnumToCodage.get(enumASerialiser.getClass()) == Constants.Type.CODAGE_BYTE) 
-					writeByte(objInt.byteValue());
+					writeByte(marshaller, objInt.byteValue());
 				else if(dicoEnumToCodage.get(enumASerialiser.getClass()) == Constants.Type.CODAGE_SHORT)
-					writeShort(objInt.shortValue());
-				else writeInt(objInt);
+					writeShort(marshaller, objInt.shortValue());
+				else writeInt(marshaller, objInt);
 		}
 	}
 	
 	@Override
-	protected <U> boolean isDejaVu(U objet) {
+	protected <U> boolean isDejaVu(Marshaller marshaller, U objet) {
 		return false;
 	}
 
