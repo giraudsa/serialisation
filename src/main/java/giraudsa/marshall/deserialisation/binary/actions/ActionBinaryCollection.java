@@ -7,6 +7,7 @@ import giraudsa.marshall.deserialisation.binary.ActionBinary;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SmallIdTypeException;
+import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.champ.FakeChamp;
 
 import java.io.IOException;
@@ -32,8 +33,8 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 		super(type, b);
 	}
 
-	public static ActionAbstrait<?> getInstance(BinaryUnmarshaller<?> bu){ // NOSONAR
-		return new ActionBinaryCollection<>(Collection.class, bu);
+	public static ActionAbstrait<?> getInstance(){ // NOSONAR
+		return new ActionBinaryCollection<>(Collection.class, null);
 	}
 	
 	@Override
@@ -41,7 +42,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 		return new ActionBinaryCollection<>(type, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 	@Override
-	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException {
+	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption {
 		if(!deserialisationFini){
 			litObject(fakeChamp);
 			deserialisationFini = ++index >= tailleCollection;
@@ -59,12 +60,12 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 	@Override
 	protected void initialise() throws IOException, InstantiationException, IllegalAccessException {
 		if (isDejaVu() && !isDeserialisationComplete() && fieldInformations.getRelation() == TypeRelation.COMPOSITION){
-			obj = getObjetDejaVu();
+			obj = getObjet();
 			tailleCollection = ((Collection)obj).size();
 			deserialisationFini = index < tailleCollection;
 		}else if(isDejaVu()){
 			deserialisationFini = true;
-			obj = getObjetDejaVu();
+			obj = getObjet();
 		}else if(!isDejaVu()){
 			obj = newInstance();
 			stockeObjetId();

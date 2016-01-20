@@ -1,6 +1,7 @@
 package giraudsa.marshall.deserialisation;
 
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -8,7 +9,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,13 +22,10 @@ public abstract class Unmarshaller<T> {
 	protected final EntityManager entity;
 	protected final Deque<ActionAbstrait<?>> pileAction = new ArrayDeque<>();
 	protected CacheObject  cacheObject;
-	protected final Map<Class<?>, ActionAbstrait<?>> actions = new HashMap<>();
-
 
 	protected Unmarshaller(EntityManager entity) throws ClassNotFoundException, IOException {
 		this.entity = entity;
 		cacheObject = new CacheEmpty();
-		initialiseActions();
 	}
 	
 	protected void setCache(boolean isIdUniversel) {
@@ -46,6 +43,7 @@ public abstract class Unmarshaller<T> {
 
 	@SuppressWarnings( { "unchecked", "rawtypes" })
 	protected <U> ActionAbstrait getAction(Class<U> type) throws NotImplementedSerializeException, InstantiationException, IllegalAccessException  {
+		Map<Class<?>, ActionAbstrait<?>> actions = getdicoTypeToAction();
 		ActionAbstrait behavior = null;
 		if (type != null) {
 			behavior = actions.get(type);
@@ -57,19 +55,26 @@ public abstract class Unmarshaller<T> {
 	}
 
 
+	protected abstract Map<Class<?>, ActionAbstrait<?>> getdicoTypeToAction();
+
 	private <U> ActionAbstrait<?> choseAction(Class<U> type) throws NotImplementedSerializeException {
+		Map<Class<?>, ActionAbstrait<?>> actions = getdicoTypeToAction();
 		ActionAbstrait<?> behavior;
 		Class<?> genericType = type;
 		if (type.isEnum())
 			genericType = Constants.enumType;
-		else if(Constants.dateType.isAssignableFrom(type))
-			genericType = Constants.dateType;
 		else if (Constants.dictionaryType.isAssignableFrom(type))
 			genericType = Constants.dictionaryType;
+		else if(Constants.dateType.isAssignableFrom(type))
+			genericType = Constants.dateType;
 		else if (Constants.collectionType.isAssignableFrom(type))
 			genericType = Constants.collectionType;
 		else if(type.isArray())
 			genericType = Constants.arrayType;
+		else if(Constants.inetAdress.isAssignableFrom(type))
+			genericType = Constants.inetAdress;
+		else if(Constants.calendarType.isAssignableFrom(type))
+			genericType = Constants.calendarType;
 		else if (type.getPackage() == null || ! type.getPackage().getName().startsWith("System"))
 			genericType = Constants.objectType;
 		behavior = actions.get(genericType);
@@ -127,24 +132,21 @@ public abstract class Unmarshaller<T> {
 	}
 	
 	protected Object getObjet(ActionAbstrait<?> action) {
-		return action.getObjetDejaVu();
+		return action.getObjet();
 	}
 
 	
 	protected <W> void integreObjet(ActionAbstrait<?> action, String nom, W objet) throws IllegalAccessException, InstantiationException {
 		action.integreObjet(nom, objet);
 	}
-	protected void rempliData(ActionAbstrait<?> action, String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ParseException {
+	protected void rempliData(ActionAbstrait<?> action, String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ParseException, UnmarshallExeption {
 		action.rempliData(donnees);
 		
 	}
-	protected void construitObjet(ActionAbstrait<?> action) throws ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException {
+	protected void construitObjet(ActionAbstrait<?> action) throws ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, UnmarshallExeption {
 		action.construitObjet();
 	}
 	
 	public void dispose() throws IOException {
 	}
-
-
-	protected abstract void initialiseActions() throws IOException;
 }

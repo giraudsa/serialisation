@@ -57,8 +57,8 @@ public class ActionJsonDictionaryType<T extends Map> extends ActionJson<T> {
 		return fakeChampValue;
 	}
 	
-	public static ActionAbstrait<Map> getInstance(JsonUnmarshaller<?> unmarshaller){
-		return new ActionJsonDictionaryType<>(Map.class, unmarshaller);
+	public static ActionAbstrait<Map> getInstance(){
+		return new ActionJsonDictionaryType<>(Map.class, null);
 	}
 	
 	@Override

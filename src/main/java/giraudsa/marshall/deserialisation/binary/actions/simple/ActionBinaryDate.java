@@ -12,8 +12,8 @@ public class ActionBinaryDate<DateType extends Date> extends ActionBinarySimple<
 		super(type, unmarshaller);
 	}
 
-	public static ActionAbstrait<Date> getInstance(BinaryUnmarshaller<?> bu){
-		return new ActionBinaryDate<Date>(Date.class, bu);
+	public static ActionAbstrait<Date> getInstance(){
+		return new ActionBinaryDate<Date>(Date.class, null);
 	}
 	
 	@SuppressWarnings("rawtypes")
@@ -26,7 +26,7 @@ public class ActionBinaryDate<DateType extends Date> extends ActionBinarySimple<
 	protected void initialise() throws IOException, InstantiationException, IllegalAccessException {
 		boolean isDejaVu = isDejaVu();
 		if(isDejaVu)
-			obj = getObjetDejaVu();
+			obj = getObjet();
 		else{
 			obj = type.newInstance();
 			((Date)obj).setTime(readLong());

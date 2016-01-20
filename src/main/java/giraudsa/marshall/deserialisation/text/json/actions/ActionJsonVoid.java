@@ -10,8 +10,8 @@ public class ActionJsonVoid extends ActionJsonSimpleComportement<Void> {
 		super(type, jsonUnmarshaller);
 	}
 
-	public static ActionAbstrait<Void> getInstance(JsonUnmarshaller<?> jsonUnmarshaller){
-		return new ActionJsonVoid(Void.class, jsonUnmarshaller);
+	public static ActionAbstrait<Void> getInstance(){
+		return new ActionJsonVoid(Void.class, null);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -28,7 +28,7 @@ public class ActionJsonVoid extends ActionJsonSimpleComportement<Void> {
 	}
 	
 	@Override
-	protected Void getObjetDejaVu() {
+	protected Void getObjet() {
 		return null;
 	}
 }

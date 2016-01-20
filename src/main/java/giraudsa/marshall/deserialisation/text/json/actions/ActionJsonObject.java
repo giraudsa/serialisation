@@ -29,8 +29,8 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 		dicoChampToValue = new HashMap<>();
 	}
 
-	public static ActionAbstrait<Object> getInstance(JsonUnmarshaller<?> jsonUnmarshaller){
-		return new ActionJsonObject<>(Object.class, jsonUnmarshaller);
+	public static ActionAbstrait<Object> getInstance(){
+		return new ActionJsonObject<>(Object.class, null);
 	}
 
 	@SuppressWarnings("rawtypes")

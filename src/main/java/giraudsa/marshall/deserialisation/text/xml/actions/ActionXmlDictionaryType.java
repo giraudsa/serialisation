@@ -50,8 +50,8 @@ public class ActionXmlDictionaryType<T extends Map> extends ActionXmlComplexeObj
 		return fakeChampValue;
 	}
 	
-	public static ActionAbstrait<Map> getInstance(XmlUnmarshaller<?> u) {	
-		return new ActionXmlDictionaryType<>(Map.class, u);
+	public static ActionAbstrait<Map> getInstance() {	
+		return new ActionXmlDictionaryType<>(Map.class, null);
 	}
 	
 	@Override

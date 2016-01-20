@@ -7,6 +7,7 @@ import giraudsa.marshall.deserialisation.binary.ActionBinary;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SmallIdTypeException;
+import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -27,8 +28,8 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 		super(type, b);
 	}
 
-	public static ActionAbstrait<Object> getInstance(BinaryUnmarshaller<?> binaryUnmarshaller) {
-		return new ActionBinaryObject<>(Object.class, binaryUnmarshaller);
+	public static ActionAbstrait<Object> getInstance() {
+		return new ActionBinaryObject<>(Object.class, null);
 	}
 	
 	@SuppressWarnings("rawtypes")
@@ -42,7 +43,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 		champId = TypeExtension.getChampId(type);
 		boolean isDejaVu = isDejaVu();
 		if(isDejaVu) 
-			obj = getObjetDejaVu();
+			obj = getObjet();
 		else if(champId.isFakeId()){
 			obj = type.newInstance();
 			stockeObjetId();
@@ -84,7 +85,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	@Override
-	protected void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException{
+	protected void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption{
 		if(champEnAttente != null){
 			if(champEnAttente != TypeExtension.getChampId(type))
 				setDejaTotalementDeSerialise();

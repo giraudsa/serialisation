@@ -11,8 +11,8 @@ public class ActionBinaryBoolean extends ActionBinarySimple<Boolean> {
 		super(type, unmarshaller);
 	}
 
-	public static ActionAbstrait<Boolean> getInstance(BinaryUnmarshaller<?> bu){
-		return new ActionBinaryBoolean(Boolean.class, bu);
+	public static ActionAbstrait<Boolean> getInstance(){
+		return new ActionBinaryBoolean(Boolean.class, null);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })

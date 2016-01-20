@@ -1,8 +1,11 @@
 package giraudsa.marshall.deserialisation.text.xml.actions;
 
+import java.lang.reflect.InvocationTargetException;
+
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
+import giraudsa.marshall.exception.UnmarshallExeption;
 
 public class ActionXmlVoid extends ActionXmlSimpleComportement<Void> {
 
@@ -10,8 +13,8 @@ public class ActionXmlVoid extends ActionXmlSimpleComportement<Void> {
 		super(type, xmlUnmarshaller);
 	}
 
-	public static ActionAbstrait<Void> getInstance(XmlUnmarshaller<?> u) {	
-		return new ActionXmlVoid(Void.class, u);
+	public static ActionAbstrait<Void> getInstance() {	
+		return new ActionXmlVoid(Void.class, null);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -29,7 +32,12 @@ public class ActionXmlVoid extends ActionXmlSimpleComportement<Void> {
 	}
 	
 	@Override
-	protected Void getObjetDejaVu() {
+	protected void construitObjet() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption {
+		obj = null;
+	}
+	
+	@Override
+	protected Void getObjet() {
 		return null;
 	}
 }

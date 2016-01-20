@@ -10,8 +10,8 @@ public class ActionBinaryVoid extends ActionBinarySimple<Void> {
 		super(type, unmarshaller);
 	}
 
-	public static ActionAbstrait<Void> getInstance(BinaryUnmarshaller<?> bu){
-		return new ActionBinaryVoid(Void.class, bu);
+	public static ActionAbstrait<Void> getInstance(){
+		return new ActionBinaryVoid(Void.class, null);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })

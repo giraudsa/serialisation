@@ -36,8 +36,8 @@ public class ActionXmlEnum<T extends Enum> extends ActionXml<T>  {
 		} 
 	}
 
-	public static ActionAbstrait<Enum> getInstance(XmlUnmarshaller<?> u) {	
-		return new ActionXmlEnum<>(Enum.class, u);
+	public static ActionAbstrait<Enum> getInstance() {	
+		return new ActionXmlEnum<>(Enum.class, null);
 	}
 	
 	@Override

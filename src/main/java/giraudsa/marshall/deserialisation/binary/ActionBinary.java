@@ -3,6 +3,7 @@ package giraudsa.marshall.deserialisation.binary;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SmallIdTypeException;
+import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.champ.FieldInformations;
 
 import java.io.IOException;
@@ -52,7 +53,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 		return getBinaryUnmarshaller().readUTF();
 	}
 
-	protected void litObject(FieldInformations f) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException{
+	protected void litObject(FieldInformations f) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption{
 		getBinaryUnmarshaller().litObject(readByte(), f);
 	}
 	
@@ -61,7 +62,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 	}
 	
 	@Override
-	protected Object getObjetDejaVu() {
+	protected Object getObjet() {
 		return getBinaryUnmarshaller().getObject(smallId);
 	}
 
@@ -73,15 +74,15 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 		getBinaryUnmarshaller().integreObject(obj);
 	}
 
-	void set(FieldInformations fieldInformations, int smallId) throws IOException, InstantiationException, IllegalAccessException {
+	void set(FieldInformations fieldInformations, int smallId) throws IOException, InstantiationException, IllegalAccessException, UnmarshallExeption {
 		this.fieldInformations = fieldInformations;
 		this.smallId = smallId;
 		initialise();
 	}
 
-	protected abstract void initialise() throws IOException, InstantiationException, IllegalAccessException;
+	protected abstract void initialise() throws IOException, InstantiationException, IllegalAccessException, UnmarshallExeption;
 
-	protected abstract void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException;
+	protected abstract void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption;
 
 	protected boolean isDejaTotalementDeSerialise() {
 		return getBinaryUnmarshaller().isDejaTotalementDeSerialise(obj);

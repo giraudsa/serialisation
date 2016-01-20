@@ -26,8 +26,8 @@ public class ActionBinaryEnum<E extends Enum> extends ActionBinarySimple<E> {
 		super(type, unmarshaller);
 	}
 
-	public static ActionAbstrait<Enum> getInstance(BinaryUnmarshaller<?> bu){
-		return new ActionBinaryEnum<>(Enum.class, bu);
+	public static ActionAbstrait<Enum> getInstance(){
+		return new ActionBinaryEnum<>(Enum.class, null);
 	}
 	
 	@Override

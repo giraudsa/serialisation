@@ -11,8 +11,8 @@ public class ActionBinaryLong extends ActionBinarySimple<Long> {
 		super(type, unmarshaller);
 	}
 
-	public static ActionAbstrait<Long> getInstance(BinaryUnmarshaller<?> bu){
-		return new ActionBinaryLong(Long.class, bu);
+	public static ActionAbstrait<Long> getInstance(){
+		return new ActionBinaryLong(Long.class, null);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })

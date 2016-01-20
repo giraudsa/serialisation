@@ -14,8 +14,8 @@ public class ActionJsonUUID extends ActionJsonSimpleComportement<UUID> {
 		super(type, jsonUnmarshaller);
 	}
 
-	public static ActionAbstrait<UUID> getInstance(JsonUnmarshaller<?> unmarshaller){
-		return new ActionJsonUUID(UUID.class, unmarshaller);
+	public static ActionAbstrait<UUID> getInstance(){
+		return new ActionJsonUUID(UUID.class, null);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })

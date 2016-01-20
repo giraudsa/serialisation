@@ -5,17 +5,19 @@ import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.ActionXml;
 import giraudsa.marshall.deserialisation.text.xml.XmlEscapeUtil;
 import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
+import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.lang.reflect.InvocationTargetException;
 
 public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
-
+	protected StringBuilder sb = new StringBuilder();
 	protected ActionXmlSimpleComportement(Class<T> type, XmlUnmarshaller<?> xmlUnmarshaller) {
 		super(type, xmlUnmarshaller);
 	}
 
-	public static <U> ActionAbstrait<U> getInstance(Class<U> type, XmlUnmarshaller<?> u) {	
-			return new ActionXmlSimpleComportement<>(type, u);
+	@SuppressWarnings("unchecked")
+	public static <U> ActionAbstrait<U> getInstance() {	
+			return (ActionAbstrait<U>) new ActionXmlSimpleComportement<>(Object.class, null);
 		}
 
 	@SuppressWarnings("rawtypes")
@@ -25,13 +27,13 @@ public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 	}
 	
 	@Override
-	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-		obj = type.getConstructor(String.class).newInstance(unescapeXml(donnees));
+	protected void rempliData(String donnees){
+		sb.append(donnees);
 	}
 
 	@Override
-	protected void construitObjet() {
-		//rien a faire
+	protected void construitObjet() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption {
+		obj = type.getConstructor(String.class).newInstance(unescapeXml(sb.toString()));
 	}
 
 	@Override
@@ -39,8 +41,7 @@ public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 		//rien a faire
 	}
 	
-	private String unescapeXml(final String text) {
-        // The chosen symbols (1.0 or 1.1) don't really matter, as both contain the same CERs
+	protected static String unescapeXml(final String text) {
         return XmlEscapeUtil.unescape(text);
     }
 }

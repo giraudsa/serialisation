@@ -7,6 +7,7 @@ import giraudsa.marshall.deserialisation.binary.ActionBinary;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SmallIdTypeException;
+import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.TypeExtension;
 import utils.champ.FakeChamp;
 
@@ -26,8 +27,8 @@ public class ActionBinaryArray<T> extends ActionBinary<T> {
 		super(type, b);
 	}
 
-	public static ActionAbstrait<Object> getInstance(BinaryUnmarshaller<?> bu){ // NOSONAR
-		return new ActionBinaryArray<>(Object.class, bu);
+	public static ActionAbstrait<Object> getInstance(){ // NOSONAR
+		return new ActionBinaryArray<>(Object.class, null);
 	}
 	
 	@Override
@@ -35,7 +36,7 @@ public class ActionBinaryArray<T> extends ActionBinary<T> {
 		return new ActionBinaryArray<>(type, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 	@Override
-	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException {
+	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption {
 		if(!deserialisationFini){
 			litObject(fakeChamp);
 		}else{
@@ -54,12 +55,12 @@ public class ActionBinaryArray<T> extends ActionBinary<T> {
 		componentType = fieldInformations.getValueType().getComponentType();
 		fakeChamp = new FakeChamp(null, TypeExtension.getTypeEnveloppe(componentType), fieldInformations.getRelation());
 		if (isDejaVu() && !isDeserialisationComplete() && fieldInformations.getRelation() == TypeRelation.COMPOSITION){
-			obj = getObjetDejaVu();
+			obj = getObjet();
 			tailleCollection = Array.getLength(obj);
 			deserialisationFini = index >= tailleCollection;
 		}else if(isDejaVu()){
 			deserialisationFini = true;
-			obj = getObjetDejaVu();
+			obj = getObjet();
 		}else if(!isDejaVu()){
 			tailleCollection = readInt();
 			obj = Array.newInstance(componentType, tailleCollection);

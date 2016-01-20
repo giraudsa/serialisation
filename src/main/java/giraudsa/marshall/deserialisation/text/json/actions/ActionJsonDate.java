@@ -16,8 +16,8 @@ public class ActionJsonDate<T extends Date> extends ActionJsonSimpleComportement
 		super(type, jsonUnmarshaller);
 	}
 
-	public static ActionAbstrait<Date> getInstance(JsonUnmarshaller<?> jsonUnmarshaller){
-		return new ActionJsonDate<>(Date.class, jsonUnmarshaller);
+	public static ActionAbstrait<Date> getInstance(){
+		return new ActionJsonDate<>(Date.class, null);
 	}
 	
 	@SuppressWarnings("rawtypes")

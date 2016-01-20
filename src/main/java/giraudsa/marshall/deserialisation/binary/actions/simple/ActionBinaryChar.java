@@ -11,8 +11,8 @@ public class ActionBinaryChar extends ActionBinarySimple<Character> {
 		super(type, unmarshaller);
 	}
 
-	public static ActionAbstrait<Character> getInstance(BinaryUnmarshaller<?> bu){
-		return new ActionBinaryChar(Character.class, bu);
+	public static ActionAbstrait<Character> getInstance(){
+		return new ActionBinaryChar(Character.class, null);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })

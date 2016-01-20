@@ -16,8 +16,8 @@ public class ActionXmlDate<T extends Date> extends ActionXmlSimpleComportement<T
 	private ActionXmlDate(Class<T> type,  XmlUnmarshaller<?> xmlUnmarshaller) {
 		super(type, xmlUnmarshaller);
 	}
-	public static ActionAbstrait<Date> getInstance(XmlUnmarshaller<?> u) {	
-		return new ActionXmlDate<>(Date.class, u);
+	public static ActionAbstrait<Date> getInstance() {	
+		return new ActionXmlDate<>(Date.class, null);
 	}
 	@SuppressWarnings("rawtypes")
 	@Override
@@ -25,10 +25,10 @@ public class ActionXmlDate<T extends Date> extends ActionXmlSimpleComportement<T
 		return new ActionXmlDate<>(type, (XmlUnmarshaller<?>)unmarshaller);
 	}
 	@Override
-	protected void rempliData(String donnees){
+	protected void construitObjet(){
 		Date date;
 		try {
-			date = getDateFormat().parse(donnees);
+			date = getDateFormat().parse(sb.toString());
 			long time = date.getTime();
 			obj = type.getConstructor(long.class).newInstance(time);
 		} catch (ParseException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {

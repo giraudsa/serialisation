@@ -12,8 +12,8 @@ public class ActionBinaryFloat extends ActionBinarySimple<Float> {
 		super(type, unmarshaller);
 	}
 
-	public static ActionAbstrait<Float> getInstance(BinaryUnmarshaller<?> bu){
-		return new ActionBinaryFloat(Float.class, bu);
+	public static ActionAbstrait<Float> getInstance(){
+		return new ActionBinaryFloat(Float.class, null);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })

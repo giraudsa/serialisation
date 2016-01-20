@@ -36,8 +36,8 @@ public class ActionJsonEnum<T extends Enum> extends ActionJson<T>  {
 			} 
 		}
 	}
-	public static ActionAbstrait<Enum> getInstance(JsonUnmarshaller<?> jsonUnmarshaller){
-		return new ActionJsonEnum<>(Enum.class, jsonUnmarshaller);
+	public static ActionAbstrait<Enum> getInstance(){
+		return new ActionJsonEnum<>(Enum.class, null);
 	}
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {

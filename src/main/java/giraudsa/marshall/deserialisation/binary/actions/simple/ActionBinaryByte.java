@@ -12,8 +12,8 @@ public class ActionBinaryByte extends ActionBinarySimple<Byte> {
 		super(type, unmarshaller);
 	}
 
-	public static ActionAbstrait<Byte> getInstance(BinaryUnmarshaller<?> bu){
-		return new ActionBinaryByte(Byte.class, bu);
+	public static ActionAbstrait<Byte> getInstance(){
+		return new ActionBinaryByte(Byte.class, null);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })

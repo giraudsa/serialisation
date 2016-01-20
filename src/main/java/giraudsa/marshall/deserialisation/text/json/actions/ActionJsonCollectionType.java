@@ -43,8 +43,8 @@ public class ActionJsonCollectionType<T extends Collection> extends ActionJsonCo
 		return fakeChamp;
 	}
 	
-	public static ActionAbstrait<Collection> getInstance(JsonUnmarshaller<?> jsonUnmarshaller){
-		return new ActionJsonCollectionType<>(Collection.class, jsonUnmarshaller);
+	public static ActionAbstrait<Collection> getInstance(){
+		return new ActionJsonCollectionType<>(Collection.class, null);
 	}
 	
 	@Override

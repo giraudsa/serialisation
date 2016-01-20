@@ -26,8 +26,8 @@ public class ActionJsonArrayType<T> extends ActionJsonComplexeObject<T> {
 		}
 		return fakeChamp;
 	}
-    public static ActionAbstrait<Object> getInstance(JsonUnmarshaller<?> u) {	
-		return new ActionJsonArrayType<>(Object.class, u);
+    public static ActionAbstrait<Object> getInstance() {	
+		return new ActionJsonArrayType<>(Object.class, null);
 	}
 	
 	@SuppressWarnings("rawtypes")

@@ -12,13 +12,21 @@ import org.xml.sax.helpers.XMLReaderFactory;
 
 import utils.ConfigurationMarshalling;
 import utils.TypeExtension;
+import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlArrayType;
+import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlAtomicIntegerArray;
+import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlAtomicLongArray;
+import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlBitSet;
+import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlCalendar;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlCollectionType;
+import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlCurrency;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlDate;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlDictionaryType;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlEnum;
+import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlInetAddress;
+import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlLocale;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlObject;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlSimpleComportement;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlString;
@@ -31,16 +39,70 @@ import giraudsa.marshall.exception.UnmarshallExeption;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URL;
 import java.text.ParseException;
+import java.util.BitSet;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Currency;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
-
-import javax.lang.model.type.ArrayType;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLongArray;
 
 public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	private static final Logger LOGGER = LoggerFactory.getLogger(XmlUnmarshaller.class);
+	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
+	static {
+		dicoTypeToAction.put(Date.class, ActionXmlDate.getInstance());
+		dicoTypeToAction.put(Collection.class, ActionXmlCollectionType.getInstance());
+		dicoTypeToAction.put(Array.class, ActionXmlArrayType.getInstance());
+		dicoTypeToAction.put(Map.class, ActionXmlDictionaryType.getInstance());
+		dicoTypeToAction.put(Object.class, ActionXmlObject.getInstance());
+		dicoTypeToAction.put(void.class, ActionXmlVoid.getInstance());
+		dicoTypeToAction.put(Void.class, ActionXmlVoid.getInstance());
+		dicoTypeToAction.put(UUID.class, ActionXmlUUID.getInstance());
+		dicoTypeToAction.put(Enum.class, ActionXmlEnum.getInstance());
+		dicoTypeToAction.put(String.class, ActionXmlString.getInstance());
+		
+		dicoTypeToAction.put(Boolean.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(Byte.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(Float.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(Integer.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(Double.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(Long.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(Short.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(Character.class, ActionXmlSimpleComportement.getInstance());	
+		
+		dicoTypeToAction.put(AtomicBoolean.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(AtomicInteger.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(AtomicLong.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(AtomicIntegerArray.class, ActionXmlAtomicIntegerArray.getInstance());
+		dicoTypeToAction.put(AtomicLongArray.class, ActionXmlAtomicLongArray.getInstance());
+		dicoTypeToAction.put(BigDecimal.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(BigInteger.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(URI.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(URL.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(Currency.class, ActionXmlCurrency.getInstance());
+		dicoTypeToAction.put(Locale.class, ActionXmlLocale.getInstance());
+		dicoTypeToAction.put(InetAddress.class, ActionXmlInetAddress.getInstance());
+		dicoTypeToAction.put(BitSet.class, ActionXmlBitSet.getInstance());
+		dicoTypeToAction.put(Calendar.class, ActionXmlCalendar.getInstance());
+		dicoTypeToAction.put(StringBuilder.class, ActionXmlSimpleComportement.getInstance());
+		dicoTypeToAction.put(StringBuffer.class, ActionXmlSimpleComportement.getInstance());
+	}
+
 	/////ATTRIBUTS
 	private boolean isFirst = true;
     /////CONSTRUCTEUR
@@ -77,28 +139,6 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		}
 	}
 
-	
-	@Override
-	protected void initialiseActions() throws IOException {
-		actions.put(Date.class, ActionXmlDate.getInstance(this));
-		actions.put(Collection.class, ActionXmlCollectionType.getInstance(this));
-		actions.put(Array.class, ActionXmlArrayType.getInstance(this));
-		actions.put(Map.class, ActionXmlDictionaryType.getInstance(this));
-		actions.put(Object.class, ActionXmlObject.getInstance(this));
-		actions.put(Void.class, ActionXmlVoid.getInstance(this));
-		actions.put(UUID.class, ActionXmlUUID.getInstance(this));
-		actions.put(Enum.class, ActionXmlEnum.getInstance(this));
-		actions.put(String.class, ActionXmlString.getInstance(this));
-		
-		actions.put(Boolean.class, ActionXmlSimpleComportement.getInstance(Boolean.class,this));
-		actions.put(Byte.class, ActionXmlSimpleComportement.getInstance(Byte.class,this));
-		actions.put(Float.class, ActionXmlSimpleComportement.getInstance(Float.class,this));
-		actions.put(Integer.class, ActionXmlSimpleComportement.getInstance(Integer.class,this));
-		actions.put(Double.class, ActionXmlSimpleComportement.getInstance(Double.class,this));
-		actions.put(Long.class, ActionXmlSimpleComportement.getInstance(Long.class,this));
-		actions.put(Short.class, ActionXmlSimpleComportement.getInstance(Short.class,this));
-		actions.put(Character.class, ActionXmlSimpleComportement.getInstance(Character.class,this));	
-	}
 	
 	//////METHODES PRIVEES
 	private U parse() throws IOException, SAXException {
@@ -157,12 +197,12 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		}
 	}
 	
-	protected void characters(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ParseException {
+	protected void characters(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ParseException, UnmarshallExeption {
 		rempliData(getActionEnCours(), donnees);
 	}
 
 	@SuppressWarnings("unchecked") 
-	protected void endElement() throws InstantiationException, InvocationTargetException, ClassNotFoundException, NoSuchMethodException, IOException, NotImplementedSerializeException, IllegalAccessException {
+	protected void endElement() throws InstantiationException, InvocationTargetException, ClassNotFoundException, NoSuchMethodException, IOException, NotImplementedSerializeException, IllegalAccessException, UnmarshallExeption {
 		construitObjet(getActionEnCours());
 		ActionXml<?> actionATraiter = (ActionXml<?>) pileAction.pop();
 		if(pileAction.isEmpty()){
@@ -172,6 +212,10 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 			Object objet = getObjet(actionATraiter);
 			integreObjet(getActionEnCours(), nom, objet);
 		}
+	}
+	@Override
+	protected Map<Class<?>, ActionAbstrait<?>> getdicoTypeToAction() {
+		return dicoTypeToAction;
 	}
 }
 

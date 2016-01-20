@@ -28,8 +28,8 @@ public class ActionXmlArrayType<T> extends ActionXmlComplexeObject<T> {
 		}
 		return fakeChamp;
 	}
-    public static ActionAbstrait<Object> getInstance(XmlUnmarshaller<?> u) {	
-		return new ActionXmlArrayType<>(Object.class, u);
+    public static ActionAbstrait<Object> getInstance() {	
+		return new ActionXmlArrayType<>(Object.class, null);
 	}
 	
 	@SuppressWarnings("rawtypes")

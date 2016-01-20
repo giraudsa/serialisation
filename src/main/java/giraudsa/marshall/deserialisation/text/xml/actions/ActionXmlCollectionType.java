@@ -39,8 +39,8 @@ public class ActionXmlCollectionType<C extends Collection> extends ActionXmlComp
 		}
 		return fakeChamp;
 	}
-    public static ActionAbstrait<Collection> getInstance(XmlUnmarshaller<?> u) {	
-		return new ActionXmlCollectionType<>(Collection.class, u);
+    public static ActionAbstrait<Collection> getInstance() {	
+		return new ActionXmlCollectionType<>(Collection.class, null);
 	}
 	
 	@Override

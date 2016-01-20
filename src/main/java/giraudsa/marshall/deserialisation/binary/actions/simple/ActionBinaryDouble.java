@@ -10,8 +10,8 @@ public class ActionBinaryDouble extends ActionBinarySimple<Double> {
 		super(type, unmarshaller);
 	}
 
-	public static ActionAbstrait<Double> getInstance(BinaryUnmarshaller<?> bu){
-		return new ActionBinaryDouble(Double.class, bu);
+	public static ActionAbstrait<Double> getInstance(){
+		return new ActionBinaryDouble(Double.class, null);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })

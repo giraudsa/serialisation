@@ -23,8 +23,8 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 		dicoChampToValue = new HashMap<>();
 	}
 
-	public static  ActionAbstrait<Object> getInstance(XmlUnmarshaller<?> u) {	
-		return new ActionXmlObject<>(Object.class, u);
+	public static  ActionAbstrait<Object> getInstance() {	
+		return new ActionXmlObject<>(Object.class, null);
 	}
 	
 	@SuppressWarnings("rawtypes")

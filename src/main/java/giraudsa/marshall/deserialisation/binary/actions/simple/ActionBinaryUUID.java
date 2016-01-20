@@ -12,8 +12,8 @@ public class ActionBinaryUUID extends ActionBinarySimple<UUID> {
 		super(type, unmarshaller);
 	}
 
-	public static ActionAbstrait<UUID> getInstance(BinaryUnmarshaller<?> bu){
-		return new ActionBinaryUUID(UUID.class, bu);
+	public static ActionAbstrait<UUID> getInstance(){
+		return new ActionBinaryUUID(UUID.class, null);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -27,7 +27,7 @@ public class ActionBinaryUUID extends ActionBinarySimple<UUID> {
 	protected void initialise() throws IOException {
 		boolean isDejaVu = isDejaVu();
 		if(isDejaVu)
-			obj = getObjetDejaVu();
+			obj = getObjet();
 		else{
 			obj = UUID.fromString(readUTF());
 			stockeObjetId();

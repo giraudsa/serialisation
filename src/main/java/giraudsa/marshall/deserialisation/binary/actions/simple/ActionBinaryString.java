@@ -11,8 +11,8 @@ public class ActionBinaryString extends ActionBinarySimple<String> {
 		super(type, unmarshaller);
 	}
 
-	public static ActionAbstrait<String> getInstance(BinaryUnmarshaller<?> bu){
-		return new ActionBinaryString(String.class, bu);
+	public static ActionAbstrait<String> getInstance(){
+		return new ActionBinaryString(String.class, null);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -23,9 +23,8 @@ public class ActionBinaryString extends ActionBinarySimple<String> {
 	
 	@Override
 	protected void initialise() throws IOException{
-		boolean isDejaVu = isDejaVu();
-		if(isDejaVu)
-			obj = getObjetDejaVu();
+		if(isDejaVu())
+			obj = getObjet();
 		else{
 			obj = readUTF();
 			stockeObjetId();

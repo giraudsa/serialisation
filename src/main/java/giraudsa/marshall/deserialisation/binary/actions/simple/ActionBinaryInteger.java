@@ -11,8 +11,8 @@ public class ActionBinaryInteger extends ActionBinarySimple<Integer> {
 		super(type, unmarshaller);
 	}
 
-	public static ActionAbstrait<Integer> getInstance(BinaryUnmarshaller<?> bu){
-		return new ActionBinaryInteger(Integer.class, bu);
+	public static ActionAbstrait<Integer> getInstance(){
+		return new ActionBinaryInteger(Integer.class, null);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })

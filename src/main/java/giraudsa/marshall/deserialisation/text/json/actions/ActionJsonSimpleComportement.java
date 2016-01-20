@@ -4,6 +4,7 @@ import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.json.ActionJson;
 import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
+import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.Constants;
 
 import java.lang.reflect.InvocationTargetException;
@@ -16,8 +17,9 @@ public class ActionJsonSimpleComportement<T> extends ActionJson<T> {
 		super(type, jsonUnmarshaller);
 	}
 
-	public static <U> ActionAbstrait<U> getInstance(Class<U> type, JsonUnmarshaller<?> u) {	
-		return new ActionJsonSimpleComportement<>(type, u);
+	@SuppressWarnings("unchecked")
+	public static <U> ActionAbstrait<U> getInstance() {	
+		return (ActionAbstrait<U>) new ActionJsonSimpleComportement<>(Object.class, null);
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -35,11 +37,11 @@ public class ActionJsonSimpleComportement<T> extends ActionJson<T> {
 	
 	@Override
 	protected <W> void integreObjet(String nomAttribut, W objet) {
-		obj = objet;
+		//rien à faire
 	}
 	
 	@Override
-	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption {
 		obj = type.getConstructor(String.class).newInstance(donnees);
 	}
 	

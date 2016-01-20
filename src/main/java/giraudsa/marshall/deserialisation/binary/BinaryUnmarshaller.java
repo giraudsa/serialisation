@@ -9,17 +9,33 @@ import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryCollection;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryDictionary;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryEnum;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryObject;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryAtomicBoolean;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryAtomicInteger;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryAtomicIntegerArray;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryAtomicLong;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryAtomicLongArray;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryBigDecimal;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryBigInteger;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryBitSet;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryBoolean;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryByte;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryCalendar;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryChar;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryCurrency;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryDate;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryDouble;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryFloat;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryInetAddress;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryInteger;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryLocale;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryLong;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryShort;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryString;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryStringBuffer;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryStringBuilder;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryUUID;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryUri;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryUrl;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryVoid;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SmallIdTypeException;
@@ -29,12 +45,27 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URL;
+import java.util.BitSet;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLongArray;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +77,43 @@ import utils.champ.FieldInformations;
 public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BinaryUnmarshaller.class);
 	private static final Set<Class<?>> simpleEnveloppe = new HashSet<>();
+	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
+	static {
+		dicoTypeToAction.put(Boolean.class, ActionBinaryBoolean.getInstance());
+		dicoTypeToAction.put(Byte.class, ActionBinaryByte.getInstance());
+		dicoTypeToAction.put(Short.class, ActionBinaryShort.getInstance());
+		dicoTypeToAction.put(Integer.class, ActionBinaryInteger.getInstance());
+		dicoTypeToAction.put(Long.class, ActionBinaryLong.getInstance());
+		dicoTypeToAction.put(Float.class, ActionBinaryFloat.getInstance());
+		dicoTypeToAction.put(Double.class, ActionBinaryDouble.getInstance());
+		dicoTypeToAction.put(String.class, ActionBinaryString.getInstance());
+		dicoTypeToAction.put(Date.class, ActionBinaryDate.getInstance());
+		dicoTypeToAction.put(UUID.class, ActionBinaryUUID.getInstance());
+		dicoTypeToAction.put(Void.class, ActionBinaryVoid.getInstance());
+		dicoTypeToAction.put(Character.class, ActionBinaryChar.getInstance());
+		dicoTypeToAction.put(Constants.collectionType, ActionBinaryCollection.getInstance());
+		dicoTypeToAction.put(Constants.arrayType, ActionBinaryArray.getInstance());
+		dicoTypeToAction.put(Constants.dictionaryType, ActionBinaryDictionary.getInstance());
+		dicoTypeToAction.put(Constants.objectType, ActionBinaryObject.getInstance());
+		dicoTypeToAction.put(Constants.enumType, ActionBinaryEnum.getInstance());	
+		dicoTypeToAction.put(AtomicBoolean.class, ActionBinaryAtomicBoolean.getInstance());
+		dicoTypeToAction.put(AtomicInteger.class, ActionBinaryAtomicInteger.getInstance());
+		dicoTypeToAction.put(AtomicLong.class, ActionBinaryAtomicLong.getInstance());
+		dicoTypeToAction.put(AtomicIntegerArray.class, ActionBinaryAtomicIntegerArray.getInstance());
+		dicoTypeToAction.put(AtomicLongArray.class, ActionBinaryAtomicLongArray.getInstance());
+		dicoTypeToAction.put(BigDecimal.class, ActionBinaryBigDecimal.getInstance());
+		dicoTypeToAction.put(BigInteger.class, ActionBinaryBigInteger.getInstance());
+		dicoTypeToAction.put(URI.class, ActionBinaryUri.getInstance());
+		dicoTypeToAction.put(URL.class, ActionBinaryUrl.getInstance());
+		dicoTypeToAction.put(Currency.class, ActionBinaryCurrency.getInstance());
+		dicoTypeToAction.put(Locale.class, ActionBinaryLocale.getInstance());
+		dicoTypeToAction.put(InetAddress.class, ActionBinaryInetAddress.getInstance());
+		dicoTypeToAction.put(BitSet.class, ActionBinaryBitSet.getInstance());
+		dicoTypeToAction.put(Calendar.class, ActionBinaryCalendar.getInstance());
+		dicoTypeToAction.put(StringBuilder.class, ActionBinaryStringBuilder.getInstance());
+		dicoTypeToAction.put(StringBuffer.class, ActionBinaryStringBuffer.getInstance());
+	}
+
 	private DataInputStream input;
 	private Map<Integer, Object> dicoSmallIdToObject = new HashMap<>();
 	private Map<Integer, Class<?>> dicoSmallIdToClazz = new HashMap<>();
@@ -134,7 +202,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		dicoSmallIdToObject.put(smallId,obj);
 	}
 	
-	private T parse() throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, SmallIdTypeException {
+	private T parse() throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption {
 		FakeChamp fc = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION);
 		litObject(readByte(), fc);
 		while(!pileAction.isEmpty()){
@@ -143,7 +211,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		return obj;
 	}
 	
-	void litObject(byte header, FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException {
+	void litObject(byte header, FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption {
 		Class<?> typeProbable = fieldInformations.getValueType();
 		Class<?> typeCandidat = null;
 		
@@ -195,26 +263,6 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		return smallId;	
 	}
 	
-	@Override protected void initialiseActions() throws IOException {
-		actions.put(Boolean.class, ActionBinaryBoolean.getInstance(this));
-		actions.put(Byte.class, ActionBinaryByte.getInstance(this));
-		actions.put(Short.class, ActionBinaryShort.getInstance(this));
-		actions.put(Integer.class, ActionBinaryInteger.getInstance(this));
-		actions.put(Long.class, ActionBinaryLong.getInstance(this));
-		actions.put(Float.class, ActionBinaryFloat.getInstance(this));
-		actions.put(Double.class, ActionBinaryDouble.getInstance(this));
-		actions.put(String.class, ActionBinaryString.getInstance(this));
-		actions.put(Date.class, ActionBinaryDate.getInstance(this));
-		actions.put(UUID.class, ActionBinaryUUID.getInstance(this));
-		actions.put(Void.class, ActionBinaryVoid.getInstance(this));
-		actions.put(Character.class, ActionBinaryChar.getInstance(this));
-		actions.put(Constants.collectionType, ActionBinaryCollection.getInstance(this));
-		actions.put(Constants.arrayType, ActionBinaryArray.getInstance(this));
-		actions.put(Constants.dictionaryType, ActionBinaryDictionary.getInstance(this));
-		actions.put(Constants.objectType, ActionBinaryObject.getInstance(this));
-		actions.put(Constants.enumType, ActionBinaryEnum.getInstance(this));
-	}
-	
 	boolean readBoolean() throws IOException {
 		return input.readBoolean();
 	}
@@ -258,6 +306,11 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 
 	void setDejaTotalementDeSerialise(Object o) {
 		isDejaTotalementDeSerialise.add(o);
+	}
+
+	@Override
+	protected Map<Class<?>, ActionAbstrait<?>> getdicoTypeToAction() {
+		return dicoTypeToAction;
 	}
 
 }

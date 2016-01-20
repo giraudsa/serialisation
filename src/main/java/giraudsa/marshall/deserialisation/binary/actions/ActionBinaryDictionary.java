@@ -7,6 +7,7 @@ import giraudsa.marshall.deserialisation.binary.ActionBinary;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SmallIdTypeException;
+import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.champ.FakeChamp;
 
 import java.io.IOException;
@@ -30,8 +31,8 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 	}
 
 
-	public static ActionAbstrait<Map> getInstance(BinaryUnmarshaller<?> bu){
-		return new ActionBinaryDictionary<>(Map.class, bu);
+	public static ActionAbstrait<Map> getInstance(){
+		return new ActionBinaryDictionary<>(Map.class, null);
 	}
 	
 
@@ -43,12 +44,12 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 	@Override
 	protected void initialise() throws InstantiationException, IllegalAccessException, IOException{
 		if (isDejaVu() && !isDeserialisationComplete() && fieldInformations.getRelation() == TypeRelation.COMPOSITION){
-			obj = getObjetDejaVu();
+			obj = getObjet();
 			tailleCollection = ((Map)obj).size();
 			deserialisationFini = index < tailleCollection;
 		}else if(isDejaVu()){
 			deserialisationFini = true;
-			obj = getObjetDejaVu();
+			obj = getObjet();
 		}else if(!isDejaVu()){
 			obj = type.newInstance();
 			stockeObjetId();
@@ -67,7 +68,7 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 	}
 
 	@Override
-	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException{
+	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption{
 		if(!deserialisationFini){
 			if(clefTampon == null) 
 				litObject(fakeChampKey);
