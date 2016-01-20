@@ -240,6 +240,8 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		simpleEnveloppe.add(Integer.class);
 		simpleEnveloppe.add(Long.class);
 		simpleEnveloppe.add(Void.class);
+		simpleEnveloppe.add(Double.class);
+		simpleEnveloppe.add(Float.class);
 	}
 	private int getSmallId(byte header, Class<?> t) throws IOException, SmallIdTypeException {
 		if(simpleEnveloppe.contains(t))
