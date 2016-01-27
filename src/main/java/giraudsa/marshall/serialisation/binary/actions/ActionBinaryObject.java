@@ -34,7 +34,6 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 		if(serialiseToutSaufId)
 			setDejaTotalementSerialise(marshaller, objetASerialiser);
 		
-		Champ champId = TypeExtension.getChampId(objetASerialiser.getClass());
 		List<Champ> champs = getListeChamp(objetASerialiser, serialiseId, serialiseToutSaufId);
 		for(Champ champ : champs){
 			Comportement comportement = traiteChamp(marshaller, objetASerialiser, champ);

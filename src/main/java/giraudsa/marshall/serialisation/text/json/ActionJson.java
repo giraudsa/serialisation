@@ -3,7 +3,6 @@ package giraudsa.marshall.serialisation.text.json;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.ActionText;
-import utils.Constants;
 import utils.champ.FieldInformations;
 
 import java.io.IOException;
@@ -11,7 +10,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public abstract class ActionJson<T> extends ActionText<T>  {
 	private static final Map<Character, String> REMPLACEMENT_CHARS;

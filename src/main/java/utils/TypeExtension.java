@@ -21,7 +21,7 @@ import utils.champ.FabriqueChamp;
 public class TypeExtension {	
 	private static Set<Class<?>> simpleTypes = new HashSet<>(Arrays.asList(Boolean.class, Byte.class, Short.class, Integer.class, Long.class, Float.class, Double.class, 
 			String.class, Date.class, void.class, UUID.class, Character.class, Void.class)); 
-	private static Map<Class<?>, List<Champ>> serializablefieldsOfType = new HashMap<>();
+	protected static Map<Class<?>, List<Champ>> serializablefieldsOfType = new HashMap<>();
 	private static Map<Class<?>, Champ> dicoTypeTochampId = new HashMap<>();
 	private static Map<Class<?>, Class<?>> dicoTypePrimitifToEnveloppe = new HashMap<>();
 	private static final Set<Class<?>> simpleEnveloppe = new HashSet<>();

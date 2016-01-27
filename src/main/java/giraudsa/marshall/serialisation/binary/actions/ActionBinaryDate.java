@@ -10,7 +10,6 @@ import utils.headers.HeaderTypeCourant;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.UUID;
 
 public class ActionBinaryDate extends ActionBinary<Date> {
 

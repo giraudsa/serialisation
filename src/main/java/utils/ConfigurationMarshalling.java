@@ -26,16 +26,20 @@ public class ConfigurationMarshalling {
 		idEstUniversel = true;
 	}
 	public static synchronized void setDateFormatJson(SimpleDateFormat dateFormatJson){
-		instance.dateFormatJson = dateFormatJson;
+		if(dateFormatJson != null)
+			instance.dateFormatJson = dateFormatJson;
 	}
 	
 	public static synchronized void setDateFormatXml(SimpleDateFormat dateFormatXml){
-		instance.dateFormatXml = dateFormatXml;
+		if (dateFormatXml != null)
+			instance.dateFormatXml = dateFormatXml;
 	}
 	
 	public static <T extends Annotation> void setAnnotationIgnoreSerialise(Class<T> ignoreSerialiseAnnotation){
-		if(ignoreSerialiseAnnotation != null) 
+		if(ignoreSerialiseAnnotation != null && annotationIgnoreSerialise != ignoreSerialiseAnnotation){ 
 			annotationIgnoreSerialise = ignoreSerialiseAnnotation;
+			TypeExtension.serializablefieldsOfType.clear();
+		}
 	}
 	
 	public static Class<? extends Annotation> getAnnotationIgnoreSerialise(){

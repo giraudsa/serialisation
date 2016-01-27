@@ -5,7 +5,6 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
 
-import utils.TypeExtension;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
