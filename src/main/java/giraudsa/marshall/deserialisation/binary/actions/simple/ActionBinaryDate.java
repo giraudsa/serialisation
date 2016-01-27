@@ -4,6 +4,7 @@ import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 
 public class ActionBinaryDate<DateType extends Date> extends ActionBinarySimple<DateType> {
@@ -23,14 +24,14 @@ public class ActionBinaryDate<DateType extends Date> extends ActionBinarySimple<
 	}
 	
 	@Override
-	protected void initialise() throws IOException, InstantiationException, IllegalAccessException {
+	protected void initialise() throws IOException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		boolean isDejaVu = isDejaVu();
 		if(isDejaVu)
 			obj = getObjet();
 		else{
-			obj = type.newInstance();
-			((Date)obj).setTime(readLong());
+			obj = type.getConstructor(long.class).newInstance(readLong());
 			stockeObjetId();
+			setDejaTotalementDeSerialise();
 		}
 	}
 }

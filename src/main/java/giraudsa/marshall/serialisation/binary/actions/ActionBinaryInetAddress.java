@@ -14,8 +14,8 @@ public class ActionBinaryInetAddress extends ActionBinary<InetAddress> {
 		super();
 	}
 	@Override
-	protected void ecritValeur(Marshaller marshaller, InetAddress address, FieldInformations fieldInformations) throws IOException {
-		if(!isDejaTotalementSerialise(marshaller, address)){
+	protected void ecritValeur(Marshaller marshaller, InetAddress address, FieldInformations fieldInformations, boolean isDejaVu) throws IOException {
+		if(!isDejaVu){
 			setDejaTotalementSerialise(marshaller, address);
 			writeUTF(marshaller, address.getHostAddress());
 		}

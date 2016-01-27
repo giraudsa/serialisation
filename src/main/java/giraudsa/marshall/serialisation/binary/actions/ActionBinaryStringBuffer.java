@@ -13,8 +13,8 @@ public class ActionBinaryStringBuffer extends ActionBinary<StringBuffer> {
 		super();
 	}
 	@Override
-	protected void ecritValeur(Marshaller marshaller, StringBuffer sb, FieldInformations fieldInformations) throws IOException {
-		if(!isDejaTotalementSerialise(marshaller, sb)){
+	protected void ecritValeur(Marshaller marshaller, StringBuffer sb, FieldInformations fieldInformations,boolean isDejaVu) throws IOException {
+		if(!isDejaVu){
 			setDejaTotalementSerialise(marshaller, sb);
 			writeUTF(marshaller, sb.toString());
 		}

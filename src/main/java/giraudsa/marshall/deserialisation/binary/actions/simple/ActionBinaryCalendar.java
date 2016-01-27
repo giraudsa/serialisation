@@ -32,6 +32,7 @@ public class ActionBinaryCalendar<C extends Calendar> extends ActionBinarySimple
 			obj = new GregorianCalendar(readInt(), readInt(), readInt(), readInt(), readInt(), readInt());
 					//day, month, day of month, hour of day, minute, second
 			stockeObjetId();
+			setDejaTotalementDeSerialise();
 		}
 	}
 }

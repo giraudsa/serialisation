@@ -96,7 +96,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	@Override
-	protected void integreObjet(String nom, Object objet) throws IllegalAccessException, InstantiationException {
+	protected void integreObjet(String nom, Object objet) throws IllegalAccessException, InstantiationException, UnmarshallExeption {
 		if(champEnAttente == champId){
 			String id = objet.toString();
 			obj = getObject(id, type);
@@ -107,6 +107,6 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 		if (iteratorChamp.hasNext())
 			champEnAttente = iteratorChamp.next();
 		else 
-			champEnAttente = null;
+			exporteObject();
 	}
 }

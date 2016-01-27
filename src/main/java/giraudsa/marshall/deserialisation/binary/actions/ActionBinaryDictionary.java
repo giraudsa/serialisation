@@ -45,6 +45,7 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 	protected void initialise() throws InstantiationException, IllegalAccessException, IOException{
 		if (isDejaVu() && !isDeserialisationComplete() && fieldInformations.getRelation() == TypeRelation.COMPOSITION){
 			obj = getObjet();
+			setDejaTotalementDeSerialise();
 			tailleCollection = ((Map)obj).size();
 			deserialisationFini = index < tailleCollection;
 		}else if(isDejaVu()){
@@ -53,6 +54,8 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 		}else if(!isDejaVu()){
 			obj = type.newInstance();
 			stockeObjetId();
+			if(isDeserialisationComplete() || fieldInformations.getRelation() == TypeRelation.COMPOSITION)
+				setDejaTotalementDeSerialise();
 			tailleCollection = readInt();
 			deserialisationFini = index >= tailleCollection;
 		}
@@ -74,7 +77,6 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 				litObject(fakeChampKey);
 			else{
 				litObject(fakeChampValue);
-				deserialisationFini = ++index >= tailleCollection;
 			}
 		}else{
 			exporteObject();
@@ -85,13 +87,16 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void integreObjet(String name, Object objet) {
+	protected void integreObjet(String name, Object objet) throws IllegalAccessException, InstantiationException, UnmarshallExeption {
 		if(clefTampon == null) 
 			clefTampon = objet;
 		else if(((Collection)obj).size() < index){
 			((Map)obj).put(clefTampon, objet);
 			clefTampon = null;
+			deserialisationFini = ++index >= tailleCollection;
 		}
+		if(deserialisationFini)
+			exporteObject();
 	}
 	
 }

@@ -9,6 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import utils.Constants;
@@ -18,8 +19,8 @@ public abstract class Marshaller {
 	
 	//////ATTRIBUT
 	protected boolean isCompleteSerialisation;
-	protected Set<Object> dejaTotalementSerialise = new HashSet<>();
-	private Set<Object> dejaVu = new HashSet<>();
+	protected Map<Object, Boolean> dejaTotalementSerialise = new IdentityHashMap<>();
+	private Map<Object, Boolean> dejaVu = new IdentityHashMap<>();
 	@SuppressWarnings("rawtypes")
 	protected Deque<Comportement> aFaire = new ArrayDeque<>();
 
@@ -79,34 +80,27 @@ public abstract class Marshaller {
 		return action;
 	}
 	
-	
-	
-	
-	protected <T> void marshall(T value, FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
-		marshallSpecialise(value, fieldInformations);
-	}
-	
 	protected <T> boolean isDejaVu(T obj){
-		return dejaVu.contains(obj);
+		return dejaVu.containsKey(obj);
 	}
 	
 	protected <T> void setDejaVu(T obj){
-		dejaVu.add(obj);
+		dejaVu.put(obj, true);
 	}
 	
 	protected <T> boolean isDejaTotalementSerialise(T obj){
-		return dejaTotalementSerialise.contains(obj);
+		return dejaTotalementSerialise.containsKey(obj);
 	}
 	
 	protected <T> void setDejaTotalementSerialise(T obj){
-		dejaTotalementSerialise.add(obj);
+		dejaTotalementSerialise.put(obj, true);
 	}
 		
 	protected void deserialisePile() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, MarshallExeption{
 		aFaire.pop().evalue(this);
 	}
 	
-	protected <T> void marshallSpecialise(T value, FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException {
+	protected <T> void marshall(T value, FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, MarshallExeption {
 		ActionAbstrait<?> action = getAction(value);
 		action.marshall(this, value, fieldInformations);
 	}

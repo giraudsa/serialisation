@@ -14,8 +14,8 @@ public class ActionBinaryCurrency extends ActionBinary<Currency> {
 		super();
 	}
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Currency currency, FieldInformations fieldInformations) throws IOException {
-		if(!isDejaTotalementSerialise(marshaller, currency)){
+	protected void ecritValeur(Marshaller marshaller, Currency currency, FieldInformations fieldInformations, boolean isDejaVu) throws IOException {
+		if(!isDejaVu){
 			setDejaTotalementSerialise(marshaller, currency);
 			writeUTF(marshaller, currency.getCurrencyCode());
 		}

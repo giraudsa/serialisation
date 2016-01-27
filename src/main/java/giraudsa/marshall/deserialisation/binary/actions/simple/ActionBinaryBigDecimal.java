@@ -29,6 +29,7 @@ public class ActionBinaryBigDecimal extends ActionBinarySimple<BigDecimal> {
 		}else{
 			obj = new BigDecimal(readUTF());
 			stockeObjetId();
+			setDejaTotalementDeSerialise();
 		}
 	}
 }

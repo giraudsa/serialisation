@@ -136,7 +136,7 @@ public abstract class Unmarshaller<T> {
 	}
 
 	
-	protected <W> void integreObjet(ActionAbstrait<?> action, String nom, W objet) throws IllegalAccessException, InstantiationException {
+	protected <W> void integreObjet(ActionAbstrait<?> action, String nom, W objet) throws IllegalAccessException, InstantiationException, UnmarshallExeption {
 		action.integreObjet(nom, objet);
 	}
 	protected void rempliData(ActionAbstrait<?> action, String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ParseException, UnmarshallExeption {

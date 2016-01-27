@@ -53,6 +53,7 @@ public class ActionBinaryLocale extends ActionBinarySimple<Locale> {
 				obj = new Locale(language, country, variant);
 			}
 			stockeObjetId();
+			setDejaTotalementDeSerialise();
 		}
 	}
 }

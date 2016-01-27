@@ -5,46 +5,82 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.ActionAbstrait;
 import giraudsa.marshall.serialisation.Marshaller;
 
+import java.io.DataOutput;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import utils.Constants;
 import utils.champ.FieldInformations;
+import utils.headers.Header;
 
 
 public abstract class ActionBinary<T> extends ActionAbstrait<T> {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ActionBinary.class);
 	
 	protected ActionBinary(){
 		super();
 	}
-
-	protected byte getHeaderType(Class<?> type, boolean typeDevinable){
-		return Constants.Type.getByteHeader(type, typeDevinable);
+	
+	protected Class<?> getTypeObjProblemeHibernate(Object object) {
+		if(object == null)
+			return void.class;
+		Class<?> ret = object.getClass();
+		if(ret.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentBag") != -1) 
+			ret = ArrayList.class;
+		else if(ret.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSet") != -1) 
+			ret = HashSet.class;
+		else if(ret.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentMap") != -1) 
+			ret = HashMap.class;
+		else if(ret.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedSet") != -1) 
+			ret = TreeSet.class;
+		else if(ret.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedMap") != -1) 
+			ret = TreeMap.class;
+		return ret;
 	}
 	
-	protected byte[] getHeaderConstant(Class<?> type, boolean typeDevinable){
-		return new byte[]{getHeaderType(type, typeDevinable)};
+	@Override
+	protected boolean isTypeDevinable(Marshaller marshaller, Object value, FieldInformations fieldInformations) {
+		return fieldInformations.isTypeDevinable(value);
 	}
 	
 	protected BinaryMarshaller getBinaryMarshaller(Marshaller marshaller){
 		return (BinaryMarshaller)marshaller;
 	}
 	
-	protected boolean writeHeaders(Marshaller marshaller, T objetASerialiser, boolean typeDevinable) throws MarshallExeption, IOException{
+	protected boolean writeHeaders(Marshaller marshaller, T objetASerialiser, FieldInformations fieldInformations) throws MarshallExeption, IOException{
+		Class<?> typeObj = getTypeObjProblemeHibernate(objetASerialiser);
 		boolean isDejaVu = isDejaVu(marshaller, objetASerialiser);
-		getBinaryMarshaller(marshaller).writeByteArray(calculHeaders(marshaller, objetASerialiser, typeDevinable, isDejaVu));
+		boolean isTypeDevinable = isTypeDevinable(marshaller, objetASerialiser, fieldInformations);
+		boolean isDejaVuType = isDejaVuType(marshaller, typeObj);
+		int smallId = getSmallIdAndStockObj(marshaller, objetASerialiser);
+		short smallIdType = getSmallIdTypeAndStockType(marshaller, typeObj);
+		Header<?> header = Header.getHeader(isDejaVu, isTypeDevinable, smallId, smallIdType);
+		header.write(getOutput(marshaller), smallId, smallIdType, isDejaVuType, typeObj);
 		return isDejaVu;
 	}
-
-	protected byte[] calculHeaders(Marshaller marshaller, T objetASerialiser, boolean typeDevinable, boolean isDejaVu) throws IOException, MarshallExeption {
-		byte headerType = getHeaderType(objetASerialiser.getClass(), typeDevinable);
-		return getBinaryMarshaller(marshaller).calculHeader(objetASerialiser, headerType, isDejaVu);
+	
+	protected DataOutput getOutput(Marshaller marshaller){
+		return getBinaryMarshaller(marshaller).output;
 	}
+
 	protected void writeBoolean(Marshaller marshaller, boolean v) throws IOException {
 		getBinaryMarshaller(marshaller).writeBoolean(v);
 	}
 	protected void writeByte(Marshaller marshaller, byte v) throws IOException {
 		getBinaryMarshaller(marshaller).writeByte(v);
+	}
+	protected void writeByteArray(Marshaller marshaller, byte[] v) throws IOException {
+		getBinaryMarshaller(marshaller).writeByteArray(v);
 	}
 	protected void writeShort(Marshaller marshaller, short v) throws IOException {
 		getBinaryMarshaller(marshaller).writeShort(v);
@@ -72,51 +108,54 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	@Override protected void marshall(Marshaller marshaller, Object objetASerialiser, FieldInformations fieldInformation){
-		pushComportement(marshaller, new ComportementEcrisValeur((T) objetASerialiser, fieldInformation));
-		pushComportement(marshaller, new ComportementWriteHeader(objetASerialiser, fieldInformation));
+	@Override protected void marshall(Marshaller marshaller, Object objetASerialiser, FieldInformations fieldInformation) throws MarshallExeption{
+		try {
+			boolean isDejaVu = writeHeaders(marshaller, (T) objetASerialiser, fieldInformation);
+			ecritValeur(marshaller, (T) objetASerialiser, fieldInformation, isDejaVu);
+		} catch (MarshallExeption | IOException | IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+			LOGGER.error("problème à la sérialisation de l'objet " + objetASerialiser.toString(), e);
+			throw new MarshallExeption(e);
+		}
+		
+	}
+
+	protected abstract void ecritValeur(Marshaller marshaller, T obj, FieldInformations fieldInformation, boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption;
+	
+	protected int getSmallIdUUIDAndStockUUID(Marshaller marshaller, UUID id) {
+		return getBinaryMarshaller(marshaller).getSmallIdAndStockUUID(id);
+	}
+	protected boolean isDejaVuUUID(Marshaller marshaller, UUID id) {
+		return getBinaryMarshaller(marshaller).isDejaVuUUID(id);
 	}
 	
-	protected abstract void ecritValeur(Marshaller marshaller, T obj, FieldInformations fieldInformation) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption;
+	protected int getSmallIdStringAndStockString(Marshaller marshaller, String string) {
+		return getBinaryMarshaller(marshaller).getSmallIdAndStockString(string);
+	}
+	protected boolean isDejaVuString(Marshaller marshaller, String string) {
+		return getBinaryMarshaller(marshaller).isDejaVuString(string);
+	}
+	protected int getSmallIdDateAndStockDate(Marshaller marshaller, Date date) {
+		return getBinaryMarshaller(marshaller).getSmallIdAndStockDate(date);
+	}
+
+	protected boolean isDejaVuDate(Marshaller marshaller, Date date) {
+		return getBinaryMarshaller(marshaller).isDejaVuDate(date);
+	}
+	protected short getSmallIdTypeAndStockType(Marshaller marshaller, Class<?> typeObj) {
+		return getBinaryMarshaller(marshaller).getSmallIdTypeAndStockType(typeObj);
+	}
+
+	protected int getSmallIdAndStockObj(Marshaller marshaller, Object o) {
+		return getBinaryMarshaller(marshaller).getSmallIdAndStockObj(o);
+	}
+
+	protected boolean isDejaVuType(Marshaller marshaller, Class<?> typeObj) {
+		return getBinaryMarshaller(marshaller).isDejaVuType(typeObj);
+	}
+	
 	
 	@Override
 	protected <V> boolean aTraiter(Marshaller marshaller, V value, FieldInformations f){
 		return true;
-	}
-
-	protected class ComportementWriteHeader extends Comportement{
-
-		private Object objetASerialiser;
-		private FieldInformations fieldInformation;
-
-		protected ComportementWriteHeader(Object objetASerialiser, FieldInformations fieldInformation) {
-			super();
-			this.objetASerialiser = objetASerialiser;
-			this.fieldInformation = fieldInformation;
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		protected void evalue(Marshaller marshaller) throws MarshallExeption, IOException{
-			boolean typeDevinable = isTypeDevinable(marshaller, objetASerialiser, fieldInformation);
-			writeHeaders(marshaller, (T) objetASerialiser, typeDevinable);
-		}
-		
-	}
-	protected class ComportementEcrisValeur extends Comportement{
-
-		private T obj;
-		private FieldInformations fieldInformations;
-
-		protected ComportementEcrisValeur(T obj, FieldInformations fieldInformations) {
-			super();
-			this.obj = obj;
-			this.fieldInformations = fieldInformations;
-		}
-
-		@Override
-		protected void evalue(Marshaller marshaller) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
-			ecritValeur(marshaller, obj, fieldInformations);
-		}
 	}
 }

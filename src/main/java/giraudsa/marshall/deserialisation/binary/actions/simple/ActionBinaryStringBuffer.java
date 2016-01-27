@@ -28,6 +28,7 @@ public class ActionBinaryStringBuffer extends ActionBinarySimple<StringBuffer> {
 		else{
 			obj = new StringBuffer(readUTF());
 			stockeObjetId();
+			setDejaTotalementDeSerialise();
 		}
 	}
 }

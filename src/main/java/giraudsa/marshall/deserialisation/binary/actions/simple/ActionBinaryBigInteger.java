@@ -34,6 +34,7 @@ public class ActionBinaryBigInteger extends ActionBinarySimple<BigInteger> {
 			}
 			obj = new BigInteger(raw);
 			stockeObjetId();
+			setDejaTotalementDeSerialise();
 		}
 	}
 }

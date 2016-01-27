@@ -33,7 +33,7 @@ public abstract class ActionAbstrait<T> {
 		return obj;
 	}
 
-	protected abstract <W> void integreObjet(String nomAttribut, W objet) throws IllegalAccessException, InstantiationException;
+	protected abstract <W> void integreObjet(String nomAttribut, W objet) throws IllegalAccessException, InstantiationException, UnmarshallExeption;
 	protected abstract void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption;
 
 	protected boolean isUniversalId() {

@@ -24,7 +24,7 @@ public abstract class ActionAbstrait<T> {
 		return obj.getClass();
 	}
 	
-	protected abstract void marshall(Marshaller marshaller, Object obj, FieldInformations fieldInformations);
+	protected abstract void marshall(Marshaller marshaller, Object obj, FieldInformations fieldInformations) throws MarshallExeption;
 
 	protected <U> boolean isDejaVu(Marshaller marshaller,U objet){
 		return marshaller.isDejaVu(objet);
@@ -53,10 +53,6 @@ public abstract class ActionAbstrait<T> {
 		if(isDejaVu(marshaller, value) && isUniversalId(marshaller))
 			return true;
 		return fieldInformations.isTypeDevinable(value);
-	}
-	
-	protected <V> void marshallValue(Marshaller marshaller, V value, FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
-		marshaller.marshall(value, fieldInformations);
 	}
 	
 	protected Comportement traiteChamp(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, IllegalAccessException {
@@ -113,12 +109,11 @@ public abstract class ActionAbstrait<T> {
 		}
 
 		@Override
-		protected void evalue(Marshaller marshaller) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
+		protected void evalue(Marshaller marshaller) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
 			if(writeSeparateur)
 					writeSeparator(marshaller);
-			marshallValue(marshaller, value, fieldInformations);
+			marshaller.marshall(value, fieldInformations);
 			
 		}
-		
 	}
 }

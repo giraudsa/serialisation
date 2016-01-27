@@ -14,12 +14,10 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import utils.Constants;
-
 @SuppressWarnings("rawtypes")
 public class ActionBinaryEnum<E extends Enum> extends ActionBinarySimple<E> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ActionBinaryEnum.class);
-	private Map<Class<?>, Byte> mapTypeSousJacent = new HashMap<>();
+	private Map<Class<?>, Integer> mapTypeSousJacent = new HashMap<>();
 	private Map<Class<?>, Enum[]> mapListeEnum = new HashMap<>();
 	
 	private ActionBinaryEnum(Class<E> type, BinaryUnmarshaller<?> unmarshaller){
@@ -39,13 +37,11 @@ public class ActionBinaryEnum<E extends Enum> extends ActionBinarySimple<E> {
 	protected void initialise() throws IOException, InstantiationException, IllegalAccessException {
 		try {
 			rempliListeEnum();
-			byte typeSousJacent = mapTypeSousJacent.get(type);
-			if(typeSousJacent == Constants.Type.CODAGE_BYTE) 
+			int typeSousJacent = mapTypeSousJacent.get(type);
+			if(typeSousJacent == 1) 
 				obj =  mapListeEnum.get(type)[(int)readByte()];
-			else if(typeSousJacent == Constants.Type.CODAGE_SHORT) 
+			else if(typeSousJacent == 2) 
 				obj = mapListeEnum.get(type)[(int)readShort()];
-			else 
-				obj = mapListeEnum.get(type)[readInt()];
 		} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException e) {
 			LOGGER.error("T n'est pas un Enum... étrange", e);
 		}
@@ -60,10 +56,9 @@ public class ActionBinaryEnum<E extends Enum> extends ActionBinarySimple<E> {
 			mapListeEnum.put(type, (Enum[]) values.invoke(null));
 			int size = mapListeEnum.get(type).length;
 			if((int)(byte)size == size)
-				mapTypeSousJacent.put(type, Constants.Type.CODAGE_BYTE);
+				mapTypeSousJacent.put(type, 1);
 			else if((int)(short)size == size)
-				mapTypeSousJacent.put(type, Constants.Type.CODAGE_SHORT);
-			else mapTypeSousJacent.put(type, Constants.Type.CODAGE_INT);
+				mapTypeSousJacent.put(type, 2);
 		}
 	}
 }

@@ -3,6 +3,7 @@ package utils.champ;
 import giraudsa.marshall.annotations.MarshallAsAttribute;
 import giraudsa.marshall.annotations.Relation;
 import giraudsa.marshall.annotations.TypeRelation;
+import utils.TypeExtension;
 import utils.generic.TypeToken;
 
 import java.lang.reflect.Field;
@@ -72,9 +73,14 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 		return that.hashCode();
 	}
 
-	public void set(Object obj, Object value) throws IllegalAccessException {
-		if(obj != null && !Modifier.isFinal(info.getModifiers()))//on ne modifie pas les attributs finaux
-			info.set(obj, value);
+	public void set(Object obj, Object value){
+		try {
+			if(obj != null && !Modifier.isFinal(info.getModifiers()))
+				info.set(obj, value);
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public boolean isFakeId(){
@@ -111,7 +117,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	@Override
 	public boolean isTypeDevinable(Object value) {
 		Class<?> type = value.getClass();
-		return isSimple || this.valueType == type;
+		return TypeExtension.getTypeEnveloppe(this.valueType) == TypeExtension.getTypeEnveloppe(type);
 	}
 	
 	@Override

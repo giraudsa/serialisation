@@ -31,6 +31,7 @@ public class ActionBinaryUrl extends ActionBinarySimple<URL> {
 		else{
 			obj = new URL(readUTF());
 			stockeObjetId();
+			setDejaTotalementDeSerialise();
 		}
 	}
 }

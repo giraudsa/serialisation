@@ -54,7 +54,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 	}
 
 	protected void litObject(FieldInformations f) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption{
-		getBinaryUnmarshaller().litObject(readByte(), f);
+		getBinaryUnmarshaller().litObject(f);
 	}
 	
 	protected boolean isDejaVu() {
@@ -70,17 +70,17 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 		getBinaryUnmarshaller().stockObjectSmallId(smallId, obj);
 	}
 	
-	protected void exporteObject() throws IllegalAccessException, InstantiationException{
+	protected void exporteObject() throws IllegalAccessException, InstantiationException, UnmarshallExeption{
 		getBinaryUnmarshaller().integreObject(obj);
 	}
 
-	void set(FieldInformations fieldInformations, int smallId) throws IOException, InstantiationException, IllegalAccessException, UnmarshallExeption {
+	protected void set(FieldInformations fieldInformations, int smallId) throws IOException, InstantiationException, IllegalAccessException, UnmarshallExeption, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		this.fieldInformations = fieldInformations;
 		this.smallId = smallId;
 		initialise();
 	}
 
-	protected abstract void initialise() throws IOException, InstantiationException, IllegalAccessException, UnmarshallExeption;
+	protected abstract void initialise() throws IOException, InstantiationException, IllegalAccessException, UnmarshallExeption, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException;
 
 	protected abstract void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption;
 

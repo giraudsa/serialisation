@@ -33,6 +33,7 @@ public class ActionBinaryBitSet extends ActionBinarySimple<BitSet> {
 				((BitSet)obj).set(i, readBoolean());
 			}
 			stockeObjetId();
+			setDejaTotalementDeSerialise();
 		}
 	}
 }

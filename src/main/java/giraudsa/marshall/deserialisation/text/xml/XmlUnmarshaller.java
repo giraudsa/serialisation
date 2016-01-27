@@ -117,7 +117,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 			return w.parse();
 		} catch (ClassNotFoundException | IOException | SAXException e) {
 			LOGGER.error("Impossible de désérialiser", e);
-			throw new UnmarshallExeption(e);
+			throw new UnmarshallExeption("Impossible de désérialiser", e);
 		}
 		
 	}

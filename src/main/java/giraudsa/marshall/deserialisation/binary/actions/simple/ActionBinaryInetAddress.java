@@ -35,6 +35,7 @@ public class ActionBinaryInetAddress extends ActionBinarySimple<InetAddress> {
 		else{
 			obj = InetAddress.getByName(readUTF());
 			stockeObjetId();
+			setDejaTotalementDeSerialise();
 		}
 	}
 }

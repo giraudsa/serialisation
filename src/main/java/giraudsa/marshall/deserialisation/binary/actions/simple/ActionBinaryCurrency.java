@@ -31,6 +31,7 @@ public class ActionBinaryCurrency extends ActionBinarySimple<Currency> {
 		else{
 			obj = Currency.getInstance(readUTF());
 			stockeObjetId();
+			setDejaTotalementDeSerialise();
 		}
 	}
 }

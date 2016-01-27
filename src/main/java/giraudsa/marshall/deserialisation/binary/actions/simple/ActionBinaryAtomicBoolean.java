@@ -24,6 +24,12 @@ public class ActionBinaryAtomicBoolean extends ActionBinarySimple<AtomicBoolean>
 	
 	@Override
 	protected void initialise() throws IOException{
-		obj = new AtomicBoolean(readBoolean());
+		if(isDejaVu()){
+			obj = getObjet();
+		}else{
+			obj = new AtomicBoolean(readBoolean());
+			stockeObjetId();
+			setDejaTotalementDeSerialise();
+		}
 	}
 }

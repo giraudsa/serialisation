@@ -24,7 +24,7 @@ public class ActionBinaryDictionaryType extends ActionBinary<Map> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Map map, FieldInformations fieldInformations) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
+	protected void ecritValeur(Marshaller marshaller, Map map, FieldInformations fieldInformations, boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
 		Type[] types = fieldInformations.getParametreType();
 		Type genericTypeKey = Object.class;
 		Type genericTypeValue = Object.class;
@@ -37,14 +37,16 @@ public class ActionBinaryDictionaryType extends ActionBinary<Map> {
 		
 		
 		Deque<Comportement> tmp = new ArrayDeque<>();
-		if(!isDejaTotalementSerialise(marshaller,  map)){
-			setDejaTotalementSerialise(marshaller, map);
+		if(!isDejaVu){
+			if(isCompleteMarshalling(marshaller) || fieldInformations.getRelation()==TypeRelation.COMPOSITION)
+				setDejaTotalementSerialise(marshaller, map);
 			writeInt(marshaller, map.size());
 			for (Object entry : map.entrySet()) {
 				tmp.push(traiteChamp(marshaller, ((Entry)entry).getKey(), fakeChampKey));
 				tmp.push(traiteChamp(marshaller, ((Entry)entry).getValue(), fakeChampValue));
 			}
 		}else if(!isCompleteMarshalling(marshaller) && fieldInformations.getRelation() == TypeRelation.COMPOSITION){//deja vu, donc on passe ici qd la relation est de type COMPOSITION
+			setDejaTotalementSerialise(marshaller, map);
 			for(Object entry : map.entrySet()){
 				tmp.push(traiteChamp(marshaller, ((Entry)entry).getKey(), fakeChampKey));
 				tmp.push(traiteChamp(marshaller, ((Entry)entry).getValue(), fakeChampValue));

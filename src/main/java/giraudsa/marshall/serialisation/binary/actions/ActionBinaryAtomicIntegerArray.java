@@ -15,8 +15,8 @@ public class ActionBinaryAtomicIntegerArray  extends ActionBinary<AtomicIntegerA
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, AtomicIntegerArray obj, FieldInformations fieldInformations) throws IOException {
-		if (!isDejaTotalementSerialise(marshaller, obj)){
+	protected void ecritValeur(Marshaller marshaller, AtomicIntegerArray obj, FieldInformations fieldInformations, boolean isDejaVu) throws IOException {
+		if (!isDejaVu){
 			setDejaTotalementSerialise(marshaller, obj);
 			int size = obj.length();
 			writeInt(marshaller, size);

@@ -17,30 +17,20 @@ import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryAtomi
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryBigDecimal;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryBigInteger;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryBitSet;
-import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryBoolean;
-import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryByte;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryCalendar;
-import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryChar;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryCurrency;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryDate;
-import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryDouble;
-import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryFloat;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryInetAddress;
-import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryInteger;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryLocale;
-import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryLong;
-import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryShort;
-import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryString;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryStringBuffer;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryStringBuilder;
-import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryUUID;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryUri;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryUrl;
-import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryVoid;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SmallIdTypeException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
+import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,6 +47,7 @@ import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -73,24 +64,16 @@ import utils.Constants;
 import utils.TypeExtension;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
+import utils.headers.Header;
+import utils.headers.HeaderEnum;
+import utils.headers.HeaderSimpleType;
+import utils.headers.HeaderTypeCourant;
 
 public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BinaryUnmarshaller.class);
-	private static final Set<Class<?>> simpleEnveloppe = new HashSet<>();
 	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
 	static {
-		dicoTypeToAction.put(Boolean.class, ActionBinaryBoolean.getInstance());
-		dicoTypeToAction.put(Byte.class, ActionBinaryByte.getInstance());
-		dicoTypeToAction.put(Short.class, ActionBinaryShort.getInstance());
-		dicoTypeToAction.put(Integer.class, ActionBinaryInteger.getInstance());
-		dicoTypeToAction.put(Long.class, ActionBinaryLong.getInstance());
-		dicoTypeToAction.put(Float.class, ActionBinaryFloat.getInstance());
-		dicoTypeToAction.put(Double.class, ActionBinaryDouble.getInstance());
-		dicoTypeToAction.put(String.class, ActionBinaryString.getInstance());
-		dicoTypeToAction.put(Date.class, ActionBinaryDate.getInstance());
-		dicoTypeToAction.put(UUID.class, ActionBinaryUUID.getInstance());
-		dicoTypeToAction.put(Void.class, ActionBinaryVoid.getInstance());
-		dicoTypeToAction.put(Character.class, ActionBinaryChar.getInstance());
+		dicoTypeToAction.put(Constants.dateType, ActionBinaryDate.getInstance());
 		dicoTypeToAction.put(Constants.collectionType, ActionBinaryCollection.getInstance());
 		dicoTypeToAction.put(Constants.arrayType, ActionBinaryArray.getInstance());
 		dicoTypeToAction.put(Constants.dictionaryType, ActionBinaryDictionary.getInstance());
@@ -115,12 +98,16 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	private DataInputStream input;
-	private Map<Integer, Object> dicoSmallIdToObject = new HashMap<>();
-	private Map<Integer, Class<?>> dicoSmallIdToClazz = new HashMap<>();
-	private Map<Class<?>, Integer> dicoClassToSmallId = new HashMap<>();
-	private boolean deserialisationComplete;
-	private Set<Object> isDejaTotalementDeSerialise = new HashSet<>();
 
+	private Map<Integer, Object> dicoSmallIdToObject = new HashMap<>();
+	private Map<Short, Class<?>> dicoSmallIdToClazz = new HashMap<>();
+	private short biggestSmallIdType = 0;
+	private Set<Class<?>> listeClasseDejaRencontre = new HashSet<>();
+	private Map<Integer, UUID> dicoSmallIdToUUID = new HashMap<>();
+	private Map<Integer, Date> dicoSmallIdToDate = new HashMap<>();
+	private Map<Integer, String> dicoSmallIdToString = new HashMap<>();
+	private boolean deserialisationComplete;
+	private Map<Object, Boolean> isDejaTotalementDeSerialise = new IdentityHashMap<>();
 
 	protected BinaryUnmarshaller(DataInputStream input, EntityManager entity) throws ClassNotFoundException, IOException {
 		super(entity);
@@ -129,185 +116,231 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	public static <U> U fromBinary(InputStream reader, EntityManager entity) throws UnmarshallExeption{
-		try(DataInputStream in = new DataInputStream(reader)){
+		try(DataInputStream in = new DataInputStream(new BufferedInputStream(reader))){
 			BinaryUnmarshaller<U> w = new BinaryUnmarshaller<U>(in, entity){};
 			return w.parse();
 		} catch (IOException | ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | NotImplementedSerializeException | SmallIdTypeException e) {
 			LOGGER.error("Impossible de désérialiser", e);
-			throw new UnmarshallExeption(e);
+			throw new UnmarshallExeption("Impossible de désérialiser", e);
 		}
 	}
 
 	public static <U> U fromBinary(InputStream reader) throws UnmarshallExeption{
 		return fromBinary(reader, null);
 	}
+	
+	private int getMaxId(){
+		return dicoSmallIdToObject.size();
+	}
 
-	boolean isDeserialisationComplete() {
+	protected boolean isDeserialisationComplete() {
 		return deserialisationComplete;
 	}
 	
-	boolean isDejaVu(int smallId){
+	protected boolean isDejaVu(int smallId){
 		return dicoSmallIdToObject.containsKey(smallId);
 	}
 	
-	
-	private Class<?> getTypeToUnmarshall(byte header, int smallId, Class<?> typeCandidat) throws ClassNotFoundException, IOException {
-		if(TypeExtension.isSimple(typeCandidat))
-			return typeCandidat;
-		boolean typeDevinable = Constants.Type.isTypeDevinable(header);
-		if (typeDevinable){
-			if(!dicoClassToSmallId.containsKey(typeCandidat)){
-				int smallIdType = dicoClassToSmallId.size() +1;
-				dicoClassToSmallId.put(typeCandidat, smallIdType);
-				dicoSmallIdToClazz.put(smallIdType, typeCandidat);
-			}			
-			return typeCandidat;
-		}
-		return isDejaVu(smallId) ? getObject(smallId).getClass() : readType(header, typeCandidat);
+	protected boolean isDejaVuDate(int dateId){
+		return dicoSmallIdToDate.containsKey(dateId);
+	}
+	protected boolean isDejaVuString(int stringId){
+		return dicoSmallIdToString.containsKey(stringId);
+	}
+	protected boolean isDejaVuUuid(int uuidId){
+		return dicoSmallIdToUUID.containsKey(uuidId);
+	}
+	protected boolean isDejaVuClazz(short smallIdType){
+		return dicoSmallIdToClazz.containsKey(smallIdType);
+	}
+	protected boolean isDejaVuClazz(Class<?> type){
+		return listeClasseDejaRencontre.contains(type);
+	}
+	private void stockClass(Class<?> type) {
+		stockClass(type, ++biggestSmallIdType);
+	}
+	private void stockClass(Class<?> type, short smallIdType) {
+		listeClasseDejaRencontre.add(type);
+		dicoSmallIdToClazz.put(smallIdType, type);
+		biggestSmallIdType = smallIdType;
 	}
 	
-	private Class<?> readType(byte header, Class<?> typeProbable) throws IOException, ClassNotFoundException{
-		byte b = Constants.Type.getLongueurCodageType(header);
-		int smallId = 0;
-		switch (b) {
-		case Constants.Type.CODAGE_BYTE:
-			smallId = readByte() & 0x000000FF;
-			break;
-		case Constants.Type.CODAGE_SHORT:
-			smallId = readShort() & 0x0000FFFF;
-			break;
-		case Constants.Type.CODAGE_INT:
-			smallId = readInt();
-			break;
-		default :
-			LOGGER.error("codage longueur id erroné");
-		}
-		if(smallId == 0) 
-			return typeProbable;
-		Class<?> ret = dicoSmallIdToClazz.get(smallId);
-		if(ret == null){
-			String classeString = readUTF();
-			ret = Class.forName(classeString);
-			dicoSmallIdToClazz.put(smallId,ret);
-			dicoClassToSmallId.put(ret, smallId);
-		}
-		return ret;
-	}
 	
-	Object getObject(int smallId){
+	protected Object getObject(int smallId){
 		return dicoSmallIdToObject.get(smallId);
 	}
 	
-	void stockObjectSmallId(int smallId, Object obj){
+	protected void stockObjectSmallId(int smallId, Object obj){
 		dicoSmallIdToObject.put(smallId,obj);
 	}
 	
 	private T parse() throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption {
 		FakeChamp fc = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION);
-		litObject(readByte(), fc);
+		litObject(fc);
 		while(!pileAction.isEmpty()){
 			((ActionBinary<?>)getActionEnCours()).deserialisePariellement();
 		}
 		return obj;
 	}
 	
-	void litObject(byte header, FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption {
-		Class<?> typeProbable = fieldInformations.getValueType();
-		Class<?> typeCandidat = null;
-		
-		if(header == Constants.IS_NULL)
-			typeCandidat = Void.class;
-		if(header == Constants.BoolValue.TRUE || header == Constants.BoolValue.FALSE) 
-			typeCandidat = Boolean.class;
-		if(typeCandidat == null)
-			typeCandidat = Constants.Type.getSimpleType(header, typeProbable);
-	
-		int smallId = getSmallId(header, typeCandidat);
-		Class<?> typeADeserialiser = getTypeToUnmarshall(header, smallId, typeCandidat);
-		ActionAbstrait<?> action = getAction(typeADeserialiser);
-		if(typeADeserialiser == Boolean.class) 
-			((ActionBinaryBoolean)action).setBool(header);
+	protected void litObject(FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption {
+		if(fieldInformations.getValueType() == byte.class){
+			integreObjectDirectement(readByte()); //seul cas ou le header n'est pas nécessaire.
+			return;
+		}
+		byte headerByte = readByte();
+		Header<?> header = Header.getHeader(headerByte);
+		if (header instanceof HeaderSimpleType<?>)
+			litObjectSimple(header);
+		else if (header instanceof HeaderTypeCourant<?>)
+			litObjectCourant(header);
+		else if (header instanceof HeaderEnum<?>)
+			litObjectEnum(fieldInformations, header);
+		else
+			litObjetComplexe(fieldInformations, header);
+	}
+
+	private void litObjectEnum(FieldInformations fi, Header<?> header) throws IOException, UnmarshallExeption, ClassNotFoundException, InstantiationException, IllegalAccessException, NotImplementedSerializeException, InvocationTargetException, NoSuchMethodException {
+		Class<?> type = fi.getValueType();
+		if(header.isTypeDevinable()){
+			if(!isDejaVuClazz(type)){
+				stockClass(type);
+			}
+		}else{			
+			short smallIdType = header.getSmallIdType(input);
+			if(!isDejaVuClazz(smallIdType))
+				stockClass(Class.forName(readUTF()), smallIdType);
+			type = dicoSmallIdToClazz.get(smallIdType);
+		}
+		ActionAbstrait<?> action = getAction(type);
+		((ActionBinary<?>)action).set(fi, 0);
+		pileAction.push(action);
+	}
+
+	private void litObjetComplexe(FieldInformations fieldInformations, Header<?> header)
+			throws IOException, UnmarshallExeption, ClassNotFoundException, NotImplementedSerializeException,
+			InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		//il faut trouver le type de l'objet
+		Class<?> type = fieldInformations.getValueType();
+		int smallId = header.readSmallId(input, getMaxId());
+		if(isDejaVu(smallId)){
+			if(isDejaTotalementDeSerialise(getObject(smallId))){
+				integreObjectDirectement(getObject(smallId));
+				return;
+			}
+			type = getObject(smallId).getClass();
+		}else if(header.isTypeDevinable()){
+			if(!isDejaVuClazz(type)){
+				stockClass(type);
+			}
+		}else{
+			short smallIdType = header.getSmallIdType(input);
+			if(!isDejaVuClazz(smallIdType))
+				stockClass(Class.forName(readUTF()), smallIdType);
+			type = dicoSmallIdToClazz.get(smallIdType);
+		}
+		ActionAbstrait<?> action = getAction(type);
 		((ActionBinary<?>)action).set(fieldInformations, smallId);
 		pileAction.push(action);
 	}
 
-	
-	static{
-		simpleEnveloppe.add(Boolean.class);
-		simpleEnveloppe.add(Byte.class);
-		simpleEnveloppe.add(Character.class);
-		simpleEnveloppe.add(Short.class);
-		simpleEnveloppe.add(Integer.class);
-		simpleEnveloppe.add(Long.class);
-		simpleEnveloppe.add(Void.class);
-		simpleEnveloppe.add(Double.class);
-		simpleEnveloppe.add(Float.class);
-	}
-	private int getSmallId(byte header, Class<?> t) throws IOException, SmallIdTypeException {
-		if(simpleEnveloppe.contains(t))
-			return 0;
-		int smallId;
-		Byte smallIdType = Constants.SmallIdType.getSmallId(header);
-		switch (smallIdType){
-		case Constants.SmallIdType.NEXT_IS_SMALL_ID_BYTE:
-			smallId = readByte() & 0x000000FF;
-			break;
-		case Constants.SmallIdType.NEXT_IS_SMALL_ID_SHORT:
-			smallId = readShort() & 0x0000FFFF;
-			break; 
-		case Constants.SmallIdType.NEXT_IS_SMALL_ID_INT:
-			smallId = readInt();
-			break;
-		default :
-			LOGGER.error("bad small id type");
-			throw new SmallIdTypeException();
+	private void litObjectCourant(Header<?> header)
+			throws IOException, UnmarshallExeption, IllegalAccessException, InstantiationException {
+		HeaderTypeCourant<?> headerTypeCourant = (HeaderTypeCourant<?>)header;
+		Class<?> clazz = headerTypeCourant.getTypeCourant();
+		int smallId = headerTypeCourant.readSmallId(input, 0); //le 0 n a pas d importance ici
+		if(clazz == Date.class){
+			if(!isDejaVuDate(smallId)){
+				Date date = new Date(readLong());
+				stockDateSmallId(date, smallId);
+			}
+			integreObjectDirectement(dicoSmallIdToDate.get(smallId));
+		}else if(clazz == UUID.class){
+			if(!isDejaVuUuid(smallId)){
+				UUID id = readUUID();
+				stockUuidSmallId(id, smallId);
+			}
+			integreObjectDirectement(dicoSmallIdToUUID.get(smallId));
+		}else if(clazz == String.class){
+			if(!isDejaVuString(smallId)){
+				String string = readUTF();
+				stockStringSmallId(string, smallId);
+			}
+			integreObjectDirectement(dicoSmallIdToString.get(smallId));
 		}
-		return smallId;	
+	}
+
+	private void litObjectSimple(Header<?> header)
+			throws IllegalAccessException, InstantiationException, IOException, UnmarshallExeption {
+		HeaderSimpleType<?> headerSimpleType = (HeaderSimpleType<?>)header;
+		integreObjectDirectement(headerSimpleType.read(input));
 	}
 	
-	boolean readBoolean() throws IOException {
+	protected boolean readBoolean() throws IOException {
 		return input.readBoolean();
 	}
-	byte readByte() throws IOException {
+	protected byte readByte() throws IOException {
 		return input.readByte();
 	}
-	short readShort() throws IOException {
+	protected short readShort() throws IOException {
 		return input.readShort();
 	}
-	char readChar() throws IOException {
+	protected char readChar() throws IOException {
 		return input.readChar();
 	}
-	int readInt() throws IOException {
+	protected int readInt() throws IOException {
 		return input.readInt();
 	}
-	long readLong() throws IOException {
+	protected long readLong() throws IOException {
 		return input.readLong();
 	}
-	float readFloat() throws IOException {
+	protected float readFloat() throws IOException {
 		return input.readFloat();
 	}
-	double readDouble() throws IOException {
+	protected double readDouble() throws IOException {
 		return input.readDouble();
 	}
-	String readUTF() throws IOException {
+	protected String readUTF() throws IOException {
 		return input.readUTF();
+	}
+	private UUID readUUID() throws IOException {
+		byte[] tmp = new byte[16];
+		int r = input.read(tmp);
+		if(r != 16)
+			throw new IOException("pas possible de lire un UUID");
+		return UUID.nameUUIDFromBytes(tmp);
 	}
 
 	@SuppressWarnings("unchecked")
-	protected void integreObject(Object obj) throws IllegalAccessException, InstantiationException {
+	protected void integreObject(Object obj) throws IllegalAccessException, InstantiationException, UnmarshallExeption {
 		pileAction.pop();
+		integreObjectDirectement(obj);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void integreObjectDirectement(Object obj) throws IllegalAccessException, InstantiationException, UnmarshallExeption {
 		ActionAbstrait<?> action = getActionEnCours();
 		if(action == null)
 			this.obj = (T) obj;
 		else integreObjet(action, null, obj);
 	}
 	
-	boolean isDejaTotalementDeSerialise(Object o) {
-		return isDejaTotalementDeSerialise.contains(o);
+	private void stockDateSmallId(Date date, int smallId) {
+		dicoSmallIdToDate.put(smallId, date);
+	}
+	private void stockUuidSmallId(UUID id, int smallId) {
+		dicoSmallIdToUUID.put(smallId, id);
+	}
+	private void stockStringSmallId(String string, int smallId) {
+		dicoSmallIdToString.put(smallId, string);
+	}
+	
+	protected boolean isDejaTotalementDeSerialise(Object o) {
+		return isDejaTotalementDeSerialise.containsKey(o);
 	}
 
-	void setDejaTotalementDeSerialise(Object o) {
-		isDejaTotalementDeSerialise.add(o);
+	protected void setDejaTotalementDeSerialise(Object o) {
+		isDejaTotalementDeSerialise.put(o, true);
 	}
 
 	@Override

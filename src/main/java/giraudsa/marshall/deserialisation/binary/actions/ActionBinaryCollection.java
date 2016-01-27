@@ -45,7 +45,6 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption {
 		if(!deserialisationFini){
 			litObject(fakeChamp);
-			deserialisationFini = ++index >= tailleCollection;
 		}else{
 			exporteObject();
 		}
@@ -53,22 +52,28 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void integreObjet(String nom, Object objet) {
+	protected void integreObjet(String nom, Object objet) throws IllegalAccessException, InstantiationException, UnmarshallExeption {
 		((Collection)obj).add(objet);
+		deserialisationFini = ++index >= tailleCollection;
+		if(deserialisationFini)
+			exporteObject();
 	}
 
 	@Override
-	protected void initialise() throws IOException, InstantiationException, IllegalAccessException {
+	protected void initialise() throws IOException, InstantiationException, IllegalAccessException, UnmarshallExeption {
 		if (isDejaVu() && !isDeserialisationComplete() && fieldInformations.getRelation() == TypeRelation.COMPOSITION){
 			obj = getObjet();
 			tailleCollection = ((Collection)obj).size();
+			setDejaTotalementDeSerialise();
 			deserialisationFini = index < tailleCollection;
 		}else if(isDejaVu()){
 			deserialisationFini = true;
 			obj = getObjet();
-		}else if(!isDejaVu()){
+		}else{//!isDejaVu
 			obj = newInstance();
 			stockeObjetId();
+			if(isDeserialisationComplete() || fieldInformations.getRelation() == TypeRelation.COMPOSITION)
+				setDejaTotalementDeSerialise();
 			tailleCollection = readInt();
 			deserialisationFini = index >= tailleCollection;
 		}
@@ -80,7 +85,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 		fakeChamp = new FakeChamp(null, parametreType, fieldInformations.getRelation());
 	}
 
-	private Collection newInstance() {
+	private Collection newInstance() throws UnmarshallExeption {
 		Collection objetADeserialiser = null;
 		try {
 			if(type == ArrayList.class) 
@@ -91,9 +96,14 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 				objetADeserialiser = new ArrayList();
 			else if(type == HashSet.class)
 				objetADeserialiser = new HashSet();
-			else if(type.getName().toLowerCase().indexOf("hibernate") != -1)
-				objetADeserialiser = new ArrayList();
-			else
+			else if(type.getName().toLowerCase().indexOf("hibernate") != -1){
+				if(fieldInformations.getValueType().isAssignableFrom(ArrayList.class))
+					objetADeserialiser = new ArrayList();
+				else if(fieldInformations.getValueType().isAssignableFrom(HashSet.class))
+					objetADeserialiser = new HashSet();
+				else
+					throw new UnmarshallExeption("Probleme avec un type hibernate " + type.getName(), new InstantiationException());
+			}else
 				objetADeserialiser = type.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
 			LOGGER.error(e.getMessage(), e);

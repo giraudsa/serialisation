@@ -46,7 +46,7 @@ public abstract class TextMarshaller extends Marshaller {
 		if (obj == null)
 			return;
 		FakeChamp fieldsInfo = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION);
-		marshallSpecialise(obj, fieldsInfo);
+		marshall(obj, fieldsInfo);
 		while(!aFaire.isEmpty()){
 			deserialisePile();
 		}

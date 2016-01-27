@@ -24,6 +24,12 @@ public class ActionBinaryAtomicLong extends ActionBinarySimple<AtomicLong> {
 	
 	@Override
 	protected void initialise() throws IOException{
-		obj = new AtomicLong(readLong());
+		if(isDejaVu()){
+			obj = getObjet();
+		}else{
+			obj = new AtomicLong(readLong());
+			stockeObjetId();
+			setDejaTotalementDeSerialise();
+		}
 	}
 }

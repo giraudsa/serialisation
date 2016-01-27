@@ -24,6 +24,12 @@ public class ActionBinaryAtomicInteger extends ActionBinarySimple<AtomicInteger>
 	
 	@Override
 	protected void initialise() throws IOException{
-		obj = new AtomicInteger(readInt());
+		if(isDejaVu()){
+			obj = getObjet();
+		}else{
+			obj = new AtomicInteger(readInt());
+			stockeObjetId();
+			setDejaTotalementDeSerialise();
+		}
 	}
 }

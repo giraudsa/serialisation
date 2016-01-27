@@ -14,8 +14,8 @@ public class ActionBinaryUrl extends ActionBinary<URL> {
 		super();
 	}
 	@Override
-	protected void ecritValeur(Marshaller marshaller, URL url, FieldInformations fieldInformations) throws IOException {
-		if(!isDejaTotalementSerialise(marshaller, url)){
+	protected void ecritValeur(Marshaller marshaller, URL url, FieldInformations fieldInformations, boolean isDejaVu) throws IOException {
+		if(!isDejaVu){
 			setDejaTotalementSerialise(marshaller, url);
 			writeUTF(marshaller, url.toExternalForm());
 		}

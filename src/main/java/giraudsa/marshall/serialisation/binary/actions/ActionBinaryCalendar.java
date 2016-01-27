@@ -14,8 +14,8 @@ public class ActionBinaryCalendar extends ActionBinary<Calendar> {
 		super();
 	}
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Calendar calendar, FieldInformations fieldInformations) throws IOException {
-		if(!isDejaTotalementSerialise(marshaller, calendar)){
+	protected void ecritValeur(Marshaller marshaller, Calendar calendar, FieldInformations fieldInformations, boolean isDejaVu) throws IOException {
+		if(!isDejaVu){
 			setDejaTotalementSerialise(marshaller, calendar);
 			writeInt(marshaller, calendar.get(Calendar.YEAR));
 			writeInt(marshaller, calendar.get(Calendar.MONTH));

@@ -30,7 +30,8 @@ public abstract class TextUnmarshaller<T> extends Unmarshaller<T> {
 	}
 	
 	protected void setNom(ActionText<?> action, String nom) {
-		action.setNom(nom);
+		if(action != null)
+			action.setNom(nom);
 	}
 	
 	protected void setFieldInformation(ActionText<?> action){
@@ -53,5 +54,4 @@ public abstract class TextUnmarshaller<T> extends Unmarshaller<T> {
 		ActionText<?> action = (ActionText<?>) getActionEnCours(); 
 		return action == null ? Object.class : TypeExtension.getTypeEnveloppe(action.getType(nomAttribut));
 	}
-
 }

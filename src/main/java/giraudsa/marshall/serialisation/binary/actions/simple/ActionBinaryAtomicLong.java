@@ -7,16 +7,20 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import giraudsa.marshall.serialisation.Marshaller;
+import giraudsa.marshall.serialisation.binary.ActionBinary;
 
-public class ActionBinaryAtomicLong  extends ActionBinarySimple<AtomicLong>{
+public class ActionBinaryAtomicLong  extends ActionBinary<AtomicLong>{
 
 	public ActionBinaryAtomicLong() {
 		super();
 	}
 	
 	@Override
-	protected void ecritValeur(Marshaller marshaller, AtomicLong objetASerialiser, FieldInformations fieldInformations) throws IOException {
-		writeLong(marshaller, objetASerialiser.get());
+	protected void ecritValeur(Marshaller marshaller, AtomicLong atomicLong, FieldInformations fieldInformations, boolean isDejaVu) throws IOException {
+		if(!isDejaVu){
+			setDejaTotalementSerialise(marshaller, atomicLong);
+			writeLong(marshaller, atomicLong.get());
+		}
 	}
 
 }

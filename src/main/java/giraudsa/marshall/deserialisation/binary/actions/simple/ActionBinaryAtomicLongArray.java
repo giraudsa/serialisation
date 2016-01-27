@@ -33,6 +33,7 @@ public class ActionBinaryAtomicLongArray extends ActionBinarySimple<AtomicLongAr
 				((AtomicLongArray)obj).set(i, readLong());
 			}
 			stockeObjetId();
+			setDejaTotalementDeSerialise();
 		}
 	}
 }

@@ -18,8 +18,8 @@ public class ActionBinaryBitSet extends ActionBinary<BitSet> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, BitSet bitSet, FieldInformations fieldInformations) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
-		if (!isDejaTotalementSerialise(marshaller, bitSet)){
+	protected void ecritValeur(Marshaller marshaller, BitSet bitSet, FieldInformations fieldInformations, boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
+		if (!isDejaVu){
 			setDejaTotalementSerialise(marshaller, bitSet);
 			int size = bitSet.length();
 			writeInt(marshaller, size);

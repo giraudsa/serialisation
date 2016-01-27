@@ -8,7 +8,6 @@ import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SmallIdTypeException;
 import giraudsa.marshall.exception.UnmarshallExeption;
-import utils.TypeExtension;
 import utils.champ.FakeChamp;
 
 import java.io.IOException;
@@ -45,26 +44,31 @@ public class ActionBinaryArray<T> extends ActionBinary<T> {
 	}
 
 	@Override
-	protected void integreObjet(String nom, Object objet) {
+	protected void integreObjet(String nom, Object objet) throws IllegalAccessException, InstantiationException, UnmarshallExeption {
 		Array.set(obj, index++, objet);
 		deserialisationFini = index >= tailleCollection;
+		if(deserialisationFini)
+			exporteObject();
 	}
 
 	@Override
 	protected void initialise() throws IOException, InstantiationException, IllegalAccessException {
 		componentType = fieldInformations.getValueType().getComponentType();
-		fakeChamp = new FakeChamp(null, TypeExtension.getTypeEnveloppe(componentType), fieldInformations.getRelation());
+		fakeChamp = new FakeChamp(null, componentType, fieldInformations.getRelation());
 		if (isDejaVu() && !isDeserialisationComplete() && fieldInformations.getRelation() == TypeRelation.COMPOSITION){
 			obj = getObjet();
 			tailleCollection = Array.getLength(obj);
+			setDejaTotalementDeSerialise();
 			deserialisationFini = index >= tailleCollection;
 		}else if(isDejaVu()){
 			deserialisationFini = true;
 			obj = getObjet();
-		}else if(!isDejaVu()){
+		}else{ //!dejavu
 			tailleCollection = readInt();
 			obj = Array.newInstance(componentType, tailleCollection);
 			stockeObjetId();
+			if(isDeserialisationComplete() || fieldInformations.getRelation() == TypeRelation.COMPOSITION)
+				setDejaTotalementDeSerialise();
 			deserialisationFini = index >= tailleCollection;
 		}
 	}

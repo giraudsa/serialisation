@@ -25,21 +25,21 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Object objetASerialiser, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	protected void ecritValeur(Marshaller marshaller, Object objetASerialiser, FieldInformations fieldInformations, boolean isDejaVu) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		
 		boolean serialiseToutSaufId = serialiseToutSaufId(marshaller, objetASerialiser, fieldInformations);
-		boolean serialiseId = serialiseId(marshaller, objetASerialiser);
+		boolean serialiseId = serialiseId(marshaller, objetASerialiser, isDejaVu);
 		
-		setDejaVu(marshaller, objetASerialiser);
-		List<Champ> champs = getListeChamp(objetASerialiser, serialiseId, serialiseToutSaufId);
+		if(serialiseToutSaufId)
+			setDejaTotalementSerialise(marshaller, objetASerialiser);
+		
 		Champ champId = TypeExtension.getChampId(objetASerialiser.getClass());
+		List<Champ> champs = getListeChamp(objetASerialiser, serialiseId, serialiseToutSaufId);
 		for(Champ champ : champs){
 			Comportement comportement = traiteChamp(marshaller, objetASerialiser, champ);
 			if(comportement != null)
 				tmp.push(comportement);
-			if(champ != champId)
-				setDejaTotalementSerialise(marshaller, objetASerialiser);
 		}
 		pushComportements(marshaller, tmp);
 	}
@@ -61,11 +61,11 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 		return !isCompleteMarshalling(marshaller) && fieldInformations.getRelation() == TypeRelation.COMPOSITION && !isDejaTotalementSerialise(marshaller, objetASerialiser);
 	}
 
-	private boolean serialiseId(Marshaller marshaller, Object objetASerialiser) {
+	private boolean serialiseId(Marshaller marshaller, Object objetASerialiser, boolean isDejaVu) {
 		Class<?> typeObj = (Class<?>) objetASerialiser.getClass();
 		if(!TypeExtension.getChampId(typeObj).isFakeId())
 			return (isCompleteMarshalling(marshaller) && ! isDejaTotalementSerialise(marshaller, objetASerialiser))||
-										(!isCompleteMarshalling(marshaller) && !isDejaVu(marshaller, objetASerialiser));
+										(!isCompleteMarshalling(marshaller) && !isDejaVu);
 		return false;
 	}
 

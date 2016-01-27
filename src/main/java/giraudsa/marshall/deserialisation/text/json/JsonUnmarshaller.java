@@ -120,7 +120,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 				| NoSuchMethodException | SecurityException | ClassNotFoundException | IOException
 				| NotImplementedSerializeException | JsonHandlerException | ParseException e) {
 			LOGGER.error("probleme dans la désérialisation JSON", e);
-			throw new UnmarshallExeption(e);
+			throw new UnmarshallExeption("probleme dans la désérialisation JSON",e);
 		}
 	}
 
@@ -213,7 +213,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 
 
 	protected void ouvreChrochet() throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-		Class<?> type = getType(clefEnCours);
+		Class<?> type = getActionEnCours() == null ? ArrayList.class : getType(clefEnCours);
 		if(type == null)
 			type = ArrayList.class;
 		ActionJson<?> action = (ActionJson<?>) getAction(type);

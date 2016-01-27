@@ -33,6 +33,7 @@ public class ActionBinaryAtomicIntegerArray extends ActionBinarySimple<AtomicInt
 				((AtomicIntegerArray)obj).set(i, readInt());
 			}
 			stockeObjetId();
+			setDejaTotalementDeSerialise();
 		}
 	}
 }

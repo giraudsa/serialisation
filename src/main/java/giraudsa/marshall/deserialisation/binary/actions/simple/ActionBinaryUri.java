@@ -42,6 +42,7 @@ public class ActionBinaryUri extends ActionBinarySimple<URI> {
 				throw new UnmarshallExeption("bad Uri Syntax", e);
 			}
 			stockeObjetId();
+			setDejaTotalementDeSerialise();
 		}
 	}
 }

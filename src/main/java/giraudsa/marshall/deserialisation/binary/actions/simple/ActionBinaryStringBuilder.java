@@ -28,6 +28,7 @@ public class ActionBinaryStringBuilder extends ActionBinarySimple<StringBuilder>
 		else{
 			obj = new StringBuilder(readUTF());
 			stockeObjetId();
+			setDejaTotalementDeSerialise();
 		}
 	}
 }

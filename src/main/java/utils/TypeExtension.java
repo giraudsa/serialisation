@@ -24,6 +24,7 @@ public class TypeExtension {
 	private static Map<Class<?>, List<Champ>> serializablefieldsOfType = new HashMap<>();
 	private static Map<Class<?>, Champ> dicoTypeTochampId = new HashMap<>();
 	private static Map<Class<?>, Class<?>> dicoTypePrimitifToEnveloppe = new HashMap<>();
+	private static final Set<Class<?>> simpleEnveloppe = new HashSet<>();
 	
 	private TypeExtension(){
 		//privateconstructor to hide explicit public one
@@ -93,6 +94,7 @@ public class TypeExtension {
 	}
 	
 	static {
+		dicoTypePrimitifToEnveloppe.put(void.class, Void.class);
 		dicoTypePrimitifToEnveloppe.put(boolean.class, Boolean.class);
 		dicoTypePrimitifToEnveloppe.put(char.class, Character.class);
 		dicoTypePrimitifToEnveloppe.put(byte.class, Byte.class);
@@ -101,10 +103,26 @@ public class TypeExtension {
 		dicoTypePrimitifToEnveloppe.put(long.class, Long.class);
 		dicoTypePrimitifToEnveloppe.put(float.class, Float.class);
 		dicoTypePrimitifToEnveloppe.put(double.class, Double.class);
+		simpleEnveloppe.add(Boolean.class);
+		simpleEnveloppe.add(Byte.class);
+		simpleEnveloppe.add(Character.class);
+		simpleEnveloppe.add(Short.class);
+		simpleEnveloppe.add(Integer.class);
+		simpleEnveloppe.add(Long.class);
+		simpleEnveloppe.add(Double.class);
+		simpleEnveloppe.add(Float.class);
+		simpleEnveloppe.add(void.class);
+		simpleEnveloppe.add(Void.class);
 	}
 	public static Class<?> getTypeEnveloppe(Class<?> typePrimitif){
 		if (typePrimitif == null || !typePrimitif.isPrimitive())
 			return typePrimitif;
 		return dicoTypePrimitifToEnveloppe.get(typePrimitif);
+	}
+	public static boolean isSimpleBinary(Class<?> clazz){
+		return clazz.isPrimitive() || simpleEnveloppe.contains(clazz) || clazz.isEnum();
+	}
+	public static boolean isEnveloppe(Class<?> clazz){
+		return simpleEnveloppe.contains(clazz);
 	}
 }
