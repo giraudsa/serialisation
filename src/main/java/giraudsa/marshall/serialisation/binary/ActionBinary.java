@@ -33,18 +33,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	protected Class<?> getTypeObjProblemeHibernate(Object object) {
 		if(object == null)
 			return void.class;
-		Class<?> ret = object.getClass();
-		if(ret.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentBag") != -1) 
-			ret = ArrayList.class;
-		else if(ret.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSet") != -1) 
-			ret = HashSet.class;
-		else if(ret.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentMap") != -1) 
-			ret = HashMap.class;
-		else if(ret.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedSet") != -1) 
-			ret = TreeSet.class;
-		else if(ret.getName().toLowerCase().indexOf("org.hibernate.collection.PersistentSortedMap") != -1) 
-			ret = TreeMap.class;
-		return ret;
+		return object.getClass();
 	}
 	
 	@Override

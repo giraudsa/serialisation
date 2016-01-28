@@ -12,8 +12,13 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.Map.Entry;
 
 @SuppressWarnings("rawtypes")
@@ -53,5 +58,17 @@ public class ActionBinaryDictionaryType extends ActionBinary<Map> {
 			}
 		}
 		pushComportements(marshaller, tmp);
+	}
+	
+	@Override
+	protected Class<?> getTypeObjProblemeHibernate(Object object) {
+		Class<?> clazz = object.getClass();
+		if(clazz.getName().toLowerCase().indexOf("hibernate") != -1){
+			if(object.getClass().getName().toLowerCase().indexOf("persistentmap") != -1)
+				return HashMap.class;
+			if(object.getClass().getName().toLowerCase().indexOf("persistentsortedmap") != -1)
+				return TreeMap.class;
+		}
+		return clazz;
 	}
 }
