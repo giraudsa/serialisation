@@ -107,7 +107,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	private Map<Integer, Date> dicoSmallIdToDate = new HashMap<>();
 	private Map<Integer, String> dicoSmallIdToString = new HashMap<>();
 	private boolean deserialisationComplete;
-	private Map<Object, Boolean> isDejaTotalementDeSerialise = new IdentityHashMap<>();
+	private Set<Integer> isDejaTotalementDeSerialise = new HashSet<>();
 
 	protected BinaryUnmarshaller(DataInputStream input, EntityManager entity) throws ClassNotFoundException, IOException {
 		super(entity);
@@ -224,7 +224,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		Class<?> type = fieldInformations.getValueType();
 		int smallId = header.readSmallId(input, getMaxId());
 		if(isDejaVu(smallId)){
-			if(isDejaTotalementDeSerialise(getObject(smallId))){
+			if(isDejaTotalementDeSerialise(smallId)){
 				integreObjectDirectement(getObject(smallId));
 				return;
 			}
@@ -335,12 +335,12 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		dicoSmallIdToString.put(smallId, string);
 	}
 	
-	protected boolean isDejaTotalementDeSerialise(Object o) {
-		return isDejaTotalementDeSerialise.containsKey(o);
+	protected boolean isDejaTotalementDeSerialise(int smallId) {
+		return isDejaTotalementDeSerialise.contains(smallId);
 	}
 
-	protected void setDejaTotalementDeSerialise(Object o) {
-		isDejaTotalementDeSerialise.put(o, true);
+	protected void setDejaTotalementDeSerialise(int smallId) {
+		isDejaTotalementDeSerialise.add(smallId);
 	}
 
 	@Override

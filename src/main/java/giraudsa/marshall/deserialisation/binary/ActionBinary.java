@@ -85,10 +85,10 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 	protected abstract void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption;
 
 	protected boolean isDejaTotalementDeSerialise() {
-		return getBinaryUnmarshaller().isDejaTotalementDeSerialise(obj);
+		return getBinaryUnmarshaller().isDejaTotalementDeSerialise(smallId);
 	}
 	protected void setDejaTotalementDeSerialise() {
-		getBinaryUnmarshaller().setDejaTotalementDeSerialise(obj);
+		getBinaryUnmarshaller().setDejaTotalementDeSerialise(smallId);
 	}
 	
 	//methode inutiles en binary
