@@ -57,7 +57,6 @@ import java.util.Collections;
 import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -113,7 +112,7 @@ public class BinaryMarshaller extends Marshaller{
 		dicoTypeToAction.put(StringBuffer.class, new ActionBinaryStringBuffer());
 	}
 	protected DataOutputStream output;
-	private Map<Object, Integer> smallIds = new IdentityHashMap<>();
+	private Map<Object, Integer> smallIds = new HashMap<>();
 	private Map<Class<?>, Short> dejaVuType = new HashMap<>();
 	private Map<UUID, Integer> dejaVuUuid = new HashMap<>();
 	private Map<Date, Integer> dejaVuDate = new HashMap<>();
@@ -160,12 +159,15 @@ public class BinaryMarshaller extends Marshaller{
 			deserialisePile();
 		}
 	}
+	
+	protected boolean isSmallIdDefined(Object obj){
+		return smallIds.containsKey(obj);
+	}
 
 	protected int getSmallIdAndStockObj(Object obj){
-		if(!smallIds.containsKey(obj)){
+		if(!isSmallIdDefined(obj)){
 			int smallid = TypeExtension.isSimpleBinary(obj.getClass()) ? -1 : compteur++;
 			smallIds.put(obj, smallid);
-			setDejaVu(obj);
 		}
 		return smallIds.get(obj);
 	}

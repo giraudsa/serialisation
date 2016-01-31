@@ -8,8 +8,10 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.IdentityHashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
 import utils.Constants;
 import utils.champ.FieldInformations;
 
@@ -17,8 +19,8 @@ public abstract class Marshaller {
 	
 	//////ATTRIBUT
 	protected boolean isCompleteSerialisation;
-	protected Map<Object, Boolean> dejaTotalementSerialise = new IdentityHashMap<>();
-	private Map<Object, Boolean> dejaVu = new IdentityHashMap<>();
+	protected Set<Object> dejaTotalementSerialise = new HashSet<>();
+	private Set<Object> dejaVu = new HashSet<>();
 	@SuppressWarnings("rawtypes")
 	protected Deque<Comportement> aFaire = new ArrayDeque<>();
 
@@ -79,19 +81,19 @@ public abstract class Marshaller {
 	}
 	
 	protected <T> boolean isDejaVu(T obj){
-		return dejaVu.containsKey(obj);
+		return dejaVu.contains(obj);
 	}
 	
 	protected <T> void setDejaVu(T obj){
-		dejaVu.put(obj, true);
+		dejaVu.add(obj);
 	}
 	
 	protected <T> boolean isDejaTotalementSerialise(T obj){
-		return dejaTotalementSerialise.containsKey(obj);
+		return dejaTotalementSerialise.contains(obj);
 	}
 	
 	protected <T> void setDejaTotalementSerialise(T obj){
-		dejaTotalementSerialise.put(obj, true);
+		dejaTotalementSerialise.add(obj);
 	}
 		
 	protected void deserialisePile() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, MarshallExeption{

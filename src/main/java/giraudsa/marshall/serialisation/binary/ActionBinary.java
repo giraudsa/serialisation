@@ -8,12 +8,7 @@ import giraudsa.marshall.serialisation.Marshaller;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -139,6 +134,10 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 
 	protected boolean isDejaVuType(Marshaller marshaller, Class<?> typeObj) {
 		return getBinaryMarshaller(marshaller).isDejaVuType(typeObj);
+	}
+	@Override
+	protected <U> boolean isDejaVu(Marshaller marshaller, U objet) {
+		return getBinaryMarshaller(marshaller).isSmallIdDefined(objet);
 	}
 	
 	
