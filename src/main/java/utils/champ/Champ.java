@@ -50,7 +50,6 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 		return comparaison;
 	}
 
-	@Override
 	public int compareTo(Champ other) {
 		int res = -1;
 		if (isSimple == other.isSimple){
@@ -77,7 +76,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 		try {
 			if(obj != null && !Modifier.isFinal(info.getModifiers()))
 				info.set(obj, value);
-		} catch (IllegalArgumentException | IllegalAccessException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -87,12 +86,10 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 		return info == null;
 	}
 
-	@Override
 	public Object get(Object obj) throws IllegalAccessException {
 			return info.get(obj);
 	}
 
-	@Override
 	public TypeRelation getRelation() {
 		return relation;
 	}
@@ -104,23 +101,19 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	public boolean isSimple(){
 		return isSimple;
 	}
-	@Override
 	public Class<?> getValueType(){
 		return valueType;
 	}
 
-	@Override
 	public String getName() {
 		return name;
 	}
 
-	@Override
 	public boolean isTypeDevinable(Object value) {
 		Class<?> type = value.getClass();
 		return TypeExtension.getTypeEnveloppe(this.valueType) == TypeExtension.getTypeEnveloppe(type);
 	}
 	
-	@Override
 	public Type[] getParametreType(){
 		Type type = typeToken.getType();
 		if(type instanceof ParameterizedType){

@@ -14,7 +14,7 @@ import java.util.Map;
 public abstract class ActionXml<T> extends ActionText<T> {
 	private static final Map<Character, String> REMPLACEMENT_CHARS;
 	static {
-		Map<Character, String> tmp = new HashMap<>();
+		Map<Character, String> tmp = new HashMap<Character, String>();
 		for (char c = 0; c <= 0x1F; c++) {
 			if (c != '\t' && c != '\n' && c != '\r') {
 				tmp.put(c, "\uFFFD");

@@ -23,7 +23,7 @@ public class ActionXmlDictionaryType<T extends Map> extends ActionXmlComplexeObj
 		if(!type.isInterface()){
 			try {
 				obj = type.newInstance();
-			} catch (InstantiationException | IllegalAccessException e) {
+			} catch (Exception e) {
 				LOGGER.error("instanciation impossible pour " + type.getName(), e);
 			}
 		}
@@ -51,12 +51,12 @@ public class ActionXmlDictionaryType<T extends Map> extends ActionXmlComplexeObj
 	}
 	
 	public static ActionAbstrait<Map> getInstance() {	
-		return new ActionXmlDictionaryType<>(Map.class, null);
+		return new ActionXmlDictionaryType<Map>(Map.class, null);
 	}
 	
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionXmlDictionaryType<>(type, (XmlUnmarshaller<?>)unmarshaller);
+		return new ActionXmlDictionaryType<U>(type, (XmlUnmarshaller<?>)unmarshaller);
 	}
 	
 	@SuppressWarnings("unchecked") @Override

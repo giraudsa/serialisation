@@ -114,11 +114,9 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 
 	public static <U> U fromJson(Reader reader, EntityManager entity) throws UnmarshallExeption{
 		try {
-			JsonUnmarshaller<U> w = new JsonUnmarshaller<>(reader, entity);
+			JsonUnmarshaller<U> w = new JsonUnmarshaller<U>(reader, entity);
 			return w.parse();
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| NoSuchMethodException | SecurityException | ClassNotFoundException | IOException
-				| NotImplementedSerializeException | JsonHandlerException | ParseException e) {
+		} catch (Exception e) {
 			LOGGER.error("probleme dans la désérialisation JSON", e);
 			throw new UnmarshallExeption("probleme dans la désérialisation JSON",e);
 		}
@@ -131,17 +129,19 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	public static <U> U fromJson(String stringToUnmarshall) throws UnmarshallExeption{
 		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) 
 			return null;
-		try(StringReader sr = new StringReader(stringToUnmarshall)){
-			return fromJson(sr);
-		}
+		StringReader sr = new StringReader(stringToUnmarshall);
+		U ret = fromJson(sr);
+		sr.close();
+		return ret;
 	}
 
 	public static  <U> U fromJson(String stringToUnmarshall, EntityManager entity) throws UnmarshallExeption{
 		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0)
 			return null;
-		try(StringReader sr = new StringReader(stringToUnmarshall)){
-			return fromJson(sr, entity);
-		}
+		StringReader sr = new StringReader(stringToUnmarshall);
+		U ret = fromJson(sr, entity);
+		sr.close();
+		return ret;
 	}
 
 

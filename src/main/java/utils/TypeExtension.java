@@ -19,12 +19,12 @@ import utils.champ.ChampUid;
 import utils.champ.FabriqueChamp;
 
 public class TypeExtension {	
-	private static Set<Class<?>> simpleTypes = new HashSet<>(Arrays.asList(Boolean.class, Byte.class, Short.class, Integer.class, Long.class, Float.class, Double.class, 
+	private static Set<Class<?>> simpleTypes = new HashSet<Class<?>>(Arrays.asList(Boolean.class, Byte.class, Short.class, Integer.class, Long.class, Float.class, Double.class, 
 			String.class, Date.class, void.class, UUID.class, Character.class, Void.class)); 
-	protected static Map<Class<?>, List<Champ>> serializablefieldsOfType = new HashMap<>();
-	private static Map<Class<?>, Champ> dicoTypeTochampId = new HashMap<>();
-	private static Map<Class<?>, Class<?>> dicoTypePrimitifToEnveloppe = new HashMap<>();
-	private static final Set<Class<?>> simpleEnveloppe = new HashSet<>();
+	protected static Map<Class<?>, List<Champ>> serializablefieldsOfType = new HashMap<Class<?>, List<Champ>>();
+	private static Map<Class<?>, Champ> dicoTypeTochampId = new HashMap<Class<?>, Champ>();
+	private static Map<Class<?>, Class<?>> dicoTypePrimitifToEnveloppe = new HashMap<Class<?>, Class<?>>();
+	private static final Set<Class<?>> simpleEnveloppe = new HashSet<Class<?>>();
 	
 	private TypeExtension(){
 		//privateconstructor to hide explicit public one
@@ -48,10 +48,10 @@ public class TypeExtension {
 	public static synchronized List<Champ> getSerializableFields(Class<?> typeObj) {
 		List<Champ> fields = serializablefieldsOfType.get(typeObj);
 		if (fields == null){
-			fields = new ArrayList<>();
+			fields = new ArrayList<Champ>();
 			Boolean hasUid = false;
 			Class<?> parent = typeObj;
-			List<Field> fieldstmp = new ArrayList<>();
+			List<Field> fieldstmp = new ArrayList<Field>();
 			while(parent != Object.class){
 				Collections.addAll(fieldstmp, parent.getDeclaredFields());
 				parent = parent.getSuperclass();

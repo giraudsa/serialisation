@@ -17,13 +17,13 @@ public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 
 	@SuppressWarnings("unchecked")
 	public static <U> ActionAbstrait<U> getInstance() {	
-			return (ActionAbstrait<U>) new ActionXmlSimpleComportement<>(Object.class, null);
+			return (ActionAbstrait<U>) new ActionXmlSimpleComportement<Object>(Object.class, null);
 		}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionXmlSimpleComportement<>(type, (XmlUnmarshaller<?>)unmarshaller);
+		return new ActionXmlSimpleComportement<U>(type, (XmlUnmarshaller<?>)unmarshaller);
 	}
 	
 	@Override

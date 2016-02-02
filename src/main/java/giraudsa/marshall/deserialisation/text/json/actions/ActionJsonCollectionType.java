@@ -26,9 +26,9 @@ public class ActionJsonCollectionType<T extends Collection> extends ActionJsonCo
 			ttype = ArrayList.class;
 		try {
 			obj = ttype.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
+		} catch (Exception e) {
 			LOGGER.debug("impossible de créer une instance de " + ttype.getName(), e);
-			obj = new ArrayList<>();
+			obj = new ArrayList();
 		}
 	}
 
@@ -44,12 +44,12 @@ public class ActionJsonCollectionType<T extends Collection> extends ActionJsonCo
 	}
 	
 	public static ActionAbstrait<Collection> getInstance(){
-		return new ActionJsonCollectionType<>(Collection.class, null);
+		return new ActionJsonCollectionType<Collection>(Collection.class, null);
 	}
 	
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionJsonCollectionType<>(type, (JsonUnmarshaller<?>)unmarshaller);
+		return new ActionJsonCollectionType<U>(type, (JsonUnmarshaller<?>)unmarshaller);
 	}
 	
 	@SuppressWarnings("unchecked")

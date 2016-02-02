@@ -1,7 +1,6 @@
 package giraudsa.marshall.serialisation.text.xml;
 
 import giraudsa.marshall.exception.MarshallExeption;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.ActionAbstrait;
 import giraudsa.marshall.serialisation.text.TextMarshaller;
 import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlArrayType;
@@ -24,7 +23,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -103,38 +101,44 @@ public class XmlMarshaller extends TextMarshaller {
 		try {
 			XmlMarshaller v = new XmlMarshaller(output, false);
 			v.marshall(obj);
-		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+		} catch (Exception e) {
 			LOGGER.error("impossible de sérialiser " + obj.toString(), e);
 			throw new MarshallExeption(e);
 		}
 		
 	}
 	public static <U> String toXml(U obj) throws MarshallExeption{
-		try(StringWriter sw = new StringWriter()){
-			toXml(obj, sw);
-			return sw.toString();
+		StringWriter sw = new StringWriter();
+		toXml(obj, sw);
+		String ret = sw.toString();
+		try {
+			sw.close();
 		} catch (IOException e) {
-			LOGGER.error("impossible de sérialiser en String " + obj.toString(), e);
+			LOGGER.error("impossible de fermer le stringwriter lors de la sérialisation en xml de " + obj.toString(), e);
 			throw new MarshallExeption(e);
 		}
+		return ret;
 	}
 	public static <U> void toCompleteXml(U obj, Writer output) throws MarshallExeption{
 		try {
 			XmlMarshaller v = new XmlMarshaller(output, true);
 			v.marshall(obj);
-		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+		} catch (Exception e) {
 			LOGGER.error("impossible de sérialiser completement " + obj.toString(), e);
 			throw new MarshallExeption(e);
 		}
 	}
 	public static <U> String toCompleteXml(U obj) throws MarshallExeption{
-		try(StringWriter sw = new StringWriter()){
-			toCompleteXml(obj, sw);
-			return sw.toString();
+		StringWriter sw = new StringWriter();
+		toCompleteXml(obj, sw);
+		String ret = sw.toString();
+		try{
+			sw.close();
 		} catch (IOException e) {
-			LOGGER.error("impossible de sérialiser completement en String " + obj.toString(), e);
+			LOGGER.error("impossible dde fermer le stringwriter lors de la sérialisation complete en xml de " + obj.toString(), e);
 			throw new MarshallExeption(e);
 		}
+		return ret;
 	}
 	private void writeHeader() throws IOException {
 		writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");

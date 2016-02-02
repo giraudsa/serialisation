@@ -113,9 +113,9 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	public static <U> U fromXml(Reader reader, EntityManager entity) throws UnmarshallExeption{
 		XmlUnmarshaller<U> w;
 		try {
-			w = new XmlUnmarshaller<>(reader, entity);
+			w = new XmlUnmarshaller<U>(reader, entity);
 			return w.parse();
-		} catch (ClassNotFoundException | IOException | SAXException e) {
+		} catch (Exception e) {
 			LOGGER.error("Impossible de désérialiser", e);
 			throw new UnmarshallExeption("Impossible de désérialiser", e);
 		}
@@ -127,16 +127,18 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	public static <U> U fromXml(String stringToUnmarshall) throws UnmarshallExeption{
 		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0)
 			return null;
-		try(StringReader sr = new StringReader(stringToUnmarshall)){
-			return fromXml(sr, null);
-		}
+		StringReader sr = new StringReader(stringToUnmarshall);
+		U ret = fromXml(sr, null);
+		sr.close();
+		return ret;
 	}
 	public static  <U> U fromXml(String stringToUnmarshall, EntityManager entity) throws UnmarshallExeption {
 		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) 
 			return null;
-		try(StringReader sr = new StringReader(stringToUnmarshall)){
-			return fromXml(sr, entity);
-		}
+		StringReader sr = new StringReader(stringToUnmarshall);
+		U ret = fromXml(sr, entity);
+		sr.close();
+		return ret;
 	}
 
 	

@@ -60,7 +60,7 @@ public class ActionJsonCollectionType extends ActionJson<Collection> {
 		}
 		FakeChamp fakeChamp = new FakeChamp(null, genericType, fieldInformations.getRelation());
 		
-		Deque<Comportement> tmp = new ArrayDeque<>();
+		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
 		for (Object value : obj) {
 			tmp.push(traiteChamp(marshaller, value, fakeChamp, ecrisSeparateur));
 			ecrisSeparateur = true;

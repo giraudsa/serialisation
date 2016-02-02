@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 public class JsonUnmarshallerHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUnmarshallerHandler.class);
 	
-	private ArrayList<Character> buff = new ArrayList<>();
+	private ArrayList<Character> buff = new ArrayList<Character>();
 	private boolean ignoreNextchar = false;
 	private boolean isBetweenQuote = false;
 	

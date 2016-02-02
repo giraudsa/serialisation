@@ -30,7 +30,7 @@ public class ActionJsonDictionaryType<T extends Map> extends ActionJson<T> {
 		if(!type.isInterface()){
 			try {
 				obj = type.newInstance();
-			} catch (InstantiationException | IllegalAccessException e) {
+			} catch (Exception e) {
 				LOGGER.error("instanciation impossible pour " + type.getName(), e);
 			}
 		}
@@ -58,12 +58,12 @@ public class ActionJsonDictionaryType<T extends Map> extends ActionJson<T> {
 	}
 	
 	public static ActionAbstrait<Map> getInstance(){
-		return new ActionJsonDictionaryType<>(Map.class, null);
+		return new ActionJsonDictionaryType<Map>(Map.class, null);
 	}
 	
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionJsonDictionaryType<>(type, (JsonUnmarshaller<?>)unmarshaller);
+		return new ActionJsonDictionaryType<U>(type, (JsonUnmarshaller<?>)unmarshaller);
 	}
 
 	@Override protected Class<?> getTypeAttribute(String nomAttribut) {

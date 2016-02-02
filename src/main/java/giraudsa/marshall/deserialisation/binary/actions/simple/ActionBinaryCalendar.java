@@ -14,7 +14,7 @@ public class ActionBinaryCalendar<C extends Calendar> extends ActionBinarySimple
 	}
 
 	public static ActionAbstrait<Calendar> getInstance(){
-		return new ActionBinaryCalendar<>(Calendar.class, null);
+		return new ActionBinaryCalendar<Calendar>(Calendar.class, null);
 	}
 	
 	@SuppressWarnings("rawtypes")

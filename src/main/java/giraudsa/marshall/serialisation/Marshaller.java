@@ -19,10 +19,10 @@ public abstract class Marshaller {
 	
 	//////ATTRIBUT
 	protected boolean isCompleteSerialisation;
-	protected Set<Object> dejaTotalementSerialise = new HashSet<>();
-	private Set<Object> dejaVu = new HashSet<>();
+	protected Set<Object> dejaTotalementSerialise = new HashSet<Object>();
+	private Set<Object> dejaVu = new HashSet<Object>();
 	@SuppressWarnings("rawtypes")
-	protected Deque<Comportement> aFaire = new ArrayDeque<>();
+	protected Deque<Comportement> aFaire = new ArrayDeque<Comportement>();
 
 	
 	//////Constructeur

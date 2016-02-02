@@ -27,12 +27,12 @@ public class ActionBinaryArray<T> extends ActionBinary<T> {
 	}
 
 	public static ActionAbstrait<Object> getInstance(){ // NOSONAR
-		return new ActionBinaryArray<>(Object.class, null);
+		return new ActionBinaryArray<Object>(Object.class, null);
 	}
 	
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionBinaryArray<>(type, (BinaryUnmarshaller<?>) unmarshaller);
+		return new ActionBinaryArray<U>(type, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 	@Override
 	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption {

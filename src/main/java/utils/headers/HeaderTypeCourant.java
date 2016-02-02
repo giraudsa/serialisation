@@ -12,20 +12,20 @@ import utils.BiHashMap;
 
 public class HeaderTypeCourant<T> extends Header<T> {
 
-	private static final BiHashMap<Class<?>, Integer, HeaderTypeCourant<?>> typeCourantAndEncodageSmallIdToHeader = new BiHashMap<>();
+	private static final BiHashMap<Class<?>, Integer, HeaderTypeCourant<?>> typeCourantAndEncodageSmallIdToHeader = new BiHashMap<Class<?>, Integer, HeaderTypeCourant<?>>();
 	protected static void init(){
-		new HeaderTypeCourant<>(String.class, 1);
-		new HeaderTypeCourant<>(String.class, 2);
-		new HeaderTypeCourant<>(String.class, 3);
-		new HeaderTypeCourant<>(String.class, 4);
-		new HeaderTypeCourant<>(UUID.class, 1);
-		new HeaderTypeCourant<>(UUID.class, 2);
-		new HeaderTypeCourant<>(UUID.class, 3);
-		new HeaderTypeCourant<>(UUID.class, 4);
-		new HeaderTypeCourant<>(Date.class, 1);
-		new HeaderTypeCourant<>(Date.class, 2);
-		new HeaderTypeCourant<>(Date.class, 3);
-		new HeaderTypeCourant<>(Date.class, 4);
+		new HeaderTypeCourant<String>(String.class, 1);
+		new HeaderTypeCourant<String>(String.class, 2);
+		new HeaderTypeCourant<String>(String.class, 3);
+		new HeaderTypeCourant<String>(String.class, 4);
+		new HeaderTypeCourant<UUID>(UUID.class, 1);
+		new HeaderTypeCourant<UUID>(UUID.class, 2);
+		new HeaderTypeCourant<UUID>(UUID.class, 3);
+		new HeaderTypeCourant<UUID>(UUID.class, 4);
+		new HeaderTypeCourant<Date>(Date.class, 1);
+		new HeaderTypeCourant<Date>(Date.class, 2);
+		new HeaderTypeCourant<Date>(Date.class, 3);
+		new HeaderTypeCourant<Date>(Date.class, 4);
 	}
 	
 	private Class<?> typeCourant;

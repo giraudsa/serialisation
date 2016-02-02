@@ -15,12 +15,12 @@ public class ActionBinaryEnum<E extends Enum> extends ActionBinarySimple<E> {
 	}
 
 	public static ActionAbstrait<Enum> getInstance(){
-		return new ActionBinaryEnum<>(Enum.class, null);
+		return new ActionBinaryEnum<Enum>(Enum.class, null);
 	}
 	
 	@Override
 	public <U extends E> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionBinaryEnum<>(type, (BinaryUnmarshaller<?>) unmarshaller);
+		return new ActionBinaryEnum<U>(type, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 
 	@Override

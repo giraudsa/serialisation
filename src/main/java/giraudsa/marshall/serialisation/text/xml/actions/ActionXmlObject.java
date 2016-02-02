@@ -32,7 +32,7 @@ public class ActionXmlObject extends ActionXml<Object> {
 			return;
 		}
 		setDejaTotalementSerialise(marshaller, obj);
-		Deque<Comportement> tmp = new ArrayDeque<>();
+		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
 		for (Champ champ : champs){
 			Comportement comportement = traiteChamp(marshaller, obj, champ);
 			if(comportement != null) 

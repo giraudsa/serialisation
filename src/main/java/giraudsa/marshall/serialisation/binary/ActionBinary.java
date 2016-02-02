@@ -95,7 +95,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 		try {
 			boolean isDejaVu = writeHeaders(marshaller, (T) objetASerialiser, fieldInformation);
 			ecritValeur(marshaller, (T) objetASerialiser, fieldInformation, isDejaVu);
-		} catch (MarshallExeption | IOException | IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+		} catch (Exception e) {
 			LOGGER.error("problème à la sérialisation de l'objet " + objetASerialiser.toString(), e);
 			throw new MarshallExeption(e);
 		}

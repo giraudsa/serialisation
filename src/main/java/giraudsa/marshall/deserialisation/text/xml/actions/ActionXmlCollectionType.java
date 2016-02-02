@@ -24,9 +24,9 @@ public class ActionXmlCollectionType<C extends Collection> extends ActionXmlComp
 			ttype = ArrayList.class;
 		try {
 			obj = ttype.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
+		} catch (Exception e) {
 			LOGGER.debug("impossible de créer une instance de " + ttype.getName(), e);
-			obj = new ArrayList<>();
+			obj = new ArrayList();
 		}
 	}
 	private FakeChamp getFakeChamp(){
@@ -40,12 +40,12 @@ public class ActionXmlCollectionType<C extends Collection> extends ActionXmlComp
 		return fakeChamp;
 	}
     public static ActionAbstrait<Collection> getInstance() {	
-		return new ActionXmlCollectionType<>(Collection.class, null);
+		return new ActionXmlCollectionType<Collection>(Collection.class, null);
 	}
 	
 	@Override
 	public <U extends C> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionXmlCollectionType<>(type, (XmlUnmarshaller<?>) unmarshaller);
+		return new ActionXmlCollectionType<U>(type, (XmlUnmarshaller<?>) unmarshaller);
 	}
 
 	

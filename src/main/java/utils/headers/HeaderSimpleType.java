@@ -11,36 +11,36 @@ import utils.BiHashMap;
 import utils.TypeExtension;
 
 public class HeaderSimpleType<T> extends Header<T> {
-	private static final BiHashMap<Class<?>, Integer, Header<?>> classAndEncodageMiniToHeader = new BiHashMap<>();
-	private static final HeaderSimpleType<Boolean> booleanTrue = new HeaderSimpleType<>(true, boolean.class);
-	private static final HeaderSimpleType<Boolean> booleanFalse = new HeaderSimpleType<>(false, boolean.class);
-	private static final HeaderSimpleType<Void> nullHeader = new HeaderSimpleType<>(void.class, 0);
+	private static final BiHashMap<Class<?>, Integer, Header<?>> classAndEncodageMiniToHeader = new BiHashMap<Class<?>, Integer, Header<?>>();
+	private static final HeaderSimpleType<Boolean> booleanTrue = new HeaderSimpleType<Boolean>(true, boolean.class);
+	private static final HeaderSimpleType<Boolean> booleanFalse = new HeaderSimpleType<Boolean>(false, boolean.class);
+	private static final HeaderSimpleType<Void> nullHeader = new HeaderSimpleType<Void>(void.class, 0);
 	protected static void init(){
-		new HeaderSimpleType<>((byte)0, byte.class);
-		new HeaderSimpleType<>(byte.class, 1);
-		new HeaderSimpleType<>((char)0, char.class);
-		new HeaderSimpleType<>(char.class, 2);
-		new HeaderSimpleType<>((short)0, short.class);
-		new HeaderSimpleType<>(short.class, 1);
-		new HeaderSimpleType<>(short.class, 2);
-		new HeaderSimpleType<>((int)0, int.class);
-		new HeaderSimpleType<>(int.class, 1);
-		new HeaderSimpleType<>(int.class, 2);
-		new HeaderSimpleType<>(int.class, 3);
-		new HeaderSimpleType<>(int.class, 4);
-		new HeaderSimpleType<>((long)0, long.class);
-		new HeaderSimpleType<>(long.class, 1);
-		new HeaderSimpleType<>(long.class, 2);
-		new HeaderSimpleType<>(long.class, 3);
-		new HeaderSimpleType<>(long.class, 4);
-		new HeaderSimpleType<>(long.class, 5);
-		new HeaderSimpleType<>(long.class, 6);
-		new HeaderSimpleType<>(long.class, 7);
-		new HeaderSimpleType<>(long.class, 8);
-		new HeaderSimpleType<>((float)0.0, float.class);
-		new HeaderSimpleType<>(float.class, 4);
-		new HeaderSimpleType<>((double)0.0, double.class);
-		new HeaderSimpleType<>(double.class, 8);
+		new HeaderSimpleType<Byte>((byte)0, byte.class);
+		new HeaderSimpleType<Byte>(byte.class, 1);
+		new HeaderSimpleType<Character>((char)0, char.class);
+		new HeaderSimpleType<Character>(char.class, 2);
+		new HeaderSimpleType<Short>((short)0, short.class);
+		new HeaderSimpleType<Short>(short.class, 1);
+		new HeaderSimpleType<Short>(short.class, 2);
+		new HeaderSimpleType<Integer>((int)0, int.class);
+		new HeaderSimpleType<Integer>(int.class, 1);
+		new HeaderSimpleType<Integer>(int.class, 2);
+		new HeaderSimpleType<Integer>(int.class, 3);
+		new HeaderSimpleType<Integer>(int.class, 4);
+		new HeaderSimpleType<Long>((long)0, long.class);
+		new HeaderSimpleType<Long>(long.class, 1);
+		new HeaderSimpleType<Long>(long.class, 2);
+		new HeaderSimpleType<Long>(long.class, 3);
+		new HeaderSimpleType<Long>(long.class, 4);
+		new HeaderSimpleType<Long>(long.class, 5);
+		new HeaderSimpleType<Long>(long.class, 6);
+		new HeaderSimpleType<Long>(long.class, 7);
+		new HeaderSimpleType<Long>(long.class, 8);
+		new HeaderSimpleType<Float>((float)0.0, float.class);
+		new HeaderSimpleType<Float>(float.class, 4);
+		new HeaderSimpleType<Double>((double)0.0, double.class);
+		new HeaderSimpleType<Double>(double.class, 8);
 	}
 	private Class<T> simpleType;
 	private T defautValue;
@@ -68,7 +68,7 @@ public class HeaderSimpleType<T> extends Header<T> {
 		if(o == null)
 			return (Header<U>) nullHeader;
 		if(Boolean.class.isInstance(o))
-			return (Header<U>) ((boolean)(Object)o ? booleanTrue : booleanFalse);
+			return (Header<U>) ((Boolean)o ? booleanTrue : booleanFalse);
 		Class<U> classeO = (Class<U>) o.getClass();
 		int encodage = ByteHelper.getMinimumEncodage((Number)o);
 		return (Header<U>) classAndEncodageMiniToHeader.get(TypeExtension.getTypeEnveloppe(classeO), encodage);
@@ -80,9 +80,9 @@ public class HeaderSimpleType<T> extends Header<T> {
 		if(tailleCodageValeur == 0)
 			return;//rien à ecrire
 		if(Float.class.isInstance(o))
-			output.writeFloat((float)o);
+			output.writeFloat(((Number)o).floatValue());
 		else if(Double.class.isInstance(o))
-			output.writeDouble((double)o);
+			output.writeDouble(((Number)o).doubleValue());
 		else{
 			output.write(BigInteger.valueOf(((Number)o).longValue()).toByteArray());
 		}

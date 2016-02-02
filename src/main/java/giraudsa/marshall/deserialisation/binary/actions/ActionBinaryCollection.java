@@ -33,13 +33,13 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 		super(type, b);
 	}
 
-	public static ActionAbstrait<?> getInstance(){ // NOSONAR
-		return new ActionBinaryCollection<>(Collection.class, null);
+	public static ActionAbstrait<Collection> getInstance(){
+		return new ActionBinaryCollection<Collection>(Collection.class, null);
 	}
 	
 	@Override
 	public <U extends C> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionBinaryCollection<>(type, (BinaryUnmarshaller<?>) unmarshaller);
+		return new ActionBinaryCollection<U>(type, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 	@Override
 	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption {
@@ -105,7 +105,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 					throw new UnmarshallExeption("Probleme avec un type hibernate " + type.getName(), new InstantiationException());
 			}else
 				objetADeserialiser = type.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
+		} catch (Exception e) {
 			LOGGER.error(e.getMessage(), e);
 		}
 		return objetADeserialiser;

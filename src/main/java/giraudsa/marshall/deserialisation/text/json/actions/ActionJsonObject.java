@@ -26,17 +26,17 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 	private ActionJsonObject(Class<T> type, JsonUnmarshaller<?> jsonUnmarshaller) {
 		super(type, jsonUnmarshaller);
 		champId = TypeExtension.getChampId(type);
-		dicoChampToValue = new HashMap<>();
+		dicoChampToValue = new HashMap<Champ, Object>();
 	}
 
 	public static ActionAbstrait<Object> getInstance(){
-		return new ActionJsonObject<>(Object.class, null);
+		return new ActionJsonObject<Object>(Object.class, null);
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionJsonObject<>(type, (JsonUnmarshaller<?>)unmarshaller);
+		return new ActionJsonObject<U>(type, (JsonUnmarshaller<?>)unmarshaller);
 	}
 
 	

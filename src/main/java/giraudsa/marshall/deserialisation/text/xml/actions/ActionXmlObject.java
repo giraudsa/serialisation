@@ -20,17 +20,17 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 	private ActionXmlObject(Class<T> type, XmlUnmarshaller<?> xmlUnmarshaller) {
 		super(type, xmlUnmarshaller);
 		champId = TypeExtension.getChampId(type);
-		dicoChampToValue = new HashMap<>();
+		dicoChampToValue = new HashMap<Champ, Object>();
 	}
 
 	public static  ActionAbstrait<Object> getInstance() {	
-		return new ActionXmlObject<>(Object.class, null);
+		return new ActionXmlObject<Object>(Object.class, null);
 	}
 	
 	@SuppressWarnings("rawtypes")
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionXmlObject<>(type, (XmlUnmarshaller<?>)unmarshaller);
+		return new ActionXmlObject<U>(type, (XmlUnmarshaller<?>)unmarshaller);
 	}
 	
 	@Override

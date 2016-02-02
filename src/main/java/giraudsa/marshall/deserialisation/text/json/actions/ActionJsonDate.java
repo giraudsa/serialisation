@@ -3,7 +3,6 @@ package giraudsa.marshall.deserialisation.text.json.actions;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
-import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.Date;
 
@@ -17,13 +16,13 @@ public class ActionJsonDate<T extends Date> extends ActionJsonSimpleComportement
 	}
 
 	public static ActionAbstrait<Date> getInstance(){
-		return new ActionJsonDate<>(Date.class, null);
+		return new ActionJsonDate<Date>(Date.class, null);
 	}
 	
 	@SuppressWarnings("rawtypes")
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionJsonDate<>(type, (JsonUnmarshaller<?>)unmarshaller);
+		return new ActionJsonDate<U>(type, (JsonUnmarshaller<?>)unmarshaller);
 	}
 	
 	@Override
@@ -33,7 +32,7 @@ public class ActionJsonDate<T extends Date> extends ActionJsonSimpleComportement
 			date = getDateFormat().parse(donnees);
 			long time = date.getTime();
 			obj = type.getConstructor(long.class).newInstance(time);
-		} catch (ParseException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+		} catch (Exception e) {
 			LOGGER.error("pas de constructeur avec un long pour le type date " + type.getName(), e);
 		} 
 	}

@@ -19,13 +19,13 @@ public class ActionJsonSimpleComportement<T> extends ActionJson<T> {
 
 	@SuppressWarnings("unchecked")
 	public static <U> ActionAbstrait<U> getInstance() {	
-		return (ActionAbstrait<U>) new ActionJsonSimpleComportement<>(Object.class, null);
+		return (ActionAbstrait<U>) new ActionJsonSimpleComportement<Object>(Object.class, null);
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionJsonSimpleComportement<>(type, (JsonUnmarshaller<?>)unmarshaller);
+		return new ActionJsonSimpleComportement<U>(type, (JsonUnmarshaller<?>)unmarshaller);
 	}
 
 

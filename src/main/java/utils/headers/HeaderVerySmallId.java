@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class HeaderVerySmallId extends Header<Object> {
 	private static int maxVerySmallId = 0;
-	private static final Map<Integer, HeaderVerySmallId> verySmallIdToHeader = new HashMap<>();
+	private static final Map<Integer, HeaderVerySmallId> verySmallIdToHeader = new HashMap<Integer, HeaderVerySmallId>();
 	
 	private int smallId;
 	

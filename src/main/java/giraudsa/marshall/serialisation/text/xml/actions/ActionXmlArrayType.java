@@ -23,7 +23,7 @@ public class ActionXmlArrayType  extends ActionXml<Object> {
 	protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
 		Type genericType = obj.getClass().getComponentType();
 		FakeChamp fakeChamp = new FakeChamp("V", genericType, fieldInformations.getRelation());
-		Deque<Comportement> tmp = new ArrayDeque<>();
+		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
 		for (int i = 0; i < Array.getLength(obj); ++i) {
 			tmp.push(traiteChamp(marshaller, Array.get(obj, i), fakeChamp));
 		}

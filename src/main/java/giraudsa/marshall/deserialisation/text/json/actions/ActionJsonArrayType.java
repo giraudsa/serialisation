@@ -12,7 +12,7 @@ import utils.champ.FieldInformations;
 
 public class ActionJsonArrayType<T> extends ActionJsonComplexeObject<T> {
 	private FakeChamp fakeChamp;
-	private List<Object> listeTampon = new ArrayList<>();
+	private List<Object> listeTampon = new ArrayList<Object>();
 	private Class<?> componentType;
 	private ActionJsonArrayType(Class<T> type, JsonUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);
@@ -27,13 +27,13 @@ public class ActionJsonArrayType<T> extends ActionJsonComplexeObject<T> {
 		return fakeChamp;
 	}
     public static ActionAbstrait<Object> getInstance() {	
-		return new ActionJsonArrayType<>(Object.class, null);
+		return new ActionJsonArrayType<Object>(Object.class, null);
 	}
 	
 	@SuppressWarnings("rawtypes")
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionJsonArrayType<>(type, (JsonUnmarshaller<?>) unmarshaller);
+		return new ActionJsonArrayType<U>(type, (JsonUnmarshaller<?>) unmarshaller);
 	}
 
 	

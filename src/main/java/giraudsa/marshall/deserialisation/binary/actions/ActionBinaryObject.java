@@ -29,13 +29,13 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	public static ActionAbstrait<Object> getInstance() {
-		return new ActionBinaryObject<>(Object.class, null);
+		return new ActionBinaryObject<Object>(Object.class, null);
 	}
 	
 	@SuppressWarnings("rawtypes")
 	@Override
 	public <U extends O> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return (ActionAbstrait<U>) new ActionBinaryObject<>(type, (BinaryUnmarshaller<?>) unmarshaller);
+		return (ActionAbstrait<U>) new ActionBinaryObject<U>(type, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	private void initialiseListeChamps(boolean deserialiseToutSaufId, boolean deserialiseId) {
-		listeChamps = new ArrayList<>();
+		listeChamps = new ArrayList<Champ>();
 		if(deserialiseId)
 			listeChamps.add(champId);
 		if(deserialiseToutSaufId){

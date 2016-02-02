@@ -24,7 +24,7 @@ public class ActionBinaryArrayType extends ActionBinary<Object> {
 	@Override
 	protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
 		FakeChamp fakeChamp = new FakeChamp(null, obj.getClass().getComponentType(), fieldInformations.getRelation());
-		Deque<Comportement> tmp = new ArrayDeque<>();
+		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
 		if (!isDejaVu){
 			if(isCompleteMarshalling(marshaller) || fieldInformations.getRelation()==TypeRelation.COMPOSITION)
 				setDejaTotalementSerialise(marshaller, obj);

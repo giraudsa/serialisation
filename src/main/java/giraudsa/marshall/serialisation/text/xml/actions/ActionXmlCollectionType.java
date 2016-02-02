@@ -34,7 +34,7 @@ public class ActionXmlCollectionType extends ActionXml<Collection> {
 			genericType = types[0];
 		}
 		FakeChamp fakeChamp = new FakeChamp("V", genericType, fieldInformations.getRelation());
-		Deque<Comportement> tmp = new ArrayDeque<>();
+		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
 		Collection<?> collection = (Collection<?>) obj;
 		for (Object value : collection) {
 			tmp.push(traiteChamp(marshaller,value, fakeChamp));

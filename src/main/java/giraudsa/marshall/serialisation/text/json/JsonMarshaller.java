@@ -1,7 +1,6 @@
 package giraudsa.marshall.serialisation.text.json;
 
 import giraudsa.marshall.exception.MarshallExeption;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.ActionAbstrait;
 import giraudsa.marshall.serialisation.text.TextMarshaller;
 import giraudsa.marshall.serialisation.text.json.actions.ActionJsonArrayType;
@@ -27,7 +26,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -108,26 +106,29 @@ public class JsonMarshaller extends TextMarshaller {
 		try {
 			JsonMarshaller v = new JsonMarshaller(output, false);
 			v.marshall(obj);
-		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+		} catch (Exception e) {
 			LOGGER.debug("probleme de sérialisation json de " + obj.toString(), e);
 			throw new MarshallExeption(e);
 		}
 	}
 
 	public static <U> String toJson(U obj) throws MarshallExeption{
-		try (StringWriter sw = new StringWriter()) {
-			toJson(obj, sw);
-			return sw.toString();
+		StringWriter sw = new StringWriter();
+		toJson(obj, sw);
+		String ret = sw.toString();
+		try{
+			sw.close();
 		} catch (IOException e) {
 			LOGGER.debug("Problème à la création d'un StringWriter", e);
 			throw new MarshallExeption(e);
 		}
+		return ret;
 	}
 	public static <U> void toCompleteJson(U obj, Writer output) throws MarshallExeption{
 		try {
 			JsonMarshaller v = new JsonMarshaller(output, true);
 			v.marshall(obj);
-		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+		} catch (Exception e) {
 			LOGGER.debug("probleme de sérialisation complète en json de " + obj.toString(), e);
 			throw new MarshallExeption(e);
 		}
@@ -135,13 +136,16 @@ public class JsonMarshaller extends TextMarshaller {
 
 
 	public static <U> String toCompleteJson(U obj) throws MarshallExeption{
-		try(StringWriter sw = new StringWriter()){
-			toCompleteJson(obj, sw);
-			return sw.toString();
+		StringWriter sw = new StringWriter();
+		toCompleteJson(obj, sw);
+		String ret =sw.toString();
+		try{
+			sw.close();
 		} catch (IOException e) {
 			LOGGER.debug("Problème à la création d'un StringWriter", e);
 			throw new MarshallExeption(e);
 		}
+		return ret;
 	}
 
 	

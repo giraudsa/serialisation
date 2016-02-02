@@ -23,7 +23,7 @@ public class ActionBinaryEnum extends ActionBinary<Enum> {
 		boolean isTypeDevinable = isTypeDevinable(marshaller, objetASerialiser, fieldInformations);
 		boolean isDejaVuType = isDejaVuType(marshaller, typeObj);
 		short smallIdType = getSmallIdTypeAndStockType(marshaller, typeObj);
-		HeaderEnum<?> header = HeaderEnum.getHeader(smallIdType, isTypeDevinable);
+		HeaderEnum header = HeaderEnum.getHeader(smallIdType, isTypeDevinable);
 		header.write(getOutput(marshaller), smallIdType, typeObj, isDejaVuType);
 		return false;
 	}

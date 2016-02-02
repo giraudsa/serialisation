@@ -23,28 +23,23 @@ public class FakeChamp implements FieldInformations {
 		isSimple = TypeExtension.isSimple(typeToken.getRawType());
 	}
 
-	@Override
 	public String getName() {
 		return name;
 	}
 
-	@Override
 	public TypeRelation getRelation() {
 		return relation;
 	}
 
-	@Override
 	public Object get(Object o) throws IllegalAccessException {
 		return o;
 	}
 
-	@Override
 	public boolean isTypeDevinable(Object o) {
 		Class<?> valueType = o.getClass();
 		return isSimple || typeToken.getRawType() == valueType;
 	}
 	
-	@Override
 	public Type[] getParametreType(){
 		Type type = typeToken.getType();
 		if(type instanceof ParameterizedType){
@@ -53,7 +48,6 @@ public class FakeChamp implements FieldInformations {
 		return new Type[0];
 	}
 
-	@Override
 	public Class<?> getValueType() {
 		return typeToken.getRawType();
 	}

@@ -10,7 +10,7 @@ import java.util.Map;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 public class HeaderTypeDevinable extends Header<Object> {
-	private static final Map<Integer, HeaderTypeDevinable> encodageSmallIdToHeaderTypeDevinable = new HashMap<>();
+	private static final Map<Integer, HeaderTypeDevinable> encodageSmallIdToHeaderTypeDevinable = new HashMap<Integer, HeaderTypeDevinable>();
 	protected static void init(){
 		new HeaderTypeDevinable(1);
 		new HeaderTypeDevinable(2);

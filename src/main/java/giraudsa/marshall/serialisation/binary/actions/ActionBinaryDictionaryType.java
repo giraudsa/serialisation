@@ -12,13 +12,10 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.Map.Entry;
 
 @SuppressWarnings("rawtypes")
@@ -41,7 +38,7 @@ public class ActionBinaryDictionaryType extends ActionBinary<Map> {
 		FakeChamp fakeChampValue = new FakeChamp("V", genericTypeValue, fieldInformations.getRelation());
 		
 		
-		Deque<Comportement> tmp = new ArrayDeque<>();
+		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
 		if(!isDejaVu){
 			if(isCompleteMarshalling(marshaller) || fieldInformations.getRelation()==TypeRelation.COMPOSITION)
 				setDejaTotalementSerialise(marshaller, map);

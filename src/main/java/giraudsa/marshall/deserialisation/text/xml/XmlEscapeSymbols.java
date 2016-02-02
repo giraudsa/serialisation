@@ -206,8 +206,8 @@ final class XmlEscapeSymbols {
         final int structureLen = references.references.size();
 
         // Initialize some auxiliary structures
-        final List<char[]> cers = new ArrayList<>(structureLen + 5);
-        final List<Integer> codepoints = new ArrayList<>(structureLen + 5);
+        final List<char[]> cers = new ArrayList<char[]>(structureLen + 5);
+        final List<Integer> codepoints = new ArrayList<Integer>(structureLen + 5);
 
         // For each reference, initialize its corresponding codepoint -> CER and CER -> codepoint structures
         for (final Reference reference : references.references) {
@@ -340,7 +340,7 @@ final class XmlEscapeSymbols {
 
     private static final class References {
 
-        private final List<Reference> references = new ArrayList<>(200);
+        private final List<Reference> references = new ArrayList<Reference>(200);
 
         protected References() {
             super();

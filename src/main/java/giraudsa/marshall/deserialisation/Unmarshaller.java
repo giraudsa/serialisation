@@ -20,7 +20,7 @@ public abstract class Unmarshaller<T> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Unmarshaller.class);
 	protected T obj;
 	protected final EntityManager entity;
-	protected final Deque<ActionAbstrait<?>> pileAction = new ArrayDeque<>();
+	protected final Deque<ActionAbstrait<?>> pileAction = new ArrayDeque<ActionAbstrait<?>>();
 	protected CacheObject  cacheObject;
 
 	protected Unmarshaller(EntityManager entity) throws ClassNotFoundException, IOException {
@@ -117,13 +117,13 @@ public abstract class Unmarshaller<T> {
 		W objet = null;
 		try{
 			objet = type.newInstance();
-		}catch (SecurityException | IllegalArgumentException | InstantiationException | IllegalAccessException e){
+		}catch (Exception e){
 			LOGGER.debug(e.getMessage(), e);
 			try {
 				Constructor<?> constr = type.getDeclaredConstructor(Constants.getClassVide());
 				constr.setAccessible(true);
 				objet = (W) constr.newInstance(Constants.getNullArgument());
-			} catch (NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException | InstantiationException | IllegalAccessException e1) {
+			} catch (Exception e1) {
 				LOGGER.error(e1.getMessage(), e1);
 				throw new InstantiationException("la classe " + type.getName() + "n'a pas pu être instanciée.");
 			}

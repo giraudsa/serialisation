@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("rawtypes")
 public class ActionJsonEnum<T extends Enum> extends ActionJson<T>  {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ActionJsonEnum.class);
-	private Map<String, T> dicoStringEnumToObjEnum = new HashMap<>();
+	private Map<String, T> dicoStringEnumToObjEnum = new HashMap<String, T>();
 	
 
 	@SuppressWarnings("unchecked")
@@ -31,17 +31,17 @@ public class ActionJsonEnum<T extends Enum> extends ActionJson<T>  {
 				for(T objEnum : listeEnum){
 					dicoStringEnumToObjEnum.put(objEnum.toString(), objEnum);
 				}
-			} catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			} catch (Exception e) {
 				LOGGER.error("T n'est pas un Enum... étrange", e);
 			} 
 		}
 	}
 	public static ActionAbstrait<Enum> getInstance(){
-		return new ActionJsonEnum<>(Enum.class, null);
+		return new ActionJsonEnum<Enum>(Enum.class, null);
 	}
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionJsonEnum<>(type, (JsonUnmarshaller<?>)unmarshaller);
+		return new ActionJsonEnum<U>(type, (JsonUnmarshaller<?>)unmarshaller);
 	}
 
 

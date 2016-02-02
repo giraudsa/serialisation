@@ -9,7 +9,7 @@ import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.BiHashMap;
 
 public class HeaderTypeNonDevinable extends Header<Object>{
-	private static final BiHashMap<Integer, Integer, HeaderTypeNonDevinable> encodageSmallIdEtSmallIdTypeToHeader = new BiHashMap<>();
+	private static final BiHashMap<Integer, Integer, HeaderTypeNonDevinable> encodageSmallIdEtSmallIdTypeToHeader = new BiHashMap<Integer, Integer, HeaderTypeNonDevinable>();
 	protected static void init(){
 		new HeaderTypeNonDevinable(1, 1);
 		new HeaderTypeNonDevinable(2, 1);

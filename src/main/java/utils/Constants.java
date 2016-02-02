@@ -16,8 +16,8 @@ public class Constants {
 	private static final Class[] classVide = new Class[0];
 	private static final Object[] nullArgument = new Object[0];
 	
-	private static final Map<String, String> dicoSimpleNameToName = new HashMap<>();
-	private static final Map<Class<?>, String> dicoClassToSimpleName = new HashMap<>();
+	private static final Map<String, String> dicoSimpleNameToName = new HashMap<String, String>();
+	private static final Map<Class<?>, String> dicoClassToSimpleName = new HashMap<Class<?>, String>();
 	
 	public static final Class<?> dictionaryType = Map.class;
 	public static final Class<?> collectionType = Collection.class;

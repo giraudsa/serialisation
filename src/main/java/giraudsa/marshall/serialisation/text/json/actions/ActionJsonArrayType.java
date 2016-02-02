@@ -26,7 +26,7 @@ public class ActionJsonArrayType  extends ActionJson<Object> {
 			NoSuchMethodException, NotImplementedSerializeException {
 		Type genericType = obj.getClass().getComponentType();
 		FakeChamp fakeChamp = new FakeChamp(null, genericType, fieldInformations.getRelation());
-		Deque<Comportement> tmp = new ArrayDeque<>();
+		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
 		for (int i = 0; i < Array.getLength(obj); ++i) {
 			tmp.push(traiteChamp(marshaller, Array.get(obj, i), fakeChamp, ecrisSeparateur));
 			ecrisSeparateur = true;

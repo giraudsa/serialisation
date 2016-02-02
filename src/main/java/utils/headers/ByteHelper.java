@@ -11,9 +11,9 @@ public class ByteHelper {
 		if(Byte.class.isInstance(o) || Short.class.isInstance(o) || Integer.class.isInstance(o) || Long.class.isInstance(o))
 			return o.longValue() == 0 ? 0 : BigInteger.valueOf(o.longValue()).toByteArray().length;
 		if (Float.class.isInstance(o))
-			return (float)o == 0.0 ? 0 : 4;
+			return o.floatValue() == 0.0 ? 0 : 4;
 		if(Double.class.isInstance(o))
-			return (double)o == 0.0 ? 0 : 8;
+			return o.doubleValue() == 0.0 ? 0 : 8;
 		return -1;
 	
 	}

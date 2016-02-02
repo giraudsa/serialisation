@@ -32,13 +32,13 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 
 
 	public static ActionAbstrait<Map> getInstance(){
-		return new ActionBinaryDictionary<>(Map.class, null);
+		return new ActionBinaryDictionary<Map>(Map.class, null);
 	}
 	
 
 	@Override
 	public <U extends D> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionBinaryDictionary<>(type, (BinaryUnmarshaller<?>) unmarshaller);
+		return new ActionBinaryDictionary<U>(type, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 	
 	@Override

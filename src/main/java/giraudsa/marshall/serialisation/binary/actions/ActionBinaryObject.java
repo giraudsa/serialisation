@@ -26,7 +26,7 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 
 	@Override
 	protected void ecritValeur(Marshaller marshaller, Object objetASerialiser, FieldInformations fieldInformations, boolean isDejaVu) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
-		Deque<Comportement> tmp = new ArrayDeque<>();
+		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
 		
 		boolean serialiseToutSaufId = serialiseToutSaufId(marshaller, objetASerialiser, fieldInformations);
 		boolean serialiseId = serialiseId(marshaller, objetASerialiser, isDejaVu);
@@ -44,7 +44,7 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 	}
 
 	private List<Champ> getListeChamp(Object objetASerialiser, boolean serialiseId, boolean serialiseToutSaufId) {
-		List<Champ> ret = new ArrayList<>();
+		List<Champ> ret = new ArrayList<Champ>();
 		Champ champId = TypeExtension.getChampId(objetASerialiser.getClass());
 		List<Champ> champs = TypeExtension.getSerializableFields(objetASerialiser.getClass());
 		for(Champ champ : champs){

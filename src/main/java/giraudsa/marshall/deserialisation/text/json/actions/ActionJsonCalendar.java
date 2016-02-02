@@ -13,11 +13,6 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import utils.TypeExtension;
 import utils.champ.Champ;
 import utils.champ.FakeChamp;
@@ -30,7 +25,7 @@ public class ActionJsonCalendar<C extends Calendar> extends ActionJson<Calendar>
 	private static FakeChamp cDayOfMonth = new FakeChamp("dayOfMonth", Integer.class, TypeRelation.COMPOSITION);
 	private static FakeChamp cMonth = new FakeChamp("month", Integer.class, TypeRelation.COMPOSITION);
 	private static FakeChamp cYear = new FakeChamp("year", Integer.class, TypeRelation.COMPOSITION);
-	private static Map<String, FakeChamp> nomToChamp = new HashMap<>();
+	private static Map<String, FakeChamp> nomToChamp = new HashMap<String, FakeChamp>();
 	static{
 		nomToChamp.put(cSeconde.getName(), cSeconde);
 		nomToChamp.put(cMinute.getName(), cMinute);
@@ -43,7 +38,7 @@ public class ActionJsonCalendar<C extends Calendar> extends ActionJson<Calendar>
 	
 	private ActionJsonCalendar(Class<Calendar> type, JsonUnmarshaller<?> jsonUnmarshaller) {
 		super(type, jsonUnmarshaller);
-		map = new HashMap<>();
+		map = new HashMap<FakeChamp, Integer>();
 	}
 
 	public static ActionAbstrait<?> getInstance(){

@@ -112,11 +112,11 @@ public class BinaryMarshaller extends Marshaller{
 		dicoTypeToAction.put(StringBuffer.class, new ActionBinaryStringBuffer());
 	}
 	protected DataOutputStream output;
-	private Map<Object, Integer> smallIds = new HashMap<>();
-	private Map<Class<?>, Short> dejaVuType = new HashMap<>();
-	private Map<UUID, Integer> dejaVuUuid = new HashMap<>();
-	private Map<Date, Integer> dejaVuDate = new HashMap<>();
-	private Map<String, Integer> dejaVuString = new HashMap<>();
+	private Map<Object, Integer> smallIds = new HashMap<Object, Integer>();
+	private Map<Class<?>, Short> dejaVuType = new HashMap<Class<?>, Short>();
+	private Map<UUID, Integer> dejaVuUuid = new HashMap<UUID, Integer>();
+	private Map<Date, Integer> dejaVuDate = new HashMap<Date, Integer>();
+	private Map<String, Integer> dejaVuString = new HashMap<String, Integer>();
 	private int compteur = 1;
 	private short compteurType = 1;
 	private int compteurUuid = 1;
@@ -130,22 +130,26 @@ public class BinaryMarshaller extends Marshaller{
 
 	/////METHODES STATICS PUBLICS
 	public static <U> void toBinary(U obj, OutputStream  output) throws MarshallExeption{
-		try(DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(output))){
+		DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(output));
+		try{
 			BinaryMarshaller v = new BinaryMarshaller(stream, false);
 			v.marshall(obj);
 			stream.flush();
-		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+			stream.close();
+		} catch (Exception e) {
 			LOGGER.error("Problème lors de la sérialisation binaire", e);
 			throw new MarshallExeption(e);
 		}
 	}
 
 	public static <U> void toCompleteBinary(U obj, OutputStream  output) throws MarshallExeption{
-		try(DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(output))){
+		DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(output));
+		try{
 			BinaryMarshaller v = new BinaryMarshaller(stream,true);
 			v.marshall(obj);
 			stream.flush();
-		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+			stream.close();
+		} catch (Exception e) {
 			LOGGER.error("Problème lors de la sérialisation binaire complète", e);
 			throw new MarshallExeption(e);
 		}

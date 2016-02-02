@@ -14,7 +14,7 @@ import java.util.Map;
 public abstract class ActionJson<T> extends ActionText<T>  {
 	private static final Map<Character, String> REMPLACEMENT_CHARS;
 	static {
-		Map<Character, String> t = new HashMap<>();
+		Map<Character, String> t = new HashMap<Character, String>();
 		for (char c = 0; c <= 0x1F; c++) {
 			t.put(c, String.format("\\u%04x", (int) c));
 		}

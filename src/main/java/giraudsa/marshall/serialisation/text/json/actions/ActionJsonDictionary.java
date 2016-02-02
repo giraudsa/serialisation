@@ -35,7 +35,7 @@ public class ActionJsonDictionary extends ActionJson<Map> {
 		FakeChamp fakeChampValue = new FakeChamp(null, genericTypeValue, fieldInformations.getRelation());
 		
 		Map<?,?> map = (Map<?,?>) obj;
-		Deque<Comportement> tmp = new ArrayDeque<>();
+		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
 		for (Entry<?, ?> entry : map.entrySet()) {
 			tmp.push(traiteChamp(marshaller, entry.getKey(), fakeChampKey, ecrisSeparateur));
 			ecrisSeparateur = true;

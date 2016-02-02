@@ -22,7 +22,7 @@ public class ActionJsonAtomicArrayIntegerType  extends ActionJson<AtomicIntegerA
 	@Override
 	protected void ecritValeur(Marshaller marshaller, AtomicIntegerArray array, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
 		FakeChamp fakeChamp = new FakeChamp("V", Integer.class, fieldInformations.getRelation());
-		Deque<Comportement> tmp = new ArrayDeque<>();
+		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
 		for (int i = 0; i < array.length(); ++i) {
 			tmp.push(traiteChamp(marshaller, array.get(i), fakeChamp, ecrisSeparateur));
 			ecrisSeparateur = true;

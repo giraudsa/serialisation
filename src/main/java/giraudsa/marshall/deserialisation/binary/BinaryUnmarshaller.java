@@ -47,7 +47,6 @@ import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -61,7 +60,6 @@ import java.util.concurrent.atomic.AtomicLongArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.Constants;
-import utils.TypeExtension;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 import utils.headers.Header;
@@ -99,15 +97,15 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 
 	private DataInputStream input;
 
-	private Map<Integer, Object> dicoSmallIdToObject = new HashMap<>();
-	private Map<Short, Class<?>> dicoSmallIdToClazz = new HashMap<>();
+	private Map<Integer, Object> dicoSmallIdToObject = new HashMap<Integer, Object>();
+	private Map<Short, Class<?>> dicoSmallIdToClazz = new HashMap<Short, Class<?>>();
 	private short biggestSmallIdType = 0;
-	private Set<Class<?>> listeClasseDejaRencontre = new HashSet<>();
-	private Map<Integer, UUID> dicoSmallIdToUUID = new HashMap<>();
-	private Map<Integer, Date> dicoSmallIdToDate = new HashMap<>();
-	private Map<Integer, String> dicoSmallIdToString = new HashMap<>();
+	private Set<Class<?>> listeClasseDejaRencontre = new HashSet<Class<?>>();
+	private Map<Integer, UUID> dicoSmallIdToUUID = new HashMap<Integer, UUID>();
+	private Map<Integer, Date> dicoSmallIdToDate = new HashMap<Integer, Date>();
+	private Map<Integer, String> dicoSmallIdToString = new HashMap<Integer, String>();
 	private boolean deserialisationComplete;
-	private Set<Integer> isDejaTotalementDeSerialise = new HashSet<>();
+	private Set<Integer> isDejaTotalementDeSerialise = new HashSet<Integer>();
 
 	protected BinaryUnmarshaller(DataInputStream input, EntityManager entity) throws ClassNotFoundException, IOException {
 		super(entity);
@@ -116,10 +114,13 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	public static <U> U fromBinary(InputStream reader, EntityManager entity) throws UnmarshallExeption{
-		try(DataInputStream in = new DataInputStream(new BufferedInputStream(reader))){
+		DataInputStream in = new DataInputStream(new BufferedInputStream(reader));
+		try{
 			BinaryUnmarshaller<U> w = new BinaryUnmarshaller<U>(in, entity){};
-			return w.parse();
-		} catch (IOException | ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | NotImplementedSerializeException | SmallIdTypeException e) {
+			U ret = w.parse();
+			in.close();
+			return ret;
+		} catch (Exception e) {
 			LOGGER.error("Impossible de désérialiser", e);
 			throw new UnmarshallExeption("Impossible de désérialiser", e);
 		}
@@ -194,7 +195,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 			litObjectSimple(header);
 		else if (header instanceof HeaderTypeCourant<?>)
 			litObjectCourant(header);
-		else if (header instanceof HeaderEnum<?>)
+		else if (header instanceof HeaderEnum)
 			litObjectEnum(fieldInformations, header);
 		else
 			litObjetComplexe(fieldInformations, header);
@@ -311,7 +312,6 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		return UUID.nameUUIDFromBytes(tmp);
 	}
 
-	@SuppressWarnings("unchecked")
 	protected void integreObject(Object obj) throws IllegalAccessException, InstantiationException, UnmarshallExeption {
 		pileAction.pop();
 		integreObjectDirectement(obj);

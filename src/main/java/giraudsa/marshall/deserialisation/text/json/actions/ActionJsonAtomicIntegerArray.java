@@ -13,7 +13,7 @@ import utils.champ.FieldInformations;
 
 public class ActionJsonAtomicIntegerArray extends ActionJsonComplexeObject<AtomicIntegerArray> {
 	private FakeChamp fakeChamp = new FakeChamp(null, Integer.class, TypeRelation.COMPOSITION);
-	private List<Integer> listeTampon = new ArrayList<>();
+	private List<Integer> listeTampon = new ArrayList<Integer>();
 	private ActionJsonAtomicIntegerArray(Class<AtomicIntegerArray> type, JsonUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);
 	}

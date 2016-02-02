@@ -1,7 +1,6 @@
 package giraudsa.marshall.deserialisation.text.xml.actions;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +13,7 @@ import utils.champ.FieldInformations;
 
 public class ActionXmlArrayType<T> extends ActionXmlComplexeObject<T> {
 	private FakeChamp fakeChamp;
-	private List<Object> listeTampon = new ArrayList<>();
+	private List<Object> listeTampon = new ArrayList<Object>();
 	private Class<?> componentType;
 	private ActionXmlArrayType(Class<T> type, XmlUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);
@@ -29,13 +28,13 @@ public class ActionXmlArrayType<T> extends ActionXmlComplexeObject<T> {
 		return fakeChamp;
 	}
     public static ActionAbstrait<Object> getInstance() {	
-		return new ActionXmlArrayType<>(Object.class, null);
+		return new ActionXmlArrayType<Object>(Object.class, null);
 	}
 	
 	@SuppressWarnings("rawtypes")
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionXmlArrayType<>(type, (XmlUnmarshaller<?>) unmarshaller);
+		return new ActionXmlArrayType<U>(type, (XmlUnmarshaller<?>) unmarshaller);
 	}
 
 	

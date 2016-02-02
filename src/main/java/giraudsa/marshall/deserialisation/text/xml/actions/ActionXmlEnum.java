@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("rawtypes")
 public class ActionXmlEnum<T extends Enum> extends ActionXml<T>  {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ActionXmlEnum.class);
-	private Map<String, T> dicoStringEnumToObjEnum = new HashMap<>();
+	private Map<String, T> dicoStringEnumToObjEnum = new HashMap<String, T>();
 	private StringBuilder sb = new StringBuilder();
 	
 	@SuppressWarnings("unchecked")
@@ -31,18 +31,18 @@ public class ActionXmlEnum<T extends Enum> extends ActionXml<T>  {
 			for(T objEnum : listeEnum){
 				dicoStringEnumToObjEnum.put(objEnum.toString(), objEnum);
 			}
-		} catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+		} catch (Exception e) {
 			LOGGER.error("T n'est pas un Enum... étrange", e);
 		} 
 	}
 
 	public static ActionAbstrait<Enum> getInstance() {	
-		return new ActionXmlEnum<>(Enum.class, null);
+		return new ActionXmlEnum<Enum>(Enum.class, null);
 	}
 	
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionXmlEnum<>(type, (XmlUnmarshaller<?>)unmarshaller);
+		return new ActionXmlEnum<U>(type, (XmlUnmarshaller<?>)unmarshaller);
 	}
 
 	@Override

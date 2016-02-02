@@ -34,7 +34,7 @@ public class ActionXmlDictionaryType extends ActionXml<Map> {
 		
 		
 		Map<?,?> map = (Map<?,?>) obj;
-		Deque<Comportement> tmp = new ArrayDeque<>();
+		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
 		for (Entry<?, ?> entry : map.entrySet()) {
 			tmp.push(traiteChamp(marshaller, entry.getKey(), fakeChampKey));
 			tmp.push(traiteChamp(marshaller, entry.getValue(), fakeChampValue));

@@ -8,7 +8,7 @@ public class ChampUid extends Champ {
 
 	public static final String UID_FIELD_NAME = "id";
 	
-	private static final Map<Object, UUID> dicoObjToFakeId = new HashMap<>();
+	private static final Map<Object, UUID> dicoObjToFakeId = new HashMap<Object, UUID>();
 	
 	private Class<?> typeObject;
 	

@@ -19,7 +19,7 @@ public class ActionXmlCalendar<Calendar> extends ActionXmlComplexeObject<Calenda
 	private static FakeChamp cDayOfMonth = new FakeChamp("dayOfMonth", Integer.class, TypeRelation.COMPOSITION);
 	private static FakeChamp cMonth = new FakeChamp("month", Integer.class, TypeRelation.COMPOSITION);
 	private static FakeChamp cYear = new FakeChamp("year", Integer.class, TypeRelation.COMPOSITION);
-	private static Map<String, FakeChamp> nomToChamp = new HashMap<>();
+	private static Map<String, FakeChamp> nomToChamp = new HashMap<String, FakeChamp>();
 	static{
 		nomToChamp.put(cSeconde.getName(), cSeconde);
 		nomToChamp.put(cMinute.getName(), cMinute);
@@ -32,17 +32,17 @@ public class ActionXmlCalendar<Calendar> extends ActionXmlComplexeObject<Calenda
 	
 	private ActionXmlCalendar(Class<Calendar> type, XmlUnmarshaller<?> xmlUnmarshaller) {
 		super(type, xmlUnmarshaller);
-		map = new HashMap<>();
+		map = new HashMap<FakeChamp, Integer>();
 	}
 
 	public static  ActionAbstrait<Object> getInstance() {	
-		return new ActionXmlCalendar<>(Object.class, null);
+		return new ActionXmlCalendar<Object>(Object.class, null);
 	}
 	
 	@SuppressWarnings("rawtypes")
 	@Override
 	public <U extends Calendar> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionXmlCalendar<>(type, (XmlUnmarshaller<?>)unmarshaller);
+		return new ActionXmlCalendar<U>(type, (XmlUnmarshaller<?>)unmarshaller);
 	}
 	
 	@Override

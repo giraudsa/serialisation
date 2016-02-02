@@ -10,7 +10,7 @@ import giraudsa.marshall.exception.UnmarshallExeption;
 
 public abstract class Header<T>{
 	private static byte constructionByte = 0;
-	private static final Map<Byte, Header<?>> dicoByteToHeader = new HashMap<>();
+	private static final Map<Byte, Header<?>> dicoByteToHeader = new HashMap<Byte, Header<?>>();
 	static{
 		HeaderSimpleType.init();
 		HeaderTypeCourant.init();
