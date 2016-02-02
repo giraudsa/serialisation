@@ -20,7 +20,7 @@ public class ActionBinaryDate<DateType extends Date> extends ActionBinarySimple<
 	@SuppressWarnings("rawtypes")
 	@Override
 	public <U extends DateType> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionBinaryDate<U>(type, (BinaryUnmarshaller<?>)unmarshaller);
+		return new ActionBinaryDate<>(type, (BinaryUnmarshaller<?>)unmarshaller);
 	}
 	
 	@Override

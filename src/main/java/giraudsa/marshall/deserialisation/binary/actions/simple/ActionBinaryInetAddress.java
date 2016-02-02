@@ -8,24 +8,21 @@ import giraudsa.marshall.exception.UnmarshallExeption;
 import java.io.IOException;
 import java.net.InetAddress;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-
-public class ActionBinaryInetAddress extends ActionBinarySimple<InetAddress> {
+public class ActionBinaryInetAddress<T extends InetAddress> extends ActionBinarySimple<T> {
 	
-	private ActionBinaryInetAddress(Class<InetAddress> type, BinaryUnmarshaller<?> unmarshaller) {
+	private ActionBinaryInetAddress(Class<T> type, BinaryUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);
 	}
 
 	public static ActionAbstrait<InetAddress> getInstance(){
-		return new ActionBinaryInetAddress(InetAddress.class, null);
+		return new ActionBinaryInetAddress<>(InetAddress.class, null);
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings("rawtypes")
 	@Override
-	public <U extends InetAddress> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return (ActionAbstrait<U>) new ActionBinaryInetAddress(InetAddress.class, (BinaryUnmarshaller<?>) unmarshaller);
+	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
+		return (ActionAbstrait<U>) new ActionBinaryInetAddress<>(type, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 	
 	@Override
