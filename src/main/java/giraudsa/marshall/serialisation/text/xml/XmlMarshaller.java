@@ -182,7 +182,7 @@ public class XmlMarshaller extends TextMarshaller {
 	}
 	
 	protected void prettyPrintOpenTag() throws IOException {
-		writer.write(System.lineSeparator());
+		writer.write("\n");
 		for(int j = 0; j < niveau ; j++){
 			writer.write("   ");
 		}
@@ -193,7 +193,7 @@ public class XmlMarshaller extends TextMarshaller {
 	protected void prettyPrintCloseTag() throws IOException {
 		--niveau;
 		if(!lastIsOpen){
-			writer.write(System.lineSeparator());
+			writer.write("\n");
 			for(int j = 0; j < niveau ; j++){
 				writer.write("   ");
 			}

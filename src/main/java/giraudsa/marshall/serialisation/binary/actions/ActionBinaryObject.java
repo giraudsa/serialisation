@@ -8,10 +8,10 @@ import giraudsa.marshall.serialisation.binary.ActionBinary;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
+import java.util.Stack;
+
 import utils.TypeExtension;
 import utils.champ.Champ;
 import utils.champ.FieldInformations;
@@ -26,7 +26,7 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 
 	@Override
 	protected void ecritValeur(Marshaller marshaller, Object objetASerialiser, FieldInformations fieldInformations, boolean isDejaVu) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
-		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
+		Stack<Comportement> tmp = new Stack<Comportement>();
 		
 		boolean serialiseToutSaufId = serialiseToutSaufId(marshaller, objetASerialiser, fieldInformations);
 		boolean serialiseId = serialiseId(marshaller, objetASerialiser, isDejaVu);

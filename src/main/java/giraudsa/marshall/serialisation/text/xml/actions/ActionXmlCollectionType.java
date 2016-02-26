@@ -9,10 +9,9 @@ import utils.champ.FieldInformations;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Deque;
+import java.util.Stack;
 
 @SuppressWarnings("rawtypes")
 public class ActionXmlCollectionType extends ActionXml<Collection> {
@@ -34,7 +33,7 @@ public class ActionXmlCollectionType extends ActionXml<Collection> {
 			genericType = types[0];
 		}
 		FakeChamp fakeChamp = new FakeChamp("V", genericType, fieldInformations.getRelation());
-		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
+		Stack<Comportement> tmp = new Stack<Comportement>();
 		Collection<?> collection = (Collection<?>) obj;
 		for (Object value : collection) {
 			tmp.push(traiteChamp(marshaller,value, fakeChamp));

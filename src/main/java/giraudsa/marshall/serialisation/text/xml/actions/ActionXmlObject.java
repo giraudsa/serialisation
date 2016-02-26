@@ -2,9 +2,9 @@ package giraudsa.marshall.serialisation.text.xml.actions;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.List;
+import java.util.Stack;
+
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
@@ -32,7 +32,7 @@ public class ActionXmlObject extends ActionXml<Object> {
 			return;
 		}
 		setDejaTotalementSerialise(marshaller, obj);
-		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
+		Stack<Comportement> tmp = new Stack<Comportement>();
 		for (Champ champ : champs){
 			Comportement comportement = traiteChamp(marshaller, obj, champ);
 			if(comportement != null) 

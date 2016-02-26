@@ -7,9 +7,9 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.Map;
+import java.util.Stack;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +20,7 @@ public abstract class Unmarshaller<T> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Unmarshaller.class);
 	protected T obj;
 	protected final EntityManager entity;
-	protected final Deque<ActionAbstrait<?>> pileAction = new ArrayDeque<ActionAbstrait<?>>();
+	protected final Stack<ActionAbstrait<?>> pileAction = new Stack<ActionAbstrait<?>>();
 	protected CacheObject  cacheObject;
 
 	protected Unmarshaller(EntityManager entity) throws ClassNotFoundException, IOException {

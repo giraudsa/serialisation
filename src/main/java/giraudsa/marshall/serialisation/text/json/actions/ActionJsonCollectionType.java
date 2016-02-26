@@ -10,10 +10,9 @@ import utils.champ.FieldInformations;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Deque;
+import java.util.Stack;
 
 @SuppressWarnings("rawtypes")
 public class ActionJsonCollectionType extends ActionJson<Collection> {
@@ -60,7 +59,7 @@ public class ActionJsonCollectionType extends ActionJson<Collection> {
 		}
 		FakeChamp fakeChamp = new FakeChamp(null, genericType, fieldInformations.getRelation());
 		
-		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
+		Stack<Comportement> tmp = new Stack<Comportement>();
 		for (Object value : obj) {
 			tmp.push(traiteChamp(marshaller, value, fakeChamp, ecrisSeparateur));
 			ecrisSeparateur = true;

@@ -11,8 +11,7 @@ import utils.champ.FieldInformations;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.Stack;
 
 public class ActionBinaryArrayType extends ActionBinary<Object> {
 
@@ -24,7 +23,7 @@ public class ActionBinaryArrayType extends ActionBinary<Object> {
 	@Override
 	protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
 		FakeChamp fakeChamp = new FakeChamp(null, obj.getClass().getComponentType(), fieldInformations.getRelation());
-		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
+		Stack<Comportement> tmp = new Stack<Comportement>();
 		if (!isDejaVu){
 			if(isCompleteMarshalling(marshaller) || fieldInformations.getRelation()==TypeRelation.COMPOSITION)
 				setDejaTotalementSerialise(marshaller, obj);

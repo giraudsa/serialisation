@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.Stack;
 
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
@@ -26,7 +25,7 @@ public class ActionJsonArrayType  extends ActionJson<Object> {
 			NoSuchMethodException, NotImplementedSerializeException {
 		Type genericType = obj.getClass().getComponentType();
 		FakeChamp fakeChamp = new FakeChamp(null, genericType, fieldInformations.getRelation());
-		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
+		Stack<Comportement> tmp = new Stack<Comportement>();
 		for (int i = 0; i < Array.getLength(obj); ++i) {
 			tmp.push(traiteChamp(marshaller, Array.get(obj, i), fakeChamp, ecrisSeparateur));
 			ecrisSeparateur = true;

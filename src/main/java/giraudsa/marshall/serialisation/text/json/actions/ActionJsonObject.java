@@ -2,9 +2,8 @@ package giraudsa.marshall.serialisation.text.json.actions;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.List;
+import java.util.Stack;
 
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
@@ -31,7 +30,7 @@ public class ActionJsonObject extends ActionJson<Object> {
 			return;
 		}
 		setDejaTotalementSerialise(marshaller, obj);
-		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
+		Stack<Comportement> tmp = new Stack<Comportement>();
 		boolean virgule = ecrisSeparateur;
 		for (Champ champ : champs){
 			Comportement comportement = traiteChamp(marshaller, obj, champ, virgule);

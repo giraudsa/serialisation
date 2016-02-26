@@ -2,8 +2,7 @@ package giraudsa.marshall.serialisation.text.json.actions;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.Stack;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import giraudsa.marshall.exception.NotImplementedSerializeException;
@@ -22,7 +21,7 @@ public class ActionJsonAtomicArrayIntegerType  extends ActionJson<AtomicIntegerA
 	@Override
 	protected void ecritValeur(Marshaller marshaller, AtomicIntegerArray array, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
 		FakeChamp fakeChamp = new FakeChamp("V", Integer.class, fieldInformations.getRelation());
-		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
+		Stack<Comportement> tmp = new Stack<Comportement>();
 		for (int i = 0; i < array.length(); ++i) {
 			tmp.push(traiteChamp(marshaller, array.get(i), fakeChamp, ecrisSeparateur));
 			ecrisSeparateur = true;

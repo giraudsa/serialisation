@@ -2,8 +2,7 @@ package giraudsa.marshall.serialisation.text.xml.actions;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.Stack;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 import giraudsa.marshall.exception.NotImplementedSerializeException;
@@ -21,7 +20,7 @@ public class ActionXmlAtomicArrayLongType  extends ActionXml<AtomicLongArray> {
 	@Override
 	protected void ecritValeur(Marshaller marshaller, AtomicLongArray obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
 		FakeChamp fakeChamp = new FakeChamp("V", Long.class, fieldInformations.getRelation());
-		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
+		Stack<Comportement> tmp = new Stack<Comportement>();
 		for (int i = 0; i < obj.length(); ++i) {
 			tmp.push(traiteChamp(marshaller, obj.get(i), fakeChamp));
 		}

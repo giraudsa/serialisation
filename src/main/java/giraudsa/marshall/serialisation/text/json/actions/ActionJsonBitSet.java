@@ -2,9 +2,9 @@ package giraudsa.marshall.serialisation.text.json.actions;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayDeque;
 import java.util.BitSet;
-import java.util.Deque;
+import java.util.Stack;
+
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
@@ -22,7 +22,7 @@ public class ActionJsonBitSet  extends ActionJson<BitSet> {
 	@Override
 	protected void ecritValeur(Marshaller marshaller, BitSet array, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
 		FakeChamp fakeChamp = new FakeChamp(null, boolean.class, TypeRelation.COMPOSITION);
-		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
+		Stack<Comportement> tmp = new Stack<Comportement>();
 		for (int i = 0; i < array.length(); ++i) {
 			tmp.push(traiteChamp(marshaller, array.get(i), fakeChamp, ecrisSeparateur));
 			ecrisSeparateur = true;

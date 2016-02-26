@@ -213,7 +213,7 @@ public class JsonMarshaller extends TextMarshaller {
 			isFirst = false;
 			return;
 		}
-		writer.write(System.lineSeparator());
+		writer.write("\n");
 		for(int j = 0; j < niveau; j++){
 			writer.write("   ");
 		}

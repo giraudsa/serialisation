@@ -6,11 +6,10 @@ import giraudsa.marshall.serialisation.ActionAbstrait.Comportement;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import utils.Constants;
 import utils.champ.FieldInformations;
@@ -22,7 +21,7 @@ public abstract class Marshaller {
 	protected Set<Object> dejaTotalementSerialise = new HashSet<Object>();
 	private Set<Object> dejaVu = new HashSet<Object>();
 	@SuppressWarnings("rawtypes")
-	protected Deque<Comportement> aFaire = new ArrayDeque<Comportement>();
+	protected Stack<Comportement> aFaire = new Stack<Comportement>();
 
 	
 	//////Constructeur

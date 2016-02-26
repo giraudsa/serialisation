@@ -45,8 +45,8 @@ public abstract class ActionText<T> extends ActionAbstrait<T> {
 
 	protected abstract Map<Character, String> getRemplacementChar();
 	protected void writeEscape(Marshaller marshaller, String toBeEscaped) throws IOException{
-		if (toBeEscaped.isEmpty())
-			write(marshaller, toBeEscaped);
+		if (toBeEscaped.length() == 0)
+			return;
 		StringReader sr = new StringReader(toBeEscaped);
 		int i = sr.read();
 		while(i != -1){

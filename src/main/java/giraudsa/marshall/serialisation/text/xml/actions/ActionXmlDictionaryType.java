@@ -9,10 +9,9 @@ import utils.champ.FieldInformations;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Stack;
 
 @SuppressWarnings("rawtypes")
 public class ActionXmlDictionaryType extends ActionXml<Map> {
@@ -34,7 +33,7 @@ public class ActionXmlDictionaryType extends ActionXml<Map> {
 		
 		
 		Map<?,?> map = (Map<?,?>) obj;
-		Deque<Comportement> tmp = new ArrayDeque<Comportement>();
+		Stack<Comportement> tmp = new Stack<Comportement>();
 		for (Entry<?, ?> entry : map.entrySet()) {
 			tmp.push(traiteChamp(marshaller, entry.getKey(), fakeChampKey));
 			tmp.push(traiteChamp(marshaller, entry.getValue(), fakeChampValue));

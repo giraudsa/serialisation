@@ -7,7 +7,7 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
-import java.util.Deque;
+import java.util.Stack;
 
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
@@ -71,7 +71,7 @@ public abstract class ActionAbstrait<T> {
 	protected <V> boolean aTraiter(Marshaller marshaller, V value, FieldInformations fieldInformations) throws IOException {
 		if(fieldInformations instanceof FakeChamp)
 			return true;
-		if(value != null && !(value instanceof String && ((String)value).isEmpty())) 
+		if(value != null && !(value instanceof String && ((String)value).length() == 0)) 
 				return !(value instanceof Collection && ((Collection)value).isEmpty());
 		return false;
 	}
@@ -82,7 +82,7 @@ public abstract class ActionAbstrait<T> {
 		marshaller.aFaire.push(comportement);
 	}
 	
-	protected void pushComportements(Marshaller marshaller, Deque<Comportement> comportements){
+	protected void pushComportements(Marshaller marshaller, Stack<Comportement> comportements){
 		while(!comportements.isEmpty()){
 			pushComportement(marshaller, comportements.pop());
 		}
