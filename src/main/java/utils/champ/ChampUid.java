@@ -35,6 +35,10 @@ public class ChampUid extends Champ {
 	public int compareTo(Champ other) {
 		return other instanceof ChampUid ? 0 : -1;
 	}
+	@Override
+	protected String getComparaison() {
+		return "000id";
+	}
 	
 	@Override
 	public int hashCode() {

@@ -37,7 +37,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 		}
 	}
 	
-	private String getComparaison(){
+	protected String getComparaison(){
 		if(comparaison == null){
 			StringBuilder sb = new StringBuilder();
 			if (name.equals(ChampUid.UID_FIELD_NAME)){
