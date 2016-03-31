@@ -182,17 +182,17 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	}
 
 
-	protected void setValeur(String valeur, Class<?> type) throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
+	protected void setValeur(String valeur, Class<?> typeGuess) throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
 	ParseException, ClassNotFoundException, IOException, UnmarshallExeption {
-		Class<?> type2;
+		Class<?> type;
 		if(waitingForType){
-			type2 = getTypeDepuisNom(valeur);
+			type = getTypeDepuisNom(valeur);
 		}else{
-			type2 = getType(clefEnCours);
+			type = getType(clefEnCours);
 		}
-		Class<?> typeAction = type;
-		if(type2 != null && !type2.isAssignableFrom(type)){
-			typeAction = type2;
+		Class<?> typeAction = typeGuess;
+		if(typeGuess != Void.class && type != null && !type.isAssignableFrom(type)){
+			typeAction = type;
 		}
 		ActionJson<?> action = (ActionJson<?>) getAction(typeAction);
 		setNom(action, clefEnCours);

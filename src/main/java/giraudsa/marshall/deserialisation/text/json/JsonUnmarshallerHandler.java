@@ -141,14 +141,14 @@ public class JsonUnmarshallerHandler {
 
 	private void setValeur() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException, UnmarshallExeption{
 		if(!buff.isEmpty()){
-			Class<?> type = String.class;
+			Class<?> typeGuess = String.class;
 			if(!enleveGuillemets()){
 				enleveEspaceEtSautDeLigne();
 				if(buff.isEmpty())
 					return;
-				type = guessType(); 
+				typeGuess = guessType(); 
 			}
-			jsonUnmarshaller.setValeur(getString(), type);
+			jsonUnmarshaller.setValeur(getString(), typeGuess);
 		}
 	}
 
