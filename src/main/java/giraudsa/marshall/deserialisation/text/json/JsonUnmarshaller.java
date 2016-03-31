@@ -191,7 +191,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 			type = getType(clefEnCours);
 		}
 		Class<?> typeAction = typeGuess;
-		if(typeGuess != Void.class && type != null && !type.isAssignableFrom(type)){
+		if(typeGuess != Void.class && type != null && !type.isAssignableFrom(typeGuess)){
 			typeAction = type;
 		}
 		ActionJson<?> action = (ActionJson<?>) getAction(typeAction);
