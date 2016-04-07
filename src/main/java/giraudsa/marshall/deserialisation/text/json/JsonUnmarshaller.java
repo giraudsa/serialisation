@@ -20,6 +20,7 @@ import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonObject;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonSimpleComportement;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonUUID;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonVoid;
+import giraudsa.marshall.exception.BadFormatException;
 import giraudsa.marshall.exception.JsonHandlerException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.UnmarshallExeption;
@@ -118,7 +119,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 			return w.parse();
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
 				| NoSuchMethodException | SecurityException | ClassNotFoundException | IOException
-				| NotImplementedSerializeException | JsonHandlerException | ParseException e) {
+				| NotImplementedSerializeException | JsonHandlerException | ParseException | BadFormatException e) {
 			LOGGER.error("probleme dans la désérialisation JSON", e);
 			throw new UnmarshallExeption("probleme dans la désérialisation JSON",e);
 		}
@@ -145,9 +146,11 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	}
 
 
-	private T parse() throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException, UnmarshallExeption {
+	private T parse() throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException, UnmarshallExeption, BadFormatException {
 		JsonUnmarshallerHandler handler = new JsonUnmarshallerHandler(this);
 		handler.parse(reader);
+		if(obj == null)
+			throw new BadFormatException("le format n'est pas un json");
 		return obj;
 	}
 
