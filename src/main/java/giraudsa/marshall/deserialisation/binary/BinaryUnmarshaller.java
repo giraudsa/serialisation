@@ -27,7 +27,6 @@ import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryStrin
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryUri;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryUrl;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
-import giraudsa.marshall.exception.SmallIdTypeException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.io.BufferedInputStream;
@@ -119,7 +118,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		try(DataInputStream in = new DataInputStream(new BufferedInputStream(reader))){
 			BinaryUnmarshaller<U> w = new BinaryUnmarshaller<U>(in, entity){};
 			return w.parse();
-		} catch (IOException | ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | NotImplementedSerializeException | SmallIdTypeException e) {
+		} catch (IOException | ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | NotImplementedSerializeException e) {
 			LOGGER.error("Impossible de désérialiser", e);
 			throw new UnmarshallExeption("Impossible de désérialiser", e);
 		}
@@ -174,7 +173,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		dicoSmallIdToObject.put(smallId,obj);
 	}
 	
-	private T parse() throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption {
+	private T parse() throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, UnmarshallExeption {
 		FakeChamp fc = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION);
 		litObject(fc);
 		while(!pileAction.isEmpty()){
@@ -183,7 +182,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		return obj;
 	}
 	
-	protected void litObject(FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption {
+	protected void litObject(FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption {
 		if(fieldInformations.getValueType() == byte.class){
 			integreObjectDirectement(readByte()); //seul cas ou le header n'est pas nécessaire.
 			return;

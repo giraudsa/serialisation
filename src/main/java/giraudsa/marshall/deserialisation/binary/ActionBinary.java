@@ -2,7 +2,6 @@ package giraudsa.marshall.deserialisation.binary;
 
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
-import giraudsa.marshall.exception.SmallIdTypeException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.champ.FieldInformations;
 
@@ -53,7 +52,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 		return getBinaryUnmarshaller().readUTF();
 	}
 
-	protected void litObject(FieldInformations f) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption{
+	protected void litObject(FieldInformations f) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption{
 		getBinaryUnmarshaller().litObject(f);
 	}
 	
@@ -82,7 +81,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 
 	protected abstract void initialise() throws IOException, InstantiationException, IllegalAccessException, UnmarshallExeption, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException;
 
-	protected abstract void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, SmallIdTypeException, UnmarshallExeption;
+	protected abstract void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption;
 
 	protected boolean isDejaTotalementDeSerialise() {
 		return getBinaryUnmarshaller().isDejaTotalementDeSerialise(smallId);

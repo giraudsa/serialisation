@@ -12,4 +12,8 @@ public class BadTypeUnmarshallException extends Exception {
 		super(string);
 	}
 
+	public BadTypeUnmarshallException(String string, Exception e) {
+		super(string,e);
+	}
+
 }

@@ -172,7 +172,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 			test.getClass();
 		} catch (Exception e) {
 			LOGGER.error("le type attendu n'est pas celui du XML ou n'est pas instanciable", e);
-			throw new BadTypeUnmarshallException("not instanciable from " + typeToUnmarshall.getName());
+			throw new BadTypeUnmarshallException("not instanciable from " + typeToUnmarshall.getName(), e);
 		}
 	}
 
