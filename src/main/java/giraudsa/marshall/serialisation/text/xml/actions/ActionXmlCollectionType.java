@@ -33,7 +33,7 @@ public class ActionXmlCollectionType extends ActionXml<Collection> {
 		if(types != null && types.length > 0){
 			genericType = types[0];
 		}
-		FakeChamp fakeChamp = new FakeChamp("V", genericType, fieldInformations.getRelation());
+		FakeChamp fakeChamp = new FakeChamp(genericType.getClass().getSimpleName(), genericType, fieldInformations.getRelation());
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		Collection<?> collection = (Collection<?>) obj;
 		for (Object value : collection) {

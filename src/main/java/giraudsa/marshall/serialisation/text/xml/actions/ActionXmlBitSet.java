@@ -21,7 +21,7 @@ public class ActionXmlBitSet  extends ActionXml<BitSet> {
 	
 	@Override
 	protected void ecritValeur(Marshaller marshaller, BitSet array, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
-		FakeChamp fakeChamp = new FakeChamp("V", boolean.class, TypeRelation.COMPOSITION);
+		FakeChamp fakeChamp = new FakeChamp("bit", boolean.class, TypeRelation.COMPOSITION);
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		for (int i = 0; i < array.length(); ++i) {
 			tmp.push(traiteChamp(marshaller, array.get(i), fakeChamp));

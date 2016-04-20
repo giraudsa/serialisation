@@ -20,7 +20,7 @@ public class ActionXmlAtomicArrayLongType  extends ActionXml<AtomicLongArray> {
 	
 	@Override
 	protected void ecritValeur(Marshaller marshaller, AtomicLongArray obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
-		FakeChamp fakeChamp = new FakeChamp("V", Long.class, fieldInformations.getRelation());
+		FakeChamp fakeChamp = new FakeChamp("long", Long.class, fieldInformations.getRelation());
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		for (int i = 0; i < obj.length(); ++i) {
 			tmp.push(traiteChamp(marshaller, obj.get(i), fakeChamp));
