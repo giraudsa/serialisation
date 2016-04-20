@@ -10,17 +10,16 @@ import java.util.Map.Entry;
 
 import utils.TypeExtension;
 import utils.champ.Champ;
+import utils.champ.ChampUid;
 import utils.champ.FieldInformations;
 
 
 public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
-	private Champ champId;
-	private Map<Champ, Object> dicoChampToValue;
+	private Map<String, Object> dicoNomChampToValue;
 	
 	private ActionXmlObject(Class<T> type, XmlUnmarshaller<?> xmlUnmarshaller) {
 		super(type, xmlUnmarshaller);
-		champId = TypeExtension.getChampId(type);
-		dicoChampToValue = new HashMap<>();
+		dicoNomChampToValue = new HashMap<>();
 	}
 
 	public static  ActionAbstrait<Object> getInstance() {	
@@ -33,12 +32,16 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 		return new ActionXmlObject<>(type, (XmlUnmarshaller<?>)unmarshaller);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	protected  void construitObjet() throws InstantiationException, IllegalAccessException {
-		obj = getObject(dicoChampToValue.get(champId).toString(), type);
-		for(Entry<Champ, Object> entry : dicoChampToValue.entrySet()){
-			Champ champ = entry.getKey();
-			if (!champ.isFakeId()){
+		obj = getObject(dicoNomChampToValue.get(ChampUid.UID_FIELD_NAME).toString(), type);
+		if(obj == null)
+			return;
+		type = (Class<T>) obj.getClass();
+		for(Entry<String, Object> entry : dicoNomChampToValue.entrySet()){
+			Champ champ = TypeExtension.getChampByName(type, entry.getKey());
+			if (champ != null && !champ.isFakeId()){
 				champ.set(obj, entry.getValue());
 			}
 		}
@@ -46,8 +49,7 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 	
 	@Override
 	protected <W> void integreObjet(String nomAttribut, W objet){
-		Champ champ = TypeExtension.getChampByName(type, nomAttribut);
-		dicoChampToValue.put(champ, objet);
+		dicoNomChampToValue.put(nomAttribut, objet);
 	}
 	
     @Override

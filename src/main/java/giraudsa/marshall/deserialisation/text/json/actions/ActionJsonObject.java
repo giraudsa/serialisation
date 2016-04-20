@@ -16,17 +16,16 @@ import org.slf4j.LoggerFactory;
 
 import utils.TypeExtension;
 import utils.champ.Champ;
+import utils.champ.ChampUid;
 import utils.champ.FieldInformations;
 
 public class ActionJsonObject<T> extends ActionJson<T> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ActionJsonObject.class);
-	private Champ champId;
-	private Map<Champ, Object> dicoChampToValue;
+	private Map<String, Object> dicoNomChampToValue;
 	
 	private ActionJsonObject(Class<T> type, JsonUnmarshaller<?> jsonUnmarshaller) {
 		super(type, jsonUnmarshaller);
-		champId = TypeExtension.getChampId(type);
-		dicoChampToValue = new HashMap<>();
+		dicoNomChampToValue = new HashMap<>();
 	}
 
 	public static ActionAbstrait<Object> getInstance(){
@@ -49,19 +48,20 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 	
 	@Override
 	protected <W> void integreObjet(String nomAttribut, W objet){
-		Champ champ = TypeExtension.getChampByName(type, nomAttribut);
-		dicoChampToValue.put(champ, objet);
+		dicoNomChampToValue.put(nomAttribut, objet);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void construitObjet() throws InstantiationException, IllegalAccessException {
-		String id = dicoChampToValue.get(champId).toString();
+		String id = dicoNomChampToValue.get(ChampUid.UID_FIELD_NAME).toString();
 		obj = getObject(id, type);
 		if (obj == null) 
 			return;
-		for(Entry<Champ, Object> entry : dicoChampToValue.entrySet()){
-			Champ champ = entry.getKey();
-			if (!champ.isFakeId())
+		type = (Class<T>) obj.getClass();
+		for(Entry<String, Object> entry : dicoNomChampToValue.entrySet()){
+			Champ champ = TypeExtension.getChampByName(type, entry.getKey());
+			if (champ != null && !champ.isFakeId())
 				champ.set(obj, entry.getValue());
 		}
 	}
