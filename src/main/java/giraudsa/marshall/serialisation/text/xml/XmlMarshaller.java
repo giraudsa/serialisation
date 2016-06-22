@@ -3,6 +3,7 @@ package giraudsa.marshall.serialisation.text.xml;
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.ActionAbstrait;
+import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.TextMarshaller;
 import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlArrayType;
 import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlAtomicArrayIntegerType;
@@ -51,6 +52,7 @@ import org.slf4j.LoggerFactory;
 
 import utils.ConfigurationMarshalling;
 import utils.Constants;
+import utils.Pair;
 
 public class XmlMarshaller extends TextMarshaller {
 	private static final Logger LOGGER = LoggerFactory.getLogger(XmlMarshaller.class);
@@ -90,14 +92,29 @@ public class XmlMarshaller extends TextMarshaller {
 		dicoTypeToAction.put(StringBuilder.class, new ActionXmlSimpleComportement<StringBuilder>());
 		dicoTypeToAction.put(StringBuffer.class, new ActionXmlSimpleComportement<StringBuffer>());
 	}
-
+	
+	private XsdManager xsdManager = null;
+	
 	//info id universal
 	private boolean isWrittenUniversal = false;
+	
+	private boolean	isWrittenW3XMLSchema = false;
+
+	private int     compteur;
+	private Map<String,Pair<String, Integer>> dicoPackagenameToALiasAndLevel = new HashMap<>();
+
+
 	//////CONSTRUCTEUR
 	private XmlMarshaller(Writer output, boolean isCompleteSerialisation) throws IOException {
 		super(output, isCompleteSerialisation, ConfigurationMarshalling.getDateFormatXml());
 		writeHeader();
 	}
+	private XmlMarshaller(Writer output, boolean isCompleteSerialisation,XsdManager xsdManager) throws IOException {
+		super(output, isCompleteSerialisation, ConfigurationMarshalling.getDateFormatXml());
+		writeHeader();
+		this.xsdManager=xsdManager;
+	}
+	
 	/////METHODES STATICS PUBLICS
 	public static <U> void toXml(U obj, Writer output) throws MarshallExeption {
 		try {
@@ -136,25 +153,64 @@ public class XmlMarshaller extends TextMarshaller {
 			throw new MarshallExeption(e);
 		}
 	}
+	
+	public static <U> void toXml(U obj, Writer output, XsdManager xsdManager) throws MarshallExeption {
+		try {
+			XmlMarshaller v = new XmlMarshaller(output, false,xsdManager);
+			v.marshall(obj);
+		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+			LOGGER.error("impossible de sérialiser " + obj.toString(), e);
+			throw new MarshallExeption(e);
+		}
+		
+	}
+	public static <U> String toXml(U obj,XsdManager xsdManager) throws MarshallExeption{
+		try(StringWriter sw = new StringWriter()){
+			toXml(obj, sw,xsdManager);
+			return sw.toString();
+		} catch (IOException e) {
+			LOGGER.error("impossible de sérialiser en String " + obj.toString(), e);
+			throw new MarshallExeption(e);
+		}
+	}
+	public static <U> void toCompleteXml(U obj, Writer output,XsdManager xsdManager) throws MarshallExeption{
+		try {
+			XmlMarshaller v = new XmlMarshaller(output, true,xsdManager);
+			v.marshall(obj);
+		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+			LOGGER.error("impossible de sérialiser completement " + obj.toString(), e);
+			throw new MarshallExeption(e);
+		}
+	}
+	public static <U> String toCompleteXml(U obj,XsdManager xsdManager) throws MarshallExeption{
+		try(StringWriter sw = new StringWriter()){
+			toCompleteXml(obj, sw,xsdManager);
+			return sw.toString();
+		} catch (IOException e) {
+			LOGGER.error("impossible de sérialiser completement en String " + obj.toString(), e);
+			throw new MarshallExeption(e);
+		}
+	}
 	private void writeHeader() throws IOException {
 		writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 	}
 
-	protected void openTag(String name, Class<?> type) throws IOException {
-		if(isPrettyPrint()){
-			prettyPrintOpenTag();
+
+	public void writeW3XMLSchema(Class<?> type) throws IOException {
+		if(isWrittenW3XMLSchema)
+			return;
+		isWrittenW3XMLSchema = true;
+		write(" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
+		write(" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"");
+		if (xsdManager!=null){
+			write(" xsi:noNamespaceSchemaLocation=\"");
+			write(xsdManager.getUriOfXsd(type).toString());
+			write("\"");
 		}
-		writer.write("<");
-		writer.write(name);
-		if(type != null){
-			writeType(type);
-		}
-		if(!isWrittenUniversal){
-			writeInfoUniversal();
-		}
-		writer.write(">");
 	}
-	private void writeInfoUniversal() throws IOException {
+	public void writeInfoUniversal() throws IOException {
+		if(isWrittenUniversal)
+			return;
 		isWrittenUniversal = true;
 		boolean isUniversal = ConfigurationMarshalling.getEstIdUniversel();
 		if(isUniversal){
@@ -164,30 +220,83 @@ public class XmlMarshaller extends TextMarshaller {
 		}
 	}
 	protected void closeTag(String name) throws IOException {
-		if(isPrettyPrint()){
+		--niveau;
+		if (isPrettyPrint()){
 			prettyPrintCloseTag();
 		}
 		writer.write("</");
 		writer.write(name);
 		writer.write('>');
 	}
-	private void writeType(Class<?> type) throws IOException {
-		writer.write(" type=\"");
-		writer.write(Constants.getSmallNameType(type));
-		writer.write("\"");
+	
+	
+	private void writeTypeSimple( Class<?> type) throws IOException{
+		write(" type=\"");
+		write( Constants.getSmallNameType(type));
+		write( "\"");
 	}
 	
-	protected void prettyPrintOpenTag() throws IOException {
+	public void writeTypeGeneral(Class<?> type) throws IOException { 
+		if (Constants.getSmallNameType(type).equals(type.getName())){
+			String[] nomClasseEtPackageEtAlias = new String[3];
+			traiteNomClasseEtPackage(nomClasseEtPackageEtAlias,type);
+			traiteAlias(nomClasseEtPackageEtAlias);
+			ecrireType(nomClasseEtPackageEtAlias);
+		}
+		else {
+			writeTypeSimple(type);
+		}
+	}
+	
+	
+	private void ecrireType(String[] nomClasseEtPackageEtAlias) throws IOException {
+		write(" xsi:type=\""+nomClasseEtPackageEtAlias[2]+":"+nomClasseEtPackageEtAlias[0]+"\"");
+		if(!dicoPackagenameToALiasAndLevel.containsKey(nomClasseEtPackageEtAlias[1])){
+			dicoPackagenameToALiasAndLevel.put(nomClasseEtPackageEtAlias[1], new Pair<String,Integer>(nomClasseEtPackageEtAlias[2],new Integer(niveau)));
+			write(" xmlns:" +nomClasseEtPackageEtAlias[2]+"=\""+nomClasseEtPackageEtAlias[1]+"\"")	;
+		}
+	}
+	
+	private void traiteAlias(String[] nomClasseEtPackageEtAlias) {
+		if (dicoPackagenameToALiasAndLevel.get(nomClasseEtPackageEtAlias[1])!=null){
+			nomClasseEtPackageEtAlias[2] = dicoPackagenameToALiasAndLevel.get(nomClasseEtPackageEtAlias[1]).getKey();
+			int portee = dicoPackagenameToALiasAndLevel.get(nomClasseEtPackageEtAlias[1]).getValue().intValue();
+			if (niveau<=portee){
+				dicoPackagenameToALiasAndLevel.remove(nomClasseEtPackageEtAlias[1]);	
+			}
+		}
+		else{
+			compteur++;
+			nomClasseEtPackageEtAlias[2] ="ns";
+			nomClasseEtPackageEtAlias[2] =  nomClasseEtPackageEtAlias[2].concat(Integer.toString(compteur));
+		}
+	}
+	
+	private void traiteNomClasseEtPackage(String[] nomClasseEtPackageEtAlias, Class<?> type) {
+		nomClasseEtPackageEtAlias[0] = (Constants.getSmallNameType(type));
+		nomClasseEtPackageEtAlias[1]= type.getPackage().getName();
+		nomClasseEtPackageEtAlias[1]=nomClasseEtPackageEtAlias[1].replace(".", "/");
+		nomClasseEtPackageEtAlias[0]=nomClasseEtPackageEtAlias[0].replace(".", "/");
+		nomClasseEtPackageEtAlias[0]=nomClasseEtPackageEtAlias[0].replace(nomClasseEtPackageEtAlias[1],"");
+		nomClasseEtPackageEtAlias[0]=nomClasseEtPackageEtAlias[0].replace("/","");
+		String firstletter=nomClasseEtPackageEtAlias[0].substring(0, 1);
+		firstletter=firstletter.toLowerCase();
+		String otherletter = nomClasseEtPackageEtAlias[0].substring(1);
+		nomClasseEtPackageEtAlias[0]=firstletter.concat(otherletter);
+	}
+	
+	public void prettyPrintOpenTag() throws IOException {
+		if (!isPrettyPrint())
+			return;
 		writer.write(System.lineSeparator());
 		for(int j = 0; j < niveau ; j++){
 			writer.write("   ");
 		}
-		++niveau;
+		
 		lastIsOpen = true;
 	}
 	
 	protected void prettyPrintCloseTag() throws IOException {
-		--niveau;
 		if(!lastIsOpen){
 			writer.write(System.lineSeparator());
 			for(int j = 0; j < niveau ; j++){
@@ -199,6 +308,20 @@ public class XmlMarshaller extends TextMarshaller {
 	@Override
 	protected Map<Class<?>, ActionAbstrait<?>> getDicoTypeToAction() {
 		return dicoTypeToAction;
+	}
+	
+	void openTag(ActionAbstrait<?> actionEncours, Marshaller marshaller, String nomBalise, Class<?> type) throws IOException {
+		++niveau;
+		prettyPrintOpenTag();
+		write("<");
+		write(nomBalise);
+		if(type != null){
+			((ActionXml<?>)actionEncours).writeType(marshaller,type);
+		}
+		writeW3XMLSchema(type);
+		writeInfoUniversal();
+
+		write(">");
 	}
 
 }

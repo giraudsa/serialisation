@@ -109,6 +109,9 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	private XmlUnmarshaller(Reader reader, EntityManager entity) throws ClassNotFoundException, IOException {
 		super(reader, entity, ConfigurationMarshalling.getDateFormatXml());
 	}
+	
+	private Map<String,String> dicoAliasToPackageName= new HashMap<>();
+
 	//////METHODES STATICS PUBLICS
 	public static <U> U fromXml(Reader reader, EntityManager entity) throws UnmarshallExeption{
 		XmlUnmarshaller<U> w;
@@ -145,17 +148,63 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		XmlUnmarshallerHandler handler =  new XmlUnmarshallerHandler(this);
 		XMLReader parser = XMLReaderFactory.createXMLReader();
 		parser.setContentHandler(handler);
+		parser.setFeature("http://xml.org/sax/features/namespace-prefixes", true);
 		InputSource source = new InputSource(reader);
 		source.setEncoding("UTF-8");
 		parser.parse(source);
 		return obj;
 	}
 
-	private Class<?> getType(Attributes attributes, String nomAttribut) throws ClassNotFoundException, BadTypeUnmarshallException {
+	private String traiteType(Attributes attributes) throws BadTypeUnmarshallException{
+		String xsiType = null;
+		String packageName = null;
+		xsiType=attributes.getValue("xsi:type");
+		if (xsiType==null)
+			return attributes.getValue("type");
+		
+		for(int c=0;c<attributes.getLength();c++){
+			String k = attributes.getQName(c);
+			if (k.contains("xmlns:ns")){
+				packageName=attributes.getValue(c);
+				break;
+			}
+		}
+		
+ 		StringBuffer temp=new StringBuffer(xsiType);
+		int indexSeparateurt= temp.indexOf(":");
+		String alias = temp.substring(0, indexSeparateurt) ;
+		if(packageName!=null){
+			packageName=packageName.replace("/", ".");
+			xsiType=recreerBonType(xsiType, packageName);
+			dicoAliasToPackageName.put(alias, packageName);
+		}
+		else{
+			packageName=dicoAliasToPackageName.get(alias);
+			if (packageName==null)
+				throw new BadTypeUnmarshallException("format xml non valide");
+			xsiType=recreerBonType(xsiType, packageName);
+		}
+		return xsiType;
+	}
+	
+	private String recreerBonType(String xsiType, String packageName){
+		StringBuffer temp=new StringBuffer(xsiType);
+		int indexSeparateurt= temp.indexOf(":");
+		xsiType= temp.substring(indexSeparateurt+1);
+		String firstletter=xsiType.substring(0, 1);
+		firstletter=firstletter.toUpperCase();
+		String otherletter = xsiType.substring(1);
+		xsiType=firstletter.concat(otherletter);
+		packageName=packageName.concat(".");
+		xsiType=packageName.concat(xsiType);
+		return xsiType;
+	}
+	
+	private Class<?> getType(Attributes attributes, String nomAttribut) throws BadTypeUnmarshallException, ClassNotFoundException {
 		Class<?> typeToUnmarshall;
-		String typeEcrit = attributes.getValue("type");
+		String typeEcrit = traiteType(attributes);
 		if(typeEcrit != null){
-			typeToUnmarshall = getTypeDepuisNom(attributes.getValue("type"));
+			typeToUnmarshall = getTypeDepuisNom(typeEcrit);
 			if(isFirst) 
 				checkType(typeToUnmarshall);
 		}else{

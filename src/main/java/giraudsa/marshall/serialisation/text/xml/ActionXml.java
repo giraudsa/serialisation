@@ -47,10 +47,13 @@ public abstract class ActionXml<T> extends ActionText<T> {
 
 	private void ouvreBalise(Marshaller marshaller, T obj, String nomBalise, boolean typeDevinable) throws IOException{
 		Class<?> classeAEcrire = classeAEcrire(obj, typeDevinable);
-		getXmlMarshaller(marshaller).openTag(nomBalise, classeAEcrire);
+		getXmlMarshaller(marshaller).openTag(this, marshaller, nomBalise, classeAEcrire);
 	}
 
-
+	protected void writeType(Marshaller marshaller, Class<?> type) throws IOException {
+		getXmlMarshaller(marshaller).writeTypeGeneral(type);
+	}
+	
 	private Class<?> classeAEcrire(T obj, boolean typeDevinable) {
 		return !typeDevinable ? getType(obj) : null;
 	}

@@ -3,6 +3,7 @@ package giraudsa.marshall.serialisation.text.xml.actions;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
+import utils.Constants;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
@@ -43,4 +44,11 @@ public class ActionXmlCollectionType extends ActionXml<Collection> {
 		pushComportements(marshaller, tmp);
 	}
 
+	@Override
+	public void writeType(Marshaller marshaller, Class<?> type) throws IOException{
+		write(marshaller," type=\"");
+		String type1 = Constants.getSmallNameType(type);
+		write(marshaller, type1);
+		write(marshaller, "\"");
+	}
 }
