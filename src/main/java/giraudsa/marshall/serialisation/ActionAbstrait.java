@@ -71,7 +71,7 @@ public abstract class ActionAbstrait<T> {
 	protected <V> boolean aTraiter(Marshaller marshaller, V value, FieldInformations fieldInformations) throws IOException {
 		if(fieldInformations instanceof FakeChamp)
 			return true;
-		if(value != null && !(value instanceof String && ((String)value).isEmpty())) 
+		if(value != null) 
 				return !(value instanceof Collection && ((Collection)value).isEmpty());
 		return false;
 	}
