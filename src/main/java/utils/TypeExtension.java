@@ -83,7 +83,7 @@ public class TypeExtension {
 		Champ champId = dicoTypeTochampId.get(typeObjetParent);
 		if(champId == null){
 			for (Champ champ : TypeExtension.getSerializableFields(typeObjetParent)){
-				if (champ.getName() == ChampUid.UID_FIELD_NAME) {
+				if (champ.getName().equals(ChampUid.UID_FIELD_NAME)) {
 					 champId = champ;
 					 break;
 				}
