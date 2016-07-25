@@ -17,7 +17,7 @@ Un exemple simple :
 D'une manière générale, le polymorphisme (classe dérivée) et les cycles sont autorisés dans les graphes d'objets sérialisés. L'identification des objets est implémentée de la manière suivante: 
 	* chaque objet sérialisé doit avoir un identifiant unique (attribut "id") renseigné et unique à travers le graphe
 	* si un objet est instance d'une classe qui ne dispose pas de cet attribut "id", un UUID lui est automatiquement affecté (création d'un pseudo-attribut "id").
-Pour la désérialisation, il est nécessaire d'avoir un constructeur de classe sans argument.
+Pour la désérialisation, il n'est pas nécessaire d'avoir un constructeur de classe.
 
 Il y a deux méthodes de sérialisation :
 	* complete

@@ -27,11 +27,13 @@ public class ActionXmlDate<T extends Date> extends ActionXmlSimpleComportement<T
 	@Override
 	protected void construitObjet(){
 		Date date;
+		long time = 0;
 		try {
 			date = getDateFormat().parse(sb.toString());
-			long time = date.getTime();
+			time = date.getTime();
 			obj = type.getConstructor(long.class).newInstance(time);
 		} catch (ParseException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			date = new Date(time);
 			LOGGER.error("pas de constructeur avec un long pour le type date " + type.getName(), e);
 		} 	
 	}

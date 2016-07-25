@@ -8,7 +8,6 @@ import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.Constants;
 
 import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
 
 public class ActionJsonSimpleComportement<T> extends ActionJson<T> {
 
@@ -41,8 +40,12 @@ public class ActionJsonSimpleComportement<T> extends ActionJson<T> {
 	}
 	
 	@Override
-	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption {
-		obj = type.getConstructor(String.class).newInstance(donnees);
+	protected void rempliData(String donnees) throws UnmarshallExeption {
+		try {
+			obj = type.getConstructor(String.class).newInstance(donnees);
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			throw new UnmarshallExeption("impossible de trouver un constructeur avec un string pour le type " + type.getName(), e);
+		}
 	}
 	
 	@Override

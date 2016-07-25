@@ -32,7 +32,7 @@ public class ActionXmlVoid extends ActionXmlSimpleComportement<Void> {
 	}
 	
 	@Override
-	protected void construitObjet() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption {
+	protected void construitObjet() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption {
 		obj = null;
 	}
 	

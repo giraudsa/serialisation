@@ -13,7 +13,7 @@ public abstract class ActionXmlComplexeObject<T> extends ActionXml<T> {
 	}
 
 	@Override
-	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException,
+	protected void rempliData(String donnees) throws ParseException, IllegalAccessException,
 			InvocationTargetException, NoSuchMethodException {
 		//Rien a faire
 	}

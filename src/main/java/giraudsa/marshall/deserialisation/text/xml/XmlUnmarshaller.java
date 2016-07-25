@@ -106,7 +106,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	/////ATTRIBUTS
 	private boolean isFirst = true;
     /////CONSTRUCTEUR
-	private XmlUnmarshaller(Reader reader, EntityManager entity) throws ClassNotFoundException, IOException {
+	private XmlUnmarshaller(Reader reader, EntityManager entity) throws ClassNotFoundException, IOException, UnmarshallExeption {
 		super(reader, entity, ConfigurationMarshalling.getDateFormatXml());
 	}
 	//////METHODES STATICS PUBLICS
@@ -177,7 +177,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	}
 
 	/////XML EVENT
-	protected void startElement(String qName, Attributes attributes) throws ClassNotFoundException, BadTypeUnmarshallException, InstantiationException, IllegalAccessException, NotImplementedSerializeException {
+	protected void startElement(String qName, Attributes attributes) throws ClassNotFoundException, BadTypeUnmarshallException, IllegalAccessException, NotImplementedSerializeException {
 		setCache(attributes);
 		Class<?> type = getType(attributes, qName);
 		isFirst = false;
@@ -197,12 +197,12 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		}
 	}
 	
-	protected void characters(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ParseException, UnmarshallExeption {
+	protected void characters(String donnees) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ParseException, UnmarshallExeption {
 		rempliData(getActionEnCours(), donnees);
 	}
 
 	@SuppressWarnings("unchecked") 
-	protected void endElement() throws InstantiationException, InvocationTargetException, ClassNotFoundException, NoSuchMethodException, IOException, NotImplementedSerializeException, IllegalAccessException, UnmarshallExeption {
+	protected void endElement() throws InvocationTargetException, ClassNotFoundException, NoSuchMethodException, IOException, NotImplementedSerializeException, IllegalAccessException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException {
 		construitObjet(getActionEnCours());
 		ActionXml<?> actionATraiter = (ActionXml<?>) pileAction.pop();
 		if(pileAction.isEmpty()){

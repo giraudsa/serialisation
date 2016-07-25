@@ -41,7 +41,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 		return new ActionBinaryCollection<>(type, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 	@Override
-	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption {
+	public void deserialisePariellement() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption {
 		if(!deserialisationFini){
 			litObject(fakeChamp);
 		}else{
@@ -51,7 +51,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void integreObjet(String nom, Object objet) throws IllegalAccessException, InstantiationException, UnmarshallExeption {
+	protected void integreObjet(String nom, Object objet) throws IllegalAccessException, UnmarshallExeption {
 		((Collection)obj).add(objet);
 		deserialisationFini = ++index >= tailleCollection;
 		if(deserialisationFini)
@@ -59,7 +59,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 	}
 
 	@Override
-	protected void initialise() throws IOException, InstantiationException, IllegalAccessException, UnmarshallExeption {
+	protected void initialise() throws UnmarshallExeption, IOException{
 		if (isDejaVu() && !isDeserialisationComplete() && fieldInformations.getRelation() == TypeRelation.COMPOSITION){
 			obj = getObjet();
 			tailleCollection = ((Collection)obj).size();
@@ -105,7 +105,8 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 			}else
 				objetADeserialiser = type.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
-			LOGGER.error(e.getMessage(), e);
+			LOGGER.error("impossible d'instancier la collection " + type.getName(), e);
+			throw new UnmarshallExeption("impossible d'instancier la collection " + type.getName(), e);
 		}
 		return objetADeserialiser;
 	}

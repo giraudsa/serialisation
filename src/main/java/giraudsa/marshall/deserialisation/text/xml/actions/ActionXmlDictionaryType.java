@@ -7,6 +7,7 @@ import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ public class ActionXmlDictionaryType<T extends Map> extends ActionXmlComplexeObj
 			try {
 				obj = type.newInstance();
 			} catch (InstantiationException | IllegalAccessException e) {
+				obj = new HashMap<>();
 				LOGGER.error("instanciation impossible pour " + type.getName(), e);
 			}
 		}

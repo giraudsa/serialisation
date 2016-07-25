@@ -78,7 +78,7 @@ public class ActionJsonCollectionType<T extends Collection> extends ActionJsonCo
 	}
 
 	@Override
-	protected void construitObjet() throws InstantiationException, IllegalAccessException {
+	protected void construitObjet() {
 		//rien a faire
 	}
 

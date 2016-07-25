@@ -46,7 +46,7 @@ public class ActionJsonEnum<T extends Enum> extends ActionJson<T>  {
 
 
 	@Override
-	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	protected void rempliData(String donnees) {
 		obj = dicoStringEnumToObjEnum.get(donnees);
 	}
 	
@@ -63,7 +63,7 @@ public class ActionJsonEnum<T extends Enum> extends ActionJson<T>  {
 	}
 
 	@Override
-	protected void construitObjet() throws InstantiationException, IllegalAccessException {
+	protected void construitObjet() {
 		//les instances des enum sont déjà construit au chargement de la jvm
 	}
 	

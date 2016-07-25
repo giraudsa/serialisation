@@ -1,9 +1,7 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
-import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.text.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +28,7 @@ public class ActionJsonInetAddress<T extends InetAddress> extends ActionJsonSimp
 	}
 	
 	@Override
-	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption {
+	protected void rempliData(String donnees) throws UnmarshallExeption {
 		try {
 			obj = InetAddress.getByName(donnees);
 		} catch (UnknownHostException e) {

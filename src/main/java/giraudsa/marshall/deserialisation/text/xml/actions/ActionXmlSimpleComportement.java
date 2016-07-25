@@ -32,7 +32,7 @@ public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 	}
 
 	@Override
-	protected void construitObjet() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption {
+	protected void construitObjet() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException {
 		obj = type.getConstructor(String.class).newInstance(unescapeXml(sb.toString()));
 	}
 

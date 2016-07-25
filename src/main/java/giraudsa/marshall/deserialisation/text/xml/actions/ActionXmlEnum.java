@@ -46,7 +46,7 @@ public class ActionXmlEnum<T extends Enum> extends ActionXml<T>  {
 	}
 
 	@Override
-	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	protected void rempliData(String donnees) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		sb.append(donnees);
 	}
 	

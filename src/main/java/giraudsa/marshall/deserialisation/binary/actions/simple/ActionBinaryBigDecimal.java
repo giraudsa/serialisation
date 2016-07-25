@@ -23,7 +23,7 @@ public class ActionBinaryBigDecimal extends ActionBinarySimple<BigDecimal> {
 	}
 
 	@Override
-	protected void initialise() throws IOException, InstantiationException, IllegalAccessException {
+	protected void initialise() throws IOException{
 		if (isDejaVu()){
 			obj = getObjet();
 		}else{

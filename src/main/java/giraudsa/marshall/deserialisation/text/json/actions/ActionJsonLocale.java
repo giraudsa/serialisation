@@ -1,7 +1,5 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
-import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
 import java.util.Locale;
 import java.util.StringTokenizer;
 
@@ -27,7 +25,7 @@ public class ActionJsonLocale extends ActionJsonSimpleComportement<Locale> {
 	}
 	
 	@Override
-	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	protected void rempliData(String donnees){
 		StringTokenizer tokenizer = new StringTokenizer(donnees, "_");
 		String language = null;
 		String country = null;

@@ -24,7 +24,7 @@ public class ActionBinaryEnum<E extends Enum> extends ActionBinarySimple<E> {
 	}
 
 	@Override
-	protected void initialise() throws IOException, InstantiationException, IllegalAccessException {
+	protected void initialise() throws IOException{
 		Enum[] enums = type.getEnumConstants();
 		if(enums.length < 254) 
 			obj =  enums[(int)readByte()];

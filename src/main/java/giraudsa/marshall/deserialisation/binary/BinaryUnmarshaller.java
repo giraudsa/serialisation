@@ -46,7 +46,6 @@ import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -60,7 +59,6 @@ import java.util.concurrent.atomic.AtomicLongArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.Constants;
-import utils.TypeExtension;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 import utils.headers.Header;
@@ -108,7 +106,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	private boolean deserialisationComplete;
 	private Set<Integer> isDejaTotalementDeSerialise = new HashSet<>();
 
-	protected BinaryUnmarshaller(DataInputStream input, EntityManager entity) throws ClassNotFoundException, IOException {
+	protected BinaryUnmarshaller(DataInputStream input, EntityManager entity) throws ClassNotFoundException, IOException, UnmarshallExeption {
 		super(entity);
 		this.input = input;
 		deserialisationComplete = readBoolean();
@@ -118,7 +116,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		try(DataInputStream in = new DataInputStream(new BufferedInputStream(reader))){
 			BinaryUnmarshaller<U> w = new BinaryUnmarshaller<U>(in, entity){};
 			return w.parse();
-		} catch (IOException | ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | NotImplementedSerializeException e) {
+		} catch (IOException | ClassNotFoundException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | NotImplementedSerializeException e) {
 			LOGGER.error("Impossible de désérialiser", e);
 			throw new UnmarshallExeption("Impossible de désérialiser", e);
 		}
@@ -173,7 +171,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		dicoSmallIdToObject.put(smallId,obj);
 	}
 	
-	private T parse() throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, UnmarshallExeption {
+	private T parse() throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, UnmarshallExeption {
 		FakeChamp fc = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION);
 		litObject(fc);
 		while(!pileAction.isEmpty()){
@@ -182,7 +180,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		return obj;
 	}
 	
-	protected void litObject(FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption {
+	protected void litObject(FieldInformations fieldInformations) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption {
 		if(fieldInformations.getValueType() == byte.class){
 			integreObjectDirectement(readByte()); //seul cas ou le header n'est pas nécessaire.
 			return;
@@ -199,7 +197,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 			litObjetComplexe(fieldInformations, header);
 	}
 
-	private void litObjectEnum(FieldInformations fi, Header<?> header) throws IOException, UnmarshallExeption, ClassNotFoundException, InstantiationException, IllegalAccessException, NotImplementedSerializeException, InvocationTargetException, NoSuchMethodException {
+	private void litObjectEnum(FieldInformations fi, Header<?> header) throws IOException, UnmarshallExeption, ClassNotFoundException, IllegalAccessException, NotImplementedSerializeException, InvocationTargetException, NoSuchMethodException {
 		Class<?> type = fi.getValueType();
 		if(header.isTypeDevinable()){
 			if(!isDejaVuClazz(type)){
@@ -218,7 +216,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 
 	private void litObjetComplexe(FieldInformations fieldInformations, Header<?> header)
 			throws IOException, UnmarshallExeption, ClassNotFoundException, NotImplementedSerializeException,
-			InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+			IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		//il faut trouver le type de l'objet
 		Class<?> type = fieldInformations.getValueType();
 		int smallId = header.readSmallId(input, getMaxId());
@@ -244,7 +242,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	private void litObjectCourant(Header<?> header)
-			throws IOException, UnmarshallExeption, IllegalAccessException, InstantiationException {
+			throws IOException, UnmarshallExeption, IllegalAccessException{
 		HeaderTypeCourant<?> headerTypeCourant = (HeaderTypeCourant<?>)header;
 		Class<?> clazz = headerTypeCourant.getTypeCourant();
 		int smallId = headerTypeCourant.readSmallId(input, 0); //le 0 n a pas d importance ici
@@ -270,7 +268,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	private void litObjectSimple(Header<?> header)
-			throws IllegalAccessException, InstantiationException, IOException, UnmarshallExeption {
+			throws IllegalAccessException, IOException, UnmarshallExeption {
 		HeaderSimpleType<?> headerSimpleType = (HeaderSimpleType<?>)header;
 		integreObjectDirectement(headerSimpleType.read(input));
 	}
@@ -311,13 +309,13 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected void integreObject(Object obj) throws IllegalAccessException, InstantiationException, UnmarshallExeption {
+	protected void integreObject(Object obj) throws IllegalAccessException, UnmarshallExeption {
 		pileAction.pop();
 		integreObjectDirectement(obj);
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void integreObjectDirectement(Object obj) throws IllegalAccessException, InstantiationException, UnmarshallExeption {
+	private void integreObjectDirectement(Object obj) throws IllegalAccessException, UnmarshallExeption {
 		ActionAbstrait<?> action = getActionEnCours();
 		if(action == null)
 			this.obj = (T) obj;

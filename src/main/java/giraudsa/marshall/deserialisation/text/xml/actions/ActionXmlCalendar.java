@@ -46,7 +46,7 @@ public class ActionXmlCalendar<Calendar> extends ActionXmlComplexeObject<Calenda
 	}
 	
 	@Override
-	protected  void construitObjet() throws InstantiationException, IllegalAccessException {
+	protected  void construitObjet() throws IllegalAccessException {
 		obj = new GregorianCalendar(map.get(cYear), map.get(cMonth), map.get(cDayOfMonth), map.get(cHourOfDay), map.get(cMinute), map.get(cSeconde));
 	}
 	

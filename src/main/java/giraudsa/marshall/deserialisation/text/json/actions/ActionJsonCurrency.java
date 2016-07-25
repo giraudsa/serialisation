@@ -1,7 +1,5 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
-import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
 import java.util.Currency;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
@@ -25,7 +23,7 @@ public class ActionJsonCurrency extends ActionJsonSimpleComportement<Currency> {
 	}
 	
 	@Override
-	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	protected void rempliData(String donnees)  {
 		obj = Currency.getInstance(donnees);
 	}
 

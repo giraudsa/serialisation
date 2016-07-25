@@ -13,7 +13,10 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("rawtypes")
 public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
@@ -41,7 +44,7 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 	}
 	
 	@Override
-	protected void initialise() throws InstantiationException, IllegalAccessException, IOException{
+	protected void initialise() throws UnmarshallExeption, IOException{
 		if (isDejaVu() && !isDeserialisationComplete() && fieldInformations.getRelation() == TypeRelation.COMPOSITION){
 			obj = getObjet();
 			setDejaTotalementDeSerialise();
@@ -51,7 +54,7 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 			deserialisationFini = true;
 			obj = getObjet();
 		}else if(!isDejaVu()){
-			obj = type.newInstance();
+			obj = newInstance();
 			stockeObjetId();
 			if(isDeserialisationComplete() || fieldInformations.getRelation() == TypeRelation.COMPOSITION)
 				setDejaTotalementDeSerialise();
@@ -69,8 +72,35 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 		fakeChampValue = new FakeChamp(null, parametreTypeValue, fieldInformations.getRelation());
 	}
 
+	private Object newInstance() throws UnmarshallExeption {
+		Map objetADeserialiser = null;
+		try {
+			if(type == HashMap.class) 
+				objetADeserialiser = new HashMap<>();
+			else if(type == LinkedHashMap.class)
+				objetADeserialiser = new LinkedHashMap<>();
+			else if(type.getName().indexOf("HashMap") != -1)
+				objetADeserialiser = new HashMap<>();
+			else if(type.getName().toLowerCase().indexOf("hibernate") != -1){
+				if(fieldInformations.getValueType().isAssignableFrom(ConcurrentHashMap.class))
+					objetADeserialiser = new ConcurrentHashMap<>();
+				else if(fieldInformations.getValueType().isAssignableFrom(LinkedHashMap.class))
+					objetADeserialiser = new LinkedHashMap<>();
+				else if(fieldInformations.getValueType().isAssignableFrom(HashMap.class))
+					objetADeserialiser = new HashMap<>();
+				else
+					throw new UnmarshallExeption("Probleme avec un type hibernate " + type.getName(), new InstantiationException());
+			}else
+				objetADeserialiser = type.newInstance();
+		} catch (InstantiationException | IllegalAccessException e) {
+			throw new UnmarshallExeption("impossible d'instancier la collection " + type.getName(), e);
+		}
+		return objetADeserialiser;
+	}
+
+
 	@Override
-	public void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption{
+	public void deserialisePariellement() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption{
 		if(!deserialisationFini){
 			if(clefTampon == null) 
 				litObject(fakeChampKey);
@@ -86,7 +116,7 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void integreObjet(String name, Object objet) throws IllegalAccessException, InstantiationException, UnmarshallExeption {
+	protected void integreObjet(String name, Object objet) throws IllegalAccessException, UnmarshallExeption{
 		if(clefTampon == null) 
 			clefTampon = objet;
 		else if(((Collection)obj).size() < index){

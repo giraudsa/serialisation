@@ -4,7 +4,6 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.ArrayDeque;
@@ -12,19 +11,20 @@ import java.util.Deque;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import utils.Constants;
 
 
 public abstract class Unmarshaller<T> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Unmarshaller.class);
+	private final Fabrique fabrique;
 	protected T obj;
 	protected final EntityManager entity;
 	protected final Deque<ActionAbstrait<?>> pileAction = new ArrayDeque<>();
 	protected CacheObject  cacheObject;
 
-	protected Unmarshaller(EntityManager entity) throws ClassNotFoundException, IOException {
+	protected Unmarshaller(EntityManager entity) throws ClassNotFoundException, IOException, UnmarshallExeption {
 		this.entity = entity;
+		fabrique = Fabrique.getInstance();
 		cacheObject = new CacheEmpty();
 	}
 	
@@ -42,7 +42,7 @@ public abstract class Unmarshaller<T> {
 
 
 	@SuppressWarnings( { "unchecked", "rawtypes" })
-	protected <U> ActionAbstrait getAction(Class<U> type) throws NotImplementedSerializeException, InstantiationException, IllegalAccessException  {
+	protected <U> ActionAbstrait getAction(Class<U> type) throws NotImplementedSerializeException, IllegalAccessException  {
 		Map<Class<?>, ActionAbstrait<?>> actions = getdicoTypeToAction();
 		ActionAbstrait behavior = null;
 		if (type != null) {
@@ -86,9 +86,9 @@ public abstract class Unmarshaller<T> {
 	}
 	
 
-    <W> W getObject(String id, Class<W> type) throws InstantiationException, IllegalAccessException{
+    <W> W getObject(String id, Class<W> type) throws IllegalAccessException, UnmarshallExeption{
 		if (id == null) 
-			return type.newInstance();
+			return newInstance(type);
 		W objet = cacheObject.getObject(type, id);
 		if(objet == null){
 			if(entity != null){
@@ -113,22 +113,8 @@ public abstract class Unmarshaller<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <W> W newInstance(Class<W> type) throws InstantiationException {
-		W objet = null;
-		try{
-			objet = type.newInstance();
-		}catch (SecurityException | IllegalArgumentException | InstantiationException | IllegalAccessException e){
-			LOGGER.debug(e.getMessage(), e);
-			try {
-				Constructor<?> constr = type.getDeclaredConstructor(Constants.getClassVide());
-				constr.setAccessible(true);
-				objet = (W) constr.newInstance(Constants.getNullArgument());
-			} catch (NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException | InstantiationException | IllegalAccessException e1) {
-				LOGGER.error(e1.getMessage(), e1);
-				throw new InstantiationException("la classe " + type.getName() + "n'a pas pu être instanciée.");
-			}
-		}
-		return objet;
+	<W> W newInstance(Class<W> type) throws UnmarshallExeption {
+		return fabrique.newObject(type);
 	}
 	
 	protected Object getObjet(ActionAbstrait<?> action) {
@@ -136,14 +122,14 @@ public abstract class Unmarshaller<T> {
 	}
 
 	
-	protected <W> void integreObjet(ActionAbstrait<?> action, String nom, W objet) throws IllegalAccessException, InstantiationException, UnmarshallExeption {
+	protected <W> void integreObjet(ActionAbstrait<?> action, String nom, W objet) throws IllegalAccessException, UnmarshallExeption {
 		action.integreObjet(nom, objet);
 	}
-	protected void rempliData(ActionAbstrait<?> action, String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ParseException, UnmarshallExeption {
+	protected void rempliData(ActionAbstrait<?> action, String donnees) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ParseException, UnmarshallExeption {
 		action.rempliData(donnees);
 		
 	}
-	protected void construitObjet(ActionAbstrait<?> action) throws ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, UnmarshallExeption {
+	protected void construitObjet(ActionAbstrait<?> action) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException {
 		action.construitObjet();
 	}
 	

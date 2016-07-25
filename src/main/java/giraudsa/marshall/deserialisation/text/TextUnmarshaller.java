@@ -3,6 +3,7 @@ package giraudsa.marshall.deserialisation.text;
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.Unmarshaller;
+import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.TypeExtension;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
@@ -17,7 +18,7 @@ public abstract class TextUnmarshaller<T> extends Unmarshaller<T> {
 	protected final Reader reader;
 	protected final DateFormat df;
 	
-	protected TextUnmarshaller(Reader reader, EntityManager entity, SimpleDateFormat dateFormat) throws ClassNotFoundException, IOException {
+	protected TextUnmarshaller(Reader reader, EntityManager entity, SimpleDateFormat dateFormat) throws ClassNotFoundException, IOException, UnmarshallExeption {
 		super(entity);
 		this.reader = reader;
 		df = new SimpleDateFormat(dateFormat.toPattern());

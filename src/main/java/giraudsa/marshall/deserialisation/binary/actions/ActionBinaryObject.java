@@ -38,13 +38,13 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	@Override
-	protected void initialise() throws IOException, InstantiationException, IllegalAccessException {
+	protected void initialise() throws UnmarshallExeption{
 		champId = TypeExtension.getChampId(type);
 		boolean isDejaVu = isDejaVu();
 		if(isDejaVu) 
 			obj = getObjet();
 		else if(champId.isFakeId()){
-			obj = type.newInstance();
+			obj = newInstanceOfType();
 			stockeObjetId();
 		}
 		boolean deserialiseToutSaufId = deserialiseToutSaufId();
@@ -84,7 +84,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	@Override
-	protected void deserialisePariellement() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption{
+	protected void deserialisePariellement() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption{
 		if(champEnAttente != null){
 			if(champEnAttente != TypeExtension.getChampId(type))
 				setDejaTotalementDeSerialise();
@@ -95,7 +95,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	@Override
-	protected void integreObjet(String nom, Object objet) throws IllegalAccessException, InstantiationException, UnmarshallExeption {
+	protected void integreObjet(String nom, Object objet) throws IllegalAccessException, UnmarshallExeption{
 		if(champEnAttente == champId){
 			String id = objet.toString();
 			obj = getObject(id, type);

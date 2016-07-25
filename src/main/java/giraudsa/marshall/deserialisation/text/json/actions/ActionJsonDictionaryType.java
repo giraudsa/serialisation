@@ -8,10 +8,9 @@ import utils.Constants;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
-import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -31,6 +30,7 @@ public class ActionJsonDictionaryType<T extends Map> extends ActionJson<T> {
 			try {
 				obj = type.newInstance();
 			} catch (InstantiationException | IllegalAccessException e) {
+				obj = new HashMap<>();
 				LOGGER.error("instanciation impossible pour " + type.getName(), e);
 			}
 		}
@@ -104,13 +104,12 @@ public class ActionJsonDictionaryType<T extends Map> extends ActionJson<T> {
 
 
 	@Override
-	protected void construitObjet() throws InstantiationException, IllegalAccessException {
+	protected void construitObjet() {
 		//l'objet est construit à l'instanciation de la classe.
 	}
 
 	@Override
-	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException,
-			InvocationTargetException, NoSuchMethodException {
+	protected void rempliData(String donnees) {
 		//l'objet est construit à l'instanciation de la classe.
 	}
 

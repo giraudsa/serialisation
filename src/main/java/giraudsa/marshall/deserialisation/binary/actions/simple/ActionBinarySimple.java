@@ -11,7 +11,7 @@ public abstract class ActionBinarySimple<T> extends ActionBinary<T>{
 	}
 	
 	@Override
-	protected void deserialisePariellement() throws IllegalAccessException, InstantiationException, UnmarshallExeption{
+	protected void deserialisePariellement() throws IllegalAccessException, UnmarshallExeption{
 		exporteObject();
 	}
 	

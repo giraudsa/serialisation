@@ -22,19 +22,23 @@ public abstract class ActionAbstrait<T> {
 	@SuppressWarnings("rawtypes")
 	public abstract <U extends T>  ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller);
 
-	protected abstract void construitObjet() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption;
+	protected abstract void construitObjet() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException;
 
 
-	protected <W> W getObject(String id, Class<W> type) throws InstantiationException, IllegalAccessException{
+	protected <W> W getObject(String id, Class<W> type) throws IllegalAccessException, UnmarshallExeption{
 		return unmarshaller.getObject(id, type);
+	}
+	
+	protected T newInstanceOfType() throws UnmarshallExeption{
+		return unmarshaller.newInstance(type);
 	}
 
 	protected Object getObjet(){
 		return obj;
 	}
 
-	protected abstract <W> void integreObjet(String nomAttribut, W objet) throws IllegalAccessException, InstantiationException, UnmarshallExeption;
-	protected abstract void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption;
+	protected abstract <W> void integreObjet(String nomAttribut, W objet) throws IllegalAccessException, UnmarshallExeption;
+	protected abstract void rempliData(String donnees) throws ParseException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption;
 
 	protected boolean isUniversalId() {
 		return true;

@@ -4,9 +4,8 @@ import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.json.ActionJson;
 import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
+import giraudsa.marshall.exception.UnmarshallExeption;
 
-import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -53,7 +52,7 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void construitObjet() throws InstantiationException, IllegalAccessException {
+	protected void construitObjet() throws IllegalAccessException, UnmarshallExeption{
 		String id = dicoNomChampToValue.get(ChampUid.UID_FIELD_NAME).toString();
 		obj = getObject(id, type);
 		if (obj == null) 
@@ -73,8 +72,7 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 
 
 	@Override
-	protected void rempliData(String donnees) throws ParseException, InstantiationException, IllegalAccessException,
-			InvocationTargetException, NoSuchMethodException {
+	protected void rempliData(String donnees){
 		LOGGER.error("on est pas supposé avoir de données avec un objet.");
 		//rien a faire avec un objet, il n'y a pas de data
 	}

@@ -5,7 +5,6 @@ import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
 import utils.Constants;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.UUID;
 
 public class ActionJsonUUID extends ActionJsonSimpleComportement<UUID> {
@@ -39,7 +38,7 @@ public class ActionJsonUUID extends ActionJsonSimpleComportement<UUID> {
 	}
 	
 	@Override
-	protected void rempliData(String donnees) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	protected void rempliData(String donnees){
 		obj = UUID.fromString(donnees);
 	}
 }

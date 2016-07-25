@@ -109,7 +109,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	
 	///////methodes public de désérialisation
 
-	private JsonUnmarshaller(Reader reader, EntityManager entity) throws ClassNotFoundException, IOException {
+	private JsonUnmarshaller(Reader reader, EntityManager entity) throws ClassNotFoundException, IOException, UnmarshallExeption {
 		super(reader, entity, ConfigurationMarshalling.getDatFormatJson());
 	}
 
@@ -117,9 +117,9 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		try {
 			JsonUnmarshaller<U> w = new JsonUnmarshaller<>(reader, entity);
 			return w.parse();
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
 				| NoSuchMethodException | SecurityException | ClassNotFoundException | IOException
-				| NotImplementedSerializeException | JsonHandlerException | ParseException | BadFormatException e) {
+				| NotImplementedSerializeException | JsonHandlerException | ParseException | BadFormatException | InstantiationException e) {
 			LOGGER.error("probleme dans la désérialisation JSON", e);
 			throw new UnmarshallExeption("probleme dans la désérialisation JSON",e);
 		}
@@ -146,7 +146,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	}
 
 
-	private T parse() throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException, UnmarshallExeption, BadFormatException {
+	private T parse() throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException, UnmarshallExeption, BadFormatException, InstantiationException {
 		JsonUnmarshallerHandler handler = new JsonUnmarshallerHandler(this);
 		handler.parse(reader);
 		if(obj == null)
@@ -154,7 +154,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		return obj;
 	}
 
-	protected void setClef(String clef) throws InstantiationException, IllegalAccessException, ClassNotFoundException, NotImplementedSerializeException {
+	protected void setClef(String clef) throws IllegalAccessException, ClassNotFoundException, NotImplementedSerializeException {
 		if(isClefType(clef)){
 			waitingForType = true;
 		}else if(!pileAction.isEmpty()){
@@ -185,8 +185,8 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	}
 
 
-	protected void setValeur(String valeur, Class<?> typeGuess) throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
-	ParseException, ClassNotFoundException, IOException, UnmarshallExeption {
+	protected void setValeur(String valeur, Class<?> typeGuess) throws NotImplementedSerializeException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
+	ParseException, ClassNotFoundException, IOException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException {
 		Class<?> type;
 		if(waitingForType){
 			type = getTypeDepuisNom(valeur);
@@ -210,12 +210,12 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		waitingForAction = false;
 	}
 
-	protected void fermeAccolade() throws InstantiationException, IllegalAccessException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, UnmarshallExeption {
+	protected void fermeAccolade() throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException {
 		integreObject();
 	}
 
 
-	protected void ouvreChrochet() throws NotImplementedSerializeException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	protected void ouvreChrochet() throws NotImplementedSerializeException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		Class<?> type = getActionEnCours() == null ? ArrayList.class : getType(clefEnCours);
 		if(type == null)
 			type = ArrayList.class;
@@ -226,12 +226,12 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		pileAction.push(action);
 	}
 
-	protected void fermeCrocher() throws InstantiationException, IllegalAccessException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, UnmarshallExeption {
+	protected void fermeCrocher() throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException {
 		integreObject();
 	}
 
 	@SuppressWarnings("unchecked")
-	private void integreObject() throws InstantiationException, IllegalAccessException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, UnmarshallExeption {
+	private void integreObject() throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException {
 		construitObjet(getActionEnCours());
 		ActionJson<?> actionATraiter = (ActionJson<?>) pileAction.pop();
 		if(pileAction.isEmpty())

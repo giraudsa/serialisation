@@ -29,7 +29,7 @@ public class JsonUnmarshallerHandler {
 		this.jsonUnmarshaller = jsonUnmarshaller;
 	}
 	
-	protected void parse(Reader reader) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException, UnmarshallExeption{
+	protected void parse(Reader reader) throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException, UnmarshallExeption, InstantiationException{
 		int t = reader.read();
 		while (t != -1){
 			traiteCaractere(t, reader);
@@ -39,7 +39,7 @@ public class JsonUnmarshallerHandler {
 		
 	}
 
-	private void traiteCaractere(int t, Reader reader) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException, UnmarshallExeption {
+	private void traiteCaractere(int t, Reader reader) throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException, UnmarshallExeption, InstantiationException {
 		if(!ignoreNextchar){
 			char c = (char)t;
 			comportement(c);
@@ -49,13 +49,13 @@ public class JsonUnmarshallerHandler {
 		}
 	}
 	
-	private void deuxPoints() throws JsonHandlerException, InstantiationException, IllegalAccessException, ClassNotFoundException, NotImplementedSerializeException{
+	private void deuxPoints() throws JsonHandlerException, IllegalAccessException, ClassNotFoundException, NotImplementedSerializeException, InstantiationException{
 		if(!isBetweenQuote) 
 			setClef();
 		else buff.add(':');
 	}
 	
-	private void virgule() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException, UnmarshallExeption {
+	private void virgule() throws  IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException {
 		if(!isBetweenQuote)
 			setValeur();
 		else buff.add(',');
@@ -73,7 +73,7 @@ public class JsonUnmarshallerHandler {
 		else buff.add('{');
 	}
 
-	private void fermeAccolade() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException, UnmarshallExeption{
+	private void fermeAccolade() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException{
 		if(!isBetweenQuote){
 			if(!buff.isEmpty()){
 				setValeur();
@@ -82,13 +82,13 @@ public class JsonUnmarshallerHandler {
 		}
 		else buff.add('}');
 	}
-	private void ouvreCrochet() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
+	private void ouvreCrochet() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
 		if(!isBetweenQuote) 
 			jsonUnmarshaller.ouvreChrochet();
 		else buff.add('[');
 	}
 	
-	private void fermeCrochet() throws InstantiationException, IllegalAccessException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, ParseException, UnmarshallExeption{
+	private void fermeCrochet() throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, ParseException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException{
 		if(!isBetweenQuote){
 			if(!buff.isEmpty()){
 				setValeur();
@@ -97,7 +97,7 @@ public class JsonUnmarshallerHandler {
 		}else buff.add(']');
 	}
 
-	private void comportement(char c) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, JsonHandlerException, ClassNotFoundException, ParseException, UnmarshallExeption {
+	private void comportement(char c) throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, JsonHandlerException, ClassNotFoundException, ParseException, UnmarshallExeption, InstantiationException {
 		switch (c) {
 		case '{':
 			ouvreAccolade();
@@ -139,7 +139,7 @@ public class JsonUnmarshallerHandler {
 	}
 	
 
-	private void setValeur() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException, UnmarshallExeption{
+	private void setValeur() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException{
 		if(!buff.isEmpty()){
 			Class<?> typeGuess = String.class;
 			if(!enleveGuillemets()){
@@ -243,7 +243,10 @@ public class JsonUnmarshallerHandler {
 		char result = 0;
 		char[] tmp = new char[4];
 		try {
-			reader.read(tmp);
+			tmp[0] = (char) reader.read();
+			tmp[1] = (char) reader.read();
+			tmp[2] = (char) reader.read();
+			tmp[3] = (char) reader.read();
 		} catch (IOException e) {
 			erreurParsing("message tronqué", e);
 		}

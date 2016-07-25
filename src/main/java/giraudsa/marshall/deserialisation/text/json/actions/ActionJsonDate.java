@@ -27,14 +27,16 @@ public class ActionJsonDate<T extends Date> extends ActionJsonSimpleComportement
 	}
 	
 	@Override
-	protected void rempliData(String donnees) throws ParseException {
+	protected void rempliData(String donnees) {
 		Date date;
+		long time = 0;
 		try {
 			date = getDateFormat().parse(donnees);
-			long time = date.getTime();
+			time = date.getTime();
 			obj = type.getConstructor(long.class).newInstance(time);
 		} catch (ParseException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			LOGGER.error("pas de constructeur avec un long pour le type date " + type.getName(), e);
+			obj = new Date(time);
 		} 
 	}
 	
