@@ -5,6 +5,7 @@ import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.rmi.UnmarshalException;
 import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -92,12 +93,10 @@ public abstract class Unmarshaller<T> {
 		W objet = cacheObject.getObject(type, id);
 		if(objet == null){
 			if(entity != null){
-				synchronized (entity) {
-					objet = entity.findObject(id, type);
-					if(objet == null){
-						objet = newInstance(type);
-						entity.metEnCache(id, objet);
-					}	
+				try {
+					objet = entity.findObjectOrCreate(id, type,true);
+				} catch (InstantiationException e) {
+					throw new UnmarshallExeption("problème dans la déserialisation", e);
 				}
 			}else{
 				objet = newInstance(type);

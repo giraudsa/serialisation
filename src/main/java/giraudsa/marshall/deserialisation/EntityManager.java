@@ -3,6 +3,7 @@ package giraudsa.marshall.deserialisation;
 public interface EntityManager {
 
 	public <U> U findObject(String id, Class<U> type);
-	public <U> void metEnCache(String id, U obj);
+	public <U> U findObjectOrCreate(String id, Class<U> clazz, boolean fromExt)
+			throws InstantiationException, IllegalAccessException;
 	
 }
