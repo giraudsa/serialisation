@@ -111,8 +111,11 @@ public abstract class Unmarshaller<T> {
 		return Class.forName(Constants.getNameType(smallNameType));
 	}
 
-	@SuppressWarnings("unchecked")
 	<W> W newInstance(Class<W> type) throws UnmarshallExeption {
+		return fabrique.newObject(type);
+	}
+	
+	protected <W> W  createInstance(Class<W> type) throws UnmarshallExeption {
 		return fabrique.newObject(type);
 	}
 	

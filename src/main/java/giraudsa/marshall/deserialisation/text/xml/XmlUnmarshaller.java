@@ -14,6 +14,7 @@ import utils.ConfigurationMarshalling;
 import utils.TypeExtension;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.EntityManager;
+import giraudsa.marshall.deserialisation.Fabrique;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlArrayType;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlAtomicIntegerArray;
@@ -168,7 +169,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	@SuppressWarnings("unchecked")
 	private <T> void checkType(Class<T> typeToUnmarshall) throws BadTypeUnmarshallException {
 		try {
-			U test = (U)typeToUnmarshall.newInstance();
+			U test = (U) createInstance(typeToUnmarshall);
 			test.getClass();
 		} catch (Exception e) {
 			LOGGER.error("le type attendu n'est pas celui du XML ou n'est pas instanciable", e);
