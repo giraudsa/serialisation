@@ -67,13 +67,10 @@ public abstract class ActionAbstrait<T> {
 		return traiteChamp(marshaller, obj, fieldInformations, true);
 	}
 	
-	@SuppressWarnings("rawtypes")
 	protected <V> boolean aTraiter(Marshaller marshaller, V value, FieldInformations fieldInformations) throws IOException {
 		if(fieldInformations instanceof FakeChamp)
 			return true;
-		if(value != null) 
-				return !(value instanceof Collection && ((Collection)value).isEmpty());
-		return false;
+		return value != null;
 	}
 
 	protected void writeSeparator(Marshaller marshaller) throws IOException {}
