@@ -29,14 +29,16 @@ public class Fabrique {
 		}
 	}
 
-	static synchronized Fabrique getInstance() throws UnmarshallExeption{
+	public static synchronized Fabrique getInstance() throws UnmarshallExeption{
 		if(instance == null)
 			instance =  new Fabrique();
 		return instance;
 	}
 
-	<T> T newObject(Class<T> type) throws UnmarshallExeption{
+	public <T> T newObject(Class<T> type) throws UnmarshallExeption{
 		try {
+			if(type == void.class || type == Void.class)
+				return null;
 			return (T)getConstructor(type).newInstance(noArgument);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			throw new UnmarshallExeption("impossible d'instancier le type " + type.getName(), e);

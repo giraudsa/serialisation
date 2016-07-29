@@ -95,6 +95,9 @@ public abstract class Unmarshaller<T> {
 			if(entity != null){
 				try {
 					objet = entity.findObjectOrCreate(id, type,true);
+					if (objet == null){
+						throw new UnmarshallExeption("Le contrat d'interface n'est pas remplie, l'objet récupéré est null", new NullPointerException());
+					}
 				} catch (InstantiationException e) {
 					throw new UnmarshallExeption("problème dans la déserialisation", e);
 				}
