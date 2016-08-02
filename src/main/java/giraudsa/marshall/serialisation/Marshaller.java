@@ -3,13 +3,13 @@ package giraudsa.marshall.serialisation;
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.ActionAbstrait.Comportement;
+import giraudsa.marshall.strategie.StrategieDeSerialisation;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,7 +19,8 @@ import utils.champ.FieldInformations;
 public abstract class Marshaller {
 	
 	//////ATTRIBUT
-	protected boolean isCompleteSerialisation;
+	protected int profondeur;
+	protected StrategieDeSerialisation strategie;
 	protected Set<Object> dejaTotalementSerialise = new HashSet<>();
 	private Set<Object> dejaVu = new HashSet<>();
 	@SuppressWarnings("rawtypes")
@@ -27,8 +28,8 @@ public abstract class Marshaller {
 
 	
 	//////Constructeur
-	protected Marshaller(boolean isCompleteSerialisation){
-		this.isCompleteSerialisation = isCompleteSerialisation;
+	protected Marshaller(StrategieDeSerialisation strategie){
+		this.strategie = strategie;
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -104,5 +105,21 @@ public abstract class Marshaller {
 	protected <T> void marshall(T value, FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, MarshallExeption {
 		ActionAbstrait<?> action = getAction(value);
 		action.marshall(this, value, fieldInformations);
+	}
+
+	StrategieDeSerialisation getStrategie() {
+		return strategie;
+	}
+
+	int getProfondeur() {
+		return profondeur;
+	}
+
+	void diminueProfondeur() {
+		--profondeur;
+	}
+	
+	void augmenteProdondeur(){
+		++profondeur;
 	}
 }

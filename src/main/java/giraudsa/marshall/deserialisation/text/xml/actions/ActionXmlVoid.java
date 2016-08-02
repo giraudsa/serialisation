@@ -1,11 +1,8 @@
 package giraudsa.marshall.deserialisation.text.xml.actions;
 
-import java.lang.reflect.InvocationTargetException;
-
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
-import giraudsa.marshall.exception.UnmarshallExeption;
 
 public class ActionXmlVoid extends ActionXmlSimpleComportement<Void> {
 
@@ -32,7 +29,7 @@ public class ActionXmlVoid extends ActionXmlSimpleComportement<Void> {
 	}
 	
 	@Override
-	protected void construitObjet() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption {
+	protected void construitObjet(){
 		obj = null;
 	}
 	

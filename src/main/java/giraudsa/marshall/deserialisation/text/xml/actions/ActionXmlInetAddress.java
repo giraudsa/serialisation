@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
-import giraudsa.marshall.exception.UnmarshallExeption;
+import giraudsa.marshall.exception.InstanciationException;
 
 public class ActionXmlInetAddress extends ActionXmlSimpleComportement<InetAddress>{
 	private static final Logger LOGGER = LoggerFactory.getLogger(ActionXmlInetAddress.class);
@@ -29,12 +29,12 @@ public class ActionXmlInetAddress extends ActionXmlSimpleComportement<InetAddres
 		return (ActionAbstrait<U>) new ActionXmlInetAddress(InetAddress.class, (XmlUnmarshaller<?>)unmarshaller);
 	}
 	
-	@Override protected void construitObjet() throws UnmarshallExeption {
+	@Override protected void construitObjet() throws InstanciationException{
 		try {
 			obj = InetAddress.getByName(unescapeXml(sb.toString()));
 		} catch (UnknownHostException e) {
 			LOGGER.error("unknown host destination : "+ unescapeXml(sb.toString()), e);
-			throw new UnmarshallExeption("unknown host destination : "+ unescapeXml(sb.toString()), e);
+			throw new InstanciationException("unknown host destination : "+ unescapeXml(sb.toString()), e);
 		}
 	}
 

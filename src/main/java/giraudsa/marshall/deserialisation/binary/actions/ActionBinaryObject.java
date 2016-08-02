@@ -1,15 +1,15 @@
 package giraudsa.marshall.deserialisation.binary.actions;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.ActionBinary;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
+import giraudsa.marshall.exception.EntityManagerImplementationException;
+import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -38,7 +38,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	@Override
-	protected void initialise() throws UnmarshallExeption{
+	protected void initialise() throws InstanciationException{
 		champId = TypeExtension.getChampId(type);
 		boolean isDejaVu = isDejaVu();
 		if(isDejaVu) 
@@ -60,16 +60,15 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	private boolean deserialiseId(boolean isDejaVu) {
 		if(champId.isFakeId())
 			return false;
-		return (isDeserialisationComplete() && ! isDejaTotalementDeSerialise())||
-				(!isDeserialisationComplete() && !isDejaVu);
+		return !isDejaVu;
 			
 	}
 
 	private boolean deserialiseToutSaufId() {
-		if (isDeserialisationComplete() && ! isDejaTotalementDeSerialise())
-			return true;
-		return !isDeserialisationComplete() && fieldInformations.getRelation() == TypeRelation.COMPOSITION && !isDejaTotalementDeSerialise();
+		return strategieDeSerialiseTout()
+				&& !isDejaTotalementDeSerialise();
 	}
+
 
 	private void initialiseListeChamps(boolean deserialiseToutSaufId, boolean deserialiseId) {
 		listeChamps = new ArrayList<>();
@@ -84,7 +83,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	@Override
-	protected void deserialisePariellement() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption{
+	protected void deserialisePariellement() throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException{
 		if(champEnAttente != null){
 			if(champEnAttente != TypeExtension.getChampId(type))
 				setDejaTotalementDeSerialise();
@@ -95,7 +94,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	@Override
-	protected void integreObjet(String nom, Object objet) throws IllegalAccessException, UnmarshallExeption{
+	protected void integreObjet(String nom, Object objet) throws EntityManagerImplementationException, InstanciationException, IllegalAccessException{
 		if(champEnAttente == champId){
 			String id = objet.toString();
 			obj = getObject(id, type);

@@ -1,16 +1,16 @@
 package giraudsa.marshall.deserialisation.binary.actions;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.ActionBinary;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
+import giraudsa.marshall.exception.EntityManagerImplementationException;
+import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.champ.FakeChamp;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,7 +41,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 		return new ActionBinaryCollection<>(type, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 	@Override
-	public void deserialisePariellement() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption {
+	public void deserialisePariellement() throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException{
 		if(!deserialisationFini){
 			litObject(fakeChamp);
 		}else{
@@ -51,7 +51,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void integreObjet(String nom, Object objet) throws IllegalAccessException, UnmarshallExeption {
+	protected void integreObjet(String nom, Object objet) throws IllegalAccessException, EntityManagerImplementationException, InstanciationException{
 		((Collection)obj).add(objet);
 		deserialisationFini = ++index >= tailleCollection;
 		if(deserialisationFini)
@@ -59,8 +59,8 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 	}
 
 	@Override
-	protected void initialise() throws UnmarshallExeption, IOException{
-		if (isDejaVu() && !isDeserialisationComplete() && fieldInformations.getRelation() == TypeRelation.COMPOSITION){
+	protected void initialise() throws UnmarshallExeption, IOException {
+		if (isDejaVu() && !isDejaTotalementDeSerialise() && strategieDeSerialiseTout()){
 			obj = getObjet();
 			tailleCollection = ((Collection)obj).size();
 			setDejaTotalementDeSerialise();
@@ -71,7 +71,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 		}else{//!isDejaVu
 			obj = newInstance();
 			stockeObjetId();
-			if(isDeserialisationComplete() || fieldInformations.getRelation() == TypeRelation.COMPOSITION)
+			if(strategieDeSerialiseTout())
 				setDejaTotalementDeSerialise();
 			tailleCollection = readInt();
 			deserialisationFini = index >= tailleCollection;

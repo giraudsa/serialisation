@@ -1,6 +1,5 @@
 package giraudsa.marshall.serialisation.binary.actions;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
@@ -29,7 +28,7 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		
 		boolean serialiseToutSaufId = serialiseToutSaufId(marshaller, objetASerialiser, fieldInformations);
-		boolean serialiseId = serialiseId(marshaller, objetASerialiser, isDejaVu);
+		boolean serialiseId = serialiseId(objetASerialiser, isDejaVu);
 		
 		if(serialiseToutSaufId)
 			setDejaTotalementSerialise(marshaller, objetASerialiser);
@@ -55,17 +54,15 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 	}
 
 	private boolean serialiseToutSaufId(Marshaller marshaller, Object objetASerialiser, FieldInformations fieldInformations) {
-		if (isCompleteMarshalling(marshaller) && ! isDejaTotalementSerialise(marshaller, objetASerialiser)) 
-			return true;
-		return !isCompleteMarshalling(marshaller) && fieldInformations.getRelation() == TypeRelation.COMPOSITION && !isDejaTotalementSerialise(marshaller, objetASerialiser);
+		return strategieSerialiseTout(marshaller, fieldInformations)
+				&& !isDejaTotalementSerialise(marshaller, objetASerialiser);
 	}
 
-	private boolean serialiseId(Marshaller marshaller, Object objetASerialiser, boolean isDejaVu) {
-		Class<?> typeObj = (Class<?>) objetASerialiser.getClass();
-		if(!TypeExtension.getChampId(typeObj).isFakeId())
-			return (isCompleteMarshalling(marshaller) && ! isDejaTotalementSerialise(marshaller, objetASerialiser))||
-										(!isCompleteMarshalling(marshaller) && !isDejaVu);
-		return false;
+	private boolean serialiseId(Object objetASerialiser, boolean isDejaVu) {
+		boolean isFakeId = TypeExtension.getChampId((Class<?>) objetASerialiser.getClass()).isFakeId();
+		if(isFakeId)
+			return false;
+		return !isDejaVu;
 	}
 
 }

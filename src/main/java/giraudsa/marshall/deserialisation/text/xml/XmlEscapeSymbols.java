@@ -1,22 +1,3 @@
-/*
- * =============================================================================
- * 
- *   Copyright (c) 2014, The UNBESCAPE team (http://www.unbescape.org)
- * 
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- * 
- *       http://www.apache.org/licenses/LICENSE-2.0
- * 
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- * 
- * =============================================================================
- */
 package giraudsa.marshall.deserialisation.text.xml;
 
 import java.util.ArrayList;
@@ -25,33 +6,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * <p>
- *   Instances of this class group all the complex data structures needed to support escape and unescape
- *   operations for XML.
- * </p>
- * <p>
- *   In contrast with HTML escape operations, the entity references to be used for XML escape/unescape operations
- *   can be defined by the user by manually creating an instance of this class containing all the entities he/she
- *   wants to escape.
- * </p>
- * <p>
- *   It is <strong>not</strong> recommended to use this XML class for HTML escape/unescape operations. Use the methods
- *   in {@link org.unbescape.html.HtmlEscape} instead, as HTML escape rules include a series of tweaks not allowed in
- *   XML, as well as being less lenient with regard to aspects such as case-sensitivity. Besides, the HTML escape
- *   infrastructure is able to apply a series of performance optimizations not possible in XML due to the fact that
- *   the number of HTML Character Entity References (<em>Named Character References</em> in HTML5 jargon) is fixed
- *   and known in advance.
- * </p>
- * <p>
- *   Objects of this class are <strong>thread-safe</strong>.
- * </p>
- *
- * @author Daniel Fern&aacute;ndez
- *
- * @since 1.0.0
- *
- */
 final class XmlEscapeSymbols {
 
     /*

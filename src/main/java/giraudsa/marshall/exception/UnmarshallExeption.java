@@ -9,4 +9,8 @@ public class UnmarshallExeption extends Exception {
 	public UnmarshallExeption(String message, Exception e2) {
 		super(message, e2);
 	}
+
+	public UnmarshallExeption(String message) {
+		super(message);
+	}
 }

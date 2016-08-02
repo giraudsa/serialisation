@@ -38,7 +38,7 @@ public class ActionJsonCalendar<C extends Calendar> extends ActionJson<Calendar>
 	}
 
 	public static ActionAbstrait<?> getInstance(){
-		return new ActionJsonCalendar(Calendar.class, null);
+		return new ActionJsonCalendar<>(Calendar.class, null);
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -62,7 +62,7 @@ public class ActionJsonCalendar<C extends Calendar> extends ActionJson<Calendar>
 	}
 	
 	@Override
-	protected void construitObjet() throws IllegalAccessException {
+	protected void construitObjet() {
 		obj = new GregorianCalendar(map.get(cYear), map.get(cMonth), map.get(cDayOfMonth), map.get(cHourOfDay), map.get(cMinute), map.get(cSeconde));
 	}
 	

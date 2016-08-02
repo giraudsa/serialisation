@@ -1,13 +1,13 @@
 package giraudsa.marshall.deserialisation.text.json;
 
+import giraudsa.marshall.exception.EntityManagerImplementationException;
+import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.JsonHandlerException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
 import java.util.ArrayList;
 
 import org.slf4j.Logger;
@@ -29,7 +29,7 @@ public class JsonUnmarshallerHandler {
 		this.jsonUnmarshaller = jsonUnmarshaller;
 	}
 	
-	protected void parse(Reader reader) throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException, UnmarshallExeption, InstantiationException{
+	protected void parse(Reader reader) throws IOException, ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, JsonHandlerException, UnmarshallExeption, IllegalAccessException{
 		int t = reader.read();
 		while (t != -1){
 			traiteCaractere(t, reader);
@@ -39,7 +39,7 @@ public class JsonUnmarshallerHandler {
 		
 	}
 
-	private void traiteCaractere(int t, Reader reader) throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, JsonHandlerException, ParseException, UnmarshallExeption, InstantiationException {
+	private void traiteCaractere(int t, Reader reader) throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, JsonHandlerException, UnmarshallExeption, IllegalAccessException{
 		if(!ignoreNextchar){
 			char c = (char)t;
 			comportement(c);
@@ -49,13 +49,13 @@ public class JsonUnmarshallerHandler {
 		}
 	}
 	
-	private void deuxPoints() throws JsonHandlerException, IllegalAccessException, ClassNotFoundException, NotImplementedSerializeException, InstantiationException{
+	private void deuxPoints() throws NotImplementedSerializeException, JsonHandlerException{
 		if(!isBetweenQuote) 
 			setClef();
 		else buff.add(':');
 	}
 	
-	private void virgule() throws  IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException {
+	private void virgule() throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, IllegalAccessException{
 		if(!isBetweenQuote)
 			setValeur();
 		else buff.add(',');
@@ -73,7 +73,7 @@ public class JsonUnmarshallerHandler {
 		else buff.add('{');
 	}
 
-	private void fermeAccolade() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException{
+	private void fermeAccolade() throws EntityManagerImplementationException, InstanciationException, ClassNotFoundException, NotImplementedSerializeException, IllegalAccessException{
 		if(!isBetweenQuote){
 			if(!buff.isEmpty()){
 				setValeur();
@@ -82,13 +82,13 @@ public class JsonUnmarshallerHandler {
 		}
 		else buff.add('}');
 	}
-	private void ouvreCrochet() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
+	private void ouvreCrochet() throws NotImplementedSerializeException{
 		if(!isBetweenQuote) 
 			jsonUnmarshaller.ouvreChrochet();
 		else buff.add('[');
 	}
 	
-	private void fermeCrochet() throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, ParseException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException{
+	private void fermeCrochet() throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, IllegalAccessException{
 		if(!isBetweenQuote){
 			if(!buff.isEmpty()){
 				setValeur();
@@ -97,7 +97,7 @@ public class JsonUnmarshallerHandler {
 		}else buff.add(']');
 	}
 
-	private void comportement(char c) throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, JsonHandlerException, ClassNotFoundException, ParseException, UnmarshallExeption, InstantiationException {
+	private void comportement(char c) throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, JsonHandlerException, IllegalAccessException{
 		switch (c) {
 		case '{':
 			ouvreAccolade();
@@ -139,7 +139,7 @@ public class JsonUnmarshallerHandler {
 	}
 	
 
-	private void setValeur() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, NotImplementedSerializeException, ParseException, IOException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException{
+	private void setValeur() throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, IllegalAccessException {
 		if(!buff.isEmpty()){
 			Class<?> typeGuess = String.class;
 			if(!enleveGuillemets()){
@@ -199,7 +199,7 @@ public class JsonUnmarshallerHandler {
 		}
 	}
 	
-	private void setClef() throws JsonHandlerException, InstantiationException, IllegalAccessException, ClassNotFoundException, NotImplementedSerializeException {
+	private void setClef() throws NotImplementedSerializeException, JsonHandlerException{
 		if(enleveGuillemets()){
 			String clef = getString();
 			jsonUnmarshaller.setClef(clef);	
@@ -219,7 +219,7 @@ public class JsonUnmarshallerHandler {
 		}
 	    switch (escaped) {
 	    case 'u':
-			return escapeCharactereU(reader);
+			return escapeCharactere(reader);
 	    case 't':
 	      return '\t';
 	    case 'b':
@@ -239,7 +239,7 @@ public class JsonUnmarshallerHandler {
 	    }
 	  }
 
-	private static char escapeCharactereU(Reader reader) throws UnmarshallExeption{
+	private static char escapeCharactere(Reader reader) throws UnmarshallExeption{
 		char result = 0;
 		char[] tmp = new char[4];
 		try {

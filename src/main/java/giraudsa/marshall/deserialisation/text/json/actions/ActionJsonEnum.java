@@ -33,6 +33,7 @@ public class ActionJsonEnum<T extends Enum> extends ActionJson<T>  {
 				}
 			} catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 				LOGGER.error("T n'est pas un Enum... étrange", e);
+				throw new NullPointerException();
 			} 
 		}
 	}

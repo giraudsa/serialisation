@@ -1,6 +1,5 @@
 package giraudsa.marshall.serialisation.text;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.serialisation.ActionAbstrait;
 import giraudsa.marshall.serialisation.Marshaller;
 import utils.champ.FieldInformations;
@@ -18,6 +17,7 @@ public abstract class ActionText<T> extends ActionAbstrait<T> {
 	protected DateFormat getDateFormat(Marshaller marshaller){
 		return getTextMarshaller(marshaller).df;
 	}
+	
 	
 	@Override
 	protected boolean isUniversalId(Marshaller marshaller) {
@@ -38,9 +38,8 @@ public abstract class ActionText<T> extends ActionAbstrait<T> {
 	}
 	
 	protected boolean serialiseTout(Marshaller marshaller, Object obj, FieldInformations fieldInformations) {
-		if (isCompleteMarshalling(marshaller) && ! isDejaVu(marshaller, obj))
-			return true;
-		return !isCompleteMarshalling(marshaller) && fieldInformations.getRelation() == TypeRelation.COMPOSITION && !isDejaTotalementSerialise(marshaller, obj);
+		return strategieSerialiseTout(marshaller, fieldInformations)
+				&& !isDejaTotalementSerialise(marshaller, obj);
 	}
 
 	protected abstract Map<Character, String> getRemplacementChar();

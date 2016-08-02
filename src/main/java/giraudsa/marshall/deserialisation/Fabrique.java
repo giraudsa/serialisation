@@ -6,6 +6,9 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import giraudsa.marshall.exception.ConstructorException;
+import giraudsa.marshall.exception.FabriqueInstantiationException;
+import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 public class Fabrique {
@@ -17,7 +20,7 @@ public class Fabrique {
 	private final Constructor<Object> constructeurObject;//constructeur par défaut de la classe Object
 	private final Map<Class<?>, Object> dicoClassToConstructeur = new HashMap<>();
 
-	private Fabrique() throws UnmarshallExeption{
+	private Fabrique() throws FabriqueInstantiationException{
 		try {
 			Class<?> reflectionFactoryClazz = Class.forName("sun.reflect.ReflectionFactory");
 			Method method = reflectionFactoryClazz.getDeclaredMethod("getReflectionFactory");
@@ -25,23 +28,23 @@ public class Fabrique {
 			newConstructorForSerializationMethod = reflectionFactoryClazz.getDeclaredMethod("newConstructorForSerialization", Class.class, Constructor.class);
 			constructeurObject = Object.class.getConstructor(new Class[0]);
 		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			throw new UnmarshallExeption("impossible de créer la fabrique", e);	
+			throw new FabriqueInstantiationException("impossible de créer la fabrique", e);	
 		}
 	}
 
-	public static synchronized Fabrique getInstance() throws UnmarshallExeption{
+	public static synchronized Fabrique getInstance() throws FabriqueInstantiationException{
 		if(instance == null)
 			instance =  new Fabrique();
 		return instance;
 	}
 
-	public <T> T newObject(Class<T> type) throws UnmarshallExeption{
+	public <T> T newObject(Class<T> type) throws InstanciationException{
 		try {
 			if(type == void.class || type == Void.class)
 				return null;
-			return (T)getConstructor(type).newInstance(noArgument);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			throw new UnmarshallExeption("impossible d'instancier le type " + type.getName(), e);
+			return getConstructor(type).newInstance(noArgument);
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | ConstructorException e) {
+			throw new InstanciationException("impossible d'instancier le type " + type.getName(), e);
 		}
 	}
 
@@ -49,7 +52,7 @@ public class Fabrique {
 	//Equivalent de 
 	//return reflectionFactory.newConstructorForSerialization(type, constructor);
 	@SuppressWarnings("unchecked")
-	private  <T> Constructor<T> getConstructor(Class<T> type ) throws UnmarshallExeption{
+	private  <T> Constructor<T> getConstructor(Class<T> type ) throws ConstructorException   {
 		try {
 			if(!dicoClassToConstructeur.containsKey(type)){
 				
@@ -59,7 +62,7 @@ public class Fabrique {
 			}
 			return (Constructor<T>)dicoClassToConstructeur.get(type);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			throw new UnmarshallExeption("impossible de creer le constructeur pour le type " + type.getName(), e);
+			throw new ConstructorException("impossible de creer le constructeur pour le type " + type.getName(), e);
 		}
 	}
 

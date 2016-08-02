@@ -64,7 +64,7 @@ public class HeaderSimpleType<T> extends Header<T> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <U> Header<U> getHeader(U o) throws MarshallExeption{
+	public static <U> Header<U> getHeader(U o){
 		if(o == null)
 			return (Header<U>) nullHeader;
 		if(Boolean.class.isInstance(o))

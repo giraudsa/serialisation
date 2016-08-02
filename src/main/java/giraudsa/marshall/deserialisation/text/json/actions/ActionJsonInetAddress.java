@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
-import giraudsa.marshall.exception.UnmarshallExeption;
+import giraudsa.marshall.exception.InstanciationException;
 
 public class ActionJsonInetAddress<T extends InetAddress> extends ActionJsonSimpleComportement<T> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ActionJsonInetAddress.class);
@@ -28,12 +28,12 @@ public class ActionJsonInetAddress<T extends InetAddress> extends ActionJsonSimp
 	}
 	
 	@Override
-	protected void rempliData(String donnees) throws UnmarshallExeption {
+	protected void rempliData(String donnees) throws InstanciationException  {
 		try {
 			obj = InetAddress.getByName(donnees);
 		} catch (UnknownHostException e) {
 			LOGGER.error("unknown host destination : "+ donnees, e);
-			throw new UnmarshallExeption("unknown host destination : "+ donnees, e);
+			throw new InstanciationException("unknown host destination : "+ donnees, e);
 		}
 	}
 

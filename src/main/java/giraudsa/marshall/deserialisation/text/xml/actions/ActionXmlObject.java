@@ -3,6 +3,8 @@ package giraudsa.marshall.deserialisation.text.xml.actions;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
+import giraudsa.marshall.exception.EntityManagerImplementationException;
+import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.util.HashMap;
@@ -35,7 +37,7 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	protected  void construitObjet() throws IllegalAccessException, UnmarshallExeption {
+	protected  void construitObjet() throws EntityManagerImplementationException, InstanciationException{
 		obj = getObject(dicoNomChampToValue.get(ChampUid.UID_FIELD_NAME).toString(), type);
 		if(obj == null)
 			return;

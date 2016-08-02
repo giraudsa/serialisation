@@ -5,6 +5,7 @@ import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.ActionXml;
 import giraudsa.marshall.deserialisation.text.xml.XmlEscapeUtil;
 import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
+import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.lang.reflect.InvocationTargetException;
@@ -32,8 +33,13 @@ public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 	}
 
 	@Override
-	protected void construitObjet() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException {
-		obj = type.getConstructor(String.class).newInstance(unescapeXml(sb.toString()));
+	protected void construitObjet() throws InstanciationException{
+		try {
+			obj = type.getConstructor(String.class).newInstance(unescapeXml(sb.toString()));
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			throw new InstanciationException("impossible d'instancier un objet de type " + type 
+					+ " avec la valeur " + System.lineSeparator() +  unescapeXml(sb.toString()), e);
+		}
 	}
 
 	@Override

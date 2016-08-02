@@ -85,8 +85,16 @@ public abstract class ActionAbstrait<T> {
 		}
 	}
 	
-	protected boolean isCompleteMarshalling(Marshaller marshaller){ //ignore relation
-		return marshaller.isCompleteSerialisation;
+	protected boolean strategieSerialiseTout(Marshaller marshaller, FieldInformations fieldInformations) {
+		return marshaller.getStrategie().serialiseTout(marshaller.getProfondeur(), fieldInformations);
+	}
+	
+	protected void diminueProfondeur(Marshaller marshaller) {
+		marshaller.diminueProfondeur();
+	}
+	
+	protected void augmenteProdondeur(Marshaller marshaller){
+		marshaller.augmenteProdondeur();
 	}
 	
 	protected abstract class Comportement {

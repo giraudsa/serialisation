@@ -4,6 +4,7 @@ import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.json.ActionJson;
 import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
+import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.Constants;
 
@@ -40,11 +41,11 @@ public class ActionJsonSimpleComportement<T> extends ActionJson<T> {
 	}
 	
 	@Override
-	protected void rempliData(String donnees) throws UnmarshallExeption {
+	protected void rempliData(String donnees) throws InstanciationException{
 		try {
 			obj = type.getConstructor(String.class).newInstance(donnees);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-			throw new UnmarshallExeption("impossible de trouver un constructeur avec un string pour le type " + type.getName(), e);
+			throw new InstanciationException("impossible de trouver un constructeur avec un string pour le type " + type.getName(), e);
 		}
 	}
 	

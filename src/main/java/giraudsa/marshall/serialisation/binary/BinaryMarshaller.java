@@ -38,8 +38,11 @@ import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryLocale;
 import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryLong;
 import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryShort;
 import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryVoid;
+import giraudsa.marshall.strategie.StrategieDeSerialisation;
+import giraudsa.marshall.strategie.StrategieParComposition;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -69,6 +72,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import utils.Constants;
 import utils.TypeExtension;
 import utils.champ.FakeChamp;
 
@@ -122,16 +126,28 @@ public class BinaryMarshaller extends Marshaller{
 	private int compteurUuid = 1;
 	private int compteurDate = 1;
 	private int compteurString = 1;
-	private BinaryMarshaller(DataOutputStream  output, boolean isCompleteSerialisation) throws IOException {
-		super(isCompleteSerialisation);
+	private BinaryMarshaller(DataOutputStream  output, StrategieDeSerialisation strategie) throws IOException, MarshallExeption {
+		super(strategie);
 		this.output = output;
-		writeBoolean(isCompleteSerialisation);
+		writeSpecialisation();
+	}
+	private void writeSpecialisation() throws IOException, MarshallExeption {
+		byte firstByte = Constants.getFirstByte(strategie);
+		writeByte(firstByte);
+		if(firstByte == Constants.STRATEGIE_INCONNUE){
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			toCompleteBinary(strategie, out);
+			writeByteArray(out.toByteArray());
+		}
+	}
+	public static <U> void toBinary(U obj, OutputStream  output) throws MarshallExeption{
+		toBinary(obj, output, new StrategieParComposition());
 	}
 
 	/////METHODES STATICS PUBLICS
-	public static <U> void toBinary(U obj, OutputStream  output) throws MarshallExeption{
+	public static <U> void toBinary(U obj, OutputStream  output, StrategieDeSerialisation strategie) throws MarshallExeption{
 		try(DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(output))){
-			BinaryMarshaller v = new BinaryMarshaller(stream, false);
+			BinaryMarshaller v = new BinaryMarshaller(stream, strategie);
 			v.marshall(obj);
 			stream.flush();
 		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
@@ -142,7 +158,7 @@ public class BinaryMarshaller extends Marshaller{
 
 	public static <U> void toCompleteBinary(U obj, OutputStream  output) throws MarshallExeption{
 		try(DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(output))){
-			BinaryMarshaller v = new BinaryMarshaller(stream,true);
+			BinaryMarshaller v = new BinaryMarshaller(stream, new StrategieParComposition());
 			v.marshall(obj);
 			stream.flush();
 		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {

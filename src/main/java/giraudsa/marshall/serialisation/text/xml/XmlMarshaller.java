@@ -19,6 +19,9 @@ import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlSimpleComportem
 import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlUri;
 import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlUrl;
 import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlVoid;
+import giraudsa.marshall.strategie.StrategieDeSerialisation;
+import giraudsa.marshall.strategie.StrategieParComposition;
+import giraudsa.marshall.strategie.StrategieSerialisationComplete;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -94,14 +97,22 @@ public class XmlMarshaller extends TextMarshaller {
 	//info id universal
 	private boolean isWrittenUniversal = false;
 	//////CONSTRUCTEUR
-	private XmlMarshaller(Writer output, boolean isCompleteSerialisation) throws IOException {
-		super(output, isCompleteSerialisation, ConfigurationMarshalling.getDateFormatXml());
+	private XmlMarshaller(Writer output, StrategieDeSerialisation strategie) throws IOException {
+		super(output, ConfigurationMarshalling.getDateFormatXml(), strategie);
 		writeHeader();
 	}
 	/////METHODES STATICS PUBLICS
 	public static <U> void toXml(U obj, Writer output) throws MarshallExeption {
+		toXml(obj, output, new StrategieParComposition());
+	}
+	
+	public static <U> String toXml(U obj) throws MarshallExeption{
+		return toXml(obj, new StrategieParComposition());
+	}
+	
+	public static <U> void toXml(U obj, Writer output, StrategieDeSerialisation strategie) throws MarshallExeption {
 		try {
-			XmlMarshaller v = new XmlMarshaller(output, false);
+			XmlMarshaller v = new XmlMarshaller(output, strategie);
 			v.marshall(obj);
 		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
 			LOGGER.error("impossible de sérialiser " + obj.toString(), e);
@@ -109,9 +120,9 @@ public class XmlMarshaller extends TextMarshaller {
 		}
 		
 	}
-	public static <U> String toXml(U obj) throws MarshallExeption{
+	public static <U> String toXml(U obj, StrategieDeSerialisation strategie) throws MarshallExeption{
 		try(StringWriter sw = new StringWriter()){
-			toXml(obj, sw);
+			toXml(obj, sw, strategie);
 			return sw.toString();
 		} catch (IOException e) {
 			LOGGER.error("impossible de sérialiser en String " + obj.toString(), e);
@@ -120,7 +131,7 @@ public class XmlMarshaller extends TextMarshaller {
 	}
 	public static <U> void toCompleteXml(U obj, Writer output) throws MarshallExeption{
 		try {
-			XmlMarshaller v = new XmlMarshaller(output, true);
+			XmlMarshaller v = new XmlMarshaller(output, new StrategieSerialisationComplete());
 			v.marshall(obj);
 		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
 			LOGGER.error("impossible de sérialiser completement " + obj.toString(), e);
@@ -179,18 +190,18 @@ public class XmlMarshaller extends TextMarshaller {
 	
 	protected void prettyPrintOpenTag() throws IOException {
 		writer.write(System.lineSeparator());
-		for(int j = 0; j < niveau ; j++){
+		for(int j = 0; j < profondeur ; j++){
 			writer.write("   ");
 		}
-		++niveau;
+		++profondeur;
 		lastIsOpen = true;
 	}
 	
 	protected void prettyPrintCloseTag() throws IOException {
-		--niveau;
+		--profondeur;
 		if(!lastIsOpen){
 			writer.write(System.lineSeparator());
-			for(int j = 0; j < niveau ; j++){
+			for(int j = 0; j < profondeur ; j++){
 				writer.write("   ");
 			}
 		}

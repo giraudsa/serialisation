@@ -1,6 +1,5 @@
 package giraudsa.marshall.serialisation.binary.actions;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
@@ -15,9 +14,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 @SuppressWarnings("rawtypes")
@@ -39,13 +36,13 @@ public class ActionBinaryCollectionType extends ActionBinary<Collection> {
 		
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		if (!isDejaVu){
-			if(isCompleteMarshalling(marshaller) || fieldInformations.getRelation()==TypeRelation.COMPOSITION)
+			if(strategieSerialiseTout(marshaller, fieldInformations))
 				setDejaTotalementSerialise(marshaller, obj);
 			writeInt(marshaller, obj.size());
 			for (Object value : obj) {
 				tmp.push(traiteChamp(marshaller, value, fakeChamp));
 			}
-		}else if(!isCompleteMarshalling(marshaller) && fieldInformations.getRelation() == TypeRelation.COMPOSITION){//deja vu, donc on passe ici qd la relation est de type COMPOSITION
+		}else if(!isDejaTotalementSerialise(marshaller, obj) && strategieSerialiseTout(marshaller, fieldInformations)){
 			setDejaTotalementSerialise(marshaller, obj);
 			for(Object value : obj){
 				tmp.push(traiteChamp(marshaller, value, fakeChamp));

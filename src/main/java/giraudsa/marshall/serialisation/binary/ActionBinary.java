@@ -94,6 +94,8 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	@Override protected void marshall(Marshaller marshaller, Object objetASerialiser, FieldInformations fieldInformation) throws MarshallExeption{
 		try {
 			boolean isDejaVu = writeHeaders(marshaller, (T) objetASerialiser, fieldInformation);
+			augmenteProdondeur(marshaller);
+			pushComportement(marshaller, new ComportementDiminueProfondeur());
 			ecritValeur(marshaller, (T) objetASerialiser, fieldInformation, isDejaVu);
 		} catch (MarshallExeption | IOException | IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
 			LOGGER.error("problème à la sérialisation de l'objet " + objetASerialiser.toString(), e);
@@ -144,5 +146,13 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	@Override
 	protected <V> boolean aTraiter(Marshaller marshaller, V value, FieldInformations f){
 		return true;
+	}
+	
+	protected class ComportementDiminueProfondeur extends Comportement{
+		
+		@Override
+		protected void evalue(Marshaller marshaller){
+			diminueProfondeur(marshaller);
+		}
 	}
 }

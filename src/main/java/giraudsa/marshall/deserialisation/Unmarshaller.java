@@ -1,29 +1,24 @@
 package giraudsa.marshall.deserialisation;
 
+import giraudsa.marshall.exception.EntityManagerImplementationException;
+import giraudsa.marshall.exception.FabriqueInstantiationException;
+import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
-import giraudsa.marshall.exception.UnmarshallExeption;
-
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.rmi.UnmarshalException;
-import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import utils.Constants;
 
 
 public abstract class Unmarshaller<T> {
-	private static final Logger LOGGER = LoggerFactory.getLogger(Unmarshaller.class);
 	private final Fabrique fabrique;
 	protected T obj;
 	protected final EntityManager entity;
 	protected final Deque<ActionAbstrait<?>> pileAction = new ArrayDeque<>();
 	protected CacheObject  cacheObject;
 
-	protected Unmarshaller(EntityManager entity) throws ClassNotFoundException, IOException, UnmarshallExeption {
+	protected Unmarshaller(EntityManager entity) throws FabriqueInstantiationException {
 		this.entity = entity;
 		fabrique = Fabrique.getInstance();
 		cacheObject = new CacheEmpty();
@@ -43,7 +38,7 @@ public abstract class Unmarshaller<T> {
 
 
 	@SuppressWarnings( { "unchecked", "rawtypes" })
-	protected <U> ActionAbstrait getAction(Class<U> type) throws NotImplementedSerializeException, IllegalAccessException  {
+	protected <U> ActionAbstrait getAction(Class<U> type) throws NotImplementedSerializeException  {
 		Map<Class<?>, ActionAbstrait<?>> actions = getdicoTypeToAction();
 		ActionAbstrait behavior = null;
 		if (type != null) {
@@ -87,19 +82,20 @@ public abstract class Unmarshaller<T> {
 	}
 	
 
-    <W> W getObject(String id, Class<W> type) throws IllegalAccessException, UnmarshallExeption{
-		if (id == null) 
-			return newInstance(type);
+    <W> W getObject(String id, Class<W> type) throws EntityManagerImplementationException, InstanciationException{
+		if (id == null){
+			W ret = newInstance(type);
+			if((type != void.class || type != Void.class)  && ret == null){
+				throw new EntityManagerImplementationException("Le contrat d'interface n'est pas remplie, l'objet récupéré est null pour le type " + type, new NullPointerException());
+			}
+			return ret;
+		}
 		W objet = cacheObject.getObject(type, id);
 		if(objet == null){
 			if(entity != null){
-				try {
-					objet = entity.findObjectOrCreate(id, type,true);
-					if (objet == null){
-						throw new UnmarshallExeption("Le contrat d'interface n'est pas remplie, l'objet récupéré est null", new NullPointerException());
-					}
-				} catch (InstantiationException e) {
-					throw new UnmarshallExeption("problème dans la déserialisation", e);
+				objet = entity.findObjectOrCreate(id, type,true);
+				if((type != void.class || type != Void.class)  && objet == null){
+					throw new EntityManagerImplementationException("Le contrat d'interface n'est pas remplie, l'objet récupéré est null pour le type " + type, new NullPointerException());
 				}
 			}else{
 				objet = newInstance(type);
@@ -114,11 +110,11 @@ public abstract class Unmarshaller<T> {
 		return Class.forName(Constants.getNameType(smallNameType));
 	}
 
-	<W> W newInstance(Class<W> type) throws UnmarshallExeption {
+	<W> W newInstance(Class<W> type) throws InstanciationException {
 		return fabrique.newObject(type);
 	}
 	
-	protected <W> W  createInstance(Class<W> type) throws UnmarshallExeption {
+	protected <W> W  createInstance(Class<W> type) throws InstanciationException{
 		return fabrique.newObject(type);
 	}
 	
@@ -127,14 +123,14 @@ public abstract class Unmarshaller<T> {
 	}
 
 	
-	protected <W> void integreObjet(ActionAbstrait<?> action, String nom, W objet) throws IllegalAccessException, UnmarshallExeption {
+	protected <W> void integreObjet(ActionAbstrait<?> action, String nom, W objet) throws IllegalAccessException, EntityManagerImplementationException, InstanciationException{
 		action.integreObjet(nom, objet);
 	}
-	protected void rempliData(ActionAbstrait<?> action, String donnees) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ParseException, UnmarshallExeption {
+	protected void rempliData(ActionAbstrait<?> action, String donnees) throws InstanciationException{
 		action.rempliData(donnees);
 		
 	}
-	protected void construitObjet(ActionAbstrait<?> action) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException {
+	protected void construitObjet(ActionAbstrait<?> action) throws EntityManagerImplementationException, InstanciationException{
 		action.construitObjet();
 	}
 	

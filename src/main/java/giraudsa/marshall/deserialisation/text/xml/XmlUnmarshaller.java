@@ -34,6 +34,9 @@ import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlString;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlUUID;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlVoid;
 import giraudsa.marshall.exception.BadTypeUnmarshallException;
+import giraudsa.marshall.exception.EntityManagerImplementationException;
+import giraudsa.marshall.exception.FabriqueInstantiationException;
+import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
@@ -107,7 +110,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	/////ATTRIBUTS
 	private boolean isFirst = true;
     /////CONSTRUCTEUR
-	private XmlUnmarshaller(Reader reader, EntityManager entity) throws ClassNotFoundException, IOException, UnmarshallExeption {
+	private XmlUnmarshaller(Reader reader, EntityManager entity) throws FabriqueInstantiationException {
 		super(reader, entity, ConfigurationMarshalling.getDateFormatXml());
 	}
 	//////METHODES STATICS PUBLICS
@@ -116,7 +119,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		try {
 			w = new XmlUnmarshaller<>(reader, entity);
 			return w.parse();
-		} catch (ClassNotFoundException | IOException | SAXException e) {
+		} catch (IOException | SAXException | FabriqueInstantiationException e) {
 			LOGGER.error("Impossible de désérialiser", e);
 			throw new UnmarshallExeption("Impossible de désérialiser", e);
 		}
@@ -178,7 +181,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	}
 
 	/////XML EVENT
-	protected void startElement(String qName, Attributes attributes) throws ClassNotFoundException, BadTypeUnmarshallException, IllegalAccessException, NotImplementedSerializeException {
+	protected void startElement(String qName, Attributes attributes) throws ClassNotFoundException, BadTypeUnmarshallException, NotImplementedSerializeException{
 		setCache(attributes);
 		Class<?> type = getType(attributes, qName);
 		isFirst = false;
@@ -198,12 +201,12 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		}
 	}
 	
-	protected void characters(String donnees) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ParseException, UnmarshallExeption {
+	protected void characters(String donnees) throws InstanciationException{
 		rempliData(getActionEnCours(), donnees);
 	}
 
 	@SuppressWarnings("unchecked") 
-	protected void endElement() throws InvocationTargetException, ClassNotFoundException, NoSuchMethodException, IOException, NotImplementedSerializeException, IllegalAccessException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException {
+	protected void endElement() throws EntityManagerImplementationException, InstanciationException, IllegalAccessException{
 		construitObjet(getActionEnCours());
 		ActionXml<?> actionATraiter = (ActionXml<?>) pileAction.pop();
 		if(pileAction.isEmpty()){

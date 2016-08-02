@@ -10,6 +10,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import giraudsa.marshall.exception.UnmarshallExeption;
+import giraudsa.marshall.strategie.StrategieDeSerialisation;
+import giraudsa.marshall.strategie.StrategieParComposition;
+import giraudsa.marshall.strategie.StrategieParCompositionOuAgregationEtClasseConcrete;
+import giraudsa.marshall.strategie.StrategieSerialisationComplete;
+
 public class Constants {
 	
 	@SuppressWarnings("rawtypes")
@@ -18,6 +24,7 @@ public class Constants {
 	
 	private static final Map<String, String> dicoSimpleNameToName = new HashMap<>();
 	private static final Map<Class<?>, String> dicoClassToSimpleName = new HashMap<>();
+	private static MapDoubleSens<Byte, Class<? extends StrategieDeSerialisation>> byteToStrategie = new MapDoubleSens<>();
 	
 	public static final Class<?> dictionaryType = Map.class;
 	public static final Class<?> collectionType = Collection.class;
@@ -50,6 +57,8 @@ public class Constants {
 	private static final String VOID_TYPE = "void";
 	
 	public static final byte IS_NULL = (byte) 0x00;//0b 0000 0000
+	public static final byte STRATEGIE_INCONNUE = (byte)254;
+	public static final byte SERIALISATION_COMPLETE = (byte) 0x00;
 	
 	private Constants(){
 		//private constructueur to hide implicit public one
@@ -90,6 +99,10 @@ public class Constants {
 		dicoClassToSimpleName.put(String.class, STRING_TYPE);
 		dicoClassToSimpleName.put(Date.class, DATE_TYPE);
 		dicoClassToSimpleName.put(Void.class, VOID_TYPE);
+		
+		byteToStrategie.put(SERIALISATION_COMPLETE, StrategieSerialisationComplete.class);
+		byteToStrategie.put((byte)1, StrategieParComposition.class);
+		byteToStrategie.put((byte)2, StrategieParCompositionOuAgregationEtClasseConcrete.class);
 	}
 	
 	public static String getSmallNameType(Class<?> clazz){
@@ -104,5 +117,21 @@ public class Constants {
 		if (typeName == null) 
 			typeName = smallName;
 		return typeName;
+	}
+	
+	public static byte getFirstByte(StrategieDeSerialisation strategie){
+		if(!byteToStrategie.containsValue(strategie.getClass()))
+			return STRATEGIE_INCONNUE;
+		else return byteToStrategie.getReverse(strategie.getClass());
+	}
+	
+	public static StrategieDeSerialisation getStrategie(byte firstByte) throws UnmarshallExeption{
+		if(firstByte == STRATEGIE_INCONNUE)
+			return null;
+		try {
+			return byteToStrategie.get(firstByte).newInstance();
+		} catch (InstantiationException | IllegalAccessException e) {
+			throw new UnmarshallExeption("impossible d'instancier la strategie de deserialisation", e);
+		}
 	}
 }

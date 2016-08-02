@@ -5,6 +5,8 @@ import utils.champ.FieldInformations;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 
+import giraudsa.marshall.exception.EntityManagerImplementationException;
+import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 public abstract class ActionAbstrait<T> {
@@ -22,14 +24,14 @@ public abstract class ActionAbstrait<T> {
 	@SuppressWarnings("rawtypes")
 	public abstract <U extends T>  ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller);
 
-	protected abstract void construitObjet() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption, InstantiationException, IllegalArgumentException, SecurityException;
+	protected abstract void construitObjet() throws EntityManagerImplementationException, InstanciationException;
 
 
-	protected <W> W getObject(String id, Class<W> type) throws IllegalAccessException, UnmarshallExeption{
+	protected <W> W getObject(String id, Class<W> type) throws EntityManagerImplementationException, InstanciationException{
 		return unmarshaller.getObject(id, type);
 	}
 	
-	protected T newInstanceOfType() throws UnmarshallExeption{
+	protected T newInstanceOfType() throws InstanciationException{
 		return unmarshaller.newInstance(type);
 	}
 
@@ -37,8 +39,8 @@ public abstract class ActionAbstrait<T> {
 		return obj;
 	}
 
-	protected abstract <W> void integreObjet(String nomAttribut, W objet) throws IllegalAccessException, UnmarshallExeption;
-	protected abstract void rempliData(String donnees) throws ParseException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, UnmarshallExeption;
+	protected abstract <W> void integreObjet(String nomAttribut, W objet) throws EntityManagerImplementationException, InstanciationException, IllegalAccessException;
+	protected abstract void rempliData(String donnees) throws InstanciationException;
 
 	protected boolean isUniversalId() {
 		return true;

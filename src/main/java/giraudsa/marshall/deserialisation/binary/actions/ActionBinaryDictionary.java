@@ -1,16 +1,16 @@
 package giraudsa.marshall.deserialisation.binary.actions;
 
-import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.ActionBinary;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
+import giraudsa.marshall.exception.EntityManagerImplementationException;
+import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.champ.FakeChamp;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,7 +45,7 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 	
 	@Override
 	protected void initialise() throws UnmarshallExeption, IOException{
-		if (isDejaVu() && !isDeserialisationComplete() && fieldInformations.getRelation() == TypeRelation.COMPOSITION){
+		if (isDejaVu() && !isDejaTotalementDeSerialise() && strategieDeSerialiseTout()){
 			obj = getObjet();
 			setDejaTotalementDeSerialise();
 			tailleCollection = ((Map)obj).size();
@@ -56,7 +56,7 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 		}else if(!isDejaVu()){
 			obj = newInstance();
 			stockeObjetId();
-			if(isDeserialisationComplete() || fieldInformations.getRelation() == TypeRelation.COMPOSITION)
+			if(strategieDeSerialiseTout())
 				setDejaTotalementDeSerialise();
 			tailleCollection = readInt();
 			deserialisationFini = index >= tailleCollection;
@@ -100,7 +100,7 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 
 
 	@Override
-	public void deserialisePariellement() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption{
+	public void deserialisePariellement() throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException {
 		if(!deserialisationFini){
 			if(clefTampon == null) 
 				litObject(fakeChampKey);
@@ -116,7 +116,7 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void integreObjet(String name, Object objet) throws IllegalAccessException, UnmarshallExeption{
+	protected void integreObjet(String name, Object objet) throws IllegalAccessException, EntityManagerImplementationException, InstanciationException{
 		if(clefTampon == null) 
 			clefTampon = objet;
 		else if(((Collection)obj).size() < index){

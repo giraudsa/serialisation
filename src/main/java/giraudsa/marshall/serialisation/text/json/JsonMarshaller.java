@@ -23,6 +23,10 @@ import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonString
 import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonUri;
 import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonUrl;
 import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonVoid;
+import giraudsa.marshall.strategie.StrategieDeSerialisation;
+import giraudsa.marshall.strategie.StrategieParComposition;
+import giraudsa.marshall.strategie.StrategieSerialisationComplete;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -98,15 +102,23 @@ public class JsonMarshaller extends TextMarshaller {
 	private boolean isFirst = true;
 	
 	// ///CONSTRUCTEUR
-	private JsonMarshaller(Writer output, boolean isCompleteSerialisation) throws IOException {
-		super(output, isCompleteSerialisation, ConfigurationMarshalling.getDatFormatJson());
+	private JsonMarshaller(Writer output, StrategieDeSerialisation strategie) throws IOException {
+		super(output, ConfigurationMarshalling.getDatFormatJson(), strategie);
 		clefType = ConfigurationMarshalling.getEstIdUniversel() ? Constants.CLEF_TYPE_ID_UNIVERSEL : Constants.CLEF_TYPE;
 	}
 
 	// /////METHODES PUBLIQUES STATIQUES
 	public static <U> void toJson(U obj, Writer output) throws MarshallExeption {
+		toJson(obj, output, new StrategieParComposition());
+	}
+	
+	public static <U> String toJson(U obj) throws MarshallExeption{
+		return toJson(obj, new StrategieParComposition());
+	}
+	
+	public static <U> void toJson(U obj, Writer output, StrategieDeSerialisation strategie) throws MarshallExeption {
 		try {
-			JsonMarshaller v = new JsonMarshaller(output, false);
+			JsonMarshaller v = new JsonMarshaller(output, strategie);
 			v.marshall(obj);
 		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
 			LOGGER.debug("probleme de sérialisation json de " + obj.toString(), e);
@@ -114,9 +126,9 @@ public class JsonMarshaller extends TextMarshaller {
 		}
 	}
 
-	public static <U> String toJson(U obj) throws MarshallExeption{
+	public static <U> String toJson(U obj, StrategieDeSerialisation strategie) throws MarshallExeption{
 		try (StringWriter sw = new StringWriter()) {
-			toJson(obj, sw);
+			toJson(obj, sw, strategie);
 			return sw.toString();
 		} catch (IOException e) {
 			LOGGER.debug("Problème à la création d'un StringWriter", e);
@@ -125,7 +137,7 @@ public class JsonMarshaller extends TextMarshaller {
 	}
 	public static <U> void toCompleteJson(U obj, Writer output) throws MarshallExeption{
 		try {
-			JsonMarshaller v = new JsonMarshaller(output, true);
+			JsonMarshaller v = new JsonMarshaller(output, new StrategieSerialisationComplete());
 			v.marshall(obj);
 		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
 			LOGGER.debug("probleme de sérialisation complète en json de " + obj.toString(), e);
@@ -178,12 +190,12 @@ public class JsonMarshaller extends TextMarshaller {
 	}
 
 	protected void ouvreAccolade() throws IOException {
-		++niveau;
+		++profondeur;
 		writer.write("{");
 	}
 
 	protected void fermeAccolade() throws IOException {
-		--niveau;
+		--profondeur;
 		if(isPrettyPrint()){
 			aLaLigne();
 		}
@@ -191,12 +203,12 @@ public class JsonMarshaller extends TextMarshaller {
 	}
 
 	protected void ouvreCrochet() throws IOException {
-		++niveau;
+		++profondeur;
 		writer.write("[");
 	}
 
 	protected void fermeCrochet() throws IOException {
-		niveau--;
+		profondeur--;
 		if(isPrettyPrint()){
 			aLaLigne();
 		}
@@ -210,7 +222,7 @@ public class JsonMarshaller extends TextMarshaller {
 			return;
 		}
 		writer.write(System.lineSeparator());
-		for(int j = 0; j < niveau; j++){
+		for(int j = 0; j < profondeur; j++){
 			writer.write("   ");
 		}
 	}

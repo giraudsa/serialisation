@@ -1,8 +1,5 @@
 package giraudsa.marshall.deserialisation.text.xml.actions;
 
-import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
-
 import giraudsa.marshall.deserialisation.text.xml.ActionXml;
 import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 
@@ -13,8 +10,7 @@ public abstract class ActionXmlComplexeObject<T> extends ActionXml<T> {
 	}
 
 	@Override
-	protected void rempliData(String donnees) throws ParseException, IllegalAccessException,
-			InvocationTargetException, NoSuchMethodException {
+	protected void rempliData(String donnees) {
 		//Rien a faire
 	}
 

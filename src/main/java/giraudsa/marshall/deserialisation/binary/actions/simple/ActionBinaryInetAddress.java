@@ -3,8 +3,6 @@ package giraudsa.marshall.deserialisation.binary.actions.simple;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
-import giraudsa.marshall.exception.UnmarshallExeption;
-
 import java.io.IOException;
 import java.net.InetAddress;
 
@@ -26,7 +24,7 @@ public class ActionBinaryInetAddress<T extends InetAddress> extends ActionBinary
 	}
 	
 	@Override
-	protected void initialise() throws IOException, UnmarshallExeption{
+	protected void initialise() throws IOException{
 		if(isDejaVu())
 			obj = getObjet();
 		else{

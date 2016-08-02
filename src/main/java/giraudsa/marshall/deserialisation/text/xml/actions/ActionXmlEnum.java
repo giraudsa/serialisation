@@ -33,6 +33,7 @@ public class ActionXmlEnum<T extends Enum> extends ActionXml<T>  {
 			}
 		} catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			LOGGER.error("T n'est pas un Enum... étrange", e);
+			throw new NullPointerException();
 		} 
 	}
 
@@ -46,7 +47,7 @@ public class ActionXmlEnum<T extends Enum> extends ActionXml<T>  {
 	}
 
 	@Override
-	protected void rempliData(String donnees) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	protected void rempliData(String donnees){
 		sb.append(donnees);
 	}
 	

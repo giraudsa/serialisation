@@ -4,8 +4,8 @@ import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.json.ActionJson;
 import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
-import giraudsa.marshall.exception.UnmarshallExeption;
-
+import giraudsa.marshall.exception.EntityManagerImplementationException;
+import giraudsa.marshall.exception.InstanciationException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -52,7 +52,7 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void construitObjet() throws IllegalAccessException, UnmarshallExeption{
+	protected void construitObjet() throws EntityManagerImplementationException, InstanciationException{
 		String id = dicoNomChampToValue.get(ChampUid.UID_FIELD_NAME).toString();
 		obj = getObject(id, type);
 		if (obj == null) 

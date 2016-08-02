@@ -4,6 +4,7 @@ import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
+import giraudsa.marshall.strategie.StrategieDeSerialisation;
 import utils.ConfigurationMarshalling;
 import utils.champ.FakeChamp;
 import java.io.IOException;
@@ -17,18 +18,16 @@ public abstract class TextMarshaller extends Marshaller {
 	protected final DateFormat df;
 	protected final boolean isUniversalId;
 	
-	//prettyPrint 
-	protected int niveau = 0;
+	//prettyPrint
 	protected boolean lastIsOpen = false;
 	
 	
-	protected TextMarshaller(Writer writer, boolean isCompleteSerialisation, SimpleDateFormat dateFormat) {
-		super(isCompleteSerialisation);
+	protected TextMarshaller(Writer writer, SimpleDateFormat dateFormat, StrategieDeSerialisation strategie) {
+		super(strategie);
 		this.writer = writer;
 		df = new SimpleDateFormat(dateFormat.toPattern());
 		df.setTimeZone(dateFormat.getTimeZone());
 		this.isUniversalId = ConfigurationMarshalling.getEstIdUniversel();
-		
 	}
 
 	protected void write(String string) throws IOException {
@@ -55,5 +54,4 @@ public abstract class TextMarshaller extends Marshaller {
 	protected boolean isPrettyPrint(){
 		return ConfigurationMarshalling.isPrettyPrint();
 	}
-
 }
