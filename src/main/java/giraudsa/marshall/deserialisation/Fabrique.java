@@ -9,6 +9,7 @@ import java.util.Map;
 import giraudsa.marshall.exception.ConstructorException;
 import giraudsa.marshall.exception.FabriqueInstantiationException;
 import giraudsa.marshall.exception.InstanciationException;
+import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 public class Fabrique {

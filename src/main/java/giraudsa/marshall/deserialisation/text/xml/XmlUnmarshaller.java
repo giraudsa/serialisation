@@ -14,7 +14,6 @@ import utils.ConfigurationMarshalling;
 import utils.TypeExtension;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.EntityManager;
-import giraudsa.marshall.deserialisation.Fabrique;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlArrayType;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlAtomicIntegerArray;
@@ -33,7 +32,6 @@ import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlSimpleComport
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlString;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlUUID;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlVoid;
-import giraudsa.marshall.exception.BadTypeUnmarshallException;
 import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.FabriqueInstantiationException;
 import giraudsa.marshall.exception.InstanciationException;
@@ -42,13 +40,11 @@ import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.io.*;
 import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
-import java.text.ParseException;
 import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Collection;
@@ -64,6 +60,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
+
+import javax.management.modelmbean.InvalidTargetObjectTypeException;
 
 public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	private static final Logger LOGGER = LoggerFactory.getLogger(XmlUnmarshaller.class);
@@ -155,7 +153,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		return obj;
 	}
 
-	private Class<?> getType(Attributes attributes, String nomAttribut) throws ClassNotFoundException, BadTypeUnmarshallException {
+	private Class<?> getType(Attributes attributes, String nomAttribut) throws ClassNotFoundException, InvalidTargetObjectTypeException {
 		Class<?> typeToUnmarshall;
 		String typeEcrit = attributes.getValue("type");
 		if(typeEcrit != null){
@@ -170,18 +168,18 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> void checkType(Class<T> typeToUnmarshall) throws BadTypeUnmarshallException {
+	private <T> void checkType(Class<T> typeToUnmarshall) throws InvalidTargetObjectTypeException {
 		try {
 			U test = (U) createInstance(typeToUnmarshall);
 			test.getClass();
 		} catch (Exception e) {
 			LOGGER.error("le type attendu n'est pas celui du XML ou n'est pas instanciable", e);
-			throw new BadTypeUnmarshallException("not instanciable from " + typeToUnmarshall.getName(), e);
+			throw new InvalidTargetObjectTypeException(e, "not instanciable from " + typeToUnmarshall.getName());
 		}
 	}
 
 	/////XML EVENT
-	protected void startElement(String qName, Attributes attributes) throws ClassNotFoundException, BadTypeUnmarshallException, NotImplementedSerializeException{
+	protected void startElement(String qName, Attributes attributes) throws ClassNotFoundException, NotImplementedSerializeException, InvalidTargetObjectTypeException{
 		setCache(attributes);
 		Class<?> type = getType(attributes, qName);
 		isFirst = false;

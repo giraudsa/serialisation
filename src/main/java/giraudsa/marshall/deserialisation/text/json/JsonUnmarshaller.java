@@ -20,7 +20,6 @@ import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonObject;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonSimpleComportement;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonUUID;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonVoid;
-import giraudsa.marshall.exception.BadFormatException;
 import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.FabriqueInstantiationException;
 import giraudsa.marshall.exception.InstanciationException;
@@ -53,6 +52,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.zip.DataFormatException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,7 +118,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		try {
 			JsonUnmarshaller<U> w = new JsonUnmarshaller<>(reader, entity);
 			return w.parse();
-		} catch ( BadFormatException | FabriqueInstantiationException | ClassNotFoundException | IOException | EntityManagerImplementationException | InstanciationException | NotImplementedSerializeException | JsonHandlerException | IllegalAccessException e) {
+		} catch ( FabriqueInstantiationException | ClassNotFoundException | IOException | EntityManagerImplementationException | InstanciationException | NotImplementedSerializeException | JsonHandlerException | IllegalAccessException | DataFormatException e) {
 			LOGGER.error("probleme dans la désérialisation JSON", e);
 			throw new UnmarshallExeption("probleme dans la désérialisation JSON",e);
 		}
@@ -145,11 +145,11 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	}
 
 
-	private T parse() throws BadFormatException, ClassNotFoundException, IOException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, JsonHandlerException, UnmarshallExeption, IllegalAccessException {
+	private T parse() throws ClassNotFoundException, IOException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, JsonHandlerException, UnmarshallExeption, IllegalAccessException, DataFormatException {
 		JsonUnmarshallerHandler handler = new JsonUnmarshallerHandler(this);
 		handler.parse(reader);
 		if(obj == null)
-			throw new BadFormatException("le format n'est pas un json");
+			throw new DataFormatException("le format n'est pas un json");
 		return obj;
 	}
 
