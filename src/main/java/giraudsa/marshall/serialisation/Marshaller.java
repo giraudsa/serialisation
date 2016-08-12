@@ -33,7 +33,7 @@ public abstract class Marshaller {
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected <T> ActionAbstrait getAction(T obj) throws NotImplementedSerializeException {
+	public <T> ActionAbstrait getAction(T obj) throws NotImplementedSerializeException {
 		Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = getDicoTypeToAction();
 		ActionAbstrait action;
 		if (obj == null) {

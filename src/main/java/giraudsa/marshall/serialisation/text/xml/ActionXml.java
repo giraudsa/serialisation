@@ -1,8 +1,10 @@
 package giraudsa.marshall.serialisation.text.xml;
 
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.ActionText;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlObject;
 import utils.champ.FieldInformations;
 
 import java.io.IOException;
@@ -63,6 +65,22 @@ public abstract class ActionXml<T> extends ActionText<T> {
 		return REMPLACEMENT_CHARS;
 	}
 	
+	@Override
+	protected Comportement traiteChamp(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, IllegalAccessException {
+		Object value = fieldInformations.get(obj);
+		if(aTraiter(marshaller, value, fieldInformations)){
+			if(marshaller.getAction(value) instanceof ActionXmlObject && serialiseTout(marshaller, obj, fieldInformations) )
+				return new ComportementIdDansBalise(value, fieldInformations, ecrisSeparateur);
+			return new ComportementMarshallValue(value, fieldInformations, ecrisSeparateur);
+		}
+		return null;
+	}
+	
+	@Override
+	protected Comportement traiteChamp(Marshaller marshaller, Object obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+		return traiteChamp(marshaller, obj, fieldInformations, true);
+	}
+	
 	protected class ComportementOuvreBaliseEtEcrisValeur extends Comportement{
 		private T obj;
 		private String nomBalise;
@@ -97,6 +115,28 @@ public abstract class ActionXml<T> extends ActionText<T> {
 			fermeBalise(marshaller, nomBalise);
 		}
 		
+	}
+	
+	protected class ComportementIdDansBalise extends Comportement{
+
+		private Object value;
+		private FieldInformations fieldInformations;
+		private boolean writeSeparateur;
+		
+		public ComportementIdDansBalise(Object value, FieldInformations fieldInformations, boolean writeSeparateur) {
+			super();
+			this.value = value;
+			this.fieldInformations = fieldInformations;
+			this.writeSeparateur = writeSeparateur;
+		}
+
+		@Override
+		public void evalue(Marshaller marshaller) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
+			if(writeSeparateur)
+					writeSeparator(marshaller);
+			//TODO : methode ouvreBalise Ecris Id ferme Balsie			
+		}
+	
 	}
 	
 
