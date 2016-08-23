@@ -5,12 +5,15 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.ActionText;
 import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlObject;
+import utils.TypeExtension;
+import utils.champ.Champ;
 import utils.champ.FieldInformations;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class ActionXml<T> extends ActionText<T> {
@@ -47,6 +50,11 @@ public abstract class ActionXml<T> extends ActionText<T> {
 
 	protected abstract void ecritValeur(Marshaller marshaller, T obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException;
 
+	private void ouvreBaliseEcritIdFermeBalise(Marshaller marshaller, T obj, String nomBalise, boolean typeDevinable, String id) throws IOException{
+		Class<?> classeAEcrire = classeAEcrire(obj, typeDevinable);
+		getXmlMarshaller(marshaller).openTagAddIdCloseTag(nomBalise, classeAEcrire,id);
+	}
+	
 	private void ouvreBalise(Marshaller marshaller, T obj, String nomBalise, boolean typeDevinable) throws IOException{
 		Class<?> classeAEcrire = classeAEcrire(obj, typeDevinable);
 		getXmlMarshaller(marshaller).openTag(nomBalise, classeAEcrire);
@@ -65,12 +73,13 @@ public abstract class ActionXml<T> extends ActionText<T> {
 		return REMPLACEMENT_CHARS;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	protected Comportement traiteChamp(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, IllegalAccessException {
 		Object value = fieldInformations.get(obj);
 		if(aTraiter(marshaller, value, fieldInformations)){
-			if(marshaller.getAction(value) instanceof ActionXmlObject && serialiseTout(marshaller, obj, fieldInformations) )
-				return new ComportementIdDansBalise(value, fieldInformations, ecrisSeparateur);
+			if(marshaller.getAction(value) instanceof ActionXmlObject && !serialiseTout(marshaller, obj, fieldInformations) )
+				return new ComportementIdDansBalise((T)value, fieldInformations, ecrisSeparateur);
 			return new ComportementMarshallValue(value, fieldInformations, ecrisSeparateur);
 		}
 		return null;
@@ -119,13 +128,13 @@ public abstract class ActionXml<T> extends ActionText<T> {
 	
 	protected class ComportementIdDansBalise extends Comportement{
 
-		private Object value;
+		private T obj;
 		private FieldInformations fieldInformations;
 		private boolean writeSeparateur;
 		
-		public ComportementIdDansBalise(Object value, FieldInformations fieldInformations, boolean writeSeparateur) {
+		public ComportementIdDansBalise(T obj, FieldInformations fieldInformations, boolean writeSeparateur) {
 			super();
-			this.value = value;
+			this.obj = obj;
 			this.fieldInformations = fieldInformations;
 			this.writeSeparateur = writeSeparateur;
 		}
@@ -134,7 +143,14 @@ public abstract class ActionXml<T> extends ActionText<T> {
 		public void evalue(Marshaller marshaller) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
 			if(writeSeparateur)
 					writeSeparator(marshaller);
-			//TODO : methode ouvreBalise Ecris Id ferme Balsie			
+			String nomBalise = fieldInformations.getName();
+			if (nomBalise == null) 
+				nomBalise = getType((T)obj).getSimpleName();
+			boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
+			Class<?> typeObj = (Class<?>) obj.getClass();
+			Champ champId = TypeExtension.getChampId(typeObj);
+			Object id=champId.get(obj);	
+			ouvreBaliseEcritIdFermeBalise(marshaller, obj, nomBalise, typeDevinable,id.toString()); 
 		}
 	
 	}

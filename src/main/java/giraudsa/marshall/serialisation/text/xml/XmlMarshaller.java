@@ -165,6 +165,28 @@ public class XmlMarshaller extends TextMarshaller {
 		}
 		writer.write(">");
 	}
+	
+	protected void openTagAddIdCloseTag(String name, Class<?> type, String id) throws IOException {
+		if(isPrettyPrint()){
+			prettyPrintOpenTag();
+		}
+		writer.write("<");
+		writer.write(name);
+		if(type != null){
+			writeType(type);
+		}
+		if(!isWrittenUniversal){
+			writeInfoUniversal();
+		}
+		writer.write(" id=\"");
+		writer.write(id);
+		writer.write("\"");
+		writer.write("/>");
+		if(isPrettyPrint()){
+			prettyPrintCloseTag();
+		}
+	}
+	
 	private void writeInfoUniversal() throws IOException {
 		isWrittenUniversal = true;
 		boolean isUniversal = ConfigurationMarshalling.getEstIdUniversel();
