@@ -11,6 +11,7 @@ import giraudsa.marshall.exception.UnmarshallExeption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import utils.TypeExtension;
 import utils.champ.Champ;
@@ -34,6 +35,10 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 	@Override
 	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
 		return new ActionXmlObject<>(type, (XmlUnmarshaller<?>)unmarshaller);
+	}
+	
+	public void setId(String id){
+		dicoNomChampToValue.put(ChampUid.UID_FIELD_NAME, UUID.fromString(id));
 	}
 	
 	@SuppressWarnings("unchecked")

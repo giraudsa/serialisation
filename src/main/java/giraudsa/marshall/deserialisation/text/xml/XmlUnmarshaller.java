@@ -12,6 +12,7 @@ import org.xml.sax.helpers.XMLReaderFactory;
 
 import utils.ConfigurationMarshalling;
 import utils.TypeExtension;
+import utils.champ.ChampUid;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
@@ -178,6 +179,17 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 			throw new InvalidTargetObjectTypeException(e, "not instanciable from " + typeToUnmarshall.getName());
 		}
 	}
+	
+	@SuppressWarnings("unchecked")
+	private <T> void setId(Attributes attributes, ActionXml<?> action){
+		if (!(action instanceof ActionXmlObject<?>))
+			return;
+		String id = attributes.getValue("id");
+		if(id != null){
+			ActionXmlObject<T> actionObject = (ActionXmlObject<T>)action;
+			actionObject.setId(id);
+		}
+	}
 
 	/////XML EVENT
 	protected void startElement(String qName, Attributes attributes) throws ClassNotFoundException, NotImplementedSerializeException, InvalidTargetObjectTypeException{
@@ -188,6 +200,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 			ActionXml<?> action = (ActionXml<?>) getAction(type);
 			setNom(action, qName);
 			setFieldInformation(action);
+			setId(attributes, action);
 			pileAction.push(action);
 		}
 	}
