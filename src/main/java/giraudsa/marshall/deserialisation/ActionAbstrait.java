@@ -7,6 +7,7 @@ import java.text.ParseException;
 
 import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.InstanciationException;
+import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 public abstract class ActionAbstrait<T> {
@@ -24,7 +25,7 @@ public abstract class ActionAbstrait<T> {
 	@SuppressWarnings("rawtypes")
 	public abstract <U extends T>  ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller);
 
-	protected abstract void construitObjet() throws EntityManagerImplementationException, InstanciationException;
+	protected abstract void construitObjet() throws EntityManagerImplementationException, InstanciationException, SetValueException;
 
 
 	protected <W> W getObject(String id, Class<W> type) throws EntityManagerImplementationException, InstanciationException{
@@ -39,7 +40,7 @@ public abstract class ActionAbstrait<T> {
 		return obj;
 	}
 
-	protected abstract <W> void integreObjet(String nomAttribut, W objet) throws EntityManagerImplementationException, InstanciationException, IllegalAccessException;
+	protected abstract <W> void integreObjet(String nomAttribut, W objet) throws EntityManagerImplementationException, InstanciationException, IllegalAccessException, SetValueException;
 	protected abstract void rempliData(String donnees) throws InstanciationException;
 
 	protected boolean isUniversalId() {

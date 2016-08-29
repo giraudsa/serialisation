@@ -30,6 +30,7 @@ import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.FabriqueInstantiationException;
 import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import giraudsa.marshall.strategie.StrategieDeSerialisation;
 
@@ -136,7 +137,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		try(DataInputStream in = new DataInputStream(new BufferedInputStream(reader))){
 			BinaryUnmarshaller<U> w = new BinaryUnmarshaller<U>(in, entity){};
 			return w.parse();
-		} catch (UnmarshallExeption | FabriqueInstantiationException | IOException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException | NotImplementedSerializeException | InstanciationException | EntityManagerImplementationException e) {
+		} catch (UnmarshallExeption | FabriqueInstantiationException | IOException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException | NotImplementedSerializeException | InstanciationException | EntityManagerImplementationException | SetValueException e) {
 			LOGGER.error("Impossible de désérialiser", e);
 			throw new UnmarshallExeption("Impossible de désérialiser", e);
 		}
@@ -188,7 +189,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		dicoSmallIdToObject.put(smallId,obj);
 	}
 	
-	private T parse() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption, InstanciationException, EntityManagerImplementationException{
+	private T parse() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption, InstanciationException, EntityManagerImplementationException, SetValueException{
 		FakeChamp fc = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION);
 		litObject(fc);
 		while(!pileAction.isEmpty()){
@@ -199,7 +200,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		return obj;
 	}
 	
-	protected void litObject(FieldInformations fieldInformations) throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException{
+	protected void litObject(FieldInformations fieldInformations) throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException{
 		if(fieldInformations.getValueType() == byte.class){
 			integreObjectDirectement(readByte()); //seul cas ou le header n'est pas nécessaire.
 			return;
@@ -233,7 +234,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		pileAction.push(action);
 	}
 
-	private void litObjetComplexe(FieldInformations fieldInformations, Header<?> header) throws NotImplementedSerializeException, ClassNotFoundException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException{
+	private void litObjetComplexe(FieldInformations fieldInformations, Header<?> header) throws NotImplementedSerializeException, ClassNotFoundException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException{
 		//il faut trouver le type de l'objet
 		Class<?> type = fieldInformations.getValueType();
 		int smallId = header.readSmallId(input, getMaxId());
@@ -258,7 +259,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		pileAction.push(action);
 	}
 
-	private void litObjectCourant(Header<?> header) throws IOException, UnmarshallExeption, IllegalAccessException, EntityManagerImplementationException, InstanciationException{
+	private void litObjectCourant(Header<?> header) throws IOException, UnmarshallExeption, IllegalAccessException, EntityManagerImplementationException, InstanciationException, SetValueException{
 		HeaderTypeCourant<?> headerTypeCourant = (HeaderTypeCourant<?>)header;
 		Class<?> clazz = headerTypeCourant.getTypeCourant();
 		int smallId = headerTypeCourant.readSmallId(input, 0); //le 0 n a pas d importance ici
@@ -283,7 +284,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		}
 	}
 
-	private void litObjectSimple(Header<?> header) throws IOException, UnmarshallExeption, IllegalAccessException, EntityManagerImplementationException, InstanciationException{
+	private void litObjectSimple(Header<?> header) throws IOException, UnmarshallExeption, IllegalAccessException, EntityManagerImplementationException, InstanciationException, SetValueException{
 		HeaderSimpleType<?> headerSimpleType = (HeaderSimpleType<?>)header;
 		integreObjectDirectement(headerSimpleType.read(input));
 	}
@@ -323,13 +324,13 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		return UUID.nameUUIDFromBytes(tmp);
 	}
 
-	protected void integreObject(Object obj) throws IllegalAccessException, EntityManagerImplementationException, InstanciationException {
+	protected void integreObject(Object obj) throws IllegalAccessException, EntityManagerImplementationException, InstanciationException, SetValueException {
 		pileAction.pop();
 		integreObjectDirectement(obj);
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void integreObjectDirectement(Object obj) throws IllegalAccessException, EntityManagerImplementationException, InstanciationException {
+	private void integreObjectDirectement(Object obj) throws IllegalAccessException, EntityManagerImplementationException, InstanciationException, SetValueException {
 		ActionAbstrait<?> action = getActionEnCours();
 		if(action == null)
 			this.obj = (T) obj;

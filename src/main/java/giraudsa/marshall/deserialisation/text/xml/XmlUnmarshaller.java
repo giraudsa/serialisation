@@ -36,6 +36,7 @@ import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.FabriqueInstantiationException;
 import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.io.*;
@@ -204,7 +205,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	}
 
 	@SuppressWarnings("unchecked") 
-	protected void endElement() throws EntityManagerImplementationException, InstanciationException, IllegalAccessException{
+	protected void endElement() throws EntityManagerImplementationException, InstanciationException, IllegalAccessException, SetValueException{
 		construitObjet(getActionEnCours());
 		ActionXml<?> actionATraiter = (ActionXml<?>) pileAction.pop();
 		if(pileAction.isEmpty()){

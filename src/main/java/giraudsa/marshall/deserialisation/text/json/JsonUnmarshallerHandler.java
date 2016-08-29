@@ -4,6 +4,7 @@ import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.JsonHandlerException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.io.IOException;
@@ -29,7 +30,7 @@ public class JsonUnmarshallerHandler {
 		this.jsonUnmarshaller = jsonUnmarshaller;
 	}
 	
-	protected void parse(Reader reader) throws IOException, ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, JsonHandlerException, UnmarshallExeption, IllegalAccessException{
+	protected void parse(Reader reader) throws IOException, ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, JsonHandlerException, UnmarshallExeption, IllegalAccessException, SetValueException{
 		int t = reader.read();
 		while (t != -1){
 			traiteCaractere(t, reader);
@@ -39,7 +40,7 @@ public class JsonUnmarshallerHandler {
 		
 	}
 
-	private void traiteCaractere(int t, Reader reader) throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, JsonHandlerException, UnmarshallExeption, IllegalAccessException{
+	private void traiteCaractere(int t, Reader reader) throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, JsonHandlerException, UnmarshallExeption, IllegalAccessException, SetValueException{
 		if(!ignoreNextchar){
 			char c = (char)t;
 			comportement(c);
@@ -55,7 +56,7 @@ public class JsonUnmarshallerHandler {
 		else buff.add(':');
 	}
 	
-	private void virgule() throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, IllegalAccessException{
+	private void virgule() throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, IllegalAccessException, SetValueException{
 		if(!isBetweenQuote)
 			setValeur();
 		else buff.add(',');
@@ -73,7 +74,7 @@ public class JsonUnmarshallerHandler {
 		else buff.add('{');
 	}
 
-	private void fermeAccolade() throws EntityManagerImplementationException, InstanciationException, ClassNotFoundException, NotImplementedSerializeException, IllegalAccessException{
+	private void fermeAccolade() throws EntityManagerImplementationException, InstanciationException, ClassNotFoundException, NotImplementedSerializeException, IllegalAccessException, SetValueException{
 		if(!isBetweenQuote){
 			if(!buff.isEmpty()){
 				setValeur();
@@ -88,7 +89,7 @@ public class JsonUnmarshallerHandler {
 		else buff.add('[');
 	}
 	
-	private void fermeCrochet() throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, IllegalAccessException{
+	private void fermeCrochet() throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, IllegalAccessException, SetValueException{
 		if(!isBetweenQuote){
 			if(!buff.isEmpty()){
 				setValeur();
@@ -97,7 +98,7 @@ public class JsonUnmarshallerHandler {
 		}else buff.add(']');
 	}
 
-	private void comportement(char c) throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, JsonHandlerException, IllegalAccessException{
+	private void comportement(char c) throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, JsonHandlerException, IllegalAccessException, SetValueException{
 		switch (c) {
 		case '{':
 			ouvreAccolade();
@@ -139,7 +140,7 @@ public class JsonUnmarshallerHandler {
 	}
 	
 
-	private void setValeur() throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, IllegalAccessException {
+	private void setValeur() throws ClassNotFoundException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, IllegalAccessException, SetValueException {
 		if(!buff.isEmpty()){
 			Class<?> typeGuess = String.class;
 			if(!enleveGuillemets()){

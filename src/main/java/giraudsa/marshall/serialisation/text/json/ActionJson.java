@@ -116,7 +116,8 @@ public abstract class ActionJson<T> extends ActionText<T>  {
 		@Override
 		protected void evalue(Marshaller marshaller) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
 			ecritClef(marshaller, nomClef);
-			boolean separateurAEcrire = commenceObject(marshaller, (T)obj, typeDevinable);
+			boolean nePasEcrireType = getJsonMarshaller(marshaller).writeType ? typeDevinable : true;
+			boolean separateurAEcrire = commenceObject(marshaller, (T)obj, nePasEcrireType);
 			ecritValeur(marshaller, (T)obj, fieldInformations, separateurAEcrire);
 		}
 	}

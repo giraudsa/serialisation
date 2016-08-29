@@ -7,6 +7,7 @@ import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.io.IOException;
@@ -83,7 +84,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	@Override
-	protected void deserialisePariellement() throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException{
+	protected void deserialisePariellement() throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException{
 		if(champEnAttente != null){
 			if(champEnAttente != TypeExtension.getChampId(type))
 				setDejaTotalementDeSerialise();
@@ -94,7 +95,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	@Override
-	protected void integreObjet(String nom, Object objet) throws EntityManagerImplementationException, InstanciationException, IllegalAccessException{
+	protected void integreObjet(String nom, Object objet) throws EntityManagerImplementationException, InstanciationException, SetValueException, IllegalAccessException{
 		if(champEnAttente == champId){
 			String id = objet.toString();
 			obj = getObject(id, type);

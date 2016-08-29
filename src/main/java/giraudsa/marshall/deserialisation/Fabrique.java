@@ -9,9 +9,14 @@ import java.util.Map;
 import giraudsa.marshall.exception.ConstructorException;
 import giraudsa.marshall.exception.FabriqueInstantiationException;
 import giraudsa.marshall.exception.InstanciationException;
-import giraudsa.marshall.exception.InstanciationException;
-import giraudsa.marshall.exception.UnmarshallExeption;
 
+/**
+ * Classe avec un singleton permettant l'instanciation d'objets ex-nihilot sans passer par 
+ * un constructeur.
+ * 
+ * @author giraudsa
+ *
+ */
 public class Fabrique {
 	private static final Object[] noArgument = new Object[0];
 	private static Fabrique instance;
@@ -39,6 +44,12 @@ public class Fabrique {
 		return instance;
 	}
 
+	/**
+	 * instancie un objet ex-nihilot sans passer par un constructeur et donc sans effet de bord...
+	 * @param type
+	 * @return
+	 * @throws InstanciationException
+	 */
 	public <T> T newObject(Class<T> type) throws InstanciationException{
 		try {
 			if(type == void.class || type == Void.class)

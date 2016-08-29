@@ -3,6 +3,7 @@ package utils.champ;
 import giraudsa.marshall.annotations.MarshallAsAttribute;
 import giraudsa.marshall.annotations.Relation;
 import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.exception.SetValueException;
 import utils.TypeExtension;
 import utils.generic.TypeToken;
 
@@ -73,13 +74,12 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 		return that.hashCode();
 	}
 
-	public void set(Object obj, Object value){
+	public void set(Object obj, Object value) throws SetValueException{
 		try {
 			if(obj != null && !Modifier.isFinal(info.getModifiers()))
 				info.set(obj, value);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new SetValueException("impossible de setter " + value.getClass().getName() + " dans le champ " + name, e);
 		}
 	}
 	

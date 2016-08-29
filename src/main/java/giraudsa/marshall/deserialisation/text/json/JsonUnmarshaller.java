@@ -25,6 +25,7 @@ import giraudsa.marshall.exception.FabriqueInstantiationException;
 import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.JsonHandlerException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 import java.io.IOException;
@@ -118,7 +119,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		try {
 			JsonUnmarshaller<U> w = new JsonUnmarshaller<>(reader, entity);
 			return w.parse();
-		} catch ( FabriqueInstantiationException | ClassNotFoundException | IOException | EntityManagerImplementationException | InstanciationException | NotImplementedSerializeException | JsonHandlerException | IllegalAccessException | DataFormatException e) {
+		} catch ( FabriqueInstantiationException | ClassNotFoundException | IOException | EntityManagerImplementationException | InstanciationException | NotImplementedSerializeException | JsonHandlerException | IllegalAccessException | DataFormatException | SetValueException e) {
 			LOGGER.error("probleme dans la désérialisation JSON", e);
 			throw new UnmarshallExeption("probleme dans la désérialisation JSON",e);
 		}
@@ -145,7 +146,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	}
 
 
-	private T parse() throws ClassNotFoundException, IOException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, JsonHandlerException, UnmarshallExeption, IllegalAccessException, DataFormatException {
+	private T parse() throws ClassNotFoundException, IOException, EntityManagerImplementationException, InstanciationException, NotImplementedSerializeException, JsonHandlerException, UnmarshallExeption, IllegalAccessException, DataFormatException, SetValueException {
 		JsonUnmarshallerHandler handler = new JsonUnmarshallerHandler(this);
 		handler.parse(reader);
 		if(obj == null)
@@ -184,7 +185,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	}
 
 
-	protected void setValeur(String valeur, Class<?> typeGuess) throws EntityManagerImplementationException, InstanciationException, ClassNotFoundException, NotImplementedSerializeException, IllegalAccessException {
+	protected void setValeur(String valeur, Class<?> typeGuess) throws EntityManagerImplementationException, InstanciationException, ClassNotFoundException, NotImplementedSerializeException, IllegalAccessException, SetValueException {
 		Class<?> type;
 		if(waitingForType){
 			type = getTypeDepuisNom(valeur);
@@ -208,7 +209,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		waitingForAction = false;
 	}
 
-	protected void fermeAccolade() throws EntityManagerImplementationException, InstanciationException, IllegalAccessException{
+	protected void fermeAccolade() throws EntityManagerImplementationException, InstanciationException, IllegalAccessException, SetValueException{
 		integreObject();
 	}
 
@@ -224,12 +225,12 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		pileAction.push(action);
 	}
 
-	protected void fermeCrocher() throws EntityManagerImplementationException, InstanciationException, IllegalAccessException{
+	protected void fermeCrocher() throws EntityManagerImplementationException, InstanciationException, IllegalAccessException, SetValueException{
 		integreObject();
 	}
 
 	@SuppressWarnings("unchecked")
-	private void integreObject() throws EntityManagerImplementationException, InstanciationException, IllegalAccessException{
+	private void integreObject() throws EntityManagerImplementationException, InstanciationException, IllegalAccessException, SetValueException{
 		construitObjet(getActionEnCours());
 		ActionJson<?> actionATraiter = (ActionJson<?>) pileAction.pop();
 		if(pileAction.isEmpty())

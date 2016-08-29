@@ -7,6 +7,7 @@ import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.champ.FakeChamp;
 
@@ -41,7 +42,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 		return new ActionBinaryCollection<>(type, (BinaryUnmarshaller<?>) unmarshaller);
 	}
 	@Override
-	public void deserialisePariellement() throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException{
+	public void deserialisePariellement() throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException{
 		if(!deserialisationFini){
 			litObject(fakeChamp);
 		}else{
@@ -51,7 +52,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void integreObjet(String nom, Object objet) throws IllegalAccessException, EntityManagerImplementationException, InstanciationException{
+	protected void integreObjet(String nom, Object objet) throws IllegalAccessException, EntityManagerImplementationException, InstanciationException, SetValueException{
 		((Collection)obj).add(objet);
 		deserialisationFini = ++index >= tailleCollection;
 		if(deserialisationFini)

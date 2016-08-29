@@ -7,6 +7,7 @@ import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.champ.FakeChamp;
 
@@ -100,7 +101,7 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 
 
 	@Override
-	public void deserialisePariellement() throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException {
+	public void deserialisePariellement() throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
 		if(!deserialisationFini){
 			if(clefTampon == null) 
 				litObject(fakeChampKey);
@@ -116,7 +117,7 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void integreObjet(String name, Object objet) throws IllegalAccessException, EntityManagerImplementationException, InstanciationException{
+	protected void integreObjet(String name, Object objet) throws IllegalAccessException, EntityManagerImplementationException, InstanciationException, SetValueException{
 		if(clefTampon == null) 
 			clefTampon = objet;
 		else if(((Collection)obj).size() < index){

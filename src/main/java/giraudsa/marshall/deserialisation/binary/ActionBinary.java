@@ -4,6 +4,7 @@ import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.champ.FieldInformations;
 
@@ -15,7 +16,8 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 	
 	protected ActionBinary(Class<T> type, BinaryUnmarshaller<?> unmarshaller){
 		super(type, unmarshaller);
-		profondeur = getBinaryUnmarshaller().getProfondeur() + 1;
+		if(unmarshaller != null)
+			profondeur = getBinaryUnmarshaller().getProfondeur() + 1;
 	}
 	
 	int getProfondeur(){
@@ -60,7 +62,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 		return getBinaryUnmarshaller().readUTF();
 	}
 
-	protected void litObject(FieldInformations f) throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException {
+	protected void litObject(FieldInformations f) throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
 		getBinaryUnmarshaller().litObject(f);
 	}
 	
@@ -77,7 +79,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 		getBinaryUnmarshaller().stockObjectSmallId(smallId, obj);
 	}
 	
-	protected void exporteObject() throws IllegalAccessException, EntityManagerImplementationException, InstanciationException{
+	protected void exporteObject() throws IllegalAccessException, EntityManagerImplementationException, InstanciationException, SetValueException{
 		getBinaryUnmarshaller().integreObject(obj);
 	}
 
@@ -89,7 +91,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T>{
 
 	protected abstract void initialise() throws InstanciationException, IOException, UnmarshallExeption;
 
-	protected abstract void deserialisePariellement() throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException;
+	protected abstract void deserialisePariellement() throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException;
 
 	protected boolean isDejaTotalementDeSerialise() {
 		return getBinaryUnmarshaller().isDejaTotalementDeSerialise(smallId);

@@ -4,6 +4,7 @@ import giraudsa.marshall.deserialisation.binary.ActionBinary;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.InstanciationException;
+import giraudsa.marshall.exception.SetValueException;
 
 public abstract class ActionBinarySimple<T> extends ActionBinary<T>{
 
@@ -12,7 +13,7 @@ public abstract class ActionBinarySimple<T> extends ActionBinary<T>{
 	}
 	
 	@Override
-	protected void deserialisePariellement() throws IllegalAccessException, EntityManagerImplementationException, InstanciationException{
+	protected void deserialisePariellement() throws IllegalAccessException, EntityManagerImplementationException, InstanciationException, SetValueException{
 		exporteObject();
 	}
 	

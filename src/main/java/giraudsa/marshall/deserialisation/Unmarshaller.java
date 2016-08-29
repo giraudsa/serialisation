@@ -4,6 +4,8 @@ import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.FabriqueInstantiationException;
 import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.exception.SetValueException;
+
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -123,14 +125,14 @@ public abstract class Unmarshaller<T> {
 	}
 
 	
-	protected <W> void integreObjet(ActionAbstrait<?> action, String nom, W objet) throws IllegalAccessException, EntityManagerImplementationException, InstanciationException{
+	protected <W> void integreObjet(ActionAbstrait<?> action, String nom, W objet) throws IllegalAccessException, EntityManagerImplementationException, InstanciationException, SetValueException{
 		action.integreObjet(nom, objet);
 	}
 	protected void rempliData(ActionAbstrait<?> action, String donnees) throws InstanciationException{
 		action.rempliData(donnees);
 		
 	}
-	protected void construitObjet(ActionAbstrait<?> action) throws EntityManagerImplementationException, InstanciationException{
+	protected void construitObjet(ActionAbstrait<?> action) throws EntityManagerImplementationException, InstanciationException, SetValueException{
 		action.construitObjet();
 	}
 	
