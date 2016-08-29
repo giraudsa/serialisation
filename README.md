@@ -157,3 +157,16 @@ Pour éviter d'annoter un attribut d'une classe de plusieurs librairies (JAXB, h
 Il est possible de formatter les XML et les JSON pour une lecture humaine.
 
 	ConfigurationMarshalling.setPrettyPrint();
+	
+###5.5 - Masquer les types dans les JSON générés.
+
+Attention, il ne sera alors plus possible de désérialiser les JSON produits. Il suffit d'utiliser les deux méthodes suivantes selon le besoin en utilisant false comme dernier argument (writeType = false):
+
+	JsonMarshaller.toJson(myObject, myWriter, myStrategieDeSerialisation, false);
+	String json = JsonMarshaller.toJson(myobject, myStrategieDeSerialisation, boolean);
+	
+###5.6 - Stratégie de sérialisation
+
+La stratégie de sérialisation permet de définir la profondeur de sérialisation en fonction du critère de profondeur et du modèle objet. Par défaut, il existe 3 stratégies possibles mais il est possible d'en définir d'autre en implémentant l'interface StrategieDeSerialisation. Cette interface possède une méthode qui défini si un objet doit être completement sérialisé ou uniquement par référence en fonction de sa profondeur et de ses informations de champs. Par exemple :
+
+	JsonMarshaller.toJson(myObject, myWriter, new StrategieParCompositionOuAgregationEtClasseConcrete(), true);
