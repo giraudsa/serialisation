@@ -5,6 +5,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
@@ -39,6 +41,39 @@ public class ActionXmlObject extends ActionXml<Object> {
 				tmp.push(comportement);
 		}
 		pushComportements(marshaller, tmp);
+	}
+	
+	@Override
+	protected boolean pushComportementParticulier(Marshaller marshaller, Object obj, String nomBalise, FieldInformations fieldInformations){
+		boolean isComportementIdDansBalise = !serialiseTout(marshaller, obj, fieldInformations);
+		if (isComportementIdDansBalise){
+			pushComportement(marshaller, new ComportementIdDansBalise(obj, nomBalise, fieldInformations));
+		}
+		return isComportementIdDansBalise;
+	}
+	
+	protected class ComportementIdDansBalise extends Comportement{
+
+		private Object obj;
+		private FieldInformations fieldInformations;
+		private String nomBalise;
+		
+		protected ComportementIdDansBalise(Object obj, String nomBalise ,FieldInformations fieldInformations) {
+			super();
+			this.obj = obj;
+			this.fieldInformations = fieldInformations;
+			this.nomBalise = nomBalise;
+		}
+
+		@Override
+		protected void evalue(Marshaller marshaller) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
+			boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
+			Class<?> typeObj = (Class<?>) obj.getClass();
+			Champ champId = TypeExtension.getChampId(typeObj);
+			Object id=champId.get(obj);	
+			ouvreBaliseEcritIdFermeBalise(marshaller, obj, nomBalise, typeDevinable,id.toString()); 
+		}
+	
 	}
 
 }

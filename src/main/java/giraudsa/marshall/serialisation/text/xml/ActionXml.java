@@ -44,13 +44,19 @@ public abstract class ActionXml<T> extends ActionText<T> {
 		String nomBalise = fieldInformations.getName();
 		if (nomBalise == null) 
 			nomBalise = getType((T)obj).getSimpleName();
+		if (pushComportementParticulier(marshaller, obj, nomBalise, fieldInformations))
+			return;
 		pushComportement(marshaller, new ComportementFermeBalise(nomBalise));
 		pushComportement(marshaller, new ComportementOuvreBaliseEtEcrisValeur((T)obj, nomBalise, fieldInformations));
 	}
 
+	protected boolean pushComportementParticulier(Marshaller marshaller, Object obj ,String nomBalise, FieldInformations fieldInformations){
+		return false;
+	}
+	
 	protected abstract void ecritValeur(Marshaller marshaller, T obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException;
 
-	private void ouvreBaliseEcritIdFermeBalise(Marshaller marshaller, T obj, String nomBalise, boolean typeDevinable, String id) throws IOException{
+	protected void ouvreBaliseEcritIdFermeBalise(Marshaller marshaller, T obj, String nomBalise, boolean typeDevinable, String id) throws IOException{
 		Class<?> classeAEcrire = classeAEcrire(obj, typeDevinable);
 		getXmlMarshaller(marshaller).openTagAddIdCloseTag(nomBalise, classeAEcrire,id);
 	}
@@ -59,7 +65,6 @@ public abstract class ActionXml<T> extends ActionText<T> {
 		Class<?> classeAEcrire = classeAEcrire(obj, typeDevinable);
 		getXmlMarshaller(marshaller).openTag(nomBalise, classeAEcrire);
 	}
-
 
 	private Class<?> classeAEcrire(T obj, boolean typeDevinable) {
 		return !typeDevinable ? getType(obj) : null;
@@ -71,23 +76,6 @@ public abstract class ActionXml<T> extends ActionText<T> {
 	@Override 
 	protected Map<Character,String> getRemplacementChar() {
 		return REMPLACEMENT_CHARS;
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	protected Comportement traiteChamp(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, IllegalAccessException {
-		Object value = fieldInformations.get(obj);
-		if(aTraiter(marshaller, value, fieldInformations)){
-			if(marshaller.getAction(value) instanceof ActionXmlObject && !serialiseTout(marshaller, obj, fieldInformations) )
-				return new ComportementIdDansBalise((T)value, fieldInformations, ecrisSeparateur);
-			return new ComportementMarshallValue(value, fieldInformations, ecrisSeparateur);
-		}
-		return null;
-	}
-	
-	@Override
-	protected Comportement traiteChamp(Marshaller marshaller, Object obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
-		return traiteChamp(marshaller, obj, fieldInformations, true);
 	}
 	
 	protected class ComportementOuvreBaliseEtEcrisValeur extends Comportement{
@@ -125,35 +113,5 @@ public abstract class ActionXml<T> extends ActionText<T> {
 		}
 		
 	}
-	
-	protected class ComportementIdDansBalise extends Comportement{
-
-		private T obj;
-		private FieldInformations fieldInformations;
-		private boolean writeSeparateur;
-		
-		public ComportementIdDansBalise(T obj, FieldInformations fieldInformations, boolean writeSeparateur) {
-			super();
-			this.obj = obj;
-			this.fieldInformations = fieldInformations;
-			this.writeSeparateur = writeSeparateur;
-		}
-
-		@Override
-		public void evalue(Marshaller marshaller) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
-			if(writeSeparateur)
-					writeSeparator(marshaller);
-			String nomBalise = fieldInformations.getName();
-			if (nomBalise == null) 
-				nomBalise = getType((T)obj).getSimpleName();
-			boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
-			Class<?> typeObj = (Class<?>) obj.getClass();
-			Champ champId = TypeExtension.getChampId(typeObj);
-			Object id=champId.get(obj);	
-			ouvreBaliseEcritIdFermeBalise(marshaller, obj, nomBalise, typeDevinable,id.toString()); 
-		}
-	
-	}
-	
 
 }

@@ -106,7 +106,7 @@ public abstract class ActionAbstrait<T> {
 		private FieldInformations fieldInformations;
 		private boolean writeSeparateur;
 		
-		public ComportementMarshallValue(Object value, FieldInformations fieldInformations, boolean writeSeparateur) {
+		protected ComportementMarshallValue(Object value, FieldInformations fieldInformations, boolean writeSeparateur) {
 			super();
 			this.value = value;
 			this.fieldInformations = fieldInformations;
@@ -114,7 +114,7 @@ public abstract class ActionAbstrait<T> {
 		}
 
 		@Override
-		public void evalue(Marshaller marshaller) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
+		protected void evalue(Marshaller marshaller) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
 			if(writeSeparateur)
 					writeSeparator(marshaller);
 			marshaller.marshall(value, fieldInformations);
