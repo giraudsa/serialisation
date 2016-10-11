@@ -14,6 +14,8 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashSet;
+import java.util.TreeSet;
 
 @SuppressWarnings("rawtypes")
 public class ActionJsonCollectionType extends ActionJson<Collection> {
@@ -24,7 +26,17 @@ public class ActionJsonCollectionType extends ActionJson<Collection> {
 
 	@Override
 	protected Class<?> getType(Collection obj) {
-		return (obj.getClass().getName().toLowerCase().indexOf("hibernate") != -1) ? ArrayList.class : obj.getClass();
+		Class<?> clazz = obj.getClass();
+		
+		if(clazz.getName().toLowerCase().indexOf("hibernate") != -1){
+			if(obj.getClass().getName().toLowerCase().indexOf("persistentbag") != -1)
+				return ArrayList.class;
+			if(obj.getClass().getName().toLowerCase().indexOf("persistentset") != -1)
+				return HashSet.class;
+			if(obj.getClass().getName().toLowerCase().indexOf("persistentsortedset") != -1)
+				return TreeSet.class;
+		}
+		return clazz;
 	}
 
 	@Override
