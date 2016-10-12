@@ -1,6 +1,5 @@
 package utils.champ;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -8,24 +7,24 @@ public class ChampUid extends Champ {
 
 	public static final String UID_FIELD_NAME = "id";
 	
-	private static final Map<Object, UUID> dicoObjToFakeId = new HashMap<>();
 	
 	private Class<?> typeObject;
 	
 	ChampUid(Class<?> typeObject) {
-		super(null, true);
+		super(null, true, true);
 		this.typeObject = typeObject;
 		name = UID_FIELD_NAME;
 		valueType = UUID.class;
 	}
 	
 	@Override
-	public  void set(Object obj, Object value) {
+	public  void set(Object obj, Object value, Map<Object, UUID> dicoObjToFakeId) {
 		dicoObjToFakeId.put(obj, (UUID)value);
 	}
 
-	@Override
-	public synchronized UUID get(Object obj) {
+	public synchronized UUID get(Object obj, Map<Object, UUID> dicoObjToFakeId) {
+		if(dicoObjToFakeId == null)
+			return UUID.randomUUID();
 		if(!dicoObjToFakeId.containsKey(obj))
 			dicoObjToFakeId.put(obj, UUID.randomUUID());
 		return dicoObjToFakeId.get(obj);
@@ -46,5 +45,9 @@ public class ChampUid extends Champ {
 		if (other instanceof ChampUid)
 			return other == this;
 		return false;
+	}
+	@Override
+	public boolean isChampId() {
+		return true;
 	}
 }

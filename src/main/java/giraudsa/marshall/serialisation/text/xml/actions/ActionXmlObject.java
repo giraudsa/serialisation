@@ -5,6 +5,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
@@ -23,7 +25,7 @@ public class ActionXmlObject extends ActionXml<Object> {
 	}
 
 
-	@Override protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	@Override protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		Class<?> typeObj = (Class<?>) obj.getClass();
 		List<Champ> champs = TypeExtension.getSerializableFields(typeObj);
 		Champ champId = TypeExtension.getChampId(typeObj);
@@ -70,7 +72,9 @@ public class ActionXmlObject extends ActionXml<Object> {
 			boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
 			Class<?> typeObj = (Class<?>) obj.getClass();
 			Champ champId = TypeExtension.getChampId(typeObj);
-			Object id=champId.get(obj);	
+			Object id = champId.get(obj, getDicoObjToFakeId(marshaller));
+			if(id == null)
+				throw new MarshallExeption("l'objet de type " + typeObj.getName() + " a un id null");
 			ouvreBaliseEcritIdFermeBalise(marshaller, obj, nomBalise, typeDevinable,id.toString()); 
 		}
 	

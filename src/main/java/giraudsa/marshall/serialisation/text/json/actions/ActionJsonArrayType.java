@@ -7,6 +7,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.json.ActionJson;
@@ -23,7 +24,7 @@ public class ActionJsonArrayType  extends ActionJson<Object> {
 	@Override
 	protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur)
 			throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException,
-			NoSuchMethodException, NotImplementedSerializeException {
+			NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
 		Type genericType = obj.getClass().getComponentType();
 		FakeChamp fakeChamp = new FakeChamp(null, genericType, fieldInformations.getRelation());
 		Deque<Comportement> tmp = new ArrayDeque<>();

@@ -6,6 +6,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.json.ActionJson;
@@ -20,7 +21,7 @@ public class ActionJsonObject extends ActionJson<Object> {
 	}
 
 
-	@Override protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	@Override protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		Class<?> typeObj = (Class<?>) obj.getClass();
 		List<Champ> champs = TypeExtension.getSerializableFields(typeObj);
 		Champ champId = TypeExtension.getChampId(typeObj);

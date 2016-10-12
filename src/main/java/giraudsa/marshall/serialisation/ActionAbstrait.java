@@ -6,8 +6,9 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
 import java.util.Deque;
+import java.util.Map;
+import java.util.UUID;
 
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
@@ -55,21 +56,23 @@ public abstract class ActionAbstrait<T> {
 		return fieldInformations.isTypeDevinable(value);
 	}
 	
-	protected Comportement traiteChamp(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, IllegalAccessException {
-		Object value = fieldInformations.get(obj);
+	protected Comportement traiteChamp(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, IllegalAccessException, MarshallExeption {
+		Object value = fieldInformations.get(obj, getDicoObjToFakeId(marshaller));
 		if(aTraiter(marshaller, value, fieldInformations)){
 			return new ComportementMarshallValue(value, fieldInformations, ecrisSeparateur);
 		}
 		return null;
 	}
 
-	protected Comportement traiteChamp(Marshaller marshaller, Object obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	protected Comportement traiteChamp(Marshaller marshaller, Object obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		return traiteChamp(marshaller, obj, fieldInformations, true);
 	}
 	
-	protected <V> boolean aTraiter(Marshaller marshaller, V value, FieldInformations fieldInformations) throws IOException {
+	protected <V> boolean aTraiter(Marshaller marshaller, V value, FieldInformations fieldInformations) throws IOException, MarshallExeption {
 		if(fieldInformations instanceof FakeChamp)
 			return true;
+		if(fieldInformations.isChampId() && value == null)
+			throw new MarshallExeption("l'objet a un id null");
 		return value != null;
 	}
 
@@ -120,5 +123,9 @@ public abstract class ActionAbstrait<T> {
 			marshaller.marshall(value, fieldInformations);
 			
 		}
+	}
+	
+	protected Map<Object, UUID> getDicoObjToFakeId(Marshaller marshaller) {
+		return marshaller.getDicoObjToFakeId();
 	}
 }

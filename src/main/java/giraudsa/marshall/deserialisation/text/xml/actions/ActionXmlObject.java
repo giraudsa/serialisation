@@ -69,12 +69,13 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 		type = (Class<T>) obj.getClass();
 		for(Entry<String, Object> entry : dicoNomChampToValue.entrySet()){
 			Champ champ = TypeExtension.getChampByName(type, entry.getKey());
-			if (champ != null && !champ.isFakeId()){
-				champ.set(obj, entry.getValue());
+			if (champ != null){
+				champ.set(obj, entry.getValue(), getDicoObjToFakeId());
 			}
 		}
 	}
 	
+
 	@Override
 	protected <W> void integreObjet(String nomAttribut, W objet){
 		dicoNomChampToValue.put(nomAttribut, objet);

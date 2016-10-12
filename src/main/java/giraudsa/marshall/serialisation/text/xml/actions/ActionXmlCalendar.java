@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Calendar;
 import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
@@ -24,7 +25,7 @@ public class ActionXmlCalendar extends ActionXml<Calendar> {
 	}
 
 
-	@Override protected void ecritValeur(Marshaller marshaller, Calendar calendar, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	@Override protected void ecritValeur(Marshaller marshaller, Calendar calendar, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		pushComportement(marshaller,traiteChamp(marshaller,calendar.get(Calendar.SECOND), fakeChampSeconde));
 		pushComportement(marshaller,traiteChamp(marshaller,calendar.get(Calendar.MINUTE), fakeChampMinute));
 		pushComportement(marshaller,traiteChamp(marshaller,calendar.get(Calendar.HOUR_OF_DAY), fakeChampHourOfDay));

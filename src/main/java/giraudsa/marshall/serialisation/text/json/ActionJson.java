@@ -1,5 +1,6 @@
 package giraudsa.marshall.serialisation.text.json;
 
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.ActionText;
@@ -51,7 +52,7 @@ public abstract class ActionJson<T> extends ActionText<T>  {
 		pushComportement(marshaller, new ComportementEcritClefOuvreAccoladeEtEcrisValeur(nomClef, typeDevinable, fieldInformations, obj));
 	}
 	
-	protected abstract void ecritValeur(Marshaller marshaller, T obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException;
+	protected abstract void ecritValeur(Marshaller marshaller, T obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption;
 
 	protected abstract boolean commenceObject(Marshaller marshaller, T obj, boolean typeDevinable) throws IOException;
 
@@ -114,7 +115,7 @@ public abstract class ActionJson<T> extends ActionText<T>  {
 
 		@SuppressWarnings("unchecked")
 		@Override
-		protected void evalue(Marshaller marshaller) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
+		protected void evalue(Marshaller marshaller) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
 			ecritClef(marshaller, nomClef);
 			boolean nePasEcrireType = getJsonMarshaller(marshaller).writeType ? typeDevinable : true;
 			boolean separateurAEcrire = commenceObject(marshaller, (T)obj, nePasEcrireType);

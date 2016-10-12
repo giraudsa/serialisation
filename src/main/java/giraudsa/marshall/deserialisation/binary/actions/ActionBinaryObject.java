@@ -101,8 +101,8 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 			obj = getObject(id, type);
 			stockeObjetId();
 		}
-		if(champEnAttente.get(obj) != objet && !champEnAttente.isFakeId())
-			champEnAttente.set(obj, objet);
+		if(champEnAttente.get(obj, getDicoObjToFakeId()) != objet && !champEnAttente.isFakeId())
+			champEnAttente.set(obj, objet, getDicoObjToFakeId());
 		if (iteratorChamp.hasNext())
 			champEnAttente = iteratorChamp.next();
 		else 

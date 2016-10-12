@@ -62,8 +62,8 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 		type = (Class<T>) obj.getClass();
 		for(Entry<String, Object> entry : dicoNomChampToValue.entrySet()){
 			Champ champ = TypeExtension.getChampByName(type, entry.getKey());
-			if (champ != null && !champ.isFakeId())
-				champ.set(obj, entry.getValue());
+			if (champ != null)
+				champ.set(obj, entry.getValue(), getDicoObjToFakeId());
 		}
 	}
 	

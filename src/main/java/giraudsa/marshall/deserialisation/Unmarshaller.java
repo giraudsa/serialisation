@@ -9,12 +9,16 @@ import giraudsa.marshall.exception.SetValueException;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+
 import utils.Constants;
 
 
 public abstract class Unmarshaller<T> {
 	private final Fabrique fabrique;
+	private final Map<Object, UUID> dicoObjToFakeId = new HashMap<>();
 	protected T obj;
 	protected final EntityManager entity;
 	protected final Deque<ActionAbstrait<?>> pileAction = new ArrayDeque<>();
@@ -54,6 +58,10 @@ public abstract class Unmarshaller<T> {
 
 
 	protected abstract Map<Class<?>, ActionAbstrait<?>> getdicoTypeToAction();
+
+	protected Map<Object, UUID> getDicoObjToFakeId() {
+		return dicoObjToFakeId;
+	}
 
 	private <U> ActionAbstrait<?> choseAction(Class<U> type) throws NotImplementedSerializeException {
 		Map<Class<?>, ActionAbstrait<?>> actions = getdicoTypeToAction();

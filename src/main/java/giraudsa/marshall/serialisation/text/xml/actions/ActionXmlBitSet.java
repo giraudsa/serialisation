@@ -7,6 +7,7 @@ import java.util.BitSet;
 import java.util.Deque;
 
 import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
@@ -20,7 +21,7 @@ public class ActionXmlBitSet  extends ActionXml<BitSet> {
 	}
 	
 	@Override
-	protected void ecritValeur(Marshaller marshaller, BitSet array, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	protected void ecritValeur(Marshaller marshaller, BitSet array, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		FakeChamp fakeChamp = new FakeChamp("bit", boolean.class, TypeRelation.COMPOSITION);
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		for (int i = 0; i < array.length(); ++i) {

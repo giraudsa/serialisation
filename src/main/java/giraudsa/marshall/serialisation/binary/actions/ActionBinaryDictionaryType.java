@@ -1,5 +1,6 @@
 package giraudsa.marshall.serialisation.binary.actions;
 
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
@@ -25,7 +26,7 @@ public class ActionBinaryDictionaryType extends ActionBinary<Map> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Map map, FieldInformations fieldInformations, boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
+	protected void ecritValeur(Marshaller marshaller, Map map, FieldInformations fieldInformations, boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
 		Type[] types = fieldInformations.getParametreType();
 		Type genericTypeKey = Object.class;
 		Type genericTypeValue = Object.class;

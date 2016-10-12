@@ -1,5 +1,6 @@
 package giraudsa.marshall.serialisation.binary.actions;
 
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
@@ -24,7 +25,7 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Object objetASerialiser, FieldInformations fieldInformations, boolean isDejaVu) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	protected void ecritValeur(Marshaller marshaller, Object objetASerialiser, FieldInformations fieldInformations, boolean isDejaVu) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		
 		boolean serialiseToutSaufId = serialiseToutSaufId(marshaller, objetASerialiser, fieldInformations);

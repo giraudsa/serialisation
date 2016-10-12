@@ -6,6 +6,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.atomic.AtomicLongArray;
 
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
@@ -19,7 +20,7 @@ public class ActionXmlAtomicArrayLongType  extends ActionXml<AtomicLongArray> {
 	}
 	
 	@Override
-	protected void ecritValeur(Marshaller marshaller, AtomicLongArray obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	protected void ecritValeur(Marshaller marshaller, AtomicLongArray obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		FakeChamp fakeChamp = new FakeChamp("long", Long.class, fieldInformations.getRelation());
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		for (int i = 0; i < obj.length(); ++i) {

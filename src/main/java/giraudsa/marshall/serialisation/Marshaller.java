@@ -9,9 +9,11 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import utils.Constants;
 import utils.champ.FieldInformations;
@@ -25,6 +27,7 @@ public abstract class Marshaller {
 	private Set<Object> dejaVu = new HashSet<>();
 	@SuppressWarnings("rawtypes")
 	protected Deque<Comportement> aFaire = new ArrayDeque<>();
+	private final Map<Object, UUID> dicoObjToFakeId = new HashMap<>();
 
 	
 	//////Constructeur
@@ -121,5 +124,9 @@ public abstract class Marshaller {
 	
 	void augmenteProdondeur(){
 		++profondeur;
+	}
+	
+	protected Map<Object, UUID> getDicoObjToFakeId() {
+		return dicoObjToFakeId;
 	}
 }

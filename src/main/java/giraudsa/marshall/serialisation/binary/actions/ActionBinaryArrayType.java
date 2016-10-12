@@ -1,5 +1,6 @@
 package giraudsa.marshall.serialisation.binary.actions;
 
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
@@ -21,7 +22,7 @@ public class ActionBinaryArrayType extends ActionBinary<Object> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
+	protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
 		FakeChamp fakeChamp = new FakeChamp(null, obj.getClass().getComponentType(), fieldInformations.getRelation());
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		if (!isDejaVu){

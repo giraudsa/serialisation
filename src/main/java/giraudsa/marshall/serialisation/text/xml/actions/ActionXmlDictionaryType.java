@@ -1,5 +1,6 @@
 package giraudsa.marshall.serialisation.text.xml.actions;
 
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
@@ -21,7 +22,7 @@ public class ActionXmlDictionaryType extends ActionXml<Map> {
 		super();
 	}
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Map obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	protected void ecritValeur(Marshaller marshaller, Map obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		Type[] types = fieldInformations.getParametreType();
 		Type genericTypeKey = Object.class;
 		Type genericTypeValue = Object.class;

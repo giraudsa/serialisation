@@ -2,6 +2,8 @@ package utils.champ;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Map;
+import java.util.UUID;
 
 import giraudsa.marshall.annotations.TypeRelation;
 import utils.TypeExtension;
@@ -34,7 +36,7 @@ public class FakeChamp implements FieldInformations {
 	}
 
 	@Override
-	public Object get(Object o) throws IllegalAccessException {
+	public Object get(Object o, Map<Object, UUID> dicoObjToFakeId) throws IllegalAccessException {
 		return o;
 	}
 
@@ -56,6 +58,16 @@ public class FakeChamp implements FieldInformations {
 	@Override
 	public Class<?> getValueType() {
 		return typeToken.getRawType();
+	}
+
+	@Override
+	public boolean isChampId() {
+		return false;
+	}
+
+	@Override
+	public Object get(Object o) throws IllegalAccessException {
+		return get(o, null);
 	}
 
 }

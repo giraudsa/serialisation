@@ -11,8 +11,6 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import utils.ConfigurationMarshalling;
-import utils.TypeExtension;
-import utils.champ.ChampUid;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;

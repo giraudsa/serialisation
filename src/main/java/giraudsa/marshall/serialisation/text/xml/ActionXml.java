@@ -54,7 +54,7 @@ public abstract class ActionXml<T> extends ActionText<T> {
 		return false;
 	}
 	
-	protected abstract void ecritValeur(Marshaller marshaller, T obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException;
+	protected abstract void ecritValeur(Marshaller marshaller, T obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption;
 
 	protected void ouvreBaliseEcritIdFermeBalise(Marshaller marshaller, T obj, String nomBalise, boolean typeDevinable, String id) throws IOException{
 		Class<?> classeAEcrire = classeAEcrire(obj, typeDevinable);
@@ -91,7 +91,7 @@ public abstract class ActionXml<T> extends ActionText<T> {
 		}
 
 		@Override
-		protected void evalue(Marshaller marshaller) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException{
+		protected void evalue(Marshaller marshaller) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
 			boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
 			ouvreBalise(marshaller, obj, nomBalise, typeDevinable);
 			ecritValeur(marshaller, obj, fieldInformations);

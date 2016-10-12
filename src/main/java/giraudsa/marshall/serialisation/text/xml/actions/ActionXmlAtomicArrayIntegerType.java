@@ -6,6 +6,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
@@ -19,7 +20,7 @@ public class ActionXmlAtomicArrayIntegerType  extends ActionXml<AtomicIntegerArr
 	}
 	
 	@Override
-	protected void ecritValeur(Marshaller marshaller, AtomicIntegerArray array, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	protected void ecritValeur(Marshaller marshaller, AtomicIntegerArray array, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		FakeChamp fakeChamp = new FakeChamp("int", Integer.class, fieldInformations.getRelation());
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		for (int i = 0; i < array.length(); ++i) {

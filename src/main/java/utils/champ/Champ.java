@@ -11,6 +11,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Map;
+import java.util.UUID;
 
 public class Champ implements Comparable<Champ>, FieldInformations {
 
@@ -22,19 +24,23 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	protected Class<?> valueType;
 	protected TypeToken<?> typeToken;
 	private String comparaison;
+	private final boolean isChampId;
 
-	Champ(Field info, Boolean isSimple) {
+	Champ(Field info, boolean isSimple, boolean isChampId) {
 		this.info = info;
 		this.isSimple = isSimple;
+		this.isChampId = isChampId;
 		if (info != null) {
 			typeToken = TypeToken.get(info.getGenericType());
 			valueType = info.getType();
 			MarshallAsAttribute metadata = info.getAnnotation(MarshallAsAttribute.class);
 			name = metadata !=null ? metadata.name() : info.getName();
 			Relation maRelation = info.getAnnotation(Relation.class);
-			relation = maRelation != null ? maRelation.type() : TypeRelation.ASSOCIATION;
 			if (isSimple)
 				relation = TypeRelation.COMPOSITION;
+			else
+				relation = maRelation != null ? maRelation.type() : TypeRelation.ASSOCIATION;
+			
 		}
 	}
 	
@@ -74,7 +80,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 		return that.hashCode();
 	}
 
-	public void set(Object obj, Object value) throws SetValueException{
+	public void set(Object obj, Object value, Map<Object, UUID> dicoObjToFakeId) throws SetValueException{
 		try {
 			if(obj != null && !Modifier.isFinal(info.getModifiers()))
 				info.set(obj, value);
@@ -88,7 +94,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	}
 
 	@Override
-	public Object get(Object obj) throws IllegalAccessException {
+	public Object get(Object obj, Map<Object, UUID> dicoObjToFakeId) throws IllegalAccessException {
 			return info.get(obj);
 	}
 
@@ -127,5 +133,15 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 			return ((ParameterizedType)type).getActualTypeArguments();
 		}
 		return new Type[0];
+	}
+
+	@Override
+	public boolean isChampId() {
+		return isChampId;
+	}
+
+	@Override
+	public Object get(Object o) throws IllegalAccessException {
+		return get(o, null);
 	}
 }

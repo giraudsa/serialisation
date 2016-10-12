@@ -1,5 +1,6 @@
 package giraudsa.marshall.serialisation.text.json.actions;
 
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.json.ActionJson;
@@ -23,7 +24,7 @@ public class ActionJsonDictionary extends ActionJson<Map> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Map obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, NotImplementedSerializeException, IOException{
+	protected void ecritValeur(Marshaller marshaller, Map obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, NotImplementedSerializeException, IOException, MarshallExeption{
 		Type[] types = fieldInformations.getParametreType();
 		Type genericTypeKey = Object.class;
 		Type genericTypeValue = Object.class;

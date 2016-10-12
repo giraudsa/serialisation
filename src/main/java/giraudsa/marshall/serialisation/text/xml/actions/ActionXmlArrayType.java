@@ -7,6 +7,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
@@ -20,7 +21,7 @@ public class ActionXmlArrayType  extends ActionXml<Object> {
 	}
 	
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException{
+	protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		Type genericType = obj.getClass().getComponentType();
 		String clef = genericType instanceof Class ? ((Class<?>)genericType).getSimpleName() : "Value";
 		FakeChamp fakeChamp = new FakeChamp(clef, genericType, fieldInformations.getRelation());

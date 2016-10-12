@@ -4,6 +4,8 @@ import utils.champ.FieldInformations;
 
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
+import java.util.Map;
+import java.util.UUID;
 
 import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.InstanciationException;
@@ -45,6 +47,10 @@ public abstract class ActionAbstrait<T> {
 
 	protected boolean isUniversalId() {
 		return true;
+	}
+	
+	protected Map<Object, UUID> getDicoObjToFakeId() {
+		return unmarshaller.getDicoObjToFakeId();
 	}
 
 }
