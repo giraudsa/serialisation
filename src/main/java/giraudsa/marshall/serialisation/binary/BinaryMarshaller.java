@@ -169,7 +169,7 @@ public class BinaryMarshaller extends Marshaller{
 	
 	/////METHODES 
 	private <T> void marshall(T obj) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, MarshallExeption{
-		FakeChamp fieldsInfo = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION);
+		FakeChamp fieldsInfo = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
 		marshall(obj, fieldsInfo);
 		while(!aFaire.isEmpty()){
 			deserialisePile();

@@ -20,8 +20,8 @@ public class ActionXmlAtomicArrayIntegerType  extends ActionXml<AtomicIntegerArr
 	}
 	
 	@Override
-	protected void ecritValeur(Marshaller marshaller, AtomicIntegerArray array, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
-		FakeChamp fakeChamp = new FakeChamp("int", Integer.class, fieldInformations.getRelation());
+	protected void ecritValeur(Marshaller marshaller, AtomicIntegerArray array, FieldInformations fi) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
+		FakeChamp fakeChamp = new FakeChamp("int", Integer.class, fi.getRelation(), fi.getAnnotations());
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		for (int i = 0; i < array.length(); ++i) {
 			tmp.push(traiteChamp(marshaller, array.get(i), fakeChamp));

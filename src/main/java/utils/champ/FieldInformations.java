@@ -1,5 +1,6 @@
 package utils.champ;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.UUID;
@@ -15,4 +16,6 @@ public interface FieldInformations {
 	public Type[] getParametreType();
 	public Class<?> getValueType();
 	public boolean isChampId();
+	public Annotation[] getAnnotations();
+	<T extends Annotation> T getAnnotation(Class<T> annotationClass);
 }

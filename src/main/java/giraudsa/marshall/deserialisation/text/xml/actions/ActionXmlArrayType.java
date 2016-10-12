@@ -24,7 +24,7 @@ public class ActionXmlArrayType<T> extends ActionXmlComplexeObject<T> {
 		if(fakeChamp == null){
 			Class<?> type = fieldInformations.getValueType();
 			Class<?> typeGeneric = TypeExtension.getTypeEnveloppe(type.getComponentType());
-			fakeChamp = new FakeChamp("V", typeGeneric, fieldInformations.getRelation());
+			fakeChamp = new FakeChamp("V", typeGeneric, fieldInformations.getRelation(), fieldInformations.getAnnotations());
 		}
 		return fakeChamp;
 	}

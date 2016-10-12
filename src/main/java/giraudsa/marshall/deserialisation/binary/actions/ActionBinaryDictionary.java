@@ -69,8 +69,8 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 			parametreTypeKey = types[0];
 			parametreTypeValue = types[1];
 		}
-		fakeChampKey = new FakeChamp(null, parametreTypeKey, fieldInformations.getRelation());
-		fakeChampValue = new FakeChamp(null, parametreTypeValue, fieldInformations.getRelation());
+		fakeChampKey = new FakeChamp(null, parametreTypeKey, fieldInformations.getRelation(), fieldInformations.getAnnotations());
+		fakeChampValue = new FakeChamp(null, parametreTypeValue, fieldInformations.getRelation(), fieldInformations.getAnnotations());
 	}
 
 	private Object newInstance() throws UnmarshallExeption {

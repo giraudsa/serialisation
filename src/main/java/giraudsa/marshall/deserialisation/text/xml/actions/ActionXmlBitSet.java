@@ -12,7 +12,7 @@ import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
 public class ActionXmlBitSet extends ActionXmlComplexeObject<BitSet> {
-	private FakeChamp fakeChamp = new FakeChamp("V", Boolean.class, TypeRelation.COMPOSITION);
+	private FakeChamp fakeChamp = new FakeChamp("V", Boolean.class, TypeRelation.COMPOSITION, null);
 	private List<Boolean> listeTampon = new ArrayList<>();
 	private ActionXmlBitSet(Class<BitSet> type, XmlUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);

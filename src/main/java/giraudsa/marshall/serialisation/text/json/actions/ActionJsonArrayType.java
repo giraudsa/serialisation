@@ -22,11 +22,11 @@ public class ActionJsonArrayType  extends ActionJson<Object> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur)
+	protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fi, boolean ecrisSeparateur)
 			throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException,
 			NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
 		Type genericType = obj.getClass().getComponentType();
-		FakeChamp fakeChamp = new FakeChamp(null, genericType, fieldInformations.getRelation());
+		FakeChamp fakeChamp = new FakeChamp(null, genericType, fi.getRelation(), fi.getAnnotations());
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		for (int i = 0; i < Array.getLength(obj); ++i) {
 			tmp.push(traiteChamp(marshaller, Array.get(obj, i), fakeChamp, ecrisSeparateur));

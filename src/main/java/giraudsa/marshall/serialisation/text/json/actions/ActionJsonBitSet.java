@@ -21,8 +21,8 @@ public class ActionJsonBitSet  extends ActionJson<BitSet> {
 	}
 	
 	@Override
-	protected void ecritValeur(Marshaller marshaller, BitSet array, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
-		FakeChamp fakeChamp = new FakeChamp(null, boolean.class, TypeRelation.COMPOSITION);
+	protected void ecritValeur(Marshaller marshaller, BitSet array, FieldInformations fi, boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
+		FakeChamp fakeChamp = new FakeChamp(null, boolean.class, TypeRelation.COMPOSITION, fi.getAnnotations());
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		for (int i = 0; i < array.length(); ++i) {
 			tmp.push(traiteChamp(marshaller, array.get(i), fakeChamp, ecrisSeparateur));

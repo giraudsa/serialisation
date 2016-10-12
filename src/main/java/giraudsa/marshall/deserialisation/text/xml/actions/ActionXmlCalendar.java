@@ -13,12 +13,12 @@ import utils.champ.FieldInformations;
 
 
 public class ActionXmlCalendar<Calendar> extends ActionXmlComplexeObject<Calendar> {
-	private static FakeChamp cSeconde = new FakeChamp("second", Integer.class, TypeRelation.COMPOSITION);
-	private static FakeChamp cMinute = new FakeChamp("minute", Integer.class, TypeRelation.COMPOSITION);
-	private static FakeChamp cHourOfDay = new FakeChamp("hourOfDay", Integer.class, TypeRelation.COMPOSITION);
-	private static FakeChamp cDayOfMonth = new FakeChamp("dayOfMonth", Integer.class, TypeRelation.COMPOSITION);
-	private static FakeChamp cMonth = new FakeChamp("month", Integer.class, TypeRelation.COMPOSITION);
-	private static FakeChamp cYear = new FakeChamp("year", Integer.class, TypeRelation.COMPOSITION);
+	private static FakeChamp cSeconde = new FakeChamp("second", Integer.class, TypeRelation.COMPOSITION, null);
+	private static FakeChamp cMinute = new FakeChamp("minute", Integer.class, TypeRelation.COMPOSITION, null);
+	private static FakeChamp cHourOfDay = new FakeChamp("hourOfDay", Integer.class, TypeRelation.COMPOSITION, null);
+	private static FakeChamp cDayOfMonth = new FakeChamp("dayOfMonth", Integer.class, TypeRelation.COMPOSITION, null);
+	private static FakeChamp cMonth = new FakeChamp("month", Integer.class, TypeRelation.COMPOSITION, null);
+	private static FakeChamp cYear = new FakeChamp("year", Integer.class, TypeRelation.COMPOSITION, null);
 	private static Map<String, FakeChamp> nomToChamp = new HashMap<>();
 	static{
 		nomToChamp.put(cSeconde.getName(), cSeconde);

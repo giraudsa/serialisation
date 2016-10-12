@@ -82,7 +82,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 		Type parametreType = Object.class;
 		if(types.length > 0)
 			parametreType = types[0];
-		fakeChamp = new FakeChamp(null, parametreType, fieldInformations.getRelation());
+		fakeChamp = new FakeChamp(null, parametreType, fieldInformations.getRelation(), fieldInformations.getAnnotations());
 	}
 
 	private Collection newInstance() throws UnmarshallExeption {

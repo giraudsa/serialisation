@@ -7,6 +7,7 @@ import giraudsa.marshall.exception.SetValueException;
 import utils.TypeExtension;
 import utils.generic.TypeToken;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -15,7 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class Champ implements Comparable<Champ>, FieldInformations {
-
+	private static final Annotation[] noAnnotation = new Annotation[0];
 	protected String name;
 	private final Field info;
 
@@ -144,4 +145,19 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	public Object get(Object o) throws IllegalAccessException {
 		return get(o, null);
 	}
+	
+	@Override
+	public Annotation[] getAnnotations(){
+		if(info == null)
+			return noAnnotation;
+		return info.getAnnotations();
+	}
+	
+	@Override
+	public <T extends Annotation> T getAnnotation(Class<T> annotationClass){
+		if(info == null)
+			return null;
+		return info.getAnnotation(annotationClass);
+	}
+	
 }

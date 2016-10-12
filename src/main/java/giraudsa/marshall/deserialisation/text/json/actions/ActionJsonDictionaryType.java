@@ -43,7 +43,7 @@ public class ActionJsonDictionaryType<T extends Map> extends ActionJson<T> {
 				Type typeGeneric = Object.class;
 				if(types != null && types.length > 0) 
 					typeGeneric = types[0];
-				fakeChampKey = new FakeChamp("K", typeGeneric, fieldInformations.getRelation());
+				fakeChampKey = new FakeChamp("K", typeGeneric, fieldInformations.getRelation(), fieldInformations.getAnnotations());
 			}
 			return fakeChampKey;
 		}
@@ -52,7 +52,7 @@ public class ActionJsonDictionaryType<T extends Map> extends ActionJson<T> {
 			Type typeGeneric = Object.class;
 			if(types != null && types.length > 1)
 				typeGeneric = types[1];
-			fakeChampValue = new FakeChamp("V", typeGeneric, fieldInformations.getRelation());
+			fakeChampValue = new FakeChamp("V", typeGeneric, fieldInformations.getRelation(), fieldInformations.getAnnotations());
 		}
 		return fakeChampValue;
 	}

@@ -190,7 +190,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 	
 	private T parse() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption, InstanciationException, EntityManagerImplementationException, SetValueException{
-		FakeChamp fc = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION);
+		FakeChamp fc = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
 		litObject(fc);
 		while(!pileAction.isEmpty()){
 			ActionBinary<?> actionEnCours = (ActionBinary<?>)getActionEnCours();

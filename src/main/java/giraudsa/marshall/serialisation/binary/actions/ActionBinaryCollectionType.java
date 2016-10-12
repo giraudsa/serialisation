@@ -27,23 +27,23 @@ public class ActionBinaryCollectionType extends ActionBinary<Collection> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Collection obj, FieldInformations fieldInformations, boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
-		Type[] types = fieldInformations.getParametreType();
+	protected void ecritValeur(Marshaller marshaller, Collection obj, FieldInformations fi, boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
+		Type[] types = fi.getParametreType();
 		Type genericType = Object.class;
 		if(types != null && types.length > 0){
 			genericType = types[0];
 		}
-		FakeChamp fakeChamp = new FakeChamp(null, genericType, fieldInformations.getRelation());
+		FakeChamp fakeChamp = new FakeChamp(null, genericType, fi.getRelation(), fi.getAnnotations());
 		
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		if (!isDejaVu){
-			if(strategieSerialiseTout(marshaller, fieldInformations))
+			if(strategieSerialiseTout(marshaller, fi))
 				setDejaTotalementSerialise(marshaller, obj);
 			writeInt(marshaller, obj.size());
 			for (Object value : obj) {
 				tmp.push(traiteChamp(marshaller, value, fakeChamp));
 			}
-		}else if(!isDejaTotalementSerialise(marshaller, obj) && strategieSerialiseTout(marshaller, fieldInformations)){
+		}else if(!isDejaTotalementSerialise(marshaller, obj) && strategieSerialiseTout(marshaller, fi)){
 			setDejaTotalementSerialise(marshaller, obj);
 			for(Object value : obj){
 				tmp.push(traiteChamp(marshaller, value, fakeChamp));

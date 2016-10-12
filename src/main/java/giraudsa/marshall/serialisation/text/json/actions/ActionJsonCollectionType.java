@@ -64,14 +64,14 @@ public class ActionJsonCollectionType extends ActionJson<Collection> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Collection obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, NotImplementedSerializeException, IOException, MarshallExeption {
+	protected void ecritValeur(Marshaller marshaller, Collection obj, FieldInformations fi, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, NotImplementedSerializeException, IOException, MarshallExeption {
 		
-		Type[] types = fieldInformations.getParametreType();
+		Type[] types = fi.getParametreType();
 		Type genericType = Object.class;
 		if(types != null && types.length > 0){
 			genericType = types[0];
 		}
-		FakeChamp fakeChamp = new FakeChamp(null, genericType, fieldInformations.getRelation());
+		FakeChamp fakeChamp = new FakeChamp(null, genericType, fi.getRelation(), fi.getAnnotations());
 		
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		for (Object value : obj) {

@@ -12,7 +12,7 @@ import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
 public class ActionJsonBitSet extends ActionJsonComplexeObject<BitSet> {
-	private FakeChamp fakeChamp = new FakeChamp(null, Boolean.class, TypeRelation.COMPOSITION);
+	private FakeChamp fakeChamp = new FakeChamp(null, Boolean.class, TypeRelation.COMPOSITION, null);
 	private List<Boolean> listeTampon = new ArrayList<>();
 	private ActionJsonBitSet(Class<BitSet> type, JsonUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);

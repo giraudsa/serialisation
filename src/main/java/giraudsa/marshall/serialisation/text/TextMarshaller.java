@@ -44,7 +44,7 @@ public abstract class TextMarshaller extends Marshaller {
 	protected <U> void marshall(U obj) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException, MarshallExeption{
 		if (obj == null)
 			return;
-		FakeChamp fieldsInfo = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION);
+		FakeChamp fieldsInfo = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
 		marshall(obj, fieldsInfo);
 		while(!aFaire.isEmpty()){
 			deserialisePile();

@@ -22,7 +22,7 @@ public class ActionJsonArrayType<T> extends ActionJsonComplexeObject<T> {
 		if(fakeChamp == null){
 			Class<?> type = fieldInformations.getValueType();
 			Class<?> typeGeneric = type.getComponentType();
-			fakeChamp = new FakeChamp("V", typeGeneric, fieldInformations.getRelation());
+			fakeChamp = new FakeChamp("V", typeGeneric, fieldInformations.getRelation(), fieldInformations.getAnnotations());
 		}
 		return fakeChamp;
 	}

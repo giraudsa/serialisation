@@ -12,7 +12,7 @@ import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
 public class ActionXmlAtomicIntegerArray extends ActionXmlComplexeObject<AtomicIntegerArray> {
-	private FakeChamp fakeChamp = new FakeChamp("V", Integer.class, TypeRelation.COMPOSITION);
+	private FakeChamp fakeChamp = new FakeChamp("V", Integer.class, TypeRelation.COMPOSITION, null);
 	private List<Integer> listeTampon = new ArrayList<>();
 	private ActionXmlAtomicIntegerArray(Class<AtomicIntegerArray> type, XmlUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);

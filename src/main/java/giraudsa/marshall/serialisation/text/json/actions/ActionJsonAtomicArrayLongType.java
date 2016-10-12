@@ -21,8 +21,8 @@ public class ActionJsonAtomicArrayLongType  extends ActionJson<AtomicLongArray> 
 	}
 	
 	@Override
-	protected void ecritValeur(Marshaller marshaller, AtomicLongArray obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
-		FakeChamp fakeChamp = new FakeChamp("V", Long.class, fieldInformations.getRelation());
+	protected void ecritValeur(Marshaller marshaller, AtomicLongArray obj, FieldInformations fi, boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
+		FakeChamp fakeChamp = new FakeChamp("V", Long.class, fi.getRelation(), fi.getAnnotations());
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		for (int i = 0; i < obj.length(); ++i) {
 			tmp.push(traiteChamp(marshaller, obj.get(i), fakeChamp, ecrisSeparateur));

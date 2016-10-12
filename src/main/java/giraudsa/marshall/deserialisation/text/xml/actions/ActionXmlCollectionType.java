@@ -35,7 +35,7 @@ public class ActionXmlCollectionType<C extends Collection> extends ActionXmlComp
 			Type typeGeneric = Object.class;
 			if(types != null && types.length > 0)
 				typeGeneric = types[0];
-			fakeChamp = new FakeChamp("V", typeGeneric, fieldInformations.getRelation());
+			fakeChamp = new FakeChamp("V", typeGeneric, fieldInformations.getRelation(), fieldInformations.getAnnotations());
 		}
 		return fakeChamp;
 	}

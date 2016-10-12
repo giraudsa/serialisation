@@ -26,28 +26,28 @@ public class ActionBinaryDictionaryType extends ActionBinary<Map> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Map map, FieldInformations fieldInformations, boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
-		Type[] types = fieldInformations.getParametreType();
+	protected void ecritValeur(Marshaller marshaller, Map map, FieldInformations fi, boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
+		Type[] types = fi.getParametreType();
 		Type genericTypeKey = Object.class;
 		Type genericTypeValue = Object.class;
 		if(types != null && types.length > 1){
 			genericTypeKey = types[0];
 			genericTypeValue = types[1];
 		}
-		FakeChamp fakeChampKey = new FakeChamp("K", genericTypeKey, fieldInformations.getRelation());
-		FakeChamp fakeChampValue = new FakeChamp("V", genericTypeValue, fieldInformations.getRelation());
+		FakeChamp fakeChampKey = new FakeChamp("K", genericTypeKey, fi.getRelation(), fi.getAnnotations());
+		FakeChamp fakeChampValue = new FakeChamp("V", genericTypeValue, fi.getRelation(), fi.getAnnotations());
 		
 		
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		if(!isDejaVu){
-			if(strategieSerialiseTout(marshaller, fieldInformations))
+			if(strategieSerialiseTout(marshaller, fi))
 				setDejaTotalementSerialise(marshaller, map);
 			writeInt(marshaller, map.size());
 			for (Object entry : map.entrySet()) {
 				tmp.push(traiteChamp(marshaller, ((Entry)entry).getKey(), fakeChampKey));
 				tmp.push(traiteChamp(marshaller, ((Entry)entry).getValue(), fakeChampValue));
 			}
-		}else if(!isDejaTotalementSerialise(marshaller, map) && strategieSerialiseTout(marshaller, fieldInformations)){
+		}else if(!isDejaTotalementSerialise(marshaller, map) && strategieSerialiseTout(marshaller, fi)){
 			setDejaTotalementSerialise(marshaller, map);
 			for(Object entry : map.entrySet()){
 				tmp.push(traiteChamp(marshaller, ((Entry)entry).getKey(), fakeChampKey));

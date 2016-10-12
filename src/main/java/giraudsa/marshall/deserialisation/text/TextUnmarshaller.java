@@ -42,7 +42,7 @@ public abstract class TextUnmarshaller<T> extends Unmarshaller<T> {
 		if(actionEnCours != null){
 			fi = actionEnCours.getFieldInformation(nom);
 		}else{
-			fi = new FakeChamp(nom, Object.class, TypeRelation.COMPOSITION);
+			fi = new FakeChamp(nom, Object.class, TypeRelation.COMPOSITION, null);
 		}
 		action.setFieldInformation(fi);
 	}

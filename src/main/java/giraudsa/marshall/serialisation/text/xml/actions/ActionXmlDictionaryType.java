@@ -32,8 +32,8 @@ public class ActionXmlDictionaryType extends ActionXml<Map> {
 		}
 		String clefKey = genericTypeKey instanceof Class ? ((Class<?>)genericTypeKey).getSimpleName() : "Key";
 		String clefValue = genericTypeValue instanceof Class ? ((Class<?>)genericTypeValue).getSimpleName() : "Value";
-		FakeChamp fakeChampKey = new FakeChamp(clefKey, genericTypeKey, fieldInformations.getRelation());
-		FakeChamp fakeChampValue = new FakeChamp(clefValue, genericTypeValue, fieldInformations.getRelation());
+		FakeChamp fakeChampKey = new FakeChamp(clefKey, genericTypeKey, fieldInformations.getRelation(), fieldInformations.getAnnotations());
+		FakeChamp fakeChampValue = new FakeChamp(clefValue, genericTypeValue, fieldInformations.getRelation(), fieldInformations.getAnnotations());
 		
 		
 		Map<?,?> map = (Map<?,?>) obj;

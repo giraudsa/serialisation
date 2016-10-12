@@ -12,7 +12,7 @@ import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
 public class ActionXmlAtomicLongArray extends ActionXmlComplexeObject<AtomicLongArray> {
-	private FakeChamp fakeChamp = new FakeChamp("V", Long.class, TypeRelation.COMPOSITION);
+	private FakeChamp fakeChamp = new FakeChamp("V", Long.class, TypeRelation.COMPOSITION, null);
 	private List<Long> listeTampon = new ArrayList<>();
 	private ActionXmlAtomicLongArray(Class<AtomicLongArray> type, XmlUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);

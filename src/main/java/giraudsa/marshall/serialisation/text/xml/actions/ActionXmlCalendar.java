@@ -12,12 +12,12 @@ import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
 public class ActionXmlCalendar extends ActionXml<Calendar> {
-	private static FakeChamp fakeChampSeconde = new FakeChamp("second", Integer.class, TypeRelation.COMPOSITION);
-	private static FakeChamp fakeChampMinute = new FakeChamp("minute", Integer.class, TypeRelation.COMPOSITION);
-	private static FakeChamp fakeChampHourOfDay = new FakeChamp("hourOfDay", Integer.class, TypeRelation.COMPOSITION);
-	private static FakeChamp fakeChampDayOfMonth = new FakeChamp("dayOfMonth", Integer.class, TypeRelation.COMPOSITION);
-	private static FakeChamp fakeChampMonth = new FakeChamp("month", Integer.class, TypeRelation.COMPOSITION);
-	private static FakeChamp fakeChampYear = new FakeChamp("year", Integer.class, TypeRelation.COMPOSITION);
+	private static FakeChamp fakeChampSeconde = new FakeChamp("second", Integer.class, TypeRelation.COMPOSITION, null);
+	private static FakeChamp fakeChampMinute = new FakeChamp("minute", Integer.class, TypeRelation.COMPOSITION, null);
+	private static FakeChamp fakeChampHourOfDay = new FakeChamp("hourOfDay", Integer.class, TypeRelation.COMPOSITION, null);
+	private static FakeChamp fakeChampDayOfMonth = new FakeChamp("dayOfMonth", Integer.class, TypeRelation.COMPOSITION, null);
+	private static FakeChamp fakeChampMonth = new FakeChamp("month", Integer.class, TypeRelation.COMPOSITION, null);
+	private static FakeChamp fakeChampYear = new FakeChamp("year", Integer.class, TypeRelation.COMPOSITION, null);
 
 
 	public ActionXmlCalendar() {

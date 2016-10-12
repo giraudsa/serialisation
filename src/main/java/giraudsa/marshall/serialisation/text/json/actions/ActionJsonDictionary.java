@@ -24,16 +24,16 @@ public class ActionJsonDictionary extends ActionJson<Map> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Map obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, NotImplementedSerializeException, IOException, MarshallExeption{
-		Type[] types = fieldInformations.getParametreType();
+	protected void ecritValeur(Marshaller marshaller, Map obj, FieldInformations fi, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, NotImplementedSerializeException, IOException, MarshallExeption{
+		Type[] types = fi.getParametreType();
 		Type genericTypeKey = Object.class;
 		Type genericTypeValue = Object.class;
 		if(types != null && types.length > 1){
 			genericTypeKey = types[0];
 			genericTypeValue = types[1];
 		}
-		FakeChamp fakeChampKey = new FakeChamp(null, genericTypeKey, fieldInformations.getRelation());
-		FakeChamp fakeChampValue = new FakeChamp(null, genericTypeValue, fieldInformations.getRelation());
+		FakeChamp fakeChampKey = new FakeChamp(null, genericTypeKey, fi.getRelation(), fi.getAnnotations());
+		FakeChamp fakeChampValue = new FakeChamp(null, genericTypeValue, fi.getRelation(), fi.getAnnotations());
 		
 		Map<?,?> map = (Map<?,?>) obj;
 		Deque<Comportement> tmp = new ArrayDeque<>();
