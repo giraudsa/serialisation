@@ -2,6 +2,9 @@ package giraudsa.marshall.deserialisation.text;
 
 import java.text.DateFormat;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
+import giraudsa.marshall.exception.EntityManagerImplementationException;
+import giraudsa.marshall.exception.InstanciationException;
+import utils.champ.ChampUid;
 import utils.champ.FieldInformations;
 
 public abstract class ActionText<T> extends ActionAbstrait<T> {
@@ -41,4 +44,14 @@ public abstract class ActionText<T> extends ActionAbstrait<T> {
 		return getFieldInformationSpecialise(nom);
 	}
 	protected abstract FieldInformations getFieldInformationSpecialise(String nom);
+	
+	@SuppressWarnings("unchecked")
+	protected <W> void preciseLeTypeSiIdConnu(String idAttribut, String id)
+			throws EntityManagerImplementationException, InstanciationException {
+		if(ChampUid.UID_FIELD_NAME.equals(idAttribut)){
+			obj = getObject(id, type);
+			if(obj != null)
+				type = (Class<T>) obj.getClass();
+		}
+	}
 }

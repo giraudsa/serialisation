@@ -60,13 +60,8 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 	}
 	
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	protected  void construitObjet() throws EntityManagerImplementationException, InstanciationException, SetValueException{
-		obj = getObject(dicoNomChampToValue.get(ChampUid.UID_FIELD_NAME).toString(), type);
-		if(obj == null)
-			return;
-		type = (Class<T>) obj.getClass();
 		for(Entry<String, Object> entry : dicoNomChampToValue.entrySet()){
 			Champ champ = TypeExtension.getChampByName(type, entry.getKey());
 			if (champ != null){
@@ -75,12 +70,9 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 		}
 	}
 	
-
-	@SuppressWarnings("unchecked")
 	@Override
 	protected <W> void integreObjet(String nomAttribut, W objet) throws EntityManagerImplementationException, InstanciationException{
-		if(type == Object.class && ChampUid.UID_FIELD_NAME.equals(nomAttribut))
-			type = (Class<T>) getObject(objet.toString(), type).getClass();
+		preciseLeTypeSiIdConnu(nomAttribut, objet.toString());
 		dicoNomChampToValue.put(nomAttribut, objet);
 	}
 	
