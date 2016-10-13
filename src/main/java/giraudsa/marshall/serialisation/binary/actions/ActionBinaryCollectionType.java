@@ -63,6 +63,7 @@ public class ActionBinaryCollectionType extends ActionBinary<Collection> {
 				return HashSet.class;
 			if(object.getClass().getName().toLowerCase().indexOf("persistentsortedset") != -1)
 				return TreeSet.class;
+			else return ArrayList.class;
 		}
 		return clazz;
 	}

@@ -47,8 +47,11 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 		return champ.getValueType();
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	protected <W> void integreObjet(String nomAttribut, W objet){
+	protected <W> void integreObjet(String nomAttribut, W objet) throws EntityManagerImplementationException, InstanciationException{
+		if(type == Object.class && ChampUid.UID_FIELD_NAME.equals(nomAttribut))
+			type = (Class<T>) getObject(objet.toString(), type).getClass();
 		dicoNomChampToValue.put(nomAttribut, objet);
 	}
 	

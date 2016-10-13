@@ -29,12 +29,15 @@ public class ActionXmlCollectionType extends ActionXml<Collection> {
 		Class<?> clazz = obj.getClass();
 		
 		if(clazz.getName().toLowerCase().indexOf("hibernate") != -1){
+			if(obj.getClass().getName().toLowerCase().indexOf("persistentlist") != -1)
+				return ArrayList.class;
 			if(obj.getClass().getName().toLowerCase().indexOf("persistentbag") != -1)
 				return ArrayList.class;
 			if(obj.getClass().getName().toLowerCase().indexOf("persistentset") != -1)
 				return HashSet.class;
 			if(obj.getClass().getName().toLowerCase().indexOf("persistentsortedset") != -1)
 				return TreeSet.class;
+			else return ArrayList.class;
 		}
 		return clazz;
 	}
