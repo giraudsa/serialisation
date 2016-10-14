@@ -46,10 +46,11 @@ public abstract class ActionText<T> extends ActionAbstrait<T> {
 	protected abstract FieldInformations getFieldInformationSpecialise(String nom);
 	
 	@SuppressWarnings("unchecked")
-	protected <W> void preciseLeTypeSiIdConnu(String idAttribut, String id)
+	protected <W> void preciseLeTypeSiIdConnu(String idAttribut, String idCandidat)
 			throws EntityManagerImplementationException, InstanciationException {
+		if (idCandidat == null) return;
 		if(ChampUid.UID_FIELD_NAME.equals(idAttribut)){
-			obj = getObject(id, type);
+			obj = getObject(idCandidat, type);
 			if(obj != null)
 				type = (Class<T>) obj.getClass();
 		}

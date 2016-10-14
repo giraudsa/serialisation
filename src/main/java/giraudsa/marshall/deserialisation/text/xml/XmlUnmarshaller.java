@@ -178,18 +178,18 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	}
 	
 	@SuppressWarnings("unchecked")
-	private <T> void setId(Attributes attributes, ActionXml<?> action, Class<?> type) throws InstanciationException{
+	private <T> void setId(Attributes attributes, ActionXml<?> action) throws InstanciationException, EntityManagerImplementationException{
 		if (!(action instanceof ActionXmlObject<?>))
 			return;
 		String id = attributes.getValue("id");
 		if(id != null){
 			ActionXmlObject<T> actionObject = (ActionXmlObject<T>)action;
-			actionObject.setId(id, type);
+			actionObject.setId(id);
 		}
 	}
 
 	/////XML EVENT
-	protected void startElement(String qName, Attributes attributes) throws ClassNotFoundException, NotImplementedSerializeException, InvalidTargetObjectTypeException, InstanciationException{
+	protected void startElement(String qName, Attributes attributes) throws ClassNotFoundException, NotImplementedSerializeException, InvalidTargetObjectTypeException, InstanciationException, EntityManagerImplementationException{
 		setCache(attributes);
 		Class<?> type = getType(attributes, qName);
 		isFirst = false;
@@ -197,7 +197,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 			ActionXml<?> action = (ActionXml<?>) getAction(type);
 			setNom(action, qName);
 			setFieldInformation(action);
-			setId(attributes, action, type);
+			setId(attributes, action);
 			pileAction.push(action);
 		}
 	}
