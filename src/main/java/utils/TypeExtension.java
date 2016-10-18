@@ -14,9 +14,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import giraudsa.marshall.exception.ChampNotFound;
 import utils.champ.Champ;
 import utils.champ.ChampUid;
 import utils.champ.FabriqueChamp;
+import utils.champ.FieldInformations;
+import utils.champ.NullChamp;
 
 public class TypeExtension {	
 	private static Set<Class<?>> simpleTypes = new HashSet<>(Arrays.asList(Boolean.class, Byte.class, Short.class, Integer.class, Long.class, Float.class, Double.class, 
@@ -35,13 +38,15 @@ public class TypeExtension {
 	}
 
 	
-	public static  Champ getChampByName(Class<?> typeObjetParent, String name){
+	public static  FieldInformations getChampByName(Class<?> typeObjetParent, String name){
 		List<Champ> champs = getSerializableFields(typeObjetParent);
 		for(Champ champ : champs){
 			if (champ.getName().equals(name))
 				return champ;
 		}
-		return null;
+		if(ConfigurationMarshalling.isModelContraignant())
+			throw new ChampNotFound("le champ " + name + " n'existe pas dans l'objet de type " + typeObjetParent.getName());
+		return NullChamp.getInstance();
 	}
 	
 	

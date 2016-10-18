@@ -1,5 +1,6 @@
 package giraudsa.marshall.serialisation.text.xml;
 
+import giraudsa.marshall.exception.ChampNotFound;
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.ActionAbstrait;
@@ -133,7 +134,7 @@ public class XmlMarshaller extends TextMarshaller {
 		try {
 			XmlMarshaller v = new XmlMarshaller(output, new StrategieSerialisationComplete());
 			v.marshall(obj);
-		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException | ChampNotFound e) {
 			LOGGER.error("impossible de sérialiser completement " + obj.toString(), e);
 			throw new MarshallExeption(e);
 		}

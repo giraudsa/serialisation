@@ -75,7 +75,8 @@ public class ActionXmlObject extends ActionXml<Object> {
 			Object id = champId.get(obj, getDicoObjToFakeId(marshaller));
 			if(id == null)
 				throw new MarshallExeption("l'objet de type " + typeObj.getName() + " a un id null");
-			ouvreBaliseEcritIdFermeBalise(marshaller, obj, nomBalise, typeDevinable,id.toString()); 
+			ouvreBaliseEcritIdFermeBalise(marshaller, obj, nomBalise, typeDevinable,id.toString());
+			setDejaVu(marshaller, obj);
 		}
 	
 	}

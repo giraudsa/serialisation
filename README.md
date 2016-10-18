@@ -170,3 +170,10 @@ Attention, il ne sera alors plus possible de désérialiser les JSON produits. I
 La stratégie de sérialisation permet de définir la profondeur de sérialisation en fonction du critère de profondeur et du modèle objet. Par défaut, il existe 3 stratégies possibles mais il est possible d'en définir d'autre en implémentant l'interface StrategieDeSerialisation. Cette interface possède une méthode qui défini si un objet doit être completement sérialisé ou uniquement par référence en fonction de sa profondeur et de ses informations de champs. Par exemple :
 
 	JsonMarshaller.toJson(myObject, myWriter, new StrategieParCompositionOuAgregationEtClasseConcrete(), true);
+	
+###5.7 - Contrainte au modèle
+
+Lors des évolutions de modèle par ajout d'attribut, il se peut que des classes ou des attributs apparaissent dans le XML qui ne soit pas dans le classloader en local. Par défaut le comportement lance une exception. Cependant, on peut vouloir le désérialiser et ne pas s'en occuper.
+
+	 ConfigurationMarshalling.setContrainteModel(false);
+Remarque : cette configuration ne fonctionne pas pour la désérialisation binaire.

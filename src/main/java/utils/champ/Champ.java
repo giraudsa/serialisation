@@ -81,6 +81,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 		return that.hashCode();
 	}
 
+	@Override
 	public void set(Object obj, Object value, Map<Object, UUID> dicoObjToFakeId) throws SetValueException{
 		try {
 			if(obj != null && !Modifier.isFinal(info.getModifiers()))
@@ -108,6 +109,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 		return info;
 	}
 	
+	@Override
 	public boolean isSimple(){
 		return isSimple;
 	}

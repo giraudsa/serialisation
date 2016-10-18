@@ -64,10 +64,8 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 	@Override
 	protected  void construitObjet() throws EntityManagerImplementationException, InstanciationException, SetValueException{
 		for(Entry<String, Object> entry : dicoNomChampToValue.entrySet()){
-			Champ champ = TypeExtension.getChampByName(type, entry.getKey());
-			if (champ != null){
-				champ.set(obj, entry.getValue(), getDicoObjToFakeId());
-			}
+			FieldInformations champ = TypeExtension.getChampByName(type, entry.getKey());
+			champ.set(obj, entry.getValue(), getDicoObjToFakeId());
 		}
 	}
 	
@@ -79,7 +77,7 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 	
     @Override
 	protected Class<?> getTypeAttribute(String nomAttribut) {
-		Champ champ = TypeExtension.getChampByName(type, nomAttribut);
+    	FieldInformations champ = TypeExtension.getChampByName(type, nomAttribut);
 		if (champ.isSimple())
 			return TypeExtension.getTypeEnveloppe(champ.getValueType());//on renvoie Integer à la place de int, Double au lieu de double, etc...
 		return champ.getValueType();

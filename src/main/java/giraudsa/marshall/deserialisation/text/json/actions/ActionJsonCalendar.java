@@ -49,7 +49,7 @@ public class ActionJsonCalendar<C extends Calendar> extends ActionJson<Calendar>
 
 	
 	@Override protected Class<?> getTypeAttribute(String nomAttribut) {
-		Champ champ = TypeExtension.getChampByName(type, nomAttribut);
+		FieldInformations champ = TypeExtension.getChampByName(type, nomAttribut);
 		if (champ.isSimple())
 			return TypeExtension.getTypeEnveloppe(champ.getValueType());//on renvoie Integer à la place de int, Double au lieu de double, etc...
 		return champ.getValueType();

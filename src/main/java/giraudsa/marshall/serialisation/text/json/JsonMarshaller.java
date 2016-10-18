@@ -1,5 +1,6 @@
 package giraudsa.marshall.serialisation.text.json;
 
+import giraudsa.marshall.exception.ChampNotFound;
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.ActionAbstrait;
@@ -123,7 +124,7 @@ public class JsonMarshaller extends TextMarshaller {
 		try {
 			JsonMarshaller v = new JsonMarshaller(output, strategie, writeType);
 			v.marshall(obj);
-		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+		} catch (ChampNotFound | IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
 			LOGGER.debug("probleme de sérialisation json de " + obj.toString(), e);
 			throw new MarshallExeption(e);
 		}
@@ -142,7 +143,7 @@ public class JsonMarshaller extends TextMarshaller {
 		try {
 			JsonMarshaller v = new JsonMarshaller(output, new StrategieSerialisationComplete(), true);
 			v.marshall(obj);
-		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+		} catch (ChampNotFound | IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
 			LOGGER.debug("probleme de sérialisation complète en json de " + obj.toString(), e);
 			throw new MarshallExeption(e);
 		}

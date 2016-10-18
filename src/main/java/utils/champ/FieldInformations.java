@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.exception.SetValueException;
 
 public interface FieldInformations {
 	public String getName();
@@ -17,5 +18,7 @@ public interface FieldInformations {
 	public Class<?> getValueType();
 	public boolean isChampId();
 	public Annotation[] getAnnotations();
-	<T extends Annotation> T getAnnotation(Class<T> annotationClass);
+	public <T extends Annotation> T getAnnotation(Class<T> annotationClass);
+	public void set(Object obj, Object value, Map<Object, UUID> dicoObjToFakeId) throws SetValueException;
+	public boolean isSimple();
 }

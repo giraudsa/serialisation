@@ -13,6 +13,7 @@ public class ConfigurationMarshalling {
 	private static boolean prettyPrint = false;
 	private static Class<? extends Annotation> annotationIgnoreSerialise= IgnoreSerialise.class;
 	private static final ConfigurationMarshalling instance = new ConfigurationMarshalling();
+	private static boolean modelContraignant = true;
 	
 	private ConfigurationMarshalling(){
 		TimeZone tz = TimeZone.getTimeZone("UTC");
@@ -60,6 +61,14 @@ public class ConfigurationMarshalling {
 	}
 	public static boolean isPrettyPrint(){
 		return prettyPrint;
+	}
+	
+	public static void setContrainteModel(boolean contraindre){
+		modelContraignant = contraindre;
+	}
+
+	public static boolean isModelContraignant() {
+		return modelContraignant;
 	}
 
 }

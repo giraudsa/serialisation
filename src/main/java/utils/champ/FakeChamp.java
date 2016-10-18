@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.exception.SetValueException;
 import utils.TypeExtension;
 import utils.generic.TypeToken;
 
@@ -78,6 +79,7 @@ public class FakeChamp implements FieldInformations {
 		return annotations;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
 		for(Annotation annotation : getAnnotations()){
@@ -85,6 +87,17 @@ public class FakeChamp implements FieldInformations {
 				return (T) annotation;
 		}
 		return null;
+	}
+
+	@Override
+	public void set(Object obj, Object value, Map<Object, UUID> dicoObjToFakeId) throws SetValueException {
+		// rien à faire
+		
+	}
+
+	@Override
+	public boolean isSimple() {
+		return false;
 	}
 
 }
