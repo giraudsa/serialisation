@@ -41,7 +41,7 @@ public abstract class ActionText<T> extends ActionAbstrait<T> {
 		return strategieSerialiseTout(marshaller, fieldInformations)
 				&& !isDejaTotalementSerialise(marshaller, obj);
 	}
-
+	
 	protected abstract Map<Character, String> getRemplacementChar();
 	protected void writeEscape(Marshaller marshaller, String toBeEscaped) throws IOException{
 		if (toBeEscaped.isEmpty())

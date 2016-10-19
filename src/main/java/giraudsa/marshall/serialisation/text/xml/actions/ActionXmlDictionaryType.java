@@ -22,7 +22,7 @@ public class ActionXmlDictionaryType extends ActionXml<Map> {
 		super();
 	}
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Map obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
+	protected void ecritValeur(Marshaller marshaller, Map obj, FieldInformations fieldInformations, boolean serialiseTout) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		Type[] types = fieldInformations.getParametreType();
 		Type genericTypeKey = Object.class;
 		Type genericTypeValue = Object.class;
@@ -43,5 +43,12 @@ public class ActionXmlDictionaryType extends ActionXml<Map> {
 			tmp.push(traiteChamp(marshaller, entry.getValue(), fakeChampValue));
 		}
 		pushComportements(marshaller, tmp);
+	}
+	
+	@Override
+	protected void pushComportementParticulier(Marshaller marshaller, Map obj, String nomBalise,
+			FieldInformations fieldInformations) {
+		newComportementFermeBalise(nomBalise);
+		newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations);
 	}
 }

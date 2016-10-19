@@ -14,7 +14,7 @@ public class ActionXmlUrl extends ActionXml<URL> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, URL obj, FieldInformations fieldInformations) throws IOException{
+	protected void ecritValeur(Marshaller marshaller, URL obj, FieldInformations fieldInformations, boolean serialiseTout) throws IOException{
 		writeEscape(marshaller, obj.toExternalForm());
 	}
 }

@@ -43,7 +43,7 @@ public class ActionXmlCollectionType extends ActionXml<Collection> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller,Collection obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
+	protected void ecritValeur(Marshaller marshaller,Collection obj, FieldInformations fieldInformations, boolean serialiseTout) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		Type[] types = fieldInformations.getParametreType();
 		Type genericType = Object.class;
 		if(types != null && types.length > 0){
@@ -57,6 +57,13 @@ public class ActionXmlCollectionType extends ActionXml<Collection> {
 			tmp.push(traiteChamp(marshaller,value, fakeChamp));
 		}
 		pushComportements(marshaller, tmp);
+	}
+	
+	@Override
+	protected void pushComportementParticulier(Marshaller marshaller, Collection obj, String nomBalise,
+			FieldInformations fieldInformations) {
+		newComportementFermeBalise(nomBalise);
+		newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations);
 	}
 
 }

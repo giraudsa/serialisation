@@ -14,7 +14,7 @@ public class ActionXmlInetAdress extends ActionXml<InetAddress> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, InetAddress inetAdress, FieldInformations fieldInformations) throws IOException{
+	protected void ecritValeur(Marshaller marshaller, InetAddress inetAdress, FieldInformations fieldInformations, boolean serialiseTout) throws IOException{
 		writeEscape(marshaller, inetAdress.getHostAddress());
 	}
 }

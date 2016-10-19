@@ -16,7 +16,7 @@ public class ActionXmlDate extends ActionXml<Date>{
 	
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Date date, FieldInformations f) throws IOException  {
+	protected void ecritValeur(Marshaller marshaller, Date date, FieldInformations f, boolean serialiseTout) throws IOException  {
 		write(marshaller, getDateFormat(marshaller).format(date));
 	}
 }

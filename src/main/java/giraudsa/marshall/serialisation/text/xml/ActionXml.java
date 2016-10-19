@@ -2,6 +2,7 @@ package giraudsa.marshall.serialisation.text.xml;
 
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.serialisation.ActionAbstrait;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.ActionText;
 import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlObject;
@@ -44,24 +45,30 @@ public abstract class ActionXml<T> extends ActionText<T> {
 		String nomBalise = fieldInformations.getName();
 		if (nomBalise == null) 
 			nomBalise = getType((T)obj).getSimpleName();
-		if (pushComportementParticulier(marshaller, obj, nomBalise, fieldInformations))
-			return;
-		pushComportement(marshaller, new ComportementFermeBalise(nomBalise));
-		pushComportement(marshaller, new ComportementOuvreBaliseEtEcrisValeur((T)obj, nomBalise, fieldInformations));
+		pushComportementParticulier(marshaller, (T)obj, nomBalise, fieldInformations);
 	}
 
-	protected boolean pushComportementParticulier(Marshaller marshaller, Object obj ,String nomBalise, FieldInformations fieldInformations){
-		return false;
+	protected void pushComportementParticulier(Marshaller marshaller, T obj ,String nomBalise, FieldInformations fieldInformations){
+		pushComportement(marshaller, new ComportementOuvreBaliseEcritValeurEtFermeBalise(obj, nomBalise, fieldInformations));
 	}
 	
-	protected abstract void ecritValeur(Marshaller marshaller, T obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption;
+	protected boolean serialiseraTout(Marshaller marshaller, Object obj, FieldInformations fieldInformations){
+		return strategieSerialiseraTout(marshaller, fieldInformations)
+				&& !isDejaTotalementSerialise(marshaller, obj);
+	}
+
+	private boolean strategieSerialiseraTout(Marshaller marshaller, FieldInformations fieldInformations) {
+		return getStrategie(marshaller).serialiseTout(getProfondeur(marshaller) + 1, fieldInformations);
+	}
+
+	protected abstract void ecritValeur(Marshaller marshaller, T obj, FieldInformations fieldInformations, boolean serialiseTout) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption;
 
 	protected void ouvreBaliseEcritIdFermeBalise(Marshaller marshaller, T obj, String nomBalise, boolean typeDevinable, String id) throws IOException{
 		Class<?> classeAEcrire = classeAEcrire(obj, typeDevinable);
 		getXmlMarshaller(marshaller).openTagAddIdCloseTag(nomBalise, classeAEcrire,id);
 	}
 	
-	private void ouvreBalise(Marshaller marshaller, T obj, String nomBalise, boolean typeDevinable) throws IOException{
+	protected void ouvreBalise(Marshaller marshaller, T obj, String nomBalise, boolean typeDevinable) throws IOException{
 		Class<?> classeAEcrire = classeAEcrire(obj, typeDevinable);
 		getXmlMarshaller(marshaller).openTag(nomBalise, classeAEcrire);
 	}
@@ -78,12 +85,12 @@ public abstract class ActionXml<T> extends ActionText<T> {
 		return REMPLACEMENT_CHARS;
 	}
 	
-	protected class ComportementOuvreBaliseEtEcrisValeur extends Comportement{
+	protected class ComportementOuvreBaliseEcritValeurEtFermeBalise extends Comportement{
 		private T obj;
 		private String nomBalise;
 		private FieldInformations fieldInformations;
 		
-		protected ComportementOuvreBaliseEtEcrisValeur(T obj, String nomBalise, FieldInformations fieldInformations) {
+		protected ComportementOuvreBaliseEcritValeurEtFermeBalise(T obj, String nomBalise, FieldInformations fieldInformations) {
 			super();
 			this.obj = obj;
 			this.nomBalise = nomBalise;
@@ -94,9 +101,39 @@ public abstract class ActionXml<T> extends ActionText<T> {
 		protected void evalue(Marshaller marshaller) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
 			boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
 			ouvreBalise(marshaller, obj, nomBalise, typeDevinable);
-			ecritValeur(marshaller, obj, fieldInformations);
+			ecritValeur(marshaller, obj, fieldInformations, true);
+			fermeBalise(marshaller, nomBalise);
 		}
 		
+	}
+	
+	protected Comportement newComportementOuvreBaliseEtEcritValeur(T obj, String nomBalise, FieldInformations fieldInformations) {
+		return new ComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations);
+	}
+	protected class ComportementOuvreBaliseEtEcritValeur extends Comportement{
+		private T obj;
+		private String nomBalise;
+		private FieldInformations fieldInformations;
+		
+		protected ComportementOuvreBaliseEtEcritValeur(T obj, String nomBalise, FieldInformations fieldInformations) {
+			super();
+			this.obj = obj;
+			this.nomBalise = nomBalise;
+			this.fieldInformations = fieldInformations;
+		}
+
+		@Override
+		protected void evalue(Marshaller marshaller) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
+			boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
+			ouvreBalise(marshaller, obj, nomBalise, typeDevinable);
+			ecritValeur(marshaller, obj, fieldInformations, true);
+			fermeBalise(marshaller, nomBalise);
+		}
+		
+	}
+	
+	protected Comportement newComportementFermeBalise(String nomBalise) {
+		return new ComportementFermeBalise(nomBalise);
 	}
 	protected class ComportementFermeBalise extends Comportement{
 
@@ -110,6 +147,47 @@ public abstract class ActionXml<T> extends ActionText<T> {
 		@Override
 		protected void evalue(Marshaller marshaller) throws IOException{
 			fermeBalise(marshaller, nomBalise);
+		}
+		
+	}
+	
+	protected Comportement newComportementSerialiseObject(T obj, String nomBalise, FieldInformations fieldInformations) {
+		return new ComportementSerialiseObject(obj, nomBalise, fieldInformations);
+	}
+	
+	protected class ComportementSerialiseObject extends Comportement{
+		private T obj;
+		private String nomBalise;
+		private FieldInformations fieldInformations;
+		
+		protected ComportementSerialiseObject(T obj, String nomBalise, FieldInformations fieldInformations) {
+			super();
+			this.obj = obj;
+			this.nomBalise = nomBalise;
+			this.fieldInformations = fieldInformations;
+		}
+
+		@Override
+		protected void evalue(Marshaller marshaller) throws IOException, InstantiationException, IllegalAccessException,
+				InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
+			boolean serialiseraTout = serialiseraTout(marshaller, obj, fieldInformations);
+			boolean isComportementIdDansBalise = !serialiseraTout;
+			setDejaVu(marshaller, obj);
+			if (isComportementIdDansBalise){
+				boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
+				Class<?> typeObj = (Class<?>) obj.getClass();
+				Champ champId = TypeExtension.getChampId(typeObj);
+				Object id = champId.get(obj, getDicoObjToFakeId(marshaller));
+				if(id == null)
+					throw new MarshallExeption("l'objet de type " + typeObj.getName() + " a un id null");
+				ouvreBaliseEcritIdFermeBalise(marshaller, obj, nomBalise, typeDevinable,id.toString());
+			}else{
+				pushComportement(marshaller, newComportementFermeBalise(nomBalise));
+				boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
+				ouvreBalise(marshaller, obj, nomBalise, typeDevinable);
+				ecritValeur(marshaller, obj, fieldInformations, serialiseraTout);
+			}
+			
 		}
 		
 	}

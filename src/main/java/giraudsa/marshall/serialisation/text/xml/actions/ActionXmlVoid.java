@@ -13,7 +13,7 @@ public class ActionXmlVoid extends ActionXml<Void> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Void obj, FieldInformations fieldInformations) throws IOException{
+	protected void ecritValeur(Marshaller marshaller, Void obj, FieldInformations fieldInformations, boolean serialiseTout) throws IOException{
 		write(marshaller, "null");
 	}
 	

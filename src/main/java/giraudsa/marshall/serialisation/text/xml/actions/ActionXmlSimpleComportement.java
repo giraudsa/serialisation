@@ -13,7 +13,7 @@ public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations) throws IOException{
+	protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean serialiseTout) throws IOException{
 		writeEscape(marshaller, obj.toString());
 	}
 }

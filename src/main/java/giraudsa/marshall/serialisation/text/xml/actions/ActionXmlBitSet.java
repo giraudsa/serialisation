@@ -21,12 +21,19 @@ public class ActionXmlBitSet  extends ActionXml<BitSet> {
 	}
 	
 	@Override
-	protected void ecritValeur(Marshaller marshaller, BitSet array, FieldInformations fi) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
+	protected void ecritValeur(Marshaller marshaller, BitSet array, FieldInformations fi, boolean serialiseTout) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		FakeChamp fakeChamp = new FakeChamp("bit", boolean.class, TypeRelation.COMPOSITION, fi.getAnnotations());
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		for (int i = 0; i < array.length(); ++i) {
 			tmp.push(traiteChamp(marshaller, array.get(i), fakeChamp));
 		}
 		pushComportements(marshaller, tmp);
+	}
+	
+	@Override
+	protected void pushComportementParticulier(Marshaller marshaller, BitSet obj, String nomBalise,
+			FieldInformations fieldInformations) {
+		newComportementFermeBalise(nomBalise);
+		newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations);
 	}
 }

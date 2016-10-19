@@ -14,7 +14,7 @@ public class ActionXmlUri extends ActionXml<URI> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, URI obj, FieldInformations fieldInformations) throws IOException{
+	protected void ecritValeur(Marshaller marshaller, URI obj, FieldInformations fieldInformations, boolean serialiseTout) throws IOException{
 		writeEscape(marshaller, obj.toASCIIString());
 	}
 }

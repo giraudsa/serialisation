@@ -14,7 +14,7 @@ public class ActionXmlCurrency extends ActionXml<Currency> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Currency currency, FieldInformations fieldInformations) throws IOException{
+	protected void ecritValeur(Marshaller marshaller, Currency currency, FieldInformations fieldInformations, boolean serialiseTout) throws IOException{
 		writeEscape(marshaller, currency.getCurrencyCode());
 	}
 }

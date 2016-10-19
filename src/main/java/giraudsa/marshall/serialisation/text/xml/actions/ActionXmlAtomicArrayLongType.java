@@ -20,12 +20,19 @@ public class ActionXmlAtomicArrayLongType  extends ActionXml<AtomicLongArray> {
 	}
 	
 	@Override
-	protected void ecritValeur(Marshaller marshaller, AtomicLongArray obj, FieldInformations fi) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
+	protected void ecritValeur(Marshaller marshaller, AtomicLongArray obj, FieldInformations fi, boolean serialiseTout) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		FakeChamp fakeChamp = new FakeChamp("long", Long.class, fi.getRelation(), fi.getAnnotations());
 		Deque<Comportement> tmp = new ArrayDeque<>();
 		for (int i = 0; i < obj.length(); ++i) {
 			tmp.push(traiteChamp(marshaller, obj.get(i), fakeChamp));
 		}
 		pushComportements(marshaller, tmp);
+	}
+	
+	@Override
+	protected void pushComportementParticulier(Marshaller marshaller, AtomicLongArray obj, String nomBalise,
+			FieldInformations fieldInformations) {
+		newComportementFermeBalise(nomBalise);
+		newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations);
 	}
 }

@@ -25,7 +25,7 @@ public class ActionXmlCalendar extends ActionXml<Calendar> {
 	}
 
 
-	@Override protected void ecritValeur(Marshaller marshaller, Calendar calendar, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
+	@Override protected void ecritValeur(Marshaller marshaller, Calendar calendar, FieldInformations fieldInformations, boolean serialiseTout) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		pushComportement(marshaller,traiteChamp(marshaller,calendar.get(Calendar.SECOND), fakeChampSeconde));
 		pushComportement(marshaller,traiteChamp(marshaller,calendar.get(Calendar.MINUTE), fakeChampMinute));
 		pushComportement(marshaller,traiteChamp(marshaller,calendar.get(Calendar.HOUR_OF_DAY), fakeChampHourOfDay));

@@ -3,6 +3,7 @@ package giraudsa.marshall.serialisation;
 
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.strategie.StrategieDeSerialisation;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -89,9 +90,17 @@ public abstract class ActionAbstrait<T> {
 	}
 	
 	protected boolean strategieSerialiseTout(Marshaller marshaller, FieldInformations fieldInformations) {
-		return marshaller.getStrategie().serialiseTout(marshaller.getProfondeur(), fieldInformations);
+		return getStrategie(marshaller).serialiseTout(getProfondeur(marshaller), fieldInformations);
 	}
 	
+	protected int getProfondeur(Marshaller marshaller) {
+		return marshaller.getProfondeur();
+	}
+
+	protected StrategieDeSerialisation getStrategie(Marshaller marshaller) {
+		return marshaller.getStrategie();
+	}
+
 	protected void diminueProfondeur(Marshaller marshaller) {
 		marshaller.diminueProfondeur();
 	}
