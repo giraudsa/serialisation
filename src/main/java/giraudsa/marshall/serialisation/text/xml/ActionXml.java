@@ -172,9 +172,9 @@ public abstract class ActionXml<T> extends ActionText<T> {
 				InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
 			boolean serialiseraTout = serialiseraTout(marshaller, obj, fieldInformations);
 			boolean isComportementIdDansBalise = !serialiseraTout;
-			setDejaVu(marshaller, obj);
 			if (isComportementIdDansBalise){
 				boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
+				setDejaVu(marshaller, obj);
 				Class<?> typeObj = (Class<?>) obj.getClass();
 				Champ champId = TypeExtension.getChampId(typeObj);
 				Object id = champId.get(obj, getDicoObjToFakeId(marshaller));
@@ -184,6 +184,7 @@ public abstract class ActionXml<T> extends ActionText<T> {
 			}else{
 				pushComportement(marshaller, newComportementFermeBalise(nomBalise));
 				boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
+				setDejaVu(marshaller, obj);
 				ouvreBalise(marshaller, obj, nomBalise, typeDevinable);
 				ecritValeur(marshaller, obj, fieldInformations, serialiseraTout);
 			}
