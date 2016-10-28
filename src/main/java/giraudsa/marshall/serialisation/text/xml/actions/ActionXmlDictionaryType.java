@@ -48,7 +48,7 @@ public class ActionXmlDictionaryType extends ActionXml<Map> {
 	@Override
 	protected void pushComportementParticulier(Marshaller marshaller, Map obj, String nomBalise,
 			FieldInformations fieldInformations) {
-		newComportementFermeBalise(nomBalise);
-		newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations);
+		pushComportement(marshaller, newComportementFermeBalise(nomBalise));
+		pushComportement(marshaller, newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations));
 	}
 }

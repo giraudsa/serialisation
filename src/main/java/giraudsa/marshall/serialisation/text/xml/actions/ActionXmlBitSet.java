@@ -33,7 +33,7 @@ public class ActionXmlBitSet  extends ActionXml<BitSet> {
 	@Override
 	protected void pushComportementParticulier(Marshaller marshaller, BitSet obj, String nomBalise,
 			FieldInformations fieldInformations) {
-		newComportementFermeBalise(nomBalise);
-		newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations);
+		pushComportement(marshaller, newComportementFermeBalise(nomBalise));
+		pushComportement(marshaller, newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations));
 	}
 }

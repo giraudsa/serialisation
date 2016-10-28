@@ -32,7 +32,7 @@ public class ActionXmlAtomicArrayLongType  extends ActionXml<AtomicLongArray> {
 	@Override
 	protected void pushComportementParticulier(Marshaller marshaller, AtomicLongArray obj, String nomBalise,
 			FieldInformations fieldInformations) {
-		newComportementFermeBalise(nomBalise);
-		newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations);
+		pushComportement(marshaller, newComportementFermeBalise(nomBalise));
+		pushComportement(marshaller, newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations));
 	}
 }

@@ -127,7 +127,6 @@ public abstract class ActionXml<T> extends ActionText<T> {
 			boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
 			ouvreBalise(marshaller, obj, nomBalise, typeDevinable);
 			ecritValeur(marshaller, obj, fieldInformations, true);
-			fermeBalise(marshaller, nomBalise);
 		}
 		
 	}

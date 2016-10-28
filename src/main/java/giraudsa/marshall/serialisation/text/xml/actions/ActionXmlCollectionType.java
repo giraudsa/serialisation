@@ -62,8 +62,8 @@ public class ActionXmlCollectionType extends ActionXml<Collection> {
 	@Override
 	protected void pushComportementParticulier(Marshaller marshaller, Collection obj, String nomBalise,
 			FieldInformations fieldInformations) {
-		newComportementFermeBalise(nomBalise);
-		newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations);
+		pushComportement(marshaller, newComportementFermeBalise(nomBalise));
+		pushComportement(marshaller, newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations));
 	}
 
 }
