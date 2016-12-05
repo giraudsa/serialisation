@@ -157,8 +157,9 @@ public class JsonUnmarshallerHandler {
 		while(buff.indexOf(ESPACE) != -1){
 			buff.remove(buff.indexOf(ESPACE));
 		}
-		while(buff.indexOf('\r') != -1){
-			buff.remove(buff.indexOf('\r'));
+		while(buff.indexOf('\n') != -1){
+			if (buff.indexOf('\r') != -1)
+				buff.remove(buff.indexOf('\r'));
 			buff.remove(buff.indexOf('\n'));
 		}
 	}
