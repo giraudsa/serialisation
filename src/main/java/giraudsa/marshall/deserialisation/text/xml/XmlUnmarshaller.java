@@ -64,6 +64,8 @@ import java.util.concurrent.atomic.AtomicLongArray;
 import javax.management.modelmbean.InvalidTargetObjectTypeException;
 
 public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
+	private static final String FEATURE_DISALLOW_DOCTYPE = "http://apache.org/xml/features/disallow-doctype-decl";
+	
 	private static final Logger LOGGER = LoggerFactory.getLogger(XmlUnmarshaller.class);
 	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
 	static {
@@ -146,6 +148,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	private U parse() throws IOException, SAXException {
 		XmlUnmarshallerHandler handler =  new XmlUnmarshallerHandler(this);
 		XMLReader parser = XMLReaderFactory.createXMLReader();
+		parser.setFeature(FEATURE_DISALLOW_DOCTYPE, true);
 		parser.setContentHandler(handler);
 		InputSource source = new InputSource(reader);
 		source.setEncoding("UTF-8");
