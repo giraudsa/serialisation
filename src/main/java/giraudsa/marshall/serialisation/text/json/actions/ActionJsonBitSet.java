@@ -47,9 +47,9 @@ public class ActionJsonBitSet  extends ActionJson<BitSet> {
 	@Override
 	protected void clotureObject(Marshaller marshaller, BitSet obj, boolean typeDevinable) throws IOException {
 		if(typeDevinable){
-			fermeCrochet(marshaller);
+			fermeCrochet(marshaller, !obj.isEmpty());
 		}else{
-			fermeCrochet(marshaller);
+			fermeCrochet(marshaller, !obj.isEmpty());
 			fermeAccolade(marshaller);
 		}
 	}

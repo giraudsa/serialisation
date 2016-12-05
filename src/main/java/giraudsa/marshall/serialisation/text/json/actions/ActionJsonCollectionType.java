@@ -59,9 +59,9 @@ public class ActionJsonCollectionType extends ActionJson<Collection> {
 	@Override
 	protected void clotureObject(Marshaller marshaller, Collection obj, boolean typeDevinable) throws IOException {
 		if(typeDevinable || obj instanceof ArrayList){
-			fermeCrochet(marshaller);
+			fermeCrochet(marshaller, !obj.isEmpty());
 		}else{
-			fermeCrochet(marshaller);
+			fermeCrochet(marshaller, !obj.isEmpty());
 			fermeAccolade(marshaller);
 		}
 	}

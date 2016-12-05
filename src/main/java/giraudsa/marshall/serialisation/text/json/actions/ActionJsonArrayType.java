@@ -51,9 +51,9 @@ public class ActionJsonArrayType  extends ActionJson<Object> {
 	@Override
 	protected void clotureObject(Marshaller marshaller, Object obj, boolean typeDevinable) throws IOException {
 		if(typeDevinable){
-			fermeCrochet(marshaller);
+			fermeCrochet(marshaller, Array.getLength(obj)!=0);
 		}else{
-			fermeCrochet(marshaller);
+			fermeCrochet(marshaller,Array.getLength(obj)!=0);
 			fermeAccolade(marshaller);
 		}
 	}

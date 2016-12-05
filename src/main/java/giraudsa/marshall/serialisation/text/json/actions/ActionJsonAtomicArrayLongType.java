@@ -46,9 +46,9 @@ public class ActionJsonAtomicArrayLongType  extends ActionJson<AtomicLongArray> 
 
 	protected void clotureObject(Marshaller marshaller, AtomicLongArray obj, boolean typeDevinable) throws IOException {
 		if(typeDevinable){
-			fermeCrochet(marshaller);
+			fermeCrochet(marshaller, obj.length()!=0);
 		}else{
-			fermeCrochet(marshaller);
+			fermeCrochet(marshaller, obj.length()!=0);
 			fermeAccolade(marshaller);
 		}
 	}

@@ -62,9 +62,9 @@ public class ActionJsonDictionary extends ActionJson<Map> {
 	@Override
 	protected void clotureObject(Marshaller marshaller, Map obj, boolean typeDevinable) throws IOException {
 		if(typeDevinable){
-			fermeCrochet(marshaller);
+			fermeCrochet(marshaller, !obj.isEmpty());
 		}else{
-			fermeCrochet(marshaller);
+			fermeCrochet(marshaller, !obj.isEmpty());
 			fermeAccolade(marshaller);
 		}
 	}

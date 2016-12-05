@@ -46,9 +46,9 @@ public class ActionJsonAtomicArrayIntegerType  extends ActionJson<AtomicIntegerA
 
 	protected void clotureObject(Marshaller marshaller, AtomicIntegerArray obj, boolean typeDevinable) throws IOException {
 		if(typeDevinable){
-			fermeCrochet(marshaller);
+			fermeCrochet(marshaller, obj.length()!=0);
 		}else{
-			fermeCrochet(marshaller);
+			fermeCrochet(marshaller, obj.length()!=0);
 			fermeAccolade(marshaller);
 		}
 	}

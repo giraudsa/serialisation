@@ -211,9 +211,9 @@ public class JsonMarshaller extends TextMarshaller {
 		writer.write("[");
 	}
 
-	protected void fermeCrochet() throws IOException {
+	protected void fermeCrochet(boolean aLaLigne) throws IOException {
 		profondeur--;
-		if(isPrettyPrint()){
+		if(isPrettyPrint() && aLaLigne){
 			aLaLigne();
 		}
 		writer.write("]");

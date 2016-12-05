@@ -69,8 +69,8 @@ public abstract class ActionJson<T> extends ActionText<T>  {
 	protected void ouvreCrochet(Marshaller marshaller) throws IOException{
 		getJsonMarshaller(marshaller).ouvreCrochet();
 	}
-	protected void fermeCrochet(Marshaller marshaller) throws IOException{
-		getJsonMarshaller(marshaller).fermeCrochet();
+	protected void fermeCrochet(Marshaller marshaller, boolean aLaLigne) throws IOException{
+		getJsonMarshaller(marshaller).fermeCrochet(aLaLigne);
 	}
 	
 	protected void ecritClef(Marshaller marshaller, String clef) throws IOException{
