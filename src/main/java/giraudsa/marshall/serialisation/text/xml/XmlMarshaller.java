@@ -167,7 +167,7 @@ public class XmlMarshaller extends TextMarshaller {
 		writer.write(">");
 	}
 	
-	protected void openTagAddIdCloseTag(String name, Class<?> type, String id) throws IOException {
+	protected void openTagAddIdIfNotNullAndCloseTag(String name, Class<?> type, String id) throws IOException {
 		if(isPrettyPrint()){
 			prettyPrintOpenTag();
 		}
@@ -179,9 +179,11 @@ public class XmlMarshaller extends TextMarshaller {
 		if(!isWrittenUniversal){
 			writeInfoUniversal();
 		}
-		writer.write(" id=\"");
-		writer.write(id);
-		writer.write("\"");
+		if(id != null){
+			writer.write(" id=\"");
+			writer.write(id);
+			writer.write("\"");
+		}
 		writer.write("/>");
 		if(isPrettyPrint()){
 			prettyPrintCloseTag();

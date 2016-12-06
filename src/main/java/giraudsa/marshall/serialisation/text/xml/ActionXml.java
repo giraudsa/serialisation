@@ -63,10 +63,6 @@ public abstract class ActionXml<T> extends ActionText<T> {
 
 	protected abstract void ecritValeur(Marshaller marshaller, T obj, FieldInformations fieldInformations, boolean serialiseTout) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption;
 
-	protected void ouvreBaliseEcritIdFermeBalise(Marshaller marshaller, T obj, String nomBalise, boolean typeDevinable, String id) throws IOException{
-		Class<?> classeAEcrire = classeAEcrire(obj, typeDevinable);
-		getXmlMarshaller(marshaller).openTagAddIdCloseTag(nomBalise, classeAEcrire,id);
-	}
 	
 	protected void ouvreBalise(Marshaller marshaller, T obj, String nomBalise, boolean typeDevinable) throws IOException{
 		Class<?> classeAEcrire = classeAEcrire(obj, typeDevinable);
@@ -131,6 +127,30 @@ public abstract class ActionXml<T> extends ActionText<T> {
 		
 	}
 	
+
+	protected Comportement newComportementOuvreEtFermeBalise(T obj, String nomBalise, FieldInformations fieldInformations){
+		return new ComportementOuvreEtFermeBalise(obj, nomBalise, fieldInformations);
+	}
+	protected class ComportementOuvreEtFermeBalise extends Comportement{
+
+		private T obj;
+		private String nomBalise;
+		private FieldInformations fieldInformations;
+		public ComportementOuvreEtFermeBalise(T obj, String nomBalise, FieldInformations fieldInformations) {
+			this.obj = obj;
+			this.nomBalise = nomBalise;
+			this.fieldInformations = fieldInformations;
+		}
+		@Override
+		protected void evalue(Marshaller marshaller) throws IOException, InstantiationException, IllegalAccessException,
+				InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
+			boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
+			Class<?> classeAEcrire = classeAEcrire(obj, typeDevinable);
+			getXmlMarshaller(marshaller).openTagAddIdIfNotNullAndCloseTag(nomBalise, classeAEcrire, null);
+		}
+	
+	}
+	
 	protected Comportement newComportementFermeBalise(String nomBalise) {
 		return new ComportementFermeBalise(nomBalise);
 	}
@@ -186,6 +206,11 @@ public abstract class ActionXml<T> extends ActionText<T> {
 				ecritValeur(marshaller, obj, fieldInformations, serialiseraTout);
 			}
 			
+		}
+		
+		private void ouvreBaliseEcritIdFermeBalise(Marshaller marshaller, T obj, String nomBalise, boolean typeDevinable, String id) throws IOException{
+			Class<?> classeAEcrire = classeAEcrire(obj, typeDevinable);
+			getXmlMarshaller(marshaller).openTagAddIdIfNotNullAndCloseTag(nomBalise, classeAEcrire,id);
 		}
 		
 	}

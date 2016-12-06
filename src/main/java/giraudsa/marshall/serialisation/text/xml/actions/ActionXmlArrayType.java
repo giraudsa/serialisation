@@ -35,7 +35,10 @@ public class ActionXmlArrayType  extends ActionXml<Object> {
 	@Override
 	protected void pushComportementParticulier(Marshaller marshaller, Object obj, String nomBalise,
 			FieldInformations fieldInformations) {
-		pushComportement(marshaller, newComportementFermeBalise(nomBalise));
-		pushComportement(marshaller, newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations));
+		if(Array.getLength(obj) > 0){
+			pushComportement(marshaller, newComportementFermeBalise(nomBalise));
+			pushComportement(marshaller, newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations));
+		}else
+			pushComportement(marshaller, newComportementOuvreEtFermeBalise(obj, nomBalise, fieldInformations));
 	}
 }

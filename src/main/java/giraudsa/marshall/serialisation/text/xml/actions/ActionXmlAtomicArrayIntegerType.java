@@ -32,7 +32,10 @@ public class ActionXmlAtomicArrayIntegerType  extends ActionXml<AtomicIntegerArr
 	@Override
 	protected void pushComportementParticulier(Marshaller marshaller, AtomicIntegerArray obj, String nomBalise,
 			FieldInformations fieldInformations) {
-		pushComportement(marshaller, newComportementFermeBalise(nomBalise));
-		pushComportement(marshaller, newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations));
+		if(obj.length() > 0){
+			pushComportement(marshaller, newComportementFermeBalise(nomBalise));
+			pushComportement(marshaller, newComportementOuvreBaliseEtEcritValeur(obj, nomBalise, fieldInformations));
+		}else
+			pushComportement(marshaller, newComportementOuvreEtFermeBalise(obj, nomBalise, fieldInformations));
 	}
 }
