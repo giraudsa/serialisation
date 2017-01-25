@@ -88,12 +88,10 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 	private Collection newInstance() throws UnmarshallExeption {
 		Collection objetADeserialiser = null;
 		try {
-			if(type == ArrayList.class) 
+			if(type == ArrayList.class || type.getName().indexOf("ArrayList") != -1) 
 				objetADeserialiser = new ArrayList();
 			else if(type == LinkedList.class)
 				objetADeserialiser = new LinkedList();
-			else if(type.getName().indexOf("ArrayList") != -1)
-				objetADeserialiser = new ArrayList();
 			else if(type == HashSet.class)
 				objetADeserialiser = new HashSet();
 			else if(type.getName().toLowerCase().indexOf("hibernate") != -1){

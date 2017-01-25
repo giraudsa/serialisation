@@ -9,19 +9,19 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 
-public class ActionBinaryDate<DateType extends Date> extends ActionBinarySimple<DateType> {
+public class ActionBinaryDate<D extends Date> extends ActionBinarySimple<D> {
 
-	private ActionBinaryDate(Class<DateType> type, BinaryUnmarshaller<?> unmarshaller) {
+	private ActionBinaryDate(Class<D> type, BinaryUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);
 	}
 
 	public static ActionAbstrait<Date> getInstance(){
-		return new ActionBinaryDate<Date>(Date.class, null);
+		return new ActionBinaryDate<>(Date.class, null);
 	}
 	
 	@SuppressWarnings("rawtypes")
 	@Override
-	public <U extends DateType> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
+	public <U extends D> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
 		return new ActionBinaryDate<>(type, (BinaryUnmarshaller<?>)unmarshaller);
 	}
 	

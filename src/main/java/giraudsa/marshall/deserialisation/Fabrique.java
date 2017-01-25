@@ -62,7 +62,7 @@ public class Fabrique {
 
 
 	//Equivalent de 
-	//return reflectionFactory.newConstructorForSerialization(type, constructor);
+	//"return reflectionFactory.newConstructorForSerialization(type, constructor);"
 	@SuppressWarnings("unchecked")
 	private  <T> Constructor<T> getConstructor(Class<T> type ) throws ConstructorException   {
 		try {

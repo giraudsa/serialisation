@@ -51,9 +51,10 @@ public abstract class Unmarshaller<T> {
 			behavior = actions.get(type);
 			if (behavior == null) {
 				behavior = choseAction(type);
-			}	
+			}
+			return  behavior.getNewInstance(type, this);
 		}
-		return  behavior.getNewInstance(type, this);
+		return null;
 	}
 
 
@@ -103,7 +104,7 @@ public abstract class Unmarshaller<T> {
 		W objet = cacheObject.getObject(type, id);
 		if(objet == null){
 			if(entity != null){
-				objet = entity.findObjectOrCreate(id, type,true);
+				objet = entity.findObjectOrCreate(id, type);
 				if((type != void.class || type != Void.class)  && objet == null){
 					throw new EntityManagerImplementationException("Le contrat d'interface n'est pas remplie, l'objet récupéré est null pour le type " + type, new NullPointerException());
 				}

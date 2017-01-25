@@ -20,7 +20,7 @@ public class ActionBinaryCalendar<C extends Calendar> extends ActionBinarySimple
 	@SuppressWarnings("rawtypes")
 	@Override
 	public <U extends C> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionBinaryCalendar<U>(type, (BinaryUnmarshaller<?>)unmarshaller);
+		return new ActionBinaryCalendar<>(type, (BinaryUnmarshaller<?>)unmarshaller);
 	}
 	
 	@Override

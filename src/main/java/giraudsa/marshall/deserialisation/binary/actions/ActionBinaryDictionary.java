@@ -76,12 +76,10 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 	private Object newInstance() throws UnmarshallExeption {
 		Map objetADeserialiser = null;
 		try {
-			if(type == HashMap.class) 
+			if(type == HashMap.class || type.getName().indexOf("HashMap") != -1) 
 				objetADeserialiser = new HashMap<>();
 			else if(type == LinkedHashMap.class)
 				objetADeserialiser = new LinkedHashMap<>();
-			else if(type.getName().indexOf("HashMap") != -1)
-				objetADeserialiser = new HashMap<>();
 			else if(type.getName().toLowerCase().indexOf("hibernate") != -1){
 				if(fieldInformations.getValueType().isAssignableFrom(ConcurrentHashMap.class))
 					objetADeserialiser = new ConcurrentHashMap<>();

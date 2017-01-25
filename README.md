@@ -62,12 +62,11 @@ Dans le processus de sérialisation au niveau de l'objet :
 	Les objets en Association ou en agrégation sont simplement référencés par leurs id.
 
 ###1.3 - EntityManager
-A la désérialisation, il faut pouvoir éventuellement s'interfacer avec les objets déjà existant afin d'affecter les bonnes instances en fonction des id. Pour cette raison, il est possible de passer au désérialiseur un EntityManager, c'est-à-dire une classe qui implémente l'interface EntityManager. Elle offre donc deux méthodes :
+A la désérialisation, il faut pouvoir éventuellement s'interfacer avec les objets déjà existant afin d'affecter les bonnes instances en fonction des id. Pour cette raison, il est possible de passer au désérialiseur un EntityManager, c'est-à-dire une classe qui implémente l'interface EntityManager. Elle offre une méthode :
 
-	U findObject(String, Class<U>)
-	<U> metEnCache(String, U)
+	U findObjectOrCreate(String, Class<U>)
 
-Ces deux méthodes permettent au désérialiseur de trouver un objet préexistant et de mettre en cache un objet qu'il aurait lui-même créé.
+Ces deux méthodes permettent au désérialiseur de trouver un objet préexistant et de mettre en cache un objet qu'il aurait lui-même créé. 
 
 ###1.4	- Divers
 Un attribut peut être exclu de la sérialisation en le préfixant de @IgnoreSerialise

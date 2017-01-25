@@ -20,7 +20,6 @@ public class ActionBinaryArray<T> extends ActionBinary<T> {
 	private int tailleCollection;
 	private int index = 0;
 	private FakeChamp fakeChamp;
-	private Class<?> componentType;
 	
 	private ActionBinaryArray(Class<T> type, BinaryUnmarshaller<?> b){
 		super(type, b);
@@ -53,7 +52,8 @@ public class ActionBinaryArray<T> extends ActionBinary<T> {
 
 	@Override
 	protected void initialise() throws IOException {
-		componentType = fieldInformations.getValueType().getComponentType();
+
+		Class<?> componentType = fieldInformations.getValueType().getComponentType();
 		fakeChamp = new FakeChamp(null, componentType, fieldInformations.getRelation(), fieldInformations.getAnnotations());
 		if (isDejaVu() && !isDejaTotalementDeSerialise() && strategieDeSerialiseTout()){
 			obj = getObjet();
