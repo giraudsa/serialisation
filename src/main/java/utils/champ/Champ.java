@@ -131,6 +131,8 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	
 	@Override
 	public Type[] getParametreType(){
+		if(typeToken == null) 
+			return new Type[0];
 		Type type = typeToken.getType();
 		if(type instanceof ParameterizedType){
 			return ((ParameterizedType)type).getActualTypeArguments();
