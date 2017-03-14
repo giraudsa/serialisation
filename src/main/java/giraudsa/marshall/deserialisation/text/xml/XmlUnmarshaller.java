@@ -11,8 +11,8 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import utils.ConfigurationMarshalling;
+import utils.EntityManager;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
-import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlArrayType;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlAtomicIntegerArray;

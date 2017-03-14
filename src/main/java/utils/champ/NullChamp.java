@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.SetValueException;
+import utils.EntityManager;
 
 public class NullChamp implements FieldInformations {
 
@@ -30,7 +31,7 @@ public class NullChamp implements FieldInformations {
 	}
 
 	@Override
-	public Object get(Object o, Map<Object, UUID> dicoObjToFakeId) throws IllegalAccessException {
+	public Object get(Object o, Map<Object, UUID> dicoObjToFakeId, EntityManager entity) throws IllegalAccessException {
 		return null;
 	}
 

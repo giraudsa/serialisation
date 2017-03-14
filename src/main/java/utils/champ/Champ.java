@@ -4,6 +4,7 @@ import giraudsa.marshall.annotations.MarshallAsAttribute;
 import giraudsa.marshall.annotations.Relation;
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.SetValueException;
+import utils.EntityManager;
 import utils.TypeExtension;
 import utils.generic.TypeToken;
 
@@ -96,7 +97,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	}
 
 	@Override
-	public Object get(Object obj, Map<Object, UUID> dicoObjToFakeId) throws IllegalAccessException {
+	public Object get(Object obj, Map<Object, UUID> dicoObjToFakeId, EntityManager entity) throws IllegalAccessException {
 			return info.get(obj);
 	}
 
@@ -147,7 +148,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 
 	@Override
 	public Object get(Object o) throws IllegalAccessException {
-		return get(o, null);
+		return get(o, null, null);
 	}
 	
 	@Override

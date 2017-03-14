@@ -2,7 +2,6 @@ package giraudsa.marshall.deserialisation.binary;
 
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
-import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryArray;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryCollection;
@@ -64,6 +63,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.Constants;
+import utils.EntityManager;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 import utils.headers.Header;

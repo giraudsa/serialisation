@@ -6,6 +6,7 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.strategie.StrategieDeSerialisation;
 import utils.ConfigurationMarshalling;
+import utils.EntityManager;
 import utils.champ.FakeChamp;
 import java.io.IOException;
 import java.io.Writer;
@@ -22,8 +23,8 @@ public abstract class TextMarshaller extends Marshaller {
 	protected boolean lastIsOpen = false;
 	
 	
-	protected TextMarshaller(Writer writer, SimpleDateFormat dateFormat, StrategieDeSerialisation strategie) {
-		super(strategie);
+	protected TextMarshaller(Writer writer, SimpleDateFormat dateFormat, StrategieDeSerialisation strategie, EntityManager entityManager) {
+		super(strategie, entityManager);
 		this.writer = writer;
 		df = new SimpleDateFormat(dateFormat.toPattern());
 		df.setTimeZone(dateFormat.getTimeZone());

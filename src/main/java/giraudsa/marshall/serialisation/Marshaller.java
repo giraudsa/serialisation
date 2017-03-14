@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import utils.Constants;
+import utils.EntityManager;
 import utils.champ.FieldInformations;
 
 public abstract class Marshaller {
@@ -28,11 +29,13 @@ public abstract class Marshaller {
 	@SuppressWarnings("rawtypes")
 	protected Deque<Comportement> aFaire = new ArrayDeque<>();
 	private final Map<Object, UUID> dicoObjToFakeId = new HashMap<>();
+	private final EntityManager entityManager;
 
 	
 	//////Constructeur
-	protected Marshaller(StrategieDeSerialisation strategie){
+	protected Marshaller(StrategieDeSerialisation strategie, EntityManager entityManager){
 		this.strategie = strategie;
+		this.entityManager = entityManager;
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -128,5 +131,9 @@ public abstract class Marshaller {
 	
 	protected Map<Object, UUID> getDicoObjToFakeId() {
 		return dicoObjToFakeId;
+	}
+
+	public EntityManager getEntityManager() {
+		return entityManager;
 	}
 }

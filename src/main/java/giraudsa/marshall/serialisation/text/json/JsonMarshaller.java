@@ -54,11 +54,14 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 
+import javax.swing.text.html.parser.Entity;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import utils.ConfigurationMarshalling;
 import utils.Constants;
+import utils.EntityManager;
 
 public class JsonMarshaller extends TextMarshaller {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonMarshaller.class);
@@ -104,25 +107,29 @@ public class JsonMarshaller extends TextMarshaller {
 	final boolean writeType;
 	
 	// ///CONSTRUCTEUR
-	private JsonMarshaller(Writer output, StrategieDeSerialisation strategie, boolean writeType) throws IOException {
-		super(output, ConfigurationMarshalling.getDatFormatJson(), strategie);
+	private JsonMarshaller(Writer output, StrategieDeSerialisation strategie, EntityManager entityManager, boolean writeType) throws IOException {
+		super(output, ConfigurationMarshalling.getDatFormatJson(), strategie, entityManager);
 		this.writeType = writeType; 
 		clefType = ConfigurationMarshalling.getEstIdUniversel() ? Constants.CLEF_TYPE_ID_UNIVERSEL : Constants.CLEF_TYPE;
 	}
 	
 
 	// /////METHODES PUBLIQUES STATIQUES
-	public static <U> void toJson(U obj, Writer output) throws MarshallExeption {
-		toJson(obj, output, new StrategieParComposition(), true);
+	public static <U> void toJson(U obj, Writer output, EntityManager entityManager) throws MarshallExeption {
+		toJson(obj, output, new StrategieParComposition(), entityManager, true);
+	}
+	
+	public static <U> String toJson(U obj, EntityManager entityManager) throws MarshallExeption{
+		return toJson(obj, new StrategieParComposition(), entityManager, true);
 	}
 	
 	public static <U> String toJson(U obj) throws MarshallExeption{
-		return toJson(obj, new StrategieParComposition(), true);
+		return toJson(obj, new StrategieParComposition(), null, true);
 	}
 	
-	public static <U> void toJson(U obj, Writer output, StrategieDeSerialisation strategie, boolean writeType) throws MarshallExeption {
+	public static <U> void toJson(U obj, Writer output, StrategieDeSerialisation strategie, EntityManager entityManager, boolean writeType) throws MarshallExeption {
 		try {
-			JsonMarshaller v = new JsonMarshaller(output, strategie, writeType);
+			JsonMarshaller v = new JsonMarshaller(output, strategie, entityManager, writeType);
 			v.marshall(obj);
 		} catch (ChampNotFound | IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
 			LOGGER.debug("probleme de sérialisation json de " + obj.toString(), e);
@@ -130,18 +137,18 @@ public class JsonMarshaller extends TextMarshaller {
 		}
 	}
 
-	public static <U> String toJson(U obj, StrategieDeSerialisation strategie, boolean writeType) throws MarshallExeption{
+	public static <U> String toJson(U obj, StrategieDeSerialisation strategie, EntityManager entityManager, boolean writeType) throws MarshallExeption{
 		try (StringWriter sw = new StringWriter()) {
-			toJson(obj, sw, strategie, writeType);
+			toJson(obj, sw, strategie, entityManager, writeType);
 			return sw.toString();
 		} catch (IOException e) {
 			LOGGER.debug("Problème à la création d'un StringWriter", e);
 			throw new MarshallExeption(e);
 		}
 	}
-	public static <U> void toCompleteJson(U obj, Writer output) throws MarshallExeption{
+	public static <U> void toCompleteJson(U obj, Writer output, EntityManager entityManager) throws MarshallExeption{
 		try {
-			JsonMarshaller v = new JsonMarshaller(output, new StrategieSerialisationComplete(), true);
+			JsonMarshaller v = new JsonMarshaller(output, new StrategieSerialisationComplete(), entityManager, true);
 			v.marshall(obj);
 		} catch (ChampNotFound | IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
 			LOGGER.debug("probleme de sérialisation complète en json de " + obj.toString(), e);
@@ -152,7 +159,7 @@ public class JsonMarshaller extends TextMarshaller {
 
 	public static <U> String toCompleteJson(U obj) throws MarshallExeption{
 		try(StringWriter sw = new StringWriter()){
-			toCompleteJson(obj, sw);
+			toCompleteJson(obj, sw, null);
 			return sw.toString();
 		} catch (IOException e) {
 			LOGGER.debug("Problème à la création d'un StringWriter", e);

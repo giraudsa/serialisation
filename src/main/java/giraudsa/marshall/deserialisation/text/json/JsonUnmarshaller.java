@@ -1,7 +1,6 @@
 package giraudsa.marshall.deserialisation.text.json;
 
 import giraudsa.marshall.deserialisation.ActionAbstrait;
-import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.text.ActionText;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonArrayType;
@@ -59,6 +58,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.ConfigurationMarshalling;
 import utils.Constants;
+import utils.EntityManager;
 import utils.TypeExtension;
 
 public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {

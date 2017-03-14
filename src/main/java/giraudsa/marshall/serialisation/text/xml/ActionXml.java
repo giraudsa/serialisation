@@ -2,10 +2,8 @@ package giraudsa.marshall.serialisation.text.xml;
 
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
-import giraudsa.marshall.serialisation.ActionAbstrait;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.ActionText;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlObject;
 import utils.TypeExtension;
 import utils.champ.Champ;
 import utils.champ.FieldInformations;
@@ -14,7 +12,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public abstract class ActionXml<T> extends ActionText<T> {
@@ -194,9 +191,9 @@ public abstract class ActionXml<T> extends ActionText<T> {
 			boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
 			setDejaVu(marshaller, obj);
 			if (isComportementIdDansBalise){
-				Class<?> typeObj = (Class<?>) obj.getClass();
+				Class<?> typeObj = obj.getClass();
 				Champ champId = TypeExtension.getChampId(typeObj);
-				Object id = champId.get(obj, getDicoObjToFakeId(marshaller));
+				Object id = champId.get(obj, getDicoObjToFakeId(marshaller), getEntityManager(marshaller));
 				if(id == null)
 					throw new MarshallExeption("l'objet de type " + typeObj.getName() + " a un id null");
 				ouvreBaliseEcritIdFermeBalise(marshaller, obj, nomBalise, typeDevinable,id.toString());

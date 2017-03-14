@@ -11,6 +11,7 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.UUID;
 
+import utils.EntityManager;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
@@ -58,12 +59,13 @@ public abstract class ActionAbstrait<T> {
 	}
 	
 	protected Comportement traiteChamp(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, IllegalAccessException, MarshallExeption {
-		Object value = fieldInformations.get(obj, getDicoObjToFakeId(marshaller));
+		Object value = fieldInformations.get(obj, getDicoObjToFakeId(marshaller), getEntityManager(marshaller));
 		if(aTraiter(marshaller, value, fieldInformations)){
 			return new ComportementMarshallValue(value, fieldInformations, ecrisSeparateur);
 		}
 		return null;
 	}
+
 
 	protected Comportement traiteChamp(Marshaller marshaller, Object obj, FieldInformations fieldInformations) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
 		return traiteChamp(marshaller, obj, fieldInformations, true);
@@ -136,5 +138,9 @@ public abstract class ActionAbstrait<T> {
 	
 	protected Map<Object, UUID> getDicoObjToFakeId(Marshaller marshaller) {
 		return marshaller.getDicoObjToFakeId();
+	}
+	
+	protected EntityManager getEntityManager(Marshaller marshaller) {
+		return marshaller.getEntityManager();
 	}
 }

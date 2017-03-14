@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import utils.Constants;
+import utils.EntityManager;
 
 
 public abstract class Unmarshaller<T> {
@@ -62,6 +63,10 @@ public abstract class Unmarshaller<T> {
 
 	protected Map<Object, UUID> getDicoObjToFakeId() {
 		return dicoObjToFakeId;
+	}
+	
+	protected EntityManager getEntityManager() {
+		return entity;
 	}
 
 	private <U> ActionAbstrait<?> choseAction(Class<U> type) throws NotImplementedSerializeException {

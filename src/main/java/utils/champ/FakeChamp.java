@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.SetValueException;
+import utils.EntityManager;
 import utils.TypeExtension;
 import utils.generic.TypeToken;
 
@@ -40,7 +41,7 @@ public class FakeChamp implements FieldInformations {
 	}
 
 	@Override
-	public Object get(Object o, Map<Object, UUID> dicoObjToFakeId) throws IllegalAccessException {
+	public Object get(Object o, Map<Object, UUID> dicoObjToFakeId, EntityManager entity) throws IllegalAccessException {
 		return o;
 	}
 
@@ -71,7 +72,7 @@ public class FakeChamp implements FieldInformations {
 
 	@Override
 	public Object get(Object o) throws IllegalAccessException {
-		return get(o, null);
+		return get(o, null, null);
 	}
 
 	@Override

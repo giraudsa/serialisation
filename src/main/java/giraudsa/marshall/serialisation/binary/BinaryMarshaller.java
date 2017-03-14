@@ -127,7 +127,7 @@ public class BinaryMarshaller extends Marshaller{
 	private int compteurDate = 1;
 	private int compteurString = 1;
 	private BinaryMarshaller(DataOutputStream  output, StrategieDeSerialisation strategie) throws IOException, MarshallExeption {
-		super(strategie);
+		super(strategie, null);
 		this.output = output;
 		writeSpecialisation();
 	}

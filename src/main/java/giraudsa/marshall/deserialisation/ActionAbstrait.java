@@ -1,5 +1,6 @@
 package giraudsa.marshall.deserialisation;
 
+import utils.EntityManager;
 import utils.champ.FieldInformations;
 
 import java.util.Map;
@@ -49,5 +50,7 @@ public abstract class ActionAbstrait<T> {
 	protected Map<Object, UUID> getDicoObjToFakeId() {
 		return unmarshaller.getDicoObjToFakeId();
 	}
-
+	protected EntityManager getEntityManager() {
+		return unmarshaller.getEntityManager();
+	}
 }

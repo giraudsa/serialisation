@@ -3,6 +3,8 @@ package utils.champ;
 import java.util.Map;
 import java.util.UUID;
 
+import utils.EntityManager;
+
 public class ChampUid extends Champ {
 
 	public static final String UID_FIELD_NAME = "id";
@@ -14,20 +16,23 @@ public class ChampUid extends Champ {
 		super(null, true, true);
 		this.typeObject = typeObject;
 		name = UID_FIELD_NAME;
-		valueType = UUID.class;
+		valueType = String.class;
 	}
 	
 	@Override
 	public  void set(Object obj, Object value, Map<Object, UUID> dicoObjToFakeId) {
-		dicoObjToFakeId.put(obj, (UUID)value);
+		dicoObjToFakeId.put(obj, UUID.fromString((String) value));
 	}
 
-	public synchronized UUID get(Object obj, Map<Object, UUID> dicoObjToFakeId) {
+	@Override
+	public synchronized String get(Object obj, Map<Object, UUID> dicoObjToFakeId, EntityManager entity) {
+		if(entity != null && entity.getId(obj) != null)
+			return entity.getId(obj);
 		if(dicoObjToFakeId == null)
-			return UUID.randomUUID();
+			return UUID.randomUUID().toString();
 		if(!dicoObjToFakeId.containsKey(obj))
 			dicoObjToFakeId.put(obj, UUID.randomUUID());
-		return dicoObjToFakeId.get(obj);
+		return dicoObjToFakeId.get(obj).toString();
 	}
 
 	@Override

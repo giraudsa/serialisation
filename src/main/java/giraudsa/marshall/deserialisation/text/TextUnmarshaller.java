@@ -1,9 +1,9 @@
 package giraudsa.marshall.deserialisation.text;
 
 import giraudsa.marshall.annotations.TypeRelation;
-import giraudsa.marshall.deserialisation.EntityManager;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.exception.FabriqueInstantiationException;
+import utils.EntityManager;
 import utils.TypeExtension;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;

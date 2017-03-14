@@ -7,11 +7,12 @@ import java.util.UUID;
 
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.SetValueException;
+import utils.EntityManager;
 
 public interface FieldInformations {
 	public String getName();
 	public TypeRelation getRelation();
-	public Object get(Object o, Map<Object, UUID> dicoObjToFakeId) throws IllegalAccessException;
+	public Object get(Object o, Map<Object, UUID> dicoObjToFakeId, EntityManager entity) throws IllegalAccessException;
 	public Object get(Object o) throws IllegalAccessException;
 	public boolean isTypeDevinable(Object o);
 	public Type[] getParametreType();
