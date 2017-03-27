@@ -39,7 +39,7 @@ public class ConfigurationMarshalling {
 	public static <T extends Annotation> void setAnnotationIgnoreSerialise(Class<T> ignoreSerialiseAnnotation){
 		if(ignoreSerialiseAnnotation != null && annotationIgnoreSerialise != ignoreSerialiseAnnotation){ 
 			annotationIgnoreSerialise = ignoreSerialiseAnnotation;
-			TypeExtension.serializablefieldsOfType.clear();
+			TypeExtension.clear();
 		}
 	}
 	

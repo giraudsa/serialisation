@@ -22,11 +22,12 @@ import utils.champ.FieldInformations;
 import utils.champ.NullChamp;
 
 public class TypeExtension {	
-	private static Set<Class<?>> simpleTypes = new HashSet<>(Arrays.asList(Boolean.class, Byte.class, Short.class, Integer.class, Long.class, Float.class, Double.class, 
+	private static final Set<Class<?>> simpleTypes = new HashSet<>(Arrays.asList(Boolean.class, Byte.class, Short.class, Integer.class, Long.class, Float.class, Double.class, 
 			String.class, Date.class, void.class, UUID.class, Character.class, Void.class)); 
-	protected static Map<Class<?>, List<Champ>> serializablefieldsOfType = new HashMap<>();
-	private static Map<Class<?>, Champ> dicoTypeTochampId = new HashMap<>();
-	private static Map<Class<?>, Class<?>> dicoTypePrimitifToEnveloppe = new HashMap<>();
+	private static final Map<Class<?>, Map<String, Champ>> serializablefieldsOfType = new HashMap<>();
+	private static final Map<Class<?>, List<Champ>> fieldsOfType = new HashMap<>();
+	private static final Map<Class<?>, Champ> dicoTypeTochampId = new HashMap<>();
+	private static final Map<Class<?>, Class<?>> dicoTypePrimitifToEnveloppe = new HashMap<>();
 	private static final Set<Class<?>> simpleEnveloppe = new HashSet<>();
 	
 	private TypeExtension(){
@@ -39,11 +40,9 @@ public class TypeExtension {
 
 	
 	public static  FieldInformations getChampByName(Class<?> typeObjetParent, String name){
-		List<Champ> champs = getSerializableFields(typeObjetParent);
-		for(Champ champ : champs){
-			if (champ.getName().equals(name))
-				return champ;
-		}
+		getSerializableFields(typeObjetParent);
+		if(serializablefieldsOfType.get(typeObjetParent).containsKey(name))
+			return serializablefieldsOfType.get(typeObjetParent).get(name);
 		if(ConfigurationMarshalling.isModelContraignant())
 			throw new ChampNotFound("le champ " + name + " n'existe pas dans l'objet de type " + typeObjetParent.getName());
 		return NullChamp.getInstance();
@@ -51,9 +50,11 @@ public class TypeExtension {
 	
 	
 	public static synchronized List<Champ> getSerializableFields(Class<?> typeObj) {
-		List<Champ> fields = serializablefieldsOfType.get(typeObj);
+		List<Champ> fields = fieldsOfType.get(typeObj);
 		if (fields == null){
 			fields = new ArrayList<>();
+			Map<String, Champ> mapFields = new HashMap<>();
+			serializablefieldsOfType.put(typeObj, mapFields);
 			Boolean hasUid = false;
 			Class<?> parent = typeObj;
 			List<Field> fieldstmp = new ArrayList<>();
@@ -63,18 +64,19 @@ public class TypeExtension {
 			}
 			for (Field info : fieldstmp) {
 				info.setAccessible(true);
-				if (!isTransient(info) && !Modifier.isFinal(info.getModifiers()) && info.getType().getName().indexOf("Logger") == -1) {
-					//on ne sérialise pas les attributs finaux ni ceux a ne pas sérialiser ni les attributs techniques de log.
+				if (!isTransient(info) && !(Modifier.isFinal(info.getModifiers()) && Modifier.isStatic(info.getModifiers())) && info.getType().getName().indexOf("Logger") == -1) {
+					//on ne sérialise pas les attributs static finaux ni ceux a ne pas sérialiser ni les attributs techniques de log.
 					Champ champ = FabriqueChamp.createChamp(info);
+					mapFields.put(champ.getName(), champ);
 					fields.add(champ);
 					hasUid = hasUid || champ.getName().equals(ChampUid.UID_FIELD_NAME);
 				}
 			}			
 			if (!hasUid) {
-				fields.add(FabriqueChamp.createChampId(typeObj));
+				mapFields.put(ChampUid.UID_FIELD_NAME, FabriqueChamp.createChampId(typeObj));
 			}
 			Collections.sort(fields);
-			serializablefieldsOfType.put(typeObj, fields) ;
+			fieldsOfType.put(typeObj, fields) ;
 		}
 		return fields;
 	}
@@ -87,12 +89,8 @@ public class TypeExtension {
 	public static synchronized Champ getChampId(Class<?> typeObjetParent){
 		Champ champId = dicoTypeTochampId.get(typeObjetParent);
 		if(champId == null){
-			for (Champ champ : TypeExtension.getSerializableFields(typeObjetParent)){
-				if (champ.getName().equals(ChampUid.UID_FIELD_NAME)) {
-					 champId = champ;
-					 break;
-				}
-			}
+			getSerializableFields(typeObjetParent);
+			champId = serializablefieldsOfType.get(typeObjetParent).get(ChampUid.UID_FIELD_NAME);
 			dicoTypeTochampId.put(typeObjetParent, champId);
 		}
 		return champId;
@@ -129,5 +127,10 @@ public class TypeExtension {
 	}
 	public static boolean isEnveloppe(Class<?> clazz){
 		return simpleEnveloppe.contains(clazz);
+	}
+
+	static synchronized void clear() {
+		serializablefieldsOfType.clear();
+		fieldsOfType.clear();
 	}
 }
