@@ -73,7 +73,9 @@ public class TypeExtension {
 				}
 			}			
 			if (!hasUid) {
-				mapFields.put(ChampUid.UID_FIELD_NAME, FabriqueChamp.createChampId(typeObj));
+				Champ champId = FabriqueChamp.createChampId(typeObj);
+				fields.add(champId);
+				mapFields.put(ChampUid.UID_FIELD_NAME, champId);
 			}
 			Collections.sort(fields);
 			fieldsOfType.put(typeObj, fields) ;
