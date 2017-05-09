@@ -25,7 +25,7 @@ public class StrategieParCompositionOuAgregationEtClasseConcrete extends Strateg
 				type = (Class<?>) types[0];
 		}else if(Map.class.isAssignableFrom(type))
 			type = Object.class;
-		boolean isConcrete = Modifier.isAbstract(fieldInformation.getValueType().getModifiers());
+		boolean isConcrete = !Modifier.isAbstract(fieldInformation.getValueType().getModifiers());
 		return fieldInformation.getRelation() == TypeRelation.COMPOSITION
 				|| (fieldInformation.getRelation() == TypeRelation.AGGREGATION && isConcrete);
 	}
