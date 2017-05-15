@@ -40,7 +40,8 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 	}
 	
 	public void setId(String id) throws InstanciationException, EntityManagerImplementationException{
-		preciseLeTypeSiIdConnu(ChampUid.UID_FIELD_NAME, id);
+		if(preciseLeTypeSiIdConnu(ChampUid.UID_FIELD_NAME, id))
+			return;
 		Champ champId = TypeExtension.getChampId(type);
 		Class<?> typeId = champId.getValueType();
 		if (typeId.isAssignableFrom(UUID.class)){
@@ -71,8 +72,8 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 	
 	@Override
 	protected <W> void integreObjet(String nomAttribut, W objet) throws EntityManagerImplementationException, InstanciationException{
-		preciseLeTypeSiIdConnu(nomAttribut, objet != null ? objet.toString() : null);
-		dicoNomChampToValue.put(nomAttribut, objet);
+		if(!preciseLeTypeSiIdConnu(nomAttribut, objet != null ? objet.toString() : null))
+			dicoNomChampToValue.put(nomAttribut, objet);
 	}
 	
     @Override
