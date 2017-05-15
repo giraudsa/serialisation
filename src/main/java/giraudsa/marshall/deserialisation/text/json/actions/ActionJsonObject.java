@@ -49,8 +49,8 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 	
 	@Override
 	protected <W> void integreObjet(String nomAttribut, W objet) throws EntityManagerImplementationException, InstanciationException{
-		if(!preciseLeTypeSiIdConnu(nomAttribut, objet != null ? objet.toString() : null))
-			dicoNomChampToValue.put(nomAttribut, objet);
+		preciseLeTypeSiIdConnu(nomAttribut, objet != null ? objet.toString() : null);
+		dicoNomChampToValue.put(nomAttribut, objet);
 	}
 	
 	@Override

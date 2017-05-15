@@ -10,7 +10,6 @@ import utils.generic.TypeToken;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -86,6 +85,8 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	public void set(Object obj, Object value, Map<Object, UUID> dicoObjToFakeId) throws SetValueException{
 		try {
 			if(obj != null)
+				if(name.equals(ChampUid.UID_FIELD_NAME) && info.get(obj) != null) //l'id est deja setté
+					return;
 				info.set(obj, value);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			throw new SetValueException("impossible de setter " + value.toString() + " de type " + value.getClass().getName() + " dans le champ " + name + " de la classe " + info.getDeclaringClass(), e);

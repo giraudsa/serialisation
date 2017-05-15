@@ -7,8 +7,6 @@ import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.SetValueException;
-import giraudsa.marshall.exception.UnmarshallExeption;
-
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,8 +38,7 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 	}
 	
 	public void setId(String id) throws InstanciationException, EntityManagerImplementationException{
-		if(preciseLeTypeSiIdConnu(ChampUid.UID_FIELD_NAME, id))
-			return;
+		preciseLeTypeSiIdConnu(ChampUid.UID_FIELD_NAME, id);
 		Champ champId = TypeExtension.getChampId(type);
 		Class<?> typeId = champId.getValueType();
 		if (typeId.isAssignableFrom(UUID.class)){
@@ -72,8 +69,8 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 	
 	@Override
 	protected <W> void integreObjet(String nomAttribut, W objet) throws EntityManagerImplementationException, InstanciationException{
-		if(!preciseLeTypeSiIdConnu(nomAttribut, objet != null ? objet.toString() : null))
-			dicoNomChampToValue.put(nomAttribut, objet);
+		preciseLeTypeSiIdConnu(nomAttribut, objet != null ? objet.toString() : null);
+		dicoNomChampToValue.put(nomAttribut, objet);
 	}
 	
     @Override

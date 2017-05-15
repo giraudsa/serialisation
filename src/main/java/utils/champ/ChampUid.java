@@ -21,7 +21,7 @@ public class ChampUid extends Champ {
 	
 	@Override
 	public  void set(Object obj, Object value, Map<Object, UUID> dicoObjToFakeId) {
-		dicoObjToFakeId.put(obj, UUID.fromString((String) value));
+		dicoObjToFakeId.put(obj, UUID.fromString(value.toString()));
 	}
 
 	@Override
