@@ -85,10 +85,10 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	@Override
 	public void set(Object obj, Object value, Map<Object, UUID> dicoObjToFakeId) throws SetValueException{
 		try {
-			if(obj != null && !Modifier.isFinal(info.getModifiers()))
+			if(obj != null)
 				info.set(obj, value);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			throw new SetValueException("impossible de setter " + value.getClass().getName() + " dans le champ " + name, e);
+			throw new SetValueException("impossible de setter " + value.toString() + " de type " + value.getClass().getName() + " dans le champ " + name + " de la classe " + info.getDeclaringClass(), e);
 		}
 	}
 	
