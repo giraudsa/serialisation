@@ -41,10 +41,10 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 				relation = TypeRelation.COMPOSITION;
 			else
 				relation = maRelation != null ? maRelation.type() : TypeRelation.ASSOCIATION;
-			
+
 		}
 	}
-	
+
 	private String getComparaison(){
 		if(comparaison == null){
 			StringBuilder sb = new StringBuilder();
@@ -67,7 +67,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 			res = 1;
 		return res;
 	}
-	
+
 	@Override
 	public boolean equals(Object other){
 		if(other instanceof Champ){
@@ -75,7 +75,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 		}
 		return false;
 	}
-	
+
 	@Override public int hashCode() {
 		String that = name + info.getDeclaringClass().getName();
 		return that.hashCode();
@@ -84,22 +84,31 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	@Override
 	public void set(Object obj, Object value, Map<Object, UUID> dicoObjToFakeId) throws SetValueException{
 		try {
-			if(obj != null)
-				if(name.equals(ChampUid.UID_FIELD_NAME) && info.get(obj) != null) //l'id est deja setté
-					return;
-				info.set(obj, value);
+			if(obj != null){
+				if(name.equals(ChampUid.UID_FIELD_NAME))
+					setChampId(obj, value);
+				else
+					info.set(obj, value);
+			}
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			throw new SetValueException("impossible de setter " + value.toString() + " de type " + value.getClass().getName() + " dans le champ " + name + " de la classe " + info.getDeclaringClass(), e);
 		}
 	}
-	
+
+	private void setChampId(Object obj, Object value) throws IllegalArgumentException, IllegalAccessException {
+		if(info.get(obj) == null)
+			info.set(obj, value);
+		else if ("0".equals(info.get(obj).toString()))
+			info.set(obj, value);
+	}
+
 	public boolean isFakeId(){
 		return info == null;
 	}
 
 	@Override
 	public Object get(Object obj, Map<Object, UUID> dicoObjToFakeId, EntityManager entity) throws IllegalAccessException {
-			return info.get(obj);
+		return info.get(obj);
 	}
 
 	@Override
@@ -110,7 +119,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	public Field getInfo() {
 		return info;
 	}
-	
+
 	@Override
 	public boolean isSimple(){
 		return isSimple;
@@ -130,7 +139,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 		Class<?> type = value.getClass();
 		return TypeExtension.getTypeEnveloppe(this.valueType) == TypeExtension.getTypeEnveloppe(type);
 	}
-	
+
 	@Override
 	public Type[] getParametreType(){
 		if(typeToken == null) 
@@ -151,19 +160,19 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	public Object get(Object o) throws IllegalAccessException {
 		return get(o, null, null);
 	}
-	
+
 	@Override
 	public Annotation[] getAnnotations(){
 		if(info == null)
 			return noAnnotation;
 		return info.getAnnotations();
 	}
-	
+
 	@Override
 	public <T extends Annotation> T getAnnotation(Class<T> annotationClass){
 		if(info == null)
 			return null;
 		return info.getAnnotation(annotationClass);
 	}
-	
+
 }
