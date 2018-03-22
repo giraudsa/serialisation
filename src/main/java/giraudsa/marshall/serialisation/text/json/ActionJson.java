@@ -58,6 +58,11 @@ public abstract class ActionJson<T> extends ActionText<T>  {
 
 	protected abstract void clotureObject(Marshaller marshaller, T obj, boolean typeDevinable) throws IOException;
 	
+	
+	protected boolean writeType(Marshaller marshaller) {
+		return getJsonMarshaller(marshaller).writeType;
+	}
+	
 	protected void ouvreAccolade(Marshaller marshaller) throws IOException{
 		getJsonMarshaller(marshaller).ouvreAccolade();
 	}
@@ -117,7 +122,7 @@ public abstract class ActionJson<T> extends ActionText<T>  {
 		@Override
 		protected void evalue(Marshaller marshaller) throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption{
 			ecritClef(marshaller, nomClef);
-			boolean nePasEcrireType = getJsonMarshaller(marshaller).writeType ? typeDevinable : true;
+			boolean nePasEcrireType = writeType(marshaller) ? typeDevinable : true;
 			boolean separateurAEcrire = commenceObject(marshaller, (T)obj, nePasEcrireType);
 			ecritValeur(marshaller, (T)obj, fieldInformations, separateurAEcrire);
 		}
@@ -138,7 +143,8 @@ public abstract class ActionJson<T> extends ActionText<T>  {
 		@SuppressWarnings("unchecked")
 		@Override
 		protected void evalue(Marshaller marshaller) throws IOException{
-			clotureObject(marshaller, (T)obj, typeDevinable);		
+			boolean nePasEcrireType = writeType(marshaller) ? typeDevinable : true;
+			clotureObject(marshaller, (T)obj, nePasEcrireType);		
 		}
 		
 	}
