@@ -83,7 +83,7 @@ public class HeaderSimpleType<T> extends Header {
 		if (simpleType == double.class)
 			return input.readDouble();
 		final byte[] tmp = new byte[tailleCodageValeur];
-		input.read(tmp);
+		input.readFully(tmp);
 		final BigInteger bi = new BigInteger(tmp);
 		return ByteHelper.getObject(simpleType, bi);
 	}

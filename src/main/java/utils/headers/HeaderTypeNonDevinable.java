@@ -46,7 +46,7 @@ public class HeaderTypeNonDevinable extends Header {
 	@Override
 	public short getSmallIdType(final DataInputStream input) throws IOException, UnmarshallExeption {
 		final byte[] tmp = new byte[encodageSmallIdType];
-		input.read(tmp);
+		input.readFully(tmp);
 		final BigInteger bi = new BigInteger(tmp);
 		return bi.shortValue();
 	}
@@ -59,7 +59,7 @@ public class HeaderTypeNonDevinable extends Header {
 	@Override
 	public int readSmallId(final DataInputStream input, final int maxId) throws IOException, UnmarshallExeption {
 		final byte[] tmp = new byte[encodageSmallId];
-		input.read(tmp);
+		input.readFully(tmp);
 		final BigInteger bi = new BigInteger(tmp);
 		return maxId >= HeaderVerySmallId.getMaxVerySmallId() ? bi.intValue() + HeaderVerySmallId.getMaxVerySmallId()
 				: bi.intValue();

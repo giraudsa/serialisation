@@ -39,7 +39,7 @@ public class HeaderTypeDevinable extends Header {
 	@Override
 	public int readSmallId(final DataInputStream input, final int maxId) throws IOException, UnmarshallExeption {
 		final byte[] tmp = new byte[encodageSmallId];
-		input.read(tmp);
+		input.readFully(tmp);
 		final BigInteger bi = new BigInteger(tmp);
 		return maxId >= HeaderVerySmallId.getMaxVerySmallId() ? bi.intValue() + HeaderVerySmallId.getMaxVerySmallId()
 				: bi.intValue();

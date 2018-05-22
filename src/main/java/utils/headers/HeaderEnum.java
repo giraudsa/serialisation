@@ -35,7 +35,7 @@ public class HeaderEnum extends Header {
 	@Override
 	public short getSmallIdType(final DataInputStream input) throws IOException, UnmarshallExeption {
 		final byte[] tmp = new byte[encodageSmallIdType];
-		input.read(tmp);
+		input.readFully(tmp);
 		final BigInteger bi = new BigInteger(tmp);
 		return bi.shortValue();
 	}
