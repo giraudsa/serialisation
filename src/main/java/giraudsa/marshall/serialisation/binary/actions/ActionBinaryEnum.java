@@ -27,12 +27,12 @@ public class ActionBinaryEnum extends ActionBinary<Enum> {
 
 	@Override
 	protected boolean writeHeaders(final Marshaller marshaller, final Enum objetASerialiser,
-			final FieldInformations fieldInformations) throws MarshallExeption, IOException {
+			final FieldInformations fieldInformations) throws IOException {
 		final Class<?> typeObj = getTypeObjProblemeHibernate(objetASerialiser);
 		final boolean isTypeDevinable = isTypeDevinable(marshaller, objetASerialiser, fieldInformations);
 		final boolean isDejaVuType = isDejaVuType(marshaller, typeObj);
 		final short smallIdType = getSmallIdTypeAndStockType(marshaller, typeObj);
-		final HeaderEnum<?> header = HeaderEnum.getHeader(smallIdType, isTypeDevinable);
+		final HeaderEnum header = HeaderEnum.getHeader(smallIdType, isTypeDevinable);
 		header.write(getOutput(marshaller), smallIdType, typeObj, isDejaVuType);
 		return false;
 	}

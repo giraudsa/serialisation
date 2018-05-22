@@ -2,7 +2,6 @@ package giraudsa.marshall.serialisation.binary.actions.simple;
 
 import java.io.IOException;
 
-import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
 import utils.champ.FieldInformations;
@@ -22,7 +21,7 @@ public class ActionBinaryBoolean extends ActionBinary<Boolean> {
 
 	@Override
 	protected boolean writeHeaders(final Marshaller marshaller, final Boolean bool, final FieldInformations fi)
-			throws IOException, MarshallExeption {
+			throws IOException {
 		final HeaderSimpleType<?> header = (HeaderSimpleType<?>) HeaderSimpleType.getHeader(bool);
 		header.writeValue(getOutput(marshaller), bool);
 		return false;

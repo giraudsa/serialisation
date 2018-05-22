@@ -3,7 +3,6 @@ package giraudsa.marshall.serialisation.binary.actions;
 import java.io.IOException;
 import java.util.UUID;
 
-import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
 import utils.champ.FieldInformations;
@@ -26,10 +25,10 @@ public class ActionBinaryUUID extends ActionBinary<UUID> {
 
 	@Override
 	protected boolean writeHeaders(final Marshaller marshaller, final UUID id,
-			final FieldInformations fieldInformations) throws MarshallExeption, IOException {
+			final FieldInformations fieldInformations) throws IOException {
 		final boolean isDejaVu = isDejaVuUUID(marshaller, id);
 		final int smallId = getSmallIdUUIDAndStockUUID(marshaller, id);
-		final HeaderTypeCourant<?> header = HeaderTypeCourant.getHeader(id, smallId);
+		final HeaderTypeCourant header = HeaderTypeCourant.getHeader(id, smallId);
 		header.write(getOutput(marshaller), smallId);
 		return isDejaVu;
 	}

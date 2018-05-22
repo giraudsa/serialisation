@@ -32,7 +32,7 @@ public class ActionXmlDate<T extends Date> extends ActionXmlSimpleComportement<T
 			obj = type.getConstructor(long.class).newInstance(time);
 		} catch (ParseException | InstantiationException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-			date = new Date(time);
+			obj = new Date(time);
 			LOGGER.error("pas de constructeur avec un long pour le type date " + type.getName(), e);
 		}
 	}

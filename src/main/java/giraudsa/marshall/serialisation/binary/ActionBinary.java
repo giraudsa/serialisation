@@ -143,14 +143,14 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	}
 
 	protected boolean writeHeaders(final Marshaller marshaller, final T objetASerialiser,
-			final FieldInformations fieldInformations) throws MarshallExeption, IOException {
+			final FieldInformations fieldInformations) throws IOException {
 		final Class<?> typeObj = getTypeObjProblemeHibernate(objetASerialiser);
 		final boolean isDejaVu = isDejaVu(marshaller, objetASerialiser);
 		final boolean isTypeDevinable = isTypeDevinable(marshaller, objetASerialiser, fieldInformations);
 		final boolean isDejaVuType = isDejaVuType(marshaller, typeObj);
 		final int smallId = getSmallIdAndStockObj(marshaller, objetASerialiser);
 		final short smallIdType = getSmallIdTypeAndStockType(marshaller, typeObj);
-		final Header<?> header = Header.getHeader(isDejaVu, isTypeDevinable, smallId, smallIdType);
+		final Header header = Header.getHeader(isDejaVu, isTypeDevinable, smallId, smallIdType);
 		header.write(getOutput(marshaller), smallId, smallIdType, isDejaVuType, typeObj);
 		return isDejaVu;
 	}
