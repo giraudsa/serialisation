@@ -9,19 +9,19 @@ import java.util.Map;
 
 import giraudsa.marshall.exception.UnmarshallExeption;
 
-public class HeaderEnum<T> extends Header<T> {
+public class HeaderEnum extends Header {
 
-	private static final Map<Integer, HeaderEnum<?>> encodageSmallIdToHeaderEnum = new HashMap<>();
+	private static final Map<Integer, HeaderEnum> encodageSmallIdToHeaderEnum = new HashMap<>();
 
-	public static HeaderEnum<?> getHeader(final short smallIdType, final boolean typeDevinable) {
+	public static HeaderEnum getHeader(final short smallIdType, final boolean typeDevinable) {
 		final int encodageSmallIdType = typeDevinable ? 0 : ByteHelper.getMinimumEncodage(smallIdType);
 		return encodageSmallIdToHeaderEnum.get(encodageSmallIdType);
 	}
 
 	protected static void init() {
-		new HeaderEnum<>(0);// type devinable
-		new HeaderEnum<>(1);
-		new HeaderEnum<>(2);
+		new HeaderEnum(0);// type devinable
+		new HeaderEnum(1);
+		new HeaderEnum(2);
 	}
 
 	private final int encodageSmallIdType;

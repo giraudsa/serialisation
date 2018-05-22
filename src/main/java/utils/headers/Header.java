@@ -8,9 +8,9 @@ import java.util.Map;
 
 import giraudsa.marshall.exception.UnmarshallExeption;
 
-public abstract class Header<T> {
+public abstract class Header {
 	private static byte constructionByte = 0;
-	private static final Map<Byte, Header<?>> dicoByteToHeader = new HashMap<>();
+	private static final Map<Byte, Header> dicoByteToHeader = new HashMap<>();
 	static {
 		HeaderSimpleType.init();
 		HeaderTypeCourant.init();
@@ -22,7 +22,7 @@ public abstract class Header<T> {
 	}
 
 	// type autre
-	public static Header<?> getHeader(final boolean isDejaVu, final boolean isTypeDevinable, final int smallId,
+	public static Header getHeader(final boolean isDejaVu, final boolean isTypeDevinable, final int smallId,
 			final short smallIdType) {
 		if (isDejaVu)
 			return smallId <= HeaderVerySmallId.getMaxVerySmallId() ? HeaderVerySmallId.getHeader(smallId)
@@ -32,7 +32,7 @@ public abstract class Header<T> {
 					: HeaderTypeNonDevinable.getHeader(smallId, smallIdType);
 	}
 
-	public static Header<?> getHeader(final byte b) {
+	public static Header getHeader(final byte b) {
 		return dicoByteToHeader.get(b);
 	}
 

@@ -9,21 +9,20 @@ import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.BiHashMap;
 import utils.TypeExtension;
 
-public class HeaderSimpleType<T> extends Header<T> {
+public class HeaderSimpleType<T> extends Header {
 	private static final HeaderSimpleType<Boolean> booleanFalse = new HeaderSimpleType<>(false, boolean.class);
 	private static final HeaderSimpleType<Boolean> booleanTrue = new HeaderSimpleType<>(true, boolean.class);
-	private static final BiHashMap<Class<?>, Integer, Header<?>> classAndEncodageMiniToHeader = new BiHashMap<>();
+	private static final BiHashMap<Class<?>, Integer, Header> classAndEncodageMiniToHeader = new BiHashMap<>();
 	private static final HeaderSimpleType<Void> nullHeader = new HeaderSimpleType<>(void.class, 0);
 
-	@SuppressWarnings("unchecked")
-	public static <U> Header<U> getHeader(final U o) {
+	public static Header getHeader(final Object o) {
 		if (o == null)
-			return (Header<U>) nullHeader;
+			return nullHeader;
 		if (Boolean.class.isInstance(o))
-			return (Header<U>) ((boolean) o ? booleanTrue : booleanFalse);
-		final Class<U> classeO = (Class<U>) o.getClass();
+			return ((Boolean) o).booleanValue() ? booleanTrue : booleanFalse;
+		final Class<?> classeO = o.getClass();
 		final int encodage = ByteHelper.getMinimumEncodage((Number) o);
-		return (Header<U>) classAndEncodageMiniToHeader.get(TypeExtension.getTypeEnveloppe(classeO), encodage);
+		return classAndEncodageMiniToHeader.get(TypeExtension.getTypeEnveloppe(classeO), encodage);
 	}
 
 	protected static void init() {

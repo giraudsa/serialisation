@@ -8,10 +8,10 @@ import java.math.BigInteger;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.BiHashMap;
 
-public class HeaderTypeNonDevinable extends Header<Object> {
+public class HeaderTypeNonDevinable extends Header {
 	private static final BiHashMap<Integer, Integer, HeaderTypeNonDevinable> encodageSmallIdEtSmallIdTypeToHeader = new BiHashMap<>();
 
-	protected static Header<?> getHeader(final int smallId, final short smallIdType) {
+	protected static Header getHeader(final int smallId, final short smallIdType) {
 		final int toBeConsideredForNextBytes = smallId > HeaderVerySmallId.getMaxVerySmallId()
 				? smallId - HeaderVerySmallId.getMaxVerySmallId()
 				: smallId;

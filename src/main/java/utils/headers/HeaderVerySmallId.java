@@ -6,11 +6,11 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HeaderVerySmallId extends Header<Object> {
+public class HeaderVerySmallId extends Header {
 	private static int maxVerySmallId = 0;
 	private static final Map<Integer, HeaderVerySmallId> verySmallIdToHeader = new HashMap<>();
 
-	protected static Header<?> getHeader(final int smallId) {
+	protected static Header getHeader(final int smallId) {
 		return verySmallIdToHeader.get(smallId);
 	}
 

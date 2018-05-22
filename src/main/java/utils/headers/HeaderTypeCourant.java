@@ -10,11 +10,11 @@ import java.util.UUID;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.BiHashMap;
 
-public class HeaderTypeCourant<T> extends Header<T> {
+public class HeaderTypeCourant extends Header {
 
-	private static final BiHashMap<Class<?>, Integer, HeaderTypeCourant<?>> typeCourantAndEncodageSmallIdToHeader = new BiHashMap<>();
+	private static final BiHashMap<Class<?>, Integer, HeaderTypeCourant> typeCourantAndEncodageSmallIdToHeader = new BiHashMap<>();
 
-	public static HeaderTypeCourant<?> getHeader(final Object o, final int smallId) {
+	public static HeaderTypeCourant getHeader(final Object o, final int smallId) {
 		final Class<?> type = o.getClass();
 		int encodageSmallId = 0;
 		encodageSmallId = ByteHelper.getMinimumEncodage(smallId);
@@ -22,18 +22,18 @@ public class HeaderTypeCourant<T> extends Header<T> {
 	}
 
 	protected static void init() {
-		new HeaderTypeCourant<>(String.class, 1);
-		new HeaderTypeCourant<>(String.class, 2);
-		new HeaderTypeCourant<>(String.class, 3);
-		new HeaderTypeCourant<>(String.class, 4);
-		new HeaderTypeCourant<>(UUID.class, 1);
-		new HeaderTypeCourant<>(UUID.class, 2);
-		new HeaderTypeCourant<>(UUID.class, 3);
-		new HeaderTypeCourant<>(UUID.class, 4);
-		new HeaderTypeCourant<>(Date.class, 1);
-		new HeaderTypeCourant<>(Date.class, 2);
-		new HeaderTypeCourant<>(Date.class, 3);
-		new HeaderTypeCourant<>(Date.class, 4);
+		new HeaderTypeCourant(String.class, 1);
+		new HeaderTypeCourant(String.class, 2);
+		new HeaderTypeCourant(String.class, 3);
+		new HeaderTypeCourant(String.class, 4);
+		new HeaderTypeCourant(UUID.class, 1);
+		new HeaderTypeCourant(UUID.class, 2);
+		new HeaderTypeCourant(UUID.class, 3);
+		new HeaderTypeCourant(UUID.class, 4);
+		new HeaderTypeCourant(Date.class, 1);
+		new HeaderTypeCourant(Date.class, 2);
+		new HeaderTypeCourant(Date.class, 3);
+		new HeaderTypeCourant(Date.class, 4);
 	}
 
 	private final int encodageSmallId;

@@ -9,10 +9,10 @@ import java.util.Map;
 
 import giraudsa.marshall.exception.UnmarshallExeption;
 
-public class HeaderTypeDevinable extends Header<Object> {
+public class HeaderTypeDevinable extends Header {
 	private static final Map<Integer, HeaderTypeDevinable> encodageSmallIdToHeaderTypeDevinable = new HashMap<>();
 
-	protected static Header<?> getHeader(final int smallId) {
+	protected static Header getHeader(final int smallId) {
 		final int toBeConsideredForNextBytes = smallId > HeaderVerySmallId.getMaxVerySmallId()
 				? smallId - HeaderVerySmallId.getMaxVerySmallId()
 				: smallId;
