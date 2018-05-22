@@ -32,7 +32,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	}
 
 	@Override
-	protected <V> boolean aTraiter(final Marshaller marshaller, final V value, final FieldInformations f) {
+	protected <V> boolean aTraiter(final V value, final FieldInformations f) {
 		return true;
 	}
 

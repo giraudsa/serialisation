@@ -1,6 +1,5 @@
 package giraudsa.marshall.exception;
 
-@SuppressWarnings("serial")
 public class JsonHandlerException extends Exception {
 	/**
 	 *

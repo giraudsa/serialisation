@@ -49,8 +49,7 @@ public abstract class ActionAbstrait<T> {
 		super();
 	}
 
-	protected <V> boolean aTraiter(final Marshaller marshaller, final V value,
-			final FieldInformations fieldInformations) throws IOException, MarshallExeption {
+	protected <V> boolean aTraiter(final V value, final FieldInformations fieldInformations) throws MarshallExeption {
 		if (fieldInformations instanceof FakeChamp)
 			return true;
 		if (fieldInformations.isChampId() && value == null)
@@ -134,18 +133,15 @@ public abstract class ActionAbstrait<T> {
 	}
 
 	protected Comportement traiteChamp(final Marshaller marshaller, final Object obj,
-			final FieldInformations fieldInformations)
-			throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException,
-			NotImplementedSerializeException, IOException, MarshallExeption {
+			final FieldInformations fieldInformations) throws IllegalAccessException, MarshallExeption {
 		return traiteChamp(marshaller, obj, fieldInformations, true);
 	}
 
 	protected Comportement traiteChamp(final Marshaller marshaller, final Object obj,
 			final FieldInformations fieldInformations, final boolean ecrisSeparateur)
-			throws InstantiationException, InvocationTargetException, NoSuchMethodException,
-			NotImplementedSerializeException, IOException, IllegalAccessException, MarshallExeption {
+			throws IllegalAccessException, MarshallExeption {
 		final Object value = fieldInformations.get(obj, getDicoObjToFakeId(marshaller), getEntityManager(marshaller));
-		if (aTraiter(marshaller, value, fieldInformations))
+		if (aTraiter(value, fieldInformations))
 			return new ComportementMarshallValue(value, fieldInformations, ecrisSeparateur);
 		return null;
 	}

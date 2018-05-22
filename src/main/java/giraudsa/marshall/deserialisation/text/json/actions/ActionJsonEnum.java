@@ -59,7 +59,6 @@ public class ActionJsonEnum<T extends Enum> extends ActionJson<T> {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	protected <W> void integreObjet(final String nomAttribut, final W objet) {
 		obj = objet;
