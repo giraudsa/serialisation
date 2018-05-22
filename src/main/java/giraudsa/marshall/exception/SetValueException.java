@@ -1,28 +1,29 @@
 package giraudsa.marshall.exception;
 
-public class SetValueException extends Exception{
+public class SetValueException extends Exception {
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -2530428821952692358L;
 
 	public SetValueException() {
-		
+
 	}
 
-	public SetValueException(String message) {
+	public SetValueException(final String message) {
 		super(message);
 	}
 
-	public SetValueException(Throwable cause) {
-		super(cause);
-	}
-
-	public SetValueException(String message, Throwable cause) {
+	public SetValueException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public SetValueException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public SetValueException(final String message, final Throwable cause, final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
+	}
+
+	public SetValueException(final Throwable cause) {
+		super(cause);
 	}
 }

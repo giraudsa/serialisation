@@ -1,32 +1,31 @@
 package giraudsa.marshall.serialisation.binary.actions.simple;
 
-
-import utils.champ.FieldInformations;
-import utils.headers.HeaderSimpleType;
-
 import java.io.IOException;
 
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
+import utils.champ.FieldInformations;
+import utils.headers.HeaderSimpleType;
 
-public class ActionBinaryChar  extends ActionBinary<Character>{
+public class ActionBinaryChar extends ActionBinary<Character> {
 
 	public ActionBinaryChar() {
 		super();
 	}
-	
+
 	@Override
-	protected boolean writeHeaders(Marshaller marshaller, Character caractere, FieldInformations fieldInformations)
-			throws IOException, MarshallExeption {
-		HeaderSimpleType<?> header = (HeaderSimpleType<?>) HeaderSimpleType.getHeader(caractere);
+	protected void ecritValeur(final Marshaller marshaller, final Character objetASerialiser,
+			final FieldInformations fieldInformations, final boolean isDejaVu) throws IOException {
+		// rien a faire
+	}
+
+	@Override
+	protected boolean writeHeaders(final Marshaller marshaller, final Character caractere,
+			final FieldInformations fieldInformations) throws IOException, MarshallExeption {
+		final HeaderSimpleType<?> header = (HeaderSimpleType<?>) HeaderSimpleType.getHeader(caractere);
 		header.writeValue(getOutput(marshaller), caractere);
 		return false;
 	}
-	
-	@Override
-	protected void ecritValeur(Marshaller marshaller, Character objetASerialiser, FieldInformations fieldInformations, boolean isDejaVu) throws IOException {
-		//rien a faire
-	}
-	
+
 }

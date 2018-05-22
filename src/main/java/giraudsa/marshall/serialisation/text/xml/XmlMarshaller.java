@@ -1,29 +1,5 @@
 package giraudsa.marshall.serialisation.text.xml;
 
-import giraudsa.marshall.exception.ChampNotFound;
-import giraudsa.marshall.exception.MarshallExeption;
-import giraudsa.marshall.exception.NotImplementedSerializeException;
-import giraudsa.marshall.serialisation.ActionAbstrait;
-import giraudsa.marshall.serialisation.text.TextMarshaller;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlArrayType;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlAtomicArrayIntegerType;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlAtomicArrayLongType;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlBitSet;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlCalendar;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlCollectionType;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlCurrency;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlDate;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlDictionaryType;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlInetAdress;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlObject;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlSimpleComportement;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlUri;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlUrl;
-import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlVoid;
-import giraudsa.marshall.strategie.StrategieDeSerialisation;
-import giraudsa.marshall.strategie.StrategieParComposition;
-import giraudsa.marshall.strategie.StrategieSerialisationComplete;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -53,14 +29,38 @@ import java.util.concurrent.atomic.AtomicLongArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import giraudsa.marshall.exception.ChampNotFound;
+import giraudsa.marshall.exception.MarshallExeption;
+import giraudsa.marshall.exception.NotImplementedSerializeException;
+import giraudsa.marshall.serialisation.ActionAbstrait;
+import giraudsa.marshall.serialisation.text.TextMarshaller;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlArrayType;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlAtomicArrayIntegerType;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlAtomicArrayLongType;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlBitSet;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlCalendar;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlCollectionType;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlCurrency;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlDate;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlDictionaryType;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlInetAdress;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlObject;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlSimpleComportement;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlUri;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlUrl;
+import giraudsa.marshall.serialisation.text.xml.actions.ActionXmlVoid;
+import giraudsa.marshall.strategie.StrategieDeSerialisation;
+import giraudsa.marshall.strategie.StrategieParComposition;
+import giraudsa.marshall.strategie.StrategieSerialisationComplete;
 import utils.ConfigurationMarshalling;
 import utils.Constants;
 import utils.EntityManager;
 
 public class XmlMarshaller extends TextMarshaller {
+	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections
+			.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(XmlMarshaller.class);
-	
-	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
 	static {
 		dicoTypeToAction.put(Date.class, new ActionXmlDate());
 		dicoTypeToAction.put(Boolean.class, new ActionXmlSimpleComportement<Boolean>());
@@ -96,150 +96,157 @@ public class XmlMarshaller extends TextMarshaller {
 		dicoTypeToAction.put(StringBuffer.class, new ActionXmlSimpleComportement<StringBuffer>());
 	}
 
-	//info id universal
-	private boolean isWrittenUniversal = false;
-	//////CONSTRUCTEUR
-	private XmlMarshaller(Writer output, StrategieDeSerialisation strategie, EntityManager entityManager) throws IOException {
-		super(output, ConfigurationMarshalling.getDateFormatXml(), strategie, entityManager);
-		writeHeader();
-	}
-	/////METHODES STATICS PUBLICS
-	public static <U> void toXml(U obj, Writer output, EntityManager entityManager) throws MarshallExeption {
-		toXml(obj, output, new StrategieParComposition(), entityManager);
-	}
-	
-	public static <U> String toXml(U obj, EntityManager entityManager) throws MarshallExeption{
-		return toXml(obj, new StrategieParComposition(), entityManager);
-	}
-	
-	public static <U> String toXml(U obj) throws MarshallExeption{
-		return toXml(obj, new StrategieParComposition(), null);
-	}
-	
-	public static <U> void toXml(U obj, Writer output, StrategieDeSerialisation strategie, EntityManager entityManager) throws MarshallExeption {
-		try {
-			XmlMarshaller v = new XmlMarshaller(output, strategie, entityManager);
-			v.marshall(obj);
-		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
-			LOGGER.error("impossible de sérialiser " + obj.toString(), e);
-			throw new MarshallExeption(e);
-		}
-		
-	}
-	public static <U> String toXml(U obj, StrategieDeSerialisation strategie, EntityManager entityManager) throws MarshallExeption{
-		try(StringWriter sw = new StringWriter()){
-			toXml(obj, sw, strategie, entityManager);
-			return sw.toString();
-		} catch (IOException e) {
-			LOGGER.error("impossible de sérialiser en String " + obj.toString(), e);
-			throw new MarshallExeption(e);
-		}
-	}
-	public static <U> void toCompleteXml(U obj, Writer output, EntityManager entityManager) throws MarshallExeption{
-		try {
-			XmlMarshaller v = new XmlMarshaller(output, new StrategieSerialisationComplete(), entityManager);
-			v.marshall(obj);
-		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException | ChampNotFound e) {
-			LOGGER.error("impossible de sérialiser completement " + obj.toString(), e);
-			throw new MarshallExeption(e);
-		}
-	}
-	public static <U> String toCompleteXml(U obj) throws MarshallExeption{
-		try(StringWriter sw = new StringWriter()){
+	public static <U> String toCompleteXml(final U obj) throws MarshallExeption {
+		try (StringWriter sw = new StringWriter()) {
 			toCompleteXml(obj, sw, null);
 			return sw.toString();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			LOGGER.error("impossible de sérialiser completement en String " + obj.toString(), e);
 			throw new MarshallExeption(e);
 		}
 	}
-	private void writeHeader() throws IOException {
-		writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+
+	public static <U> void toCompleteXml(final U obj, final Writer output, final EntityManager entityManager)
+			throws MarshallExeption {
+		try {
+			final XmlMarshaller v = new XmlMarshaller(output, new StrategieSerialisationComplete(), entityManager);
+			v.marshall(obj);
+		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException
+				| NoSuchMethodException | NotImplementedSerializeException | ChampNotFound e) {
+			LOGGER.error("impossible de sérialiser completement " + obj.toString(), e);
+			throw new MarshallExeption(e);
+		}
 	}
 
-	protected void openTag(String name, Class<?> type) throws IOException {
-		if(isPrettyPrint()){
-			prettyPrintOpenTag();
+	public static <U> String toXml(final U obj) throws MarshallExeption {
+		return toXml(obj, new StrategieParComposition(), null);
+	}
+
+	public static <U> String toXml(final U obj, final EntityManager entityManager) throws MarshallExeption {
+		return toXml(obj, new StrategieParComposition(), entityManager);
+	}
+
+	public static <U> String toXml(final U obj, final StrategieDeSerialisation strategie,
+			final EntityManager entityManager) throws MarshallExeption {
+		try (StringWriter sw = new StringWriter()) {
+			toXml(obj, sw, strategie, entityManager);
+			return sw.toString();
+		} catch (final IOException e) {
+			LOGGER.error("impossible de sérialiser en String " + obj.toString(), e);
+			throw new MarshallExeption(e);
 		}
+	}
+
+	///// METHODES STATICS PUBLICS
+	public static <U> void toXml(final U obj, final Writer output, final EntityManager entityManager)
+			throws MarshallExeption {
+		toXml(obj, output, new StrategieParComposition(), entityManager);
+	}
+
+	public static <U> void toXml(final U obj, final Writer output, final StrategieDeSerialisation strategie,
+			final EntityManager entityManager) throws MarshallExeption {
+		try {
+			final XmlMarshaller v = new XmlMarshaller(output, strategie, entityManager);
+			v.marshall(obj);
+		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException
+				| NoSuchMethodException | NotImplementedSerializeException e) {
+			LOGGER.error("impossible de sérialiser " + obj.toString(), e);
+			throw new MarshallExeption(e);
+		}
+
+	}
+
+	// info id universal
+	private boolean isWrittenUniversal = false;
+
+	////// CONSTRUCTEUR
+	private XmlMarshaller(final Writer output, final StrategieDeSerialisation strategie,
+			final EntityManager entityManager) throws IOException {
+		super(output, ConfigurationMarshalling.getDateFormatXml(), strategie, entityManager);
+		writeHeader();
+	}
+
+	protected void closeTag(final String name) throws IOException {
+		if (isPrettyPrint())
+			prettyPrintCloseTag();
+		writer.write("</");
+		writer.write(name);
+		writer.write('>');
+	}
+
+	@Override
+	protected Map<Class<?>, ActionAbstrait<?>> getDicoTypeToAction() {
+		return dicoTypeToAction;
+	}
+
+	protected void openTag(final String name, final Class<?> type) throws IOException {
+		if (isPrettyPrint())
+			prettyPrintOpenTag();
 		writer.write("<");
 		writer.write(name);
-		if(type != null){
+		if (type != null)
 			writeType(type);
-		}
-		if(!isWrittenUniversal){
+		if (!isWrittenUniversal)
 			writeInfoUniversal();
-		}
 		writer.write(">");
 	}
-	
-	protected void openTagAddIdIfNotNullAndCloseTag(String name, Class<?> type, String id) throws IOException {
-		if(isPrettyPrint()){
+
+	protected void openTagAddIdIfNotNullAndCloseTag(final String name, final Class<?> type, final String id)
+			throws IOException {
+		if (isPrettyPrint())
 			prettyPrintOpenTag();
-		}
 		writer.write("<");
 		writer.write(name);
-		if(type != null){
+		if (type != null)
 			writeType(type);
-		}
-		if(!isWrittenUniversal){
+		if (!isWrittenUniversal)
 			writeInfoUniversal();
-		}
-		if(id != null){
+		if (id != null) {
 			writer.write(" id=\"");
 			writer.write(id);
 			writer.write("\"");
 		}
 		writer.write("/>");
-		if(isPrettyPrint()){
+		if (isPrettyPrint())
 			prettyPrintCloseTag();
-		}
 	}
-	
+
+	protected void prettyPrintCloseTag() throws IOException {
+		--profondeur;
+		if (!lastIsOpen) {
+			writer.write(System.lineSeparator());
+			for (int j = 0; j < profondeur; j++)
+				writer.write("   ");
+		}
+		lastIsOpen = false;
+	}
+
+	protected void prettyPrintOpenTag() throws IOException {
+		writer.write(System.lineSeparator());
+		for (int j = 0; j < profondeur; j++)
+			writer.write("   ");
+		++profondeur;
+		lastIsOpen = true;
+	}
+
+	private void writeHeader() throws IOException {
+		writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+	}
+
 	private void writeInfoUniversal() throws IOException {
 		isWrittenUniversal = true;
-		boolean isUniversal = ConfigurationMarshalling.getEstIdUniversel();
-		if(isUniversal){
+		final boolean isUniversal = ConfigurationMarshalling.getEstIdUniversel();
+		if (isUniversal) {
 			writer.write(" typeId=\"");
 			writer.write("universal");
 			writer.write("\"");
 		}
 	}
-	protected void closeTag(String name) throws IOException {
-		if(isPrettyPrint()){
-			prettyPrintCloseTag();
-		}
-		writer.write("</");
-		writer.write(name);
-		writer.write('>');
-	}
-	private void writeType(Class<?> type) throws IOException {
+
+	private void writeType(final Class<?> type) throws IOException {
 		writer.write(" type=\"");
 		writer.write(Constants.getSmallNameType(type));
 		writer.write("\"");
-	}
-	
-	protected void prettyPrintOpenTag() throws IOException {
-		writer.write(System.lineSeparator());
-		for(int j = 0; j < profondeur ; j++){
-			writer.write("   ");
-		}
-		++profondeur;
-		lastIsOpen = true;
-	}
-	
-	protected void prettyPrintCloseTag() throws IOException {
-		--profondeur;
-		if(!lastIsOpen){
-			writer.write(System.lineSeparator());
-			for(int j = 0; j < profondeur ; j++){
-				writer.write("   ");
-			}
-		}
-		lastIsOpen = false;
-	}
-	@Override
-	protected Map<Class<?>, ActionAbstrait<?>> getDicoTypeToAction() {
-		return dicoTypeToAction;
 	}
 
 }

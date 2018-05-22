@@ -1,9 +1,9 @@
 package giraudsa.marshall.serialisation.text.json.actions.simple;
 
+import java.net.InetAddress;
+
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.json.actions.ActionJsonSimpleWithQuote;
-
-import java.net.InetAddress;
 
 public class ActionJsonInetAddress extends ActionJsonSimpleWithQuote<InetAddress> {
 
@@ -12,7 +12,7 @@ public class ActionJsonInetAddress extends ActionJsonSimpleWithQuote<InetAddress
 	}
 
 	@Override
-	protected String getAEcrire(Marshaller marshaller, InetAddress address) {
+	protected String getAEcrire(final Marshaller marshaller, final InetAddress address) {
 		return address.getHostAddress();
 	}
 }

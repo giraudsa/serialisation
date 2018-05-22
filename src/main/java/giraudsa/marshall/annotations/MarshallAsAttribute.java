@@ -6,9 +6,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({ElementType.FIELD})
+@Target({ ElementType.FIELD })
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-public @interface MarshallAsAttribute{
+public @interface MarshallAsAttribute {
 	public String name();
 }

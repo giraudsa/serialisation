@@ -5,21 +5,21 @@ import java.io.IOException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.json.actions.ActionJsonSimpleWithoutQuote;
 
-
-
 public class ActionJsonBoolean extends ActionJsonSimpleWithoutQuote<Boolean> {
 
 	public ActionJsonBoolean() {
 		super();
 	}
-	
+
 	@Override
-	protected boolean commenceObject(Marshaller marshaller, Boolean obj, boolean notApplicableHere) throws IOException {
-		return false;
+	protected void clotureObject(final Marshaller marshaller, final Boolean obj, final boolean notApplicableHere)
+			throws IOException {
+		// pas d'accolade fermante pour un booleen
 	}
-	
+
 	@Override
-	protected void clotureObject(Marshaller marshaller, Boolean obj, boolean notApplicableHere) throws IOException {
-		//pas d'accolade fermante pour un booleen
+	protected boolean commenceObject(final Marshaller marshaller, final Boolean obj, final boolean notApplicableHere)
+			throws IOException {
+		return false;
 	}
 }

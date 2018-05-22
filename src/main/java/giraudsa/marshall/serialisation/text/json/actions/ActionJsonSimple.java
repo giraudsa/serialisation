@@ -11,10 +11,18 @@ public abstract class ActionJsonSimple<T> extends ActionJson<T> {
 	protected ActionJsonSimple() {
 		super();
 	}
-	
+
 	@Override
-	protected boolean commenceObject(Marshaller marshaller, T obj, boolean typeDevinable) throws IOException {
-		if(!typeDevinable){
+	protected void clotureObject(final Marshaller marshaller, final T obj, final boolean typeDevinable)
+			throws IOException {
+		if (!typeDevinable)
+			fermeAccolade(marshaller);
+	}
+
+	@Override
+	protected boolean commenceObject(final Marshaller marshaller, final T obj, final boolean typeDevinable)
+			throws IOException {
+		if (!typeDevinable) {
 			ouvreAccolade(marshaller);
 			ecritType(marshaller, obj);
 			writeSeparator(marshaller);
@@ -22,12 +30,5 @@ public abstract class ActionJsonSimple<T> extends ActionJson<T> {
 			return false;
 		}
 		return true;
-	}
-	
-	@Override
-	protected void clotureObject(Marshaller marshaller, T obj, boolean typeDevinable) throws IOException {
-		if(!typeDevinable){
-			fermeAccolade(marshaller);
-		}
 	}
 }

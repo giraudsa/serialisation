@@ -13,7 +13,15 @@ import utils.BiHashMap;
 public class HeaderTypeCourant<T> extends Header<T> {
 
 	private static final BiHashMap<Class<?>, Integer, HeaderTypeCourant<?>> typeCourantAndEncodageSmallIdToHeader = new BiHashMap<>();
-	protected static void init(){
+
+	public static HeaderTypeCourant<?> getHeader(final Object o, final int smallId) {
+		final Class<?> type = o.getClass();
+		int encodageSmallId = 0;
+		encodageSmallId = ByteHelper.getMinimumEncodage(smallId);
+		return typeCourantAndEncodageSmallIdToHeader.get(type, encodageSmallId);
+	}
+
+	protected static void init() {
 		new HeaderTypeCourant<>(String.class, 1);
 		new HeaderTypeCourant<>(String.class, 2);
 		new HeaderTypeCourant<>(String.class, 3);
@@ -27,26 +35,15 @@ public class HeaderTypeCourant<T> extends Header<T> {
 		new HeaderTypeCourant<>(Date.class, 3);
 		new HeaderTypeCourant<>(Date.class, 4);
 	}
-	
-	private Class<?> typeCourant;
-	private int encodageSmallId;
-	private HeaderTypeCourant(Class<?> typeCourant, int encodageSmallId) {
+
+	private final int encodageSmallId;
+	private final Class<?> typeCourant;
+
+	private HeaderTypeCourant(final Class<?> typeCourant, final int encodageSmallId) {
 		super();
 		this.typeCourant = typeCourant;
 		this.encodageSmallId = encodageSmallId;
 		typeCourantAndEncodageSmallIdToHeader.put(typeCourant, encodageSmallId, this);
-	}
-	
-	public static  HeaderTypeCourant<?> getHeader(Object o, int smallId){
-		Class<?> type = o.getClass();
-		int encodageSmallId = 0;
-		encodageSmallId = ByteHelper.getMinimumEncodage(smallId);
-		return typeCourantAndEncodageSmallIdToHeader.get(type, encodageSmallId);
-	}
-	
-	public void write(DataOutput output, int smallId) throws IOException {
-		output.writeByte(headerByte);
-		output.write(BigInteger.valueOf(smallId).toByteArray());
 	}
 
 	public Class<?> getTypeCourant() {
@@ -54,11 +51,16 @@ public class HeaderTypeCourant<T> extends Header<T> {
 	}
 
 	@Override
-	public int readSmallId(DataInputStream input, int maxId) throws IOException, UnmarshallExeption {
-		byte[] tmp = new byte[encodageSmallId];
+	public int readSmallId(final DataInputStream input, final int maxId) throws IOException, UnmarshallExeption {
+		final byte[] tmp = new byte[encodageSmallId];
 		input.read(tmp);
-		BigInteger bi = new BigInteger(tmp);
+		final BigInteger bi = new BigInteger(tmp);
 		return bi.intValue();
 	}
-	
+
+	public void write(final DataOutput output, final int smallId) throws IOException {
+		output.writeByte(headerByte);
+		output.write(BigInteger.valueOf(smallId).toByteArray());
+	}
+
 }

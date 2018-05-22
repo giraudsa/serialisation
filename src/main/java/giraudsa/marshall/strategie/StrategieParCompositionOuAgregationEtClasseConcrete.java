@@ -14,20 +14,20 @@ public class StrategieParCompositionOuAgregationEtClasseConcrete extends Strateg
 	}
 
 	@Override
-	public boolean serialiseTout(int profondeur, FieldInformations fieldInformation) {
+	public boolean serialiseTout(final int profondeur, final FieldInformations fieldInformation) {
 		Class<?> type = fieldInformation.getValueType();
-		if(type.isArray())
+		if (type.isArray())
 			type = type.getComponentType();
-		else if(Collection.class.isAssignableFrom(type)){
+		else if (Collection.class.isAssignableFrom(type)) {
 			type = Object.class;
-			Type[] types = fieldInformation.getParametreType();
-			if(types != null && types.length > 0)
+			final Type[] types = fieldInformation.getParametreType();
+			if (types != null && types.length > 0)
 				type = (Class<?>) types[0];
-		}else if(Map.class.isAssignableFrom(type))
+		} else if (Map.class.isAssignableFrom(type))
 			type = Object.class;
-		boolean isConcrete = !Modifier.isAbstract(fieldInformation.getValueType().getModifiers());
+		final boolean isConcrete = !Modifier.isAbstract(fieldInformation.getValueType().getModifiers());
 		return fieldInformation.getRelation() == TypeRelation.COMPOSITION
-				|| (fieldInformation.getRelation() == TypeRelation.AGGREGATION && isConcrete);
+				|| fieldInformation.getRelation() == TypeRelation.AGGREGATION && isConcrete;
 	}
 
 }

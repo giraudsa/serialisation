@@ -10,8 +10,9 @@ import utils.champ.FieldInformations;
 public class ActionBinaryLocale extends ActionBinary<Locale> {
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Locale locale, FieldInformations fieldInformation, boolean isDejaVu) throws IOException{
-		if(!isDejaVu){
+	protected void ecritValeur(final Marshaller marshaller, final Locale locale,
+			final FieldInformations fieldInformation, final boolean isDejaVu) throws IOException {
+		if (!isDejaVu) {
 			setDejaTotalementSerialise(marshaller, locale);
 			writeUTF(marshaller, locale.toString());
 		}

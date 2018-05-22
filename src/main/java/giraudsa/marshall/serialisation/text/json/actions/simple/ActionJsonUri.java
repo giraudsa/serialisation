@@ -1,8 +1,9 @@
 package giraudsa.marshall.serialisation.text.json.actions.simple;
 
+import java.net.URI;
+
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.json.actions.ActionJsonSimpleWithQuote;
-import java.net.URI;
 
 public class ActionJsonUri extends ActionJsonSimpleWithQuote<URI> {
 
@@ -11,7 +12,7 @@ public class ActionJsonUri extends ActionJsonSimpleWithQuote<URI> {
 	}
 
 	@Override
-	protected String getAEcrire(Marshaller marshaller, URI uri) {
+	protected String getAEcrire(final Marshaller marshaller, final URI uri) {
 		return uri.toASCIIString();
 	}
 }

@@ -5,10 +5,12 @@ import java.util.Map.Entry;
 
 public class Pair<K, V> extends AbstractMap.SimpleImmutableEntry<K, V> {
 	private static final long serialVersionUID = 1L;
-	public Pair(Entry<? extends K, ? extends V> entry) {
+
+	public Pair(final Entry<? extends K, ? extends V> entry) {
 		super(entry);
 	}
-	public Pair(K key, V value) {
+
+	public Pair(final K key, final V value) {
 		super(key, value);
 	}
 }

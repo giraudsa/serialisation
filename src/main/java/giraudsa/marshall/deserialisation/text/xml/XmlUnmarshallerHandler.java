@@ -1,51 +1,45 @@
 package giraudsa.marshall.deserialisation.text.xml;
 
-
-
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.DefaultHandler2;
 
-
 public class XmlUnmarshallerHandler extends DefaultHandler2 {
-	private XmlUnmarshaller<?> xmlUnmarshaller;
-	
-	public XmlUnmarshallerHandler(XmlUnmarshaller<?> xmlUnmarshaller) {
+	private final XmlUnmarshaller<?> xmlUnmarshaller;
+
+	public XmlUnmarshallerHandler(final XmlUnmarshaller<?> xmlUnmarshaller) {
 		super();
 		this.xmlUnmarshaller = xmlUnmarshaller;
 	}
 
-	
 	@Override
-	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-		try {
-			xmlUnmarshaller.startElement(qName, attributes);
-		} catch (Exception e) {
-			throw new SAXException(e);			
-		}
-	}	
+	public void characters(final char[] caracteres, final int debut, final int longueur) throws SAXException {
 
-
-	@Override
-	public void endElement(String uri, String localName, String qName) throws SAXException {
-		try {
-			xmlUnmarshaller.endElement();
-		} catch (Exception e) {
-			throw new SAXException(e);			
-		}
-	}
-
-	
-
-	@Override
-	public void characters(char[] caracteres, int debut, int longueur) throws SAXException{
-		
-		String donnees = new String(caracteres, debut, longueur);
+		final String donnees = new String(caracteres, debut, longueur);
 		try {
 			xmlUnmarshaller.characters(donnees);
-		} catch (Exception e) {
-			throw new SAXException(e);			
+		} catch (final Exception e) {
+			throw new SAXException(e);
 		}
 	}
-	 
+
+	@Override
+	public void endElement(final String uri, final String localName, final String qName) throws SAXException {
+		try {
+			xmlUnmarshaller.endElement();
+		} catch (final Exception e) {
+			throw new SAXException(e);
+		}
+	}
+
+	@Override
+	public void startElement(final String uri, final String localName, final String qName, final Attributes attributes)
+			throws SAXException {
+		try {
+			xmlUnmarshaller.startElement(qName, attributes);
+		} catch (final Exception e) {
+			throw new SAXException(e);
+		}
+	}
+
 }

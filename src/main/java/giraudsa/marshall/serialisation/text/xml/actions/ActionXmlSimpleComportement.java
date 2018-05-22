@@ -1,10 +1,10 @@
 package giraudsa.marshall.serialisation.text.xml.actions;
 
+import java.io.IOException;
+
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
 import utils.champ.FieldInformations;
-
-import java.io.IOException;
 
 public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 
@@ -13,7 +13,8 @@ public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean serialiseTout) throws IOException{
+	protected void ecritValeur(final Marshaller marshaller, final Object obj, final FieldInformations fieldInformations,
+			final boolean serialiseTout) throws IOException {
 		writeEscape(marshaller, obj.toString());
 	}
 }

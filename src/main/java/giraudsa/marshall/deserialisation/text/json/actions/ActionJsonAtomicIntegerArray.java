@@ -12,42 +12,44 @@ import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
 public class ActionJsonAtomicIntegerArray extends ActionJsonComplexeObject<AtomicIntegerArray> {
-	private FakeChamp fakeChamp = new FakeChamp(null, Integer.class, TypeRelation.COMPOSITION, null);
-	private List<Integer> listeTampon = new ArrayList<>();
-	private ActionJsonAtomicIntegerArray(Class<AtomicIntegerArray> type, JsonUnmarshaller<?> unmarshaller) {
-		super(type, unmarshaller);
-	}
-	
-    public static ActionAbstrait<?> getInstance() {	
+	public static ActionAbstrait<?> getInstance() {
 		return new ActionJsonAtomicIntegerArray(AtomicIntegerArray.class, null);
 	}
-	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@Override
-	public <U extends AtomicIntegerArray> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return (ActionAbstrait<U>) new ActionJsonAtomicIntegerArray(AtomicIntegerArray.class, (JsonUnmarshaller<?>) unmarshaller);
-	}
 
-	
-	@Override
-	protected <W> void integreObjet(String nomAttribut, W objet) {
-		listeTampon.add((Integer) objet);
+	private final FakeChamp fakeChamp = new FakeChamp(null, Integer.class, TypeRelation.COMPOSITION, null);
+	private final List<Integer> listeTampon = new ArrayList<>();
+
+	private ActionJsonAtomicIntegerArray(final Class<AtomicIntegerArray> type, final JsonUnmarshaller<?> unmarshaller) {
+		super(type, unmarshaller);
 	}
 
 	@Override
 	protected void construitObjet() {
 		obj = new AtomicIntegerArray(listeTampon.size());
-		for(int i = 0; i < listeTampon.size(); ++i){
-			((AtomicIntegerArray)obj).set(i, listeTampon.get(i));
-		}
+		for (int i = 0; i < listeTampon.size(); ++i)
+			((AtomicIntegerArray) obj).set(i, listeTampon.get(i));
 	}
+
 	@Override
-	protected FieldInformations getFieldInformationSpecialise(String nom) {
+	protected FieldInformations getFieldInformationSpecialise(final String nom) {
 		return fakeChamp;
 	}
-	
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	protected Class<?> getTypeAttribute(String nomAttribut) {
+	public <U extends AtomicIntegerArray> ActionAbstrait<U> getNewInstance(final Class<U> type,
+			final Unmarshaller unmarshaller) {
+		return (ActionAbstrait<U>) new ActionJsonAtomicIntegerArray(AtomicIntegerArray.class,
+				(JsonUnmarshaller<?>) unmarshaller);
+	}
+
+	@Override
+	protected Class<?> getTypeAttribute(final String nomAttribut) {
 		return Integer.class;
+	}
+
+	@Override
+	protected <W> void integreObjet(final String nomAttribut, final W objet) {
+		listeTampon.add((Integer) objet);
 	}
 }

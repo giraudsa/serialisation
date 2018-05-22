@@ -5,17 +5,17 @@ import utils.champ.FieldInformations;
 
 public abstract class ActionJson<T> extends ActionText<T> {
 
-	protected ActionJson(Class<T> type, JsonUnmarshaller<?> jsonUnmarshaller) {
-		super(type,jsonUnmarshaller);
+	protected ActionJson(final Class<T> type, final JsonUnmarshaller<?> jsonUnmarshaller) {
+		super(type, jsonUnmarshaller);
 	}
 
 	@Override
-	protected Class<?> getTypeAttribute(String nomAttribut) {
+	protected FieldInformations getFieldInformationSpecialise(final String nom) {
 		return null;
 	}
 
 	@Override
-	protected FieldInformations getFieldInformationSpecialise(String nom) {
+	protected Class<?> getTypeAttribute(final String nomAttribut) {
 		return null;
 	}
 

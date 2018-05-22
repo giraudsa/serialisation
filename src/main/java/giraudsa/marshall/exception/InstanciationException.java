@@ -3,27 +3,28 @@ package giraudsa.marshall.exception;
 public class InstanciationException extends Exception {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -6471150466593908669L;
-	
 
-	public InstanciationException() {};
+	public InstanciationException() {
+	};
 
-	public InstanciationException(String message) {
+	public InstanciationException(final String message) {
 		super(message);
 	}
 
-	public InstanciationException(Throwable innerException) {
-		super(innerException);
-	}
-
-	public InstanciationException(String message, Throwable innerException) {
+	public InstanciationException(final String message, final Throwable innerException) {
 		super(message, innerException);
 	}
 
-	public InstanciationException(String message, Throwable innerException, boolean arg2, boolean arg3) {
+	public InstanciationException(final String message, final Throwable innerException, final boolean arg2,
+			final boolean arg3) {
 		super(message, innerException, arg2, arg3);
+	}
+
+	public InstanciationException(final Throwable innerException) {
+		super(innerException);
 	}
 
 }

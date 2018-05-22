@@ -20,39 +20,46 @@ public class ActionJsonObject extends ActionJson<Object> {
 		super();
 	}
 
-
-	@Override protected void ecritValeur(Marshaller marshaller, Object obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
-		Class<?> typeObj = (Class<?>) obj.getClass();
-		List<Champ> champs = TypeExtension.getSerializableFields(typeObj);
-		Champ champId = TypeExtension.getChampId(typeObj);
-		boolean serialiseTout = serialiseTout(marshaller, obj, fieldInformations);
-		setDejaVu(marshaller, obj);
-		if(!serialiseTout){
-			pushComportement(marshaller, traiteChamp(marshaller, obj, champId, ecrisSeparateur));
-			return;
-		}
-		setDejaTotalementSerialise(marshaller, obj);
-		Deque<Comportement> tmp = new ArrayDeque<>();
-		boolean virgule = ecrisSeparateur;
-		for (Champ champ : champs){
-			Comportement comportement = traiteChamp(marshaller, obj, champ, virgule);
-			virgule = true;
-			if(comportement != null) 
-				tmp.push(comportement);
-		}
-		pushComportements(marshaller, tmp);
-	}
-	
-	@Override protected void clotureObject(Marshaller marshaller, Object obj, boolean typeDevinable) throws IOException {
+	@Override
+	protected void clotureObject(final Marshaller marshaller, final Object obj, final boolean typeDevinable)
+			throws IOException {
 		fermeAccolade(marshaller);
 	}
 
-	@Override protected boolean commenceObject(Marshaller marshaller, Object obj, boolean typeDevinable) throws IOException {
+	@Override
+	protected boolean commenceObject(final Marshaller marshaller, final Object obj, final boolean typeDevinable)
+			throws IOException {
 		ouvreAccolade(marshaller);
-		if(!typeDevinable) {
+		if (!typeDevinable) {
 			ecritType(marshaller, obj);
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	protected void ecritValeur(final Marshaller marshaller, final Object obj, final FieldInformations fieldInformations,
+			final boolean ecrisSeparateur)
+			throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException,
+			NotImplementedSerializeException, IOException, MarshallExeption {
+		final Class<?> typeObj = obj.getClass();
+		final List<Champ> champs = TypeExtension.getSerializableFields(typeObj);
+		final Champ champId = TypeExtension.getChampId(typeObj);
+		final boolean serialiseTout = serialiseTout(marshaller, obj, fieldInformations);
+		setDejaVu(marshaller, obj);
+		if (!serialiseTout) {
+			pushComportement(marshaller, traiteChamp(marshaller, obj, champId, ecrisSeparateur));
+			return;
+		}
+		setDejaTotalementSerialise(marshaller, obj);
+		final Deque<Comportement> tmp = new ArrayDeque<>();
+		boolean virgule = ecrisSeparateur;
+		for (final Champ champ : champs) {
+			final Comportement comportement = traiteChamp(marshaller, obj, champ, virgule);
+			virgule = true;
+			if (comportement != null)
+				tmp.push(comportement);
+		}
+		pushComportements(marshaller, tmp);
 	}
 }

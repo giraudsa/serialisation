@@ -1,17 +1,40 @@
 package giraudsa.marshall.deserialisation.text.xml;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URL;
+import java.util.BitSet;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Currency;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLongArray;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.XMLReaderFactory;
 
-import utils.ConfigurationMarshalling;
-import utils.EntityManager;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.actions.ActionXmlArrayType;
@@ -37,37 +60,15 @@ import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
+import utils.ConfigurationMarshalling;
+import utils.EntityManager;
 
-import java.io.*;
-import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.URL;
-import java.util.BitSet;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Currency;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicLongArray;
+public class XmlUnmarshaller<U> extends TextUnmarshaller<U> {
+	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections
+			.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
 
-import javax.management.modelmbean.InvalidTargetObjectTypeException;
-
-public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 	private static final String FEATURE_DISALLOW_DOCTYPE = "http://apache.org/xml/features/disallow-doctype-decl";
-	
 	private static final Logger LOGGER = LoggerFactory.getLogger(XmlUnmarshaller.class);
-	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
 	static {
 		dicoTypeToAction.put(Date.class, ActionXmlDate.getInstance());
 		dicoTypeToAction.put(Collection.class, ActionXmlCollectionType.getInstance());
@@ -79,7 +80,7 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		dicoTypeToAction.put(UUID.class, ActionXmlUUID.getInstance());
 		dicoTypeToAction.put(Enum.class, ActionXmlEnum.getInstance());
 		dicoTypeToAction.put(String.class, ActionXmlString.getInstance());
-		
+
 		dicoTypeToAction.put(Boolean.class, ActionXmlSimpleComportement.getInstance());
 		dicoTypeToAction.put(Byte.class, ActionXmlSimpleComportement.getInstance());
 		dicoTypeToAction.put(Float.class, ActionXmlSimpleComportement.getInstance());
@@ -87,8 +88,8 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		dicoTypeToAction.put(Double.class, ActionXmlSimpleComportement.getInstance());
 		dicoTypeToAction.put(Long.class, ActionXmlSimpleComportement.getInstance());
 		dicoTypeToAction.put(Short.class, ActionXmlSimpleComportement.getInstance());
-		dicoTypeToAction.put(Character.class, ActionXmlSimpleComportement.getInstance());	
-		
+		dicoTypeToAction.put(Character.class, ActionXmlSimpleComportement.getInstance());
+
 		dicoTypeToAction.put(AtomicBoolean.class, ActionXmlSimpleComportement.getInstance());
 		dicoTypeToAction.put(AtomicInteger.class, ActionXmlSimpleComportement.getInstance());
 		dicoTypeToAction.put(AtomicLong.class, ActionXmlSimpleComportement.getInstance());
@@ -107,14 +108,12 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 		dicoTypeToAction.put(StringBuffer.class, ActionXmlSimpleComportement.getInstance());
 	}
 
-	/////ATTRIBUTS
-	private boolean isFirst = true;
-    /////CONSTRUCTEUR
-	private XmlUnmarshaller(Reader reader, EntityManager entity) throws FabriqueInstantiationException {
-		super(reader, entity, ConfigurationMarshalling.getDateFormatXml());
+	public static <U> U fromXml(final Reader reader) throws UnmarshallExeption {
+		return fromXml(reader, null);
 	}
-	//////METHODES STATICS PUBLICS
-	public static <U> U fromXml(Reader reader, EntityManager entity) throws UnmarshallExeption{
+
+	////// METHODES STATICS PUBLICS
+	public static <U> U fromXml(final Reader reader, final EntityManager entity) throws UnmarshallExeption {
 		XmlUnmarshaller<U> w;
 		try {
 			w = new XmlUnmarshaller<>(reader, entity);
@@ -123,116 +122,127 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U>{
 			LOGGER.error("Impossible de désérialiser", e);
 			throw new UnmarshallExeption("Impossible de désérialiser", e);
 		}
-		
+
 	}
-	public static <U> U fromXml(Reader reader) throws UnmarshallExeption{
-		return fromXml(reader, null);
-	}
-	public static <U> U fromXml(String stringToUnmarshall) throws UnmarshallExeption{
-		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0)
+
+	public static <U> U fromXml(final String stringToUnmarshall) throws UnmarshallExeption {
+		if (stringToUnmarshall == null || stringToUnmarshall.length() == 0)
 			return null;
-		try(StringReader sr = new StringReader(stringToUnmarshall)){
+		try (StringReader sr = new StringReader(stringToUnmarshall)) {
 			return fromXml(sr, null);
 		}
 	}
-	public static  <U> U fromXml(String stringToUnmarshall, EntityManager entity) throws UnmarshallExeption {
-		if(stringToUnmarshall == null || stringToUnmarshall.length() == 0) 
+
+	public static <U> U fromXml(final String stringToUnmarshall, final EntityManager entity) throws UnmarshallExeption {
+		if (stringToUnmarshall == null || stringToUnmarshall.length() == 0)
 			return null;
-		try(StringReader sr = new StringReader(stringToUnmarshall)){
+		try (StringReader sr = new StringReader(stringToUnmarshall)) {
 			return fromXml(sr, entity);
 		}
 	}
 
-	
-	//////METHODES PRIVEES
-	private U parse() throws IOException, SAXException {
-		XmlUnmarshallerHandler handler =  new XmlUnmarshallerHandler(this);
-		XMLReader parser = XMLReaderFactory.createXMLReader();
-		parser.setFeature(FEATURE_DISALLOW_DOCTYPE, true);
-		parser.setContentHandler(handler);
-		InputSource source = new InputSource(reader);
-		source.setEncoding("UTF-8");
-		parser.parse(source);
-		return obj;
+	///// ATTRIBUTS
+	private boolean isFirst = true;
+
+	///// CONSTRUCTEUR
+	private XmlUnmarshaller(final Reader reader, final EntityManager entity) throws FabriqueInstantiationException {
+		super(reader, entity, ConfigurationMarshalling.getDateFormatXml());
 	}
 
-	private Class<?> getType(Attributes attributes, String nomAttribut) throws ClassNotFoundException, InvalidTargetObjectTypeException {
-		Class<?> typeToUnmarshall;
-		String typeEcrit = attributes.getValue("type");
-		if(typeEcrit != null){
-			typeToUnmarshall = getTypeDepuisNom(attributes.getValue("type"));
-			if(isFirst) 
-				checkType(typeToUnmarshall);
-		}else{
-			typeToUnmarshall = getType(nomAttribut);
+	protected void characters(final String donnees) throws InstanciationException {
+		rempliData(getActionEnCours(), donnees);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> void checkType(final Class<T> typeToUnmarshall) throws ClassNotFoundException {
+		try {
+			final U test = (U) createInstance(typeToUnmarshall);
+			test.getClass();
+		} catch (final Exception e) {
+			LOGGER.error("le type attendu n'est pas celui du XML ou n'est pas instanciable", e);
+			throw new ClassNotFoundException("not instanciable from " + typeToUnmarshall.getName(), e);
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	protected void endElement() throws EntityManagerImplementationException, InstanciationException,
+			IllegalAccessException, SetValueException {
+		construitObjet(getActionEnCours());
+		final ActionXml<?> actionATraiter = (ActionXml<?>) pileAction.pop();
+		if (pileAction.isEmpty())
+			obj = obj == null ? (U) getObjet(actionATraiter) : obj;
+		else {
+			final String nom = getNom(actionATraiter);
+			final Object objet = getObjet(actionATraiter);
+			integreObjet(getActionEnCours(), nom, objet);
+		}
+	}
+
+	@Override
+	protected Map<Class<?>, ActionAbstrait<?>> getdicoTypeToAction() {
+		return dicoTypeToAction;
+	}
+
+	private Class<?> getType(final Attributes attributes, final String nomAttribut) throws ClassNotFoundException {
+		Class<?> typeToUnmarshall;
+		final String typeEcrit = attributes.getValue("type");
+		if (typeEcrit != null) {
+			typeToUnmarshall = getTypeDepuisNom(attributes.getValue("type"));
+			if (isFirst)
+				checkType(typeToUnmarshall);
+		} else
+			typeToUnmarshall = getType(nomAttribut);
 		return typeToUnmarshall;
 	}
 
-	@SuppressWarnings("unchecked")
-	private <T> void checkType(Class<T> typeToUnmarshall) throws InvalidTargetObjectTypeException {
+	////// METHODES PRIVEES
+	private U parse() throws IOException, SAXException, UnmarshallExeption {
+		final XmlUnmarshallerHandler handler = new XmlUnmarshallerHandler(this);
+		final SAXParserFactory factory = SAXParserFactory.newInstance();
 		try {
-			U test = (U) createInstance(typeToUnmarshall);
-			test.getClass();
-		} catch (Exception e) {
-			LOGGER.error("le type attendu n'est pas celui du XML ou n'est pas instanciable", e);
-			throw new InvalidTargetObjectTypeException(e, "not instanciable from " + typeToUnmarshall.getName());
+			factory.setFeature(FEATURE_DISALLOW_DOCTYPE, true);
+			final SAXParser parser = factory.newSAXParser();
+			final InputSource source = new InputSource(reader);
+			source.setEncoding("UTF-8");
+			parser.parse(source, handler);
+			return obj;
+		} catch (final ParserConfigurationException e) {
+			throw new UnmarshallExeption("Impossible de creer le parseur", e);
 		}
 	}
-	
+
+	private void setCache(final Attributes attributes) {
+		if (isFirst) {
+			final String typeId = attributes.getValue("typeId");
+			final boolean isIdUniversal = typeId != null ? true : false;
+			setCache(isIdUniversal);
+		}
+	}
+
 	@SuppressWarnings("unchecked")
-	private <T> void setId(Attributes attributes, ActionXml<?> action) throws InstanciationException, EntityManagerImplementationException{
+	private <T> void setId(final Attributes attributes, final ActionXml<?> action)
+			throws InstanciationException, EntityManagerImplementationException {
 		if (!(action instanceof ActionXmlObject<?>))
 			return;
-		String id = attributes.getValue("id");
-		if(id != null){
-			ActionXmlObject<T> actionObject = (ActionXmlObject<T>)action;
+		final String id = attributes.getValue("id");
+		if (id != null) {
+			final ActionXmlObject<T> actionObject = (ActionXmlObject<T>) action;
 			actionObject.setId(id);
 		}
 	}
 
-	/////XML EVENT
-	protected void startElement(String qName, Attributes attributes) throws ClassNotFoundException, NotImplementedSerializeException, InvalidTargetObjectTypeException, InstanciationException, EntityManagerImplementationException{
+	///// XML EVENT
+	protected void startElement(final String qName, final Attributes attributes) throws ClassNotFoundException,
+			NotImplementedSerializeException, InstanciationException, EntityManagerImplementationException {
 		setCache(attributes);
-		Class<?> type = getType(attributes, qName);
+		final Class<?> type = getType(attributes, qName);
 		isFirst = false;
-		if(type != null){
-			ActionXml<?> action = (ActionXml<?>) getAction(type);
+		if (type != null) {
+			final ActionXml<?> action = (ActionXml<?>) getAction(type);
 			setNom(action, qName);
 			setFieldInformation(action);
 			setId(attributes, action);
 			pileAction.push(action);
 		}
 	}
-
-	private void setCache(Attributes attributes) {
-		if(isFirst){
-			String typeId = attributes.getValue("typeId");
-			boolean isIdUniversal = typeId != null ? true : false;
-			setCache(isIdUniversal);
-		}
-	}
-	
-	protected void characters(String donnees) throws InstanciationException{
-		rempliData(getActionEnCours(), donnees);
-	}
-
-	@SuppressWarnings("unchecked") 
-	protected void endElement() throws EntityManagerImplementationException, InstanciationException, IllegalAccessException, SetValueException{
-		construitObjet(getActionEnCours());
-		ActionXml<?> actionATraiter = (ActionXml<?>) pileAction.pop();
-		if(pileAction.isEmpty()){
-			obj = obj == null ? (U) getObjet(actionATraiter) : obj;
-		}else{
-			String nom = getNom(actionATraiter);
-			Object objet = getObjet(actionATraiter);
-			integreObjet(getActionEnCours(), nom, objet);
-		}
-	}
-	@Override
-	protected Map<Class<?>, ActionAbstrait<?>> getdicoTypeToAction() {
-		return dicoTypeToAction;
-	}
 }
-
-

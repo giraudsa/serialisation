@@ -9,29 +9,31 @@ import java.util.Map;
 public class HeaderVerySmallId extends Header<Object> {
 	private static int maxVerySmallId = 0;
 	private static final Map<Integer, HeaderVerySmallId> verySmallIdToHeader = new HashMap<>();
-	
-	private int smallId;
-	
+
+	protected static Header<?> getHeader(final int smallId) {
+		return verySmallIdToHeader.get(smallId);
+	}
+
+	protected static int getMaxVerySmallId() {
+		return maxVerySmallId;
+	}
+
+	private final int smallId;
+
 	HeaderVerySmallId() {
 		smallId = ++maxVerySmallId;
 		verySmallIdToHeader.put(smallId, this);
 	}
-	
-	protected static int getMaxVerySmallId(){
-		return maxVerySmallId;
-	}
-	
-	protected static Header<?> getHeader(int smallId){
-		return verySmallIdToHeader.get(smallId);
-	}
+
 	@Override
-	public void write(DataOutput output, int smallId, short smallIdType, boolean isDejaVuType, Class<?> type) throws IOException {
-		output.writeByte(headerByte);
+	public int readSmallId(final DataInputStream input, final int maxId) {
+		return smallId;
 	}
 
 	@Override
-	public int readSmallId(DataInputStream input, int maxId) {
-		return smallId;
+	public void write(final DataOutput output, final int smallId, final short smallIdType, final boolean isDejaVuType,
+			final Class<?> type) throws IOException {
+		output.writeByte(headerByte);
 	}
 
 }

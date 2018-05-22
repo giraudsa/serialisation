@@ -5,11 +5,11 @@ import utils.champ.FieldInformations;
 public class StrategieSerialisationComplete extends StrategieDeSerialisation {
 
 	public StrategieSerialisationComplete() {
-		
+
 	}
 
 	@Override
-	public boolean serialiseTout(int profondeur, FieldInformations fieldInformation) {
+	public boolean serialiseTout(final int profondeur, final FieldInformations fieldInformation) {
 		return true;
 	}
 

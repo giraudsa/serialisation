@@ -4,18 +4,18 @@ import giraudsa.marshall.deserialisation.text.ActionText;
 import utils.champ.FieldInformations;
 
 public abstract class ActionXml<T> extends ActionText<T> {
-	
-	protected ActionXml(Class<T> type, XmlUnmarshaller<?> unmarshaller) {
+
+	protected ActionXml(final Class<T> type, final XmlUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);
 	}
 
 	@Override
-	protected Class<?> getTypeAttribute(String nomAttribut) {
+	protected FieldInformations getFieldInformationSpecialise(final String nom) {
 		return null;
 	}
 
 	@Override
-	protected FieldInformations getFieldInformationSpecialise(String nom) {
+	protected Class<?> getTypeAttribute(final String nomAttribut) {
 		return null;
 	}
 }

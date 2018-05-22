@@ -1,11 +1,5 @@
 package giraudsa.marshall.deserialisation.text.xml.actions;
 
-import giraudsa.marshall.deserialisation.ActionAbstrait;
-import giraudsa.marshall.deserialisation.Unmarshaller;
-import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
-import utils.champ.FakeChamp;
-import utils.champ.FieldInformations;
-
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,76 +7,86 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import giraudsa.marshall.deserialisation.ActionAbstrait;
+import giraudsa.marshall.deserialisation.Unmarshaller;
+import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
+import utils.champ.FakeChamp;
+import utils.champ.FieldInformations;
+
 @SuppressWarnings("rawtypes")
 public class ActionXmlDictionaryType<T extends Map> extends ActionXmlComplexeObject<T> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ActionXmlDictionaryType.class);
-	private Object keyTampon;
+
+	public static ActionAbstrait<Map> getInstance() {
+		return new ActionXmlDictionaryType<>(Map.class, null);
+	}
+
 	private FakeChamp fakeChampKey;
 	private FakeChamp fakeChampValue;
-	private ActionXmlDictionaryType(Class<T> type, XmlUnmarshaller<?> xmlUnmarshaller){
+	private Object keyTampon;
+
+	private ActionXmlDictionaryType(final Class<T> type, final XmlUnmarshaller<?> xmlUnmarshaller) {
 		super(type, xmlUnmarshaller);
-		if(!type.isInterface()){
+		if (!type.isInterface())
 			try {
 				obj = type.newInstance();
 			} catch (InstantiationException | IllegalAccessException e) {
 				obj = new HashMap<>();
 				LOGGER.error("instanciation impossible pour " + type.getName(), e);
 			}
-		}
-	}
-
-	private FakeChamp getFakeChamp(){
-		if(keyTampon == null){
-			if (fakeChampKey == null){
-				Type[] types = fieldInformations.getParametreType();
-				Type typeGeneric = Object.class;
-				if(types != null && types.length > 0) 
-					typeGeneric = types[0];
-				fakeChampKey = new FakeChamp("K", typeGeneric, fieldInformations.getRelation(), fieldInformations.getAnnotations());
-			}
-			return fakeChampKey;
-		}
-		if(fakeChampValue == null){
-			Type[] types = fieldInformations.getParametreType();
-			Type typeGeneric = Object.class;
-			if(types != null && types.length > 1)
-				typeGeneric = types[1];
-			fakeChampValue = new FakeChamp("V", typeGeneric, fieldInformations.getRelation(), fieldInformations.getAnnotations());
-		}
-		return fakeChampValue;
-	}
-	
-	public static ActionAbstrait<Map> getInstance() {	
-		return new ActionXmlDictionaryType<>(Map.class, null);
-	}
-	
-	@Override
-	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionXmlDictionaryType<>(type, (XmlUnmarshaller<?>)unmarshaller);
-	}
-	
-	@SuppressWarnings("unchecked") @Override
-	protected <W> void integreObjet(String nomAttribut, W objet) {
-		if(keyTampon == null){
-			keyTampon = objet;
-		}else{
-			((Map)obj).put(keyTampon, objet);
-			keyTampon = null;
-		}
 	}
 
 	@Override
 	protected void construitObjet() {
-		//rien a faire
+		// rien a faire
+	}
+
+	private FakeChamp getFakeChamp() {
+		if (keyTampon == null) {
+			if (fakeChampKey == null) {
+				final Type[] types = fieldInformations.getParametreType();
+				Type typeGeneric = Object.class;
+				if (types != null && types.length > 0)
+					typeGeneric = types[0];
+				fakeChampKey = new FakeChamp("K", typeGeneric, fieldInformations.getRelation(),
+						fieldInformations.getAnnotations());
+			}
+			return fakeChampKey;
+		}
+		if (fakeChampValue == null) {
+			final Type[] types = fieldInformations.getParametreType();
+			Type typeGeneric = Object.class;
+			if (types != null && types.length > 1)
+				typeGeneric = types[1];
+			fakeChampValue = new FakeChamp("V", typeGeneric, fieldInformations.getRelation(),
+					fieldInformations.getAnnotations());
+		}
+		return fakeChampValue;
 	}
 
 	@Override
-	protected FieldInformations getFieldInformationSpecialise(String nom) {
+	protected FieldInformations getFieldInformationSpecialise(final String nom) {
 		return getFakeChamp();
 	}
-	
+
 	@Override
-	protected Class<?> getTypeAttribute(String nomAttribut) {
+	public <U extends T> ActionAbstrait<U> getNewInstance(final Class<U> type, final Unmarshaller unmarshaller) {
+		return new ActionXmlDictionaryType<>(type, (XmlUnmarshaller<?>) unmarshaller);
+	}
+
+	@Override
+	protected Class<?> getTypeAttribute(final String nomAttribut) {
 		return getFakeChamp().getValueType();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	protected <W> void integreObjet(final String nomAttribut, final W objet) {
+		if (keyTampon == null)
+			keyTampon = objet;
+		else {
+			((Map) obj).put(keyTampon, objet);
+			keyTampon = null;
+		}
 	}
 }

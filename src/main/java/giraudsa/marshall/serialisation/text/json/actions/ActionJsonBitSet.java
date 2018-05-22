@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
 import java.util.BitSet;
 import java.util.Deque;
+
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
@@ -14,28 +15,29 @@ import utils.Constants;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
-public class ActionJsonBitSet  extends ActionJson<BitSet> {
-	
+public class ActionJsonBitSet extends ActionJson<BitSet> {
+
 	public ActionJsonBitSet() {
 		super();
 	}
-	
+
 	@Override
-	protected void ecritValeur(Marshaller marshaller, BitSet array, FieldInformations fi, boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
-		FakeChamp fakeChamp = new FakeChamp(null, boolean.class, TypeRelation.COMPOSITION, fi.getAnnotations());
-		Deque<Comportement> tmp = new ArrayDeque<>();
-		for (int i = 0; i < array.length(); ++i) {
-			tmp.push(traiteChamp(marshaller, array.get(i), fakeChamp, ecrisSeparateur));
-			ecrisSeparateur = true;
+	protected void clotureObject(final Marshaller marshaller, final BitSet obj, final boolean typeDevinable)
+			throws IOException {
+		if (typeDevinable)
+			fermeCrochet(marshaller, !obj.isEmpty());
+		else {
+			fermeCrochet(marshaller, !obj.isEmpty());
+			fermeAccolade(marshaller);
 		}
-		pushComportements(marshaller, tmp);
 	}
-	
+
 	@Override
-	protected boolean commenceObject(Marshaller marshaller, BitSet obj, boolean typeDevinable) throws IOException {
-		if(typeDevinable){
+	protected boolean commenceObject(final Marshaller marshaller, final BitSet obj, final boolean typeDevinable)
+			throws IOException {
+		if (typeDevinable)
 			ouvreCrochet(marshaller);
-		}else{//type inconnu pour deserialisation
+		else {// type inconnu pour deserialisation
 			ouvreAccolade(marshaller);
 			ecritType(marshaller, obj);
 			writeSeparator(marshaller);
@@ -44,13 +46,17 @@ public class ActionJsonBitSet  extends ActionJson<BitSet> {
 		}
 		return false;
 	}
+
 	@Override
-	protected void clotureObject(Marshaller marshaller, BitSet obj, boolean typeDevinable) throws IOException {
-		if(typeDevinable){
-			fermeCrochet(marshaller, !obj.isEmpty());
-		}else{
-			fermeCrochet(marshaller, !obj.isEmpty());
-			fermeAccolade(marshaller);
+	protected void ecritValeur(final Marshaller marshaller, final BitSet array, final FieldInformations fi,
+			boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException,
+			NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption {
+		final FakeChamp fakeChamp = new FakeChamp(null, boolean.class, TypeRelation.COMPOSITION, fi.getAnnotations());
+		final Deque<Comportement> tmp = new ArrayDeque<>();
+		for (int i = 0; i < array.length(); ++i) {
+			tmp.push(traiteChamp(marshaller, array.get(i), fakeChamp, ecrisSeparateur));
+			ecrisSeparateur = true;
 		}
+		pushComportements(marshaller, tmp);
 	}
 }

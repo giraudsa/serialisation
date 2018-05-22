@@ -8,21 +8,22 @@ import giraudsa.marshall.serialisation.binary.ActionBinary;
 import utils.champ.FieldInformations;
 import utils.headers.HeaderSimpleType;
 
-public class ActionBinaryInteger  extends ActionBinary<Integer>{
+public class ActionBinaryInteger extends ActionBinary<Integer> {
 
 	public ActionBinaryInteger() {
 		super();
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Integer objetASerialiser, FieldInformations fieldInformations, boolean isDejaVu) throws IOException {
-		//rien a faire
+	protected void ecritValeur(final Marshaller marshaller, final Integer objetASerialiser,
+			final FieldInformations fieldInformations, final boolean isDejaVu) throws IOException {
+		// rien a faire
 	}
 
 	@Override
-	protected boolean writeHeaders(Marshaller marshaller, Integer i, FieldInformations fieldInformations)
-			throws IOException, MarshallExeption {
-		HeaderSimpleType<?> header = (HeaderSimpleType<?>) HeaderSimpleType.getHeader(i);
+	protected boolean writeHeaders(final Marshaller marshaller, final Integer i,
+			final FieldInformations fieldInformations) throws IOException, MarshallExeption {
+		final HeaderSimpleType<?> header = (HeaderSimpleType<?>) HeaderSimpleType.getHeader(i);
 		header.writeValue(getOutput(marshaller), i);
 		return false;
 	}

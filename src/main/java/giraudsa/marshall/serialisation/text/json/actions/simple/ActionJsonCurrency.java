@@ -1,8 +1,9 @@
 package giraudsa.marshall.serialisation.text.json.actions.simple;
 
+import java.util.Currency;
+
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.json.actions.ActionJsonSimpleWithQuote;
-import java.util.Currency;
 
 public class ActionJsonCurrency extends ActionJsonSimpleWithQuote<Currency> {
 
@@ -11,7 +12,7 @@ public class ActionJsonCurrency extends ActionJsonSimpleWithQuote<Currency> {
 	}
 
 	@Override
-	protected String getAEcrire(Marshaller marshaller, Currency currency) {
+	protected String getAEcrire(final Marshaller marshaller, final Currency currency) {
 		return currency.getCurrencyCode();
 	}
 }

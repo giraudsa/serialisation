@@ -11,18 +11,22 @@ public class ActionJsonVoid extends ActionJsonSimpleWithoutQuote<Void> {
 	public ActionJsonVoid() {
 		super();
 	}
-	
-	@Override protected void ecritValeur(Marshaller marshaller, Void obj, FieldInformations fieldInformations, boolean ecrisSeparateur) throws IOException{
-		write(marshaller, "null");
-	}
-	
+
 	@Override
-	protected boolean commenceObject(Marshaller marshaller, Void obj, boolean notApplicableHere) throws IOException {
+	protected void clotureObject(final Marshaller marshaller, final Void obj, final boolean notApplicableHere)
+			throws IOException {
+		// pas d'accolade fermante pour un objet null
+	}
+
+	@Override
+	protected boolean commenceObject(final Marshaller marshaller, final Void obj, final boolean notApplicableHere)
+			throws IOException {
 		return false;
 	}
-	
+
 	@Override
-	protected void clotureObject(Marshaller marshaller, Void obj, boolean notApplicableHere) throws IOException {
-		//pas d'accolade fermante pour un objet null
+	protected void ecritValeur(final Marshaller marshaller, final Void obj, final FieldInformations fieldInformations,
+			final boolean ecrisSeparateur) throws IOException {
+		write(marshaller, "null");
 	}
 }

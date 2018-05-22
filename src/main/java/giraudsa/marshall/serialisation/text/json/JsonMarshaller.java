@@ -1,5 +1,34 @@
 package giraudsa.marshall.serialisation.text.json;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URL;
+import java.util.BitSet;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Currency;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLongArray;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import giraudsa.marshall.exception.ChampNotFound;
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
@@ -27,45 +56,14 @@ import giraudsa.marshall.serialisation.text.json.actions.simple.ActionJsonVoid;
 import giraudsa.marshall.strategie.StrategieDeSerialisation;
 import giraudsa.marshall.strategie.StrategieParComposition;
 import giraudsa.marshall.strategie.StrategieSerialisationComplete;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.URL;
-import java.util.BitSet;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Currency;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicLongArray;
-
-import javax.swing.text.html.parser.Entity;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import utils.ConfigurationMarshalling;
 import utils.Constants;
 import utils.EntityManager;
 
 public class JsonMarshaller extends TextMarshaller {
+	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections
+			.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonMarshaller.class);
-	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
 
 	static {
 		dicoTypeToAction.put(Date.class, new ActionJsonDate());
@@ -102,102 +100,123 @@ public class JsonMarshaller extends TextMarshaller {
 		dicoTypeToAction.put(StringBuffer.class, new ActionJsonSimpleWithQuote<StringBuffer>());
 	}
 
-	private final String clefType;
-	private boolean isFirst = true;
-	final boolean writeType;
-	
-	// ///CONSTRUCTEUR
-	private JsonMarshaller(Writer output, StrategieDeSerialisation strategie, EntityManager entityManager, boolean writeType) throws IOException {
-		super(output, ConfigurationMarshalling.getDatFormatJson(), strategie, entityManager);
-		this.writeType = writeType; 
-		clefType = ConfigurationMarshalling.getEstIdUniversel() ? Constants.CLEF_TYPE_ID_UNIVERSEL : Constants.CLEF_TYPE;
-	}
-	
-
-	// /////METHODES PUBLIQUES STATIQUES
-	public static <U> void toJson(U obj, Writer output, EntityManager entityManager) throws MarshallExeption {
-		toJson(obj, output, new StrategieParComposition(), entityManager, true);
-	}
-	
-	public static <U> String toJson(U obj, EntityManager entityManager) throws MarshallExeption{
-		return toJson(obj, new StrategieParComposition(), entityManager, true);
-	}
-	
-	public static <U> String toJson(U obj) throws MarshallExeption{
-		return toJson(obj, new StrategieParComposition(), null, true);
-	}
-	
-	public static <U> void toJson(U obj, Writer output, StrategieDeSerialisation strategie, EntityManager entityManager, boolean writeType) throws MarshallExeption {
-		try {
-			JsonMarshaller v = new JsonMarshaller(output, strategie, entityManager, writeType);
-			v.marshall(obj);
-		} catch (ChampNotFound | IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
-			LOGGER.debug("probleme de sérialisation json de " + obj.toString(), e);
-			throw new MarshallExeption(e);
-		}
-	}
-
-	public static <U> String toJson(U obj, StrategieDeSerialisation strategie, EntityManager entityManager, boolean writeType) throws MarshallExeption{
+	public static <U> String toCompleteJson(final U obj) throws MarshallExeption {
 		try (StringWriter sw = new StringWriter()) {
-			toJson(obj, sw, strategie, entityManager, writeType);
+			toCompleteJson(obj, sw, null);
 			return sw.toString();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			LOGGER.debug("Problème à la création d'un StringWriter", e);
 			throw new MarshallExeption(e);
 		}
 	}
-	public static <U> void toCompleteJson(U obj, Writer output, EntityManager entityManager) throws MarshallExeption{
+
+	public static <U> void toCompleteJson(final U obj, final Writer output, final EntityManager entityManager)
+			throws MarshallExeption {
 		try {
-			JsonMarshaller v = new JsonMarshaller(output, new StrategieSerialisationComplete(), entityManager, true);
+			final JsonMarshaller v = new JsonMarshaller(output, new StrategieSerialisationComplete(), entityManager,
+					true);
 			v.marshall(obj);
-		} catch (ChampNotFound | IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+		} catch (ChampNotFound | IOException | InstantiationException | IllegalAccessException
+				| InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
 			LOGGER.debug("probleme de sérialisation complète en json de " + obj.toString(), e);
 			throw new MarshallExeption(e);
 		}
 	}
 
+	public static <U> String toJson(final U obj) throws MarshallExeption {
+		return toJson(obj, new StrategieParComposition(), null, true);
+	}
 
-	public static <U> String toCompleteJson(U obj) throws MarshallExeption{
-		try(StringWriter sw = new StringWriter()){
-			toCompleteJson(obj, sw, null);
+	public static <U> String toJson(final U obj, final EntityManager entityManager) throws MarshallExeption {
+		return toJson(obj, new StrategieParComposition(), entityManager, true);
+	}
+
+	public static <U> String toJson(final U obj, final StrategieDeSerialisation strategie,
+			final EntityManager entityManager, final boolean writeType) throws MarshallExeption {
+		try (StringWriter sw = new StringWriter()) {
+			toJson(obj, sw, strategie, entityManager, writeType);
 			return sw.toString();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			LOGGER.debug("Problème à la création d'un StringWriter", e);
 			throw new MarshallExeption(e);
 		}
 	}
 
-	
+	// /////METHODES PUBLIQUES STATIQUES
+	public static <U> void toJson(final U obj, final Writer output, final EntityManager entityManager)
+			throws MarshallExeption {
+		toJson(obj, output, new StrategieParComposition(), entityManager, true);
+	}
 
-	// ///ME
-	
-	protected void ecritClef(String nomClef) throws IOException {
-		if(isPrettyPrint()){
-			aLaLigne();
-		}
-		if(nomClef != null){
-			writer.write("\"" + nomClef + "\":");
+	public static <U> void toJson(final U obj, final Writer output, final StrategieDeSerialisation strategie,
+			final EntityManager entityManager, final boolean writeType) throws MarshallExeption {
+		try {
+			final JsonMarshaller v = new JsonMarshaller(output, strategie, entityManager, writeType);
+			v.marshall(obj);
+		} catch (ChampNotFound | IOException | InstantiationException | IllegalAccessException
+				| InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+			LOGGER.debug("probleme de sérialisation json de " + obj.toString(), e);
+			throw new MarshallExeption(e);
 		}
 	}
 
-	protected void ecritType(Class<?> type) throws IOException {
+	private final String clefType;
+
+	private boolean isFirst = true;
+	final boolean writeType;
+
+	// ///CONSTRUCTEUR
+	private JsonMarshaller(final Writer output, final StrategieDeSerialisation strategie,
+			final EntityManager entityManager, final boolean writeType) throws IOException {
+		super(output, ConfigurationMarshalling.getDatFormatJson(), strategie, entityManager);
+		this.writeType = writeType;
+		clefType = ConfigurationMarshalling.getEstIdUniversel() ? Constants.CLEF_TYPE_ID_UNIVERSEL
+				: Constants.CLEF_TYPE;
+	}
+
+	// ///ME
+
+	/// prettyPrint methode
+	private void aLaLigne() throws IOException {
+		if (isFirst) {
+			isFirst = false;
+			return;
+		}
+		writer.write(System.lineSeparator());
+		for (int j = 0; j < profondeur; j++)
+			writer.write("   ");
+	}
+
+	protected void ecritClef(final String nomClef) throws IOException {
+		if (isPrettyPrint())
+			aLaLigne();
+		if (nomClef != null)
+			writer.write("\"" + nomClef + "\":");
+	}
+
+	protected void ecritType(final Class<?> type) throws IOException {
 		ecritClef(clefType);
-		String stringType = Constants.getSmallNameType(type);
+		final String stringType = Constants.getSmallNameType(type);
 		writeWithQuote(stringType);
 	}
 
-	protected void writeWithQuote(String string) throws IOException {
-		writeQuote();
-		writer.write(string);
-		writeQuote();
-	}
-	
-	protected void writeQuote() throws IOException{
-		writer.write("\"");
+	protected void fermeAccolade() throws IOException {
+		--profondeur;
+		if (isPrettyPrint())
+			aLaLigne();
+		writer.write("}");
 	}
 
-	protected void writeSeparator() throws IOException {
-		writer.write(",");
+	protected void fermeCrochet(final boolean aLaLigne) throws IOException {
+		profondeur--;
+		if (isPrettyPrint() && aLaLigne)
+			aLaLigne();
+		writer.write("]");
+	}
+
+	@Override
+	protected Map<Class<?>, ActionAbstrait<?>> getDicoTypeToAction() {
+		return dicoTypeToAction;
 	}
 
 	protected void ouvreAccolade() throws IOException {
@@ -205,41 +224,22 @@ public class JsonMarshaller extends TextMarshaller {
 		writer.write("{");
 	}
 
-	protected void fermeAccolade() throws IOException {
-		--profondeur;
-		if(isPrettyPrint()){
-			aLaLigne();
-		}
-		writer.write("}");
-	}
-
 	protected void ouvreCrochet() throws IOException {
 		++profondeur;
 		writer.write("[");
 	}
 
-	protected void fermeCrochet(boolean aLaLigne) throws IOException {
-		profondeur--;
-		if(isPrettyPrint() && aLaLigne){
-			aLaLigne();
-		}
-		writer.write("]");
+	protected void writeQuote() throws IOException {
+		writer.write("\"");
 	}
 
-	///prettyPrint methode
-	private void aLaLigne() throws IOException {
-		if(isFirst ){
-			isFirst = false;
-			return;
-		}
-		writer.write(System.lineSeparator());
-		for(int j = 0; j < profondeur; j++){
-			writer.write("   ");
-		}
+	protected void writeSeparator() throws IOException {
+		writer.write(",");
 	}
 
-	@Override
-	protected Map<Class<?>, ActionAbstrait<?>> getDicoTypeToAction() {
-		return dicoTypeToAction;
+	protected void writeWithQuote(final String string) throws IOException {
+		writeQuote();
+		writer.write(string);
+		writeQuote();
 	}
 }

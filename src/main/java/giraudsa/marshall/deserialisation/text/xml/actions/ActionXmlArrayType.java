@@ -1,7 +1,6 @@
 package giraudsa.marshall.deserialisation.text.xml.actions;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,52 +12,56 @@ import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
 public class ActionXmlArrayType<T> extends ActionXmlComplexeObject<T> {
-	private FakeChamp fakeChamp;
-	private List<Object> listeTampon = new ArrayList<>();
-	private Class<?> componentType;
-	private ActionXmlArrayType(Class<T> type, XmlUnmarshaller<?> unmarshaller) {
-		super(type, unmarshaller);
-		componentType = type.getComponentType();
-	}
-	private FakeChamp getFakeChamp(){
-		if(fakeChamp == null){
-			Class<?> type = fieldInformations.getValueType();
-			Class<?> typeGeneric = TypeExtension.getTypeEnveloppe(type.getComponentType());
-			fakeChamp = new FakeChamp("V", typeGeneric, fieldInformations.getRelation(), fieldInformations.getAnnotations());
-		}
-		return fakeChamp;
-	}
-    public static ActionAbstrait<Object> getInstance() {	
+	public static ActionAbstrait<Object> getInstance() {
 		return new ActionXmlArrayType<>(Object.class, null);
 	}
-	
-	@SuppressWarnings("rawtypes")
-	@Override
-	public <U extends T> ActionAbstrait<U> getNewInstance(Class<U> type, Unmarshaller unmarshaller) {
-		return new ActionXmlArrayType<>(type, (XmlUnmarshaller<?>) unmarshaller);
-	}
 
-	
-	@Override
-	protected <W> void integreObjet(String nomAttribut, W objet) {
-		listeTampon.add(objet);
+	private final Class<?> componentType;
+	private FakeChamp fakeChamp;
+	private final List<Object> listeTampon = new ArrayList<>();
+
+	private ActionXmlArrayType(final Class<T> type, final XmlUnmarshaller<?> unmarshaller) {
+		super(type, unmarshaller);
+		componentType = type.getComponentType();
 	}
 
 	@Override
 	protected void construitObjet() {
 		obj = Array.newInstance(componentType, listeTampon.size());
-		for(int i = 0; i < listeTampon.size(); ++i){
-			Object o = listeTampon.get(i);
+		for (int i = 0; i < listeTampon.size(); ++i) {
+			final Object o = listeTampon.get(i);
 			Array.set(obj, i, o);
 		}
 	}
+
+	private FakeChamp getFakeChamp() {
+		if (fakeChamp == null) {
+			final Class<?> type = fieldInformations.getValueType();
+			final Class<?> typeGeneric = TypeExtension.getTypeEnveloppe(type.getComponentType());
+			fakeChamp = new FakeChamp("V", typeGeneric, fieldInformations.getRelation(),
+					fieldInformations.getAnnotations());
+		}
+		return fakeChamp;
+	}
+
 	@Override
-	protected FieldInformations getFieldInformationSpecialise(String nom) {
+	protected FieldInformations getFieldInformationSpecialise(final String nom) {
 		return getFakeChamp();
 	}
-	
+
+	@SuppressWarnings("rawtypes")
 	@Override
-	protected Class<?> getTypeAttribute(String nomAttribut) {
+	public <U extends T> ActionAbstrait<U> getNewInstance(final Class<U> type, final Unmarshaller unmarshaller) {
+		return new ActionXmlArrayType<>(type, (XmlUnmarshaller<?>) unmarshaller);
+	}
+
+	@Override
+	protected Class<?> getTypeAttribute(final String nomAttribut) {
 		return getFakeChamp().getValueType();
+	}
+
+	@Override
+	protected <W> void integreObjet(final String nomAttribut, final W objet) {
+		listeTampon.add(objet);
 	}
 }

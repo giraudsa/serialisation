@@ -5,13 +5,13 @@ import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
 
 public abstract class ActionJsonComplexeObject<T> extends ActionJson<T> {
 
-	protected ActionJsonComplexeObject(Class<T> type, JsonUnmarshaller<?> unmarshaller) {
+	protected ActionJsonComplexeObject(final Class<T> type, final JsonUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);
 	}
 
 	@Override
-	protected void rempliData(String donnees) {
-		//Rien a faire
+	protected void rempliData(final String donnees) {
+		// Rien a faire
 	}
 
 }

@@ -9,7 +9,7 @@ public class StrategieParComposition extends StrategieDeSerialisation {
 	}
 
 	@Override
-	public boolean serialiseTout(int profondeur, FieldInformations fieldInformation) {
+	public boolean serialiseTout(final int profondeur, final FieldInformations fieldInformation) {
 		return fieldInformation.getRelation() == TypeRelation.COMPOSITION;
 	}
 

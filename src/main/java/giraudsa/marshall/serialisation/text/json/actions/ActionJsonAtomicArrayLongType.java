@@ -14,27 +14,29 @@ import utils.Constants;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 
-public class ActionJsonAtomicArrayLongType  extends ActionJson<AtomicLongArray> {
-	
+public class ActionJsonAtomicArrayLongType extends ActionJson<AtomicLongArray> {
+
 	public ActionJsonAtomicArrayLongType() {
 		super();
 	}
-	
+
 	@Override
-	protected void ecritValeur(Marshaller marshaller, AtomicLongArray obj, FieldInformations fi, boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption{
-		FakeChamp fakeChamp = new FakeChamp("V", Long.class, fi.getRelation(), fi.getAnnotations());
-		Deque<Comportement> tmp = new ArrayDeque<>();
-		for (int i = 0; i < obj.length(); ++i) {
-			tmp.push(traiteChamp(marshaller, obj.get(i), fakeChamp, ecrisSeparateur));
-			ecrisSeparateur = true;
+	protected void clotureObject(final Marshaller marshaller, final AtomicLongArray obj, final boolean typeDevinable)
+			throws IOException {
+		if (typeDevinable)
+			fermeCrochet(marshaller, obj.length() != 0);
+		else {
+			fermeCrochet(marshaller, obj.length() != 0);
+			fermeAccolade(marshaller);
 		}
-		pushComportements(marshaller, tmp);
 	}
-	
-	protected boolean commenceObject(Marshaller marshaller, AtomicLongArray obj, boolean typeDevinable) throws IOException {
-		if(typeDevinable){
+
+	@Override
+	protected boolean commenceObject(final Marshaller marshaller, final AtomicLongArray obj,
+			final boolean typeDevinable) throws IOException {
+		if (typeDevinable)
 			ouvreCrochet(marshaller);
-		}else{//type inconnu pour deserialisation
+		else {// type inconnu pour deserialisation
 			ouvreAccolade(marshaller);
 			ecritType(marshaller, obj);
 			writeSeparator(marshaller);
@@ -44,12 +46,16 @@ public class ActionJsonAtomicArrayLongType  extends ActionJson<AtomicLongArray> 
 		return false;
 	}
 
-	protected void clotureObject(Marshaller marshaller, AtomicLongArray obj, boolean typeDevinable) throws IOException {
-		if(typeDevinable){
-			fermeCrochet(marshaller, obj.length()!=0);
-		}else{
-			fermeCrochet(marshaller, obj.length()!=0);
-			fermeAccolade(marshaller);
+	@Override
+	protected void ecritValeur(final Marshaller marshaller, final AtomicLongArray obj, final FieldInformations fi,
+			boolean ecrisSeparateur) throws IllegalAccessException, InstantiationException, InvocationTargetException,
+			NoSuchMethodException, NotImplementedSerializeException, IOException, MarshallExeption {
+		final FakeChamp fakeChamp = new FakeChamp("V", Long.class, fi.getRelation(), fi.getAnnotations());
+		final Deque<Comportement> tmp = new ArrayDeque<>();
+		for (int i = 0; i < obj.length(); ++i) {
+			tmp.push(traiteChamp(marshaller, obj.get(i), fakeChamp, ecrisSeparateur));
+			ecrisSeparateur = true;
 		}
+		pushComportements(marshaller, tmp);
 	}
 }

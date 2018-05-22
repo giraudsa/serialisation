@@ -14,20 +14,44 @@ import utils.generic.TypeToken;
 
 public class FakeChamp implements FieldInformations {
 	private static final Annotation[] noAnnotation = new Annotation[0];
-	private final String name;
-	private final TypeToken<?> typeToken;
-	private final TypeRelation relation;
-	private final boolean isSimple;
 	private final Annotation[] annotations;
-	
-	
-	public FakeChamp(String name, Type type, TypeRelation relation, Annotation[] annotations) {
+	private final boolean isSimple;
+	private final String name;
+	private final TypeRelation relation;
+	private final TypeToken<?> typeToken;
+
+	public FakeChamp(final String name, final Type type, final TypeRelation relation, final Annotation[] annotations) {
 		super();
 		this.name = name;
-		this.typeToken = TypeToken.get(type);
+		typeToken = TypeToken.get(type);
 		this.relation = relation;
 		isSimple = TypeExtension.isSimple(typeToken.getRawType());
-		this.annotations = annotations == null ? noAnnotation : annotations ;
+		this.annotations = annotations == null ? noAnnotation : annotations;
+	}
+
+	@Override
+	public Object get(final Object o) throws IllegalAccessException {
+		return get(o, null, null);
+	}
+
+	@Override
+	public Object get(final Object o, final Map<Object, UUID> dicoObjToFakeId, final EntityManager entity)
+			throws IllegalAccessException {
+		return o;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
+		for (final Annotation annotation : getAnnotations())
+			if (annotationClass.isInstance(annotation))
+				return (T) annotation;
+		return null;
+	}
+
+	@Override
+	public Annotation[] getAnnotations() {
+		return annotations;
 	}
 
 	@Override
@@ -36,28 +60,16 @@ public class FakeChamp implements FieldInformations {
 	}
 
 	@Override
+	public Type[] getParametreType() {
+		final Type type = typeToken.getType();
+		if (type instanceof ParameterizedType)
+			return ((ParameterizedType) type).getActualTypeArguments();
+		return new Type[0];
+	}
+
+	@Override
 	public TypeRelation getRelation() {
 		return relation;
-	}
-
-	@Override
-	public Object get(Object o, Map<Object, UUID> dicoObjToFakeId, EntityManager entity) throws IllegalAccessException {
-		return o;
-	}
-
-	@Override
-	public boolean isTypeDevinable(Object o) {
-		Class<?> valueType = o.getClass();
-		return isSimple || typeToken.getRawType() == valueType;
-	}
-	
-	@Override
-	public Type[] getParametreType(){
-		Type type = typeToken.getType();
-		if(type instanceof ParameterizedType){
-			return ((ParameterizedType)type).getActualTypeArguments();
-		}
-		return new Type[0];
 	}
 
 	@Override
@@ -71,34 +83,21 @@ public class FakeChamp implements FieldInformations {
 	}
 
 	@Override
-	public Object get(Object o) throws IllegalAccessException {
-		return get(o, null, null);
-	}
-
-	@Override
-	public Annotation[] getAnnotations() {
-		return annotations;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-		for(Annotation annotation : getAnnotations()){
-			if(annotationClass.isInstance(annotation))
-				return (T) annotation;
-		}
-		return null;
-	}
-
-	@Override
-	public void set(Object obj, Object value, Map<Object, UUID> dicoObjToFakeId) throws SetValueException {
-		// rien à faire
-		
-	}
-
-	@Override
 	public boolean isSimple() {
 		return false;
+	}
+
+	@Override
+	public boolean isTypeDevinable(final Object o) {
+		final Class<?> valueType = o.getClass();
+		return isSimple || typeToken.getRawType() == valueType;
+	}
+
+	@Override
+	public void set(final Object obj, final Object value, final Map<Object, UUID> dicoObjToFakeId)
+			throws SetValueException {
+		// rien à faire
+
 	}
 
 }

@@ -3,13 +3,13 @@ package giraudsa.marshall.deserialisation;
 public class CacheEmpty implements CacheObject {
 
 	@Override
-	public <U> U getObject(Class<U> clazz, String id) {
-		return null;
+	public <U> void addObject(final U object, final String id) {
+		// rien a ajouter dans un cache vide
 	}
 
 	@Override
-	public <U> void addObject(U object, String id) {
-		//rien a ajouter dans un cache vide
+	public <U> U getObject(final Class<U> clazz, final String id) {
+		return null;
 	}
 
 }

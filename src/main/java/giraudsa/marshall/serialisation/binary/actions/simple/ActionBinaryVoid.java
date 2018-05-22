@@ -13,16 +13,18 @@ public class ActionBinaryVoid extends ActionBinary<Void> {
 	public ActionBinaryVoid() {
 		super();
 	}
-	
+
 	@Override
-	protected boolean writeHeaders(Marshaller marshaller, Void objetASerialiser, FieldInformations fieldInformations)
-			throws MarshallExeption, IOException {
-		HeaderSimpleType<?> header = (HeaderSimpleType<?>) HeaderSimpleType.getHeader(null);
+	protected void ecritValeur(final Marshaller marshaller, final Void objetASerialiser,
+			final FieldInformations fieldInformations, final boolean isDejaVu) throws IOException {
+		// rien à écrire si l'objet est null.
+	}
+
+	@Override
+	protected boolean writeHeaders(final Marshaller marshaller, final Void objetASerialiser,
+			final FieldInformations fieldInformations) throws MarshallExeption, IOException {
+		final HeaderSimpleType<?> header = (HeaderSimpleType<?>) HeaderSimpleType.getHeader(null);
 		header.writeValue(getOutput(marshaller), null);
 		return false;
-	}
-	@Override
-	protected void ecritValeur(Marshaller marshaller, Void objetASerialiser, FieldInformations fieldInformations, boolean isDejaVu) throws IOException {
-		//rien à écrire si l'objet est null.
 	}
 }

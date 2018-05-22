@@ -1,11 +1,11 @@
 package giraudsa.marshall.serialisation.text.xml.actions;
 
+import java.io.IOException;
+import java.util.Currency;
+
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.xml.ActionXml;
 import utils.champ.FieldInformations;
-
-import java.io.IOException;
-import java.util.Currency;
 
 public class ActionXmlCurrency extends ActionXml<Currency> {
 
@@ -14,7 +14,8 @@ public class ActionXmlCurrency extends ActionXml<Currency> {
 	}
 
 	@Override
-	protected void ecritValeur(Marshaller marshaller, Currency currency, FieldInformations fieldInformations, boolean serialiseTout) throws IOException{
+	protected void ecritValeur(final Marshaller marshaller, final Currency currency,
+			final FieldInformations fieldInformations, final boolean serialiseTout) throws IOException {
 		writeEscape(marshaller, currency.getCurrencyCode());
 	}
 }
