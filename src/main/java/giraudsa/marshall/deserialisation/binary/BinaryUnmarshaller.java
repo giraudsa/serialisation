@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -118,9 +117,8 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 			};
 			return w.parse();
 		} catch (UnmarshallExeption | FabriqueInstantiationException | IOException | IllegalAccessException
-				| InvocationTargetException | NoSuchMethodException | ClassNotFoundException
-				| NotImplementedSerializeException | InstanciationException | EntityManagerImplementationException
-				| SetValueException e) {
+				| ClassNotFoundException | NotImplementedSerializeException | InstanciationException
+				| EntityManagerImplementationException | SetValueException e) {
 			LOGGER.error("Impossible de désérialiser", e);
 			throw new UnmarshallExeption("Impossible de désérialiser", e);
 		}
@@ -220,20 +218,20 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 			return;
 		}
 		final byte headerByte = readByte();
-		final Header<?> header = Header.getHeader(headerByte);
-		if (header instanceof HeaderSimpleType<?>)
+		final Header header = Header.getHeader(headerByte);
+		if (header instanceof HeaderSimpleType)
 			litObjectSimple(header);
-		else if (header instanceof HeaderTypeCourant<?>)
+		else if (header instanceof HeaderTypeCourant)
 			litObjectCourant(header);
-		else if (header instanceof HeaderEnum<?>)
+		else if (header instanceof HeaderEnum)
 			litObjectEnum(fieldInformations, header);
 		else
 			litObjetComplexe(fieldInformations, header);
 	}
 
-	private void litObjectCourant(final Header<?> header) throws IOException, UnmarshallExeption,
-			IllegalAccessException, EntityManagerImplementationException, InstanciationException, SetValueException {
-		final HeaderTypeCourant<?> headerTypeCourant = (HeaderTypeCourant<?>) header;
+	private void litObjectCourant(final Header header) throws IOException, UnmarshallExeption, IllegalAccessException,
+			EntityManagerImplementationException, InstanciationException, SetValueException {
+		final HeaderTypeCourant headerTypeCourant = (HeaderTypeCourant) header;
 		final Class<?> clazz = headerTypeCourant.getTypeCourant();
 		final int smallId = headerTypeCourant.readSmallId(input, 0); // le 0 n a pas d importance ici
 		if (clazz == Date.class) {
@@ -257,9 +255,8 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		}
 	}
 
-	private void litObjectEnum(final FieldInformations fi, final Header<?> header)
-			throws NotImplementedSerializeException, ClassNotFoundException, IOException, UnmarshallExeption,
-			InstanciationException {
+	private void litObjectEnum(final FieldInformations fi, final Header header) throws NotImplementedSerializeException,
+			ClassNotFoundException, IOException, UnmarshallExeption, InstanciationException {
 		Class<?> type = fi.getValueType();
 		if (header.isTypeDevinable()) {
 			if (!isDejaVuClazz(type))
@@ -275,13 +272,13 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		pileAction.push(action);
 	}
 
-	private void litObjectSimple(final Header<?> header) throws IOException, UnmarshallExeption, IllegalAccessException,
+	private void litObjectSimple(final Header header) throws IOException, UnmarshallExeption, IllegalAccessException,
 			EntityManagerImplementationException, InstanciationException, SetValueException {
 		final HeaderSimpleType<?> headerSimpleType = (HeaderSimpleType<?>) header;
 		integreObjectDirectement(headerSimpleType.read(input));
 	}
 
-	private void litObjetComplexe(final FieldInformations fieldInformations, final Header<?> header)
+	private void litObjetComplexe(final FieldInformations fieldInformations, final Header header)
 			throws NotImplementedSerializeException, ClassNotFoundException, IOException, UnmarshallExeption,
 			InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
 		// il faut trouver le type de l'objet
@@ -307,9 +304,9 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		pileAction.push(action);
 	}
 
-	private T parse() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException,
-			ClassNotFoundException, IOException, NotImplementedSerializeException, UnmarshallExeption,
-			InstanciationException, EntityManagerImplementationException, SetValueException {
+	private T parse()
+			throws IllegalAccessException, ClassNotFoundException, IOException, NotImplementedSerializeException,
+			UnmarshallExeption, InstanciationException, EntityManagerImplementationException, SetValueException {
 		final FakeChamp fc = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
 		litObject(fc);
 		while (!pileAction.isEmpty()) {
