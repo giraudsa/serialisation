@@ -71,6 +71,7 @@ import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryShort;
 import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryVoid;
 import giraudsa.marshall.strategie.StrategieDeSerialisation;
 import giraudsa.marshall.strategie.StrategieParComposition;
+import giraudsa.marshall.strategie.StrategieSerialisationComplete;
 import utils.Constants;
 import utils.TypeExtension;
 import utils.champ.FakeChamp;
@@ -136,7 +137,7 @@ public class BinaryMarshaller extends Marshaller {
 
 	public static <U> void toCompleteBinary(final U obj, final OutputStream output) throws MarshallExeption {
 		try (DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(output))) {
-			final BinaryMarshaller v = new BinaryMarshaller(stream, new StrategieParComposition());
+			final BinaryMarshaller v = new BinaryMarshaller(stream, new StrategieSerialisationComplete());
 			v.marshall(obj);
 			stream.flush();
 		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException
