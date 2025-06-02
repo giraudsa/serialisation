@@ -43,7 +43,6 @@ public class Constants {
 	private static final String FLOAT_TYPE = "float";
 	public static final Class<?> inetAdress = InetAddress.class;
 	private static final String INTEGER_TYPE = "int";
-	public static final byte IS_NULL = (byte) 0x00;// 0b 0000 0000
 	private static final String LONG_TYPE = "long";
 	public static final String MAP_CLEF = "__map__clef";
 	public static final String MAP_TYPE = "__entry__set";
