@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
@@ -152,9 +153,9 @@ public abstract class ActionXml<T> extends ActionText<T> {
 
 	static {
 		final Map<Character, String> tmp = new HashMap<>();
-		for (char c = 0; c <= 0x1F; c++)
-			if (c != '\t' && c != '\n' && c != '\r')
-				tmp.put(c, "\uFFFD");
+		IntStream.rangeClosed(0, 0x1F)
+			.filter(c -> c != '\t' && c != '\n' && c != '\r')
+			.forEach(c -> tmp.put((char) c, "\uFFFD"));
 		tmp.put('&', "&amp;");
 		tmp.put('<', "&lt;");
 		tmp.put('>', "&gt;");

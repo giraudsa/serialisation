@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
@@ -64,8 +65,8 @@ public abstract class ActionJson<T> extends ActionText<T> {
 
 	static {
 		final Map<Character, String> t = new HashMap<>();
-		for (char c = 0; c <= 0x1F; c++)
-			t.put(c, String.format("\\u%04x", (int) c));
+		IntStream.rangeClosed(0, 0x1F)
+			.forEach(c -> t.put((char) c, String.format("\\u%04x", c)));
 		t.put('"', "\\\"");
 		t.put('\\', "\\\\");
 		t.put('\t', "\\t");

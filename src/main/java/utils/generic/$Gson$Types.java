@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * Static methods for working with types.
@@ -129,10 +130,11 @@ public final class $Gson$Types {
 			if (typeArguments.length == 0)
 				return stringBuilder.toString();
 
-			stringBuilder.append("<").append(typeToString(typeArguments[0]));
-			for (int i = 1; i < typeArguments.length; i++)
-				stringBuilder.append(", ").append(typeToString(typeArguments[i]));
-			return stringBuilder.append(">").toString();
+			return stringBuilder.append("<")
+				.append(Arrays.stream(typeArguments)
+					.map($Gson$Types::typeToString)
+					.collect(Collectors.joining(", ")))
+				.append(">").toString();
 		}
 	}
 

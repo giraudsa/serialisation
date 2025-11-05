@@ -3,6 +3,7 @@ package giraudsa.marshall.deserialisation.text.json;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,13 +134,7 @@ public class JsonUnmarshallerHandler {
 	}
 
 	private void enleveEspaceEtSautDeLigne() {
-		while (buff.indexOf(ESPACE) != -1)
-			buff.remove(buff.indexOf(ESPACE));
-		while (buff.indexOf('\n') != -1) {
-			if (buff.indexOf('\r') != -1)
-				buff.remove(buff.indexOf('\r'));
-			buff.remove(buff.indexOf('\n'));
-		}
+		buff.removeIf(c -> c == ESPACE || c == '\n' || c == '\r');
 	}
 
 	private boolean enleveGuillemets() {
@@ -177,11 +172,11 @@ public class JsonUnmarshallerHandler {
 	}
 
 	private String getString() {
-		final StringBuilder sb = new StringBuilder();
-		for (final Character character : buff)
-			sb.append(character);
+		final String result = buff.stream()
+			.map(String::valueOf)
+			.collect(Collectors.joining());
 		buff.clear();
-		return sb.toString();
+		return result;
 	}
 
 	private Class<?> guessType() {
