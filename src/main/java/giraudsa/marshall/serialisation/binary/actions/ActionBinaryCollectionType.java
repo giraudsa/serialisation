@@ -28,41 +28,46 @@ public class ActionBinaryCollectionType extends ActionBinary<Collection> {
 	protected void ecritValeur(final Marshaller marshaller, final Collection obj, final FieldInformations fi,
 			final boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException,
 			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
-		final Type[] types = fi.getParametreType();
-		Type genericType = Object.class;
-		if (types != null && types.length > 0)
-			genericType = types[0];
-		final FakeChamp fakeChamp = new FakeChamp(null, genericType, fi.getRelation(), fi.getAnnotations());
+		final var types = fi.getParametreType();
+		Type genericType = (types != null && types.length > 0) ? types[0] : Object.class;
+		final var fakeChamp = new FakeChamp(null, genericType, fi.getRelation(), fi.getAnnotations());
 
-		final Deque<Comportement> tmp = new ArrayDeque<>();
+		final var tmp = new ArrayDeque<Comportement>();
 		if (!isDejaVu) {
-			if (strategieSerialiseTout(marshaller, fi))
+			if (strategieSerialiseTout(marshaller, fi)) {
 				setDejaTotalementSerialise(marshaller, obj);
+			}
 			writeInt(marshaller, obj.size());
-			for (final Object value : obj)
+			for (final var value : obj) {
 				tmp.push(traiteChamp(marshaller, value, fakeChamp));
+			}
 		} else if (!isDejaTotalementSerialise(marshaller, obj) && strategieSerialiseTout(marshaller, fi)) {
 			setDejaTotalementSerialise(marshaller, obj);
-			for (final Object value : obj)
+			for (final var value : obj) {
 				tmp.push(traiteChamp(marshaller, value, fakeChamp));
+			}
 		}
 		pushComportements(marshaller, tmp);
 	}
 
 	@Override
 	protected Class<?> getTypeObjProblemeHibernate(final Object object) {
-		final Class<?> clazz = object.getClass();
+		final var clazz = object.getClass();
+		final var className = clazz.getName().toLowerCase();
 
-		if (clazz.getName().toLowerCase().indexOf("hibernate") != -1) {
-			if (object.getClass().getName().toLowerCase().indexOf("persistentbag") != -1)
-				return ArrayList.class;
-			if (object.getClass().getName().toLowerCase().indexOf("persistentset") != -1)
-				return HashSet.class;
-			if (object.getClass().getName().toLowerCase().indexOf("persistentsortedset") != -1)
-				return TreeSet.class;
-			else
-				return ArrayList.class;
+		if (!className.contains("hibernate")) {
+			return clazz;
 		}
-		return clazz;
+
+		if (className.contains("persistentbag")) {
+			return ArrayList.class;
+		}
+		if (className.contains("persistentset")) {
+			return HashSet.class;
+		}
+		if (className.contains("persistentsortedset")) {
+			return TreeSet.class;
+		}
+		return ArrayList.class;
 	}
 }

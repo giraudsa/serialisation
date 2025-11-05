@@ -101,7 +101,7 @@ public class JsonMarshaller extends TextMarshaller {
 	}
 
 	public static <U> String toCompleteJson(final U obj) throws MarshallExeption {
-		try (StringWriter sw = new StringWriter()) {
+		try (var sw = new StringWriter()) {
 			toCompleteJson(obj, sw, null);
 			return sw.toString();
 		} catch (final IOException e) {
@@ -113,9 +113,8 @@ public class JsonMarshaller extends TextMarshaller {
 	public static <U> void toCompleteJson(final U obj, final Writer output, final EntityManager entityManager)
 			throws MarshallExeption {
 		try {
-			final JsonMarshaller v = new JsonMarshaller(output, new StrategieSerialisationComplete(), entityManager,
-					true);
-			v.marshall(obj);
+			final var marshaller = new JsonMarshaller(output, new StrategieSerialisationComplete(), entityManager, true);
+			marshaller.marshall(obj);
 		} catch (ChampNotFound | IOException | InstantiationException | IllegalAccessException
 				| InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
 			LOGGER.debug("probleme de sérialisation complète en json de " + obj.toString(), e);
@@ -133,7 +132,7 @@ public class JsonMarshaller extends TextMarshaller {
 
 	public static <U> String toJson(final U obj, final StrategieDeSerialisation strategie,
 			final EntityManager entityManager, final boolean writeType) throws MarshallExeption {
-		try (StringWriter sw = new StringWriter()) {
+		try (var sw = new StringWriter()) {
 			toJson(obj, sw, strategie, entityManager, writeType);
 			return sw.toString();
 		} catch (final IOException e) {
@@ -151,8 +150,8 @@ public class JsonMarshaller extends TextMarshaller {
 	public static <U> void toJson(final U obj, final Writer output, final StrategieDeSerialisation strategie,
 			final EntityManager entityManager, final boolean writeType) throws MarshallExeption {
 		try {
-			final JsonMarshaller v = new JsonMarshaller(output, strategie, entityManager, writeType);
-			v.marshall(obj);
+			final var marshaller = new JsonMarshaller(output, strategie, entityManager, writeType);
+			marshaller.marshall(obj);
 		} catch (ChampNotFound | IOException | InstantiationException | IllegalAccessException
 				| InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
 			LOGGER.debug("probleme de sérialisation json de " + obj.toString(), e);
@@ -196,7 +195,7 @@ public class JsonMarshaller extends TextMarshaller {
 
 	protected void ecritType(final Class<?> type) throws IOException {
 		ecritClef(clefType);
-		final String stringType = Constants.getSmallNameType(type);
+		final var stringType = Constants.getSmallNameType(type);
 		writeWithQuote(stringType);
 	}
 

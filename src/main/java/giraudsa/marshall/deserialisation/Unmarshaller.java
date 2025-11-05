@@ -35,35 +35,23 @@ public abstract class Unmarshaller<T> {
 	}
 
 	private <U> ActionAbstrait<?> choseAction(final Class<U> type) throws NotImplementedSerializeException {
-		final Map<Class<?>, ActionAbstrait<?>> actions = getdicoTypeToAction();
-
-		final Class<?> genericType = determineGenericType(type);
-
-		final ActionAbstrait<?> behavior = actions.get(genericType);
+		final var actions = getdicoTypeToAction();
+		Class<?> genericType = switch (type) {
+			case Class<?> t when t.isEnum() -> Constants.enumType;
+			case Class<?> t when Constants.dictionaryType.isAssignableFrom(t) -> Constants.dictionaryType;
+			case Class<?> t when Constants.dateType.isAssignableFrom(t) -> Constants.dateType;
+			case Class<?> t when Constants.collectionType.isAssignableFrom(t) -> Constants.collectionType;
+			case Class<?> t when t.isArray() -> Constants.arrayType;
+			case Class<?> t when Constants.inetAdress.isAssignableFrom(t) -> Constants.inetAdress;
+			case Class<?> t when Constants.calendarType.isAssignableFrom(t) -> Constants.calendarType;
+			case Class<?> t when t.getPackage() == null || !t.getPackage().getName().startsWith("System") -> Constants.objectType;
+			default -> type;
+		};
+		var behavior = actions.get(genericType);
 		actions.put(type, behavior);
 		if (behavior == null)
 			throw new NotImplementedSerializeException("not implemented: " + type);
 		return behavior;
-	}
-
-	private <U> Class<?> determineGenericType(final Class<U> type) {
-		if (type.isEnum())
-			return Constants.enumType;
-		if (Constants.dictionaryType.isAssignableFrom(type))
-			return Constants.dictionaryType;
-		if (Constants.dateType.isAssignableFrom(type))
-			return Constants.dateType;
-		if (Constants.collectionType.isAssignableFrom(type))
-			return Constants.collectionType;
-		if (type.isArray())
-			return Constants.arrayType;
-		if (Constants.inetAdress.isAssignableFrom(type))
-			return Constants.inetAdress;
-		if (Constants.calendarType.isAssignableFrom(type))
-			return Constants.calendarType;
-		if (type.getPackage() == null || !type.getPackage().getName().startsWith("System"))
-			return Constants.objectType;
-		return type;
 	}
 
 	protected void construitObjet(final ActionAbstrait<?> action)
@@ -80,15 +68,15 @@ public abstract class Unmarshaller<T> {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected <U> ActionAbstrait getAction(final Class<U> type) throws NotImplementedSerializeException {
-		final Map<Class<?>, ActionAbstrait<?>> actions = getdicoTypeToAction();
-		ActionAbstrait behavior = null;
-		if (type != null) {
-			behavior = actions.get(type);
-			if (behavior == null)
-				behavior = choseAction(type);
-			return behavior.getNewInstance(type, this);
+		if (type == null) {
+			return null;
 		}
-		return null;
+		final var actions = getdicoTypeToAction();
+		var behavior = actions.get(type);
+		if (behavior == null) {
+			behavior = choseAction(type);
+		}
+		return behavior.getNewInstance(type, this);
 	}
 
 	@SuppressWarnings("unchecked")

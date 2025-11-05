@@ -112,10 +112,10 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	 * @throws UnmarshallExeption
 	 */
 	public static <U> U fromBinary(final InputStream reader, final EntityManager entity) throws UnmarshallExeption {
-		try (DataInputStream in = new DataInputStream(new BufferedInputStream(reader))) {
-			final BinaryUnmarshaller<U> w = new BinaryUnmarshaller<U>(in, entity) {
+		try (var in = new DataInputStream(new BufferedInputStream(reader))) {
+			final BinaryUnmarshaller<U> unmarshaller = new BinaryUnmarshaller<>(in, entity) {
 			};
-			return w.parse();
+			return unmarshaller.parse();
 		} catch (UnmarshallExeption | FabriqueInstantiationException | IOException | IllegalAccessException
 				| ClassNotFoundException | NotImplementedSerializeException | InstanciationException
 				| EntityManagerImplementationException | SetValueException e) {
@@ -217,38 +217,39 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 			integreObjectDirectement(readByte()); // seul cas ou le header n'est pas nécessaire.
 			return;
 		}
-		final byte headerByte = readByte();
-		final Header header = Header.getHeader(headerByte);
-		if (header instanceof HeaderSimpleType)
-			litObjectSimple(header);
-		else if (header instanceof HeaderTypeCourant)
-			litObjectCourant(header);
-		else if (header instanceof HeaderEnum)
-			litObjectEnum(fieldInformations, header);
-		else
-			litObjetComplexe(fieldInformations, header);
+		final var headerByte = readByte();
+		final var header = Header.getHeader(headerByte);
+		switch (header) {
+			case HeaderSimpleType h -> litObjectSimple(h);
+			case HeaderTypeCourant h -> litObjectCourant(h);
+			case HeaderEnum h -> litObjectEnum(fieldInformations, h);
+			default -> litObjetComplexe(fieldInformations, header);
+		}
 	}
 
 	private void litObjectCourant(final Header header) throws IOException, UnmarshallExeption, IllegalAccessException,
 			EntityManagerImplementationException, InstanciationException, SetValueException {
-		final HeaderTypeCourant headerTypeCourant = (HeaderTypeCourant) header;
-		final Class<?> clazz = headerTypeCourant.getTypeCourant();
-		final int smallId = headerTypeCourant.readSmallId(input, 0); // le 0 n a pas d importance ici
+		if (!(header instanceof HeaderTypeCourant headerTypeCourant)) {
+			return;
+		}
+		final var clazz = headerTypeCourant.getTypeCourant();
+		final var smallId = headerTypeCourant.readSmallId(input, 0); // le 0 n a pas d importance ici
+
 		if (clazz == Date.class) {
 			if (!isDejaVuDate(smallId)) {
-				final Date date = new Date(readLong());
+				final var date = new Date(readLong());
 				stockDateSmallId(date, smallId);
 			}
 			integreObjectDirectement(dicoSmallIdToDate.get(smallId));
 		} else if (clazz == UUID.class) {
 			if (!isDejaVuUuid(smallId)) {
-				final UUID id = readUUID();
+				final var id = readUUID();
 				stockUuidSmallId(id, smallId);
 			}
 			integreObjectDirectement(dicoSmallIdToUUID.get(smallId));
 		} else if (clazz == String.class) {
 			if (!isDejaVuString(smallId)) {
-				final String string = readUTF();
+				final var string = readUTF();
 				stockStringSmallId(string, smallId);
 			}
 			integreObjectDirectement(dicoSmallIdToString.get(smallId));
@@ -274,8 +275,9 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 
 	private void litObjectSimple(final Header header) throws IOException, UnmarshallExeption, IllegalAccessException,
 			EntityManagerImplementationException, InstanciationException, SetValueException {
-		final HeaderSimpleType<?> headerSimpleType = (HeaderSimpleType<?>) header;
-		integreObjectDirectement(headerSimpleType.read(input));
+		if (header instanceof HeaderSimpleType<?> headerSimpleType) {
+			integreObjectDirectement(headerSimpleType.read(input));
+		}
 	}
 
 	private void litObjetComplexe(final FieldInformations fieldInformations, final Header header)
@@ -307,12 +309,13 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	private T parse()
 			throws IllegalAccessException, ClassNotFoundException, IOException, NotImplementedSerializeException,
 			UnmarshallExeption, InstanciationException, EntityManagerImplementationException, SetValueException {
-		final FakeChamp fc = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
+		final var fc = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
 		litObject(fc);
 		while (!pileAction.isEmpty()) {
-			final ActionBinary<?> actionEnCours = (ActionBinary<?>) getActionEnCours();
-			profondeur = actionEnCours.getProfondeur();
-			((ActionBinary<?>) getActionEnCours()).deserialisePariellement();
+			if (getActionEnCours() instanceof ActionBinary<?> actionEnCours) {
+				profondeur = actionEnCours.getProfondeur();
+				actionEnCours.deserialisePariellement();
+			}
 		}
 		return obj;
 	}
@@ -350,11 +353,9 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	private StrategieDeSerialisation readStrategie() throws IOException, UnmarshallExeption {
-		final byte firstByte = readByte();
-		final StrategieDeSerialisation strat = Constants.getStrategie(firstByte);
-		if (strat != null)
-			return strat;
-		return fromBinary(input); // TODO : verifier que le input n'est pas fermé apres lecture de la strategie
+		final var firstByte = readByte();
+		final var strat = Constants.getStrategie(firstByte);
+		return (strat != null) ? strat : fromBinary(input); // TODO : verifier que le input n'est pas fermé apres lecture de la strategie
 	}
 
 	protected String readUTF() throws IOException {

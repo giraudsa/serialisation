@@ -124,9 +124,9 @@ public class BinaryMarshaller extends Marshaller {
 	///// METHODES STATICS PUBLICS
 	public static <U> void toBinary(final U obj, final OutputStream output, final StrategieDeSerialisation strategie)
 			throws MarshallExeption {
-		try (DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(output))) {
-			final BinaryMarshaller v = new BinaryMarshaller(stream, strategie);
-			v.marshall(obj);
+		try (var stream = new DataOutputStream(new BufferedOutputStream(output))) {
+			final var marshaller = new BinaryMarshaller(stream, strategie);
+			marshaller.marshall(obj);
 			stream.flush();
 		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException
 				| NoSuchMethodException | NotImplementedSerializeException e) {
@@ -136,9 +136,9 @@ public class BinaryMarshaller extends Marshaller {
 	}
 
 	public static <U> void toCompleteBinary(final U obj, final OutputStream output) throws MarshallExeption {
-		try (DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(output))) {
-			final BinaryMarshaller v = new BinaryMarshaller(stream, new StrategieSerialisationComplete());
-			v.marshall(obj);
+		try (var stream = new DataOutputStream(new BufferedOutputStream(output))) {
+			final var marshaller = new BinaryMarshaller(stream, new StrategieSerialisationComplete());
+			marshaller.marshall(obj);
 			stream.flush();
 		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException
 				| NoSuchMethodException | NotImplementedSerializeException e) {
@@ -278,10 +278,10 @@ public class BinaryMarshaller extends Marshaller {
 	}
 
 	private void writeSpecialisation() throws IOException, MarshallExeption {
-		final byte firstByte = Constants.getFirstByte(strategie);
+		final var firstByte = Constants.getFirstByte(strategie);
 		writeByte(firstByte);
 		if (firstByte == Constants.STRATEGIE_INCONNUE) {
-			final ByteArrayOutputStream out = new ByteArrayOutputStream();
+			final var out = new ByteArrayOutputStream();
 			toCompleteBinary(strategie, out);
 			writeByteArray(out.toByteArray());
 		}

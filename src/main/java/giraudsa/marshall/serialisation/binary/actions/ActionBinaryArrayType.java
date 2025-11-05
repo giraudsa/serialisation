@@ -23,27 +23,24 @@ public class ActionBinaryArrayType extends ActionBinary<Object> {
 	protected void ecritValeur(final Marshaller marshaller, final Object obj, final FieldInformations fi,
 			final boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException,
 			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
-		final FakeChamp fakeChamp = new FakeChamp(null, obj.getClass().getComponentType(), fi.getRelation(),
-				fi.getAnnotations());
-		final Deque<Comportement> tmp = new ArrayDeque<>();
+		final var fakeChamp = new FakeChamp(null, obj.getClass().getComponentType(), fi.getRelation(), fi.getAnnotations());
+		final var tmp = new ArrayDeque<Comportement>();
 		if (!isDejaVu) {
-			if (strategieSerialiseTout(marshaller, fi))
+			if (strategieSerialiseTout(marshaller, fi)) {
 				setDejaTotalementSerialise(marshaller, obj);
-			final int size = Array.getLength(obj);
+			}
+			final var size = Array.getLength(obj);
 			writeInt(marshaller, size);
-			for (int i = 0; i < size; i++)
+			for (var i = 0; i < size; i++) {
 				tmp.push(traiteChamp(marshaller, Array.get(obj, i), fakeChamp));
-		} else if (!isDejaTotalementSerialise(marshaller, obj) && strategieSerialiseTout(marshaller, fi)) {// deja vu,
-																											// donc on
-																											// passe ici
-																											// qd la
-																											// relation
-																											// est de
-																											// type
-																											// COMPOSITION
+			}
+		} else if (!isDejaTotalementSerialise(marshaller, obj) && strategieSerialiseTout(marshaller, fi)) {
+			// deja vu, donc on passe ici qd la relation est de type COMPOSITION
 			setDejaTotalementSerialise(marshaller, obj);
-			for (int i = 0; i < Array.getLength(obj); i++)
+			final var length = Array.getLength(obj);
+			for (var i = 0; i < length; i++) {
 				tmp.push(traiteChamp(marshaller, Array.get(obj, i), fakeChamp));
+			}
 		}
 		pushComportements(marshaller, tmp);
 	}

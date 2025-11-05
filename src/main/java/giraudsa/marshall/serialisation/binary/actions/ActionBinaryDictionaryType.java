@@ -28,30 +28,32 @@ public class ActionBinaryDictionaryType extends ActionBinary<Map> {
 	protected void ecritValeur(final Marshaller marshaller, final Map map, final FieldInformations fi,
 			final boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException,
 			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
-		final Type[] types = fi.getParametreType();
-		Type genericTypeKey = Object.class;
-		Type genericTypeValue = Object.class;
-		if (types != null && types.length > 1) {
-			genericTypeKey = types[0];
-			genericTypeValue = types[1];
-		}
-		final FakeChamp fakeChampKey = new FakeChamp("K", genericTypeKey, fi.getRelation(), fi.getAnnotations());
-		final FakeChamp fakeChampValue = new FakeChamp("V", genericTypeValue, fi.getRelation(), fi.getAnnotations());
+		final var types = fi.getParametreType();
+		Type genericTypeKey = (types != null && types.length > 1) ? types[0] : Object.class;
+		Type genericTypeValue = (types != null && types.length > 1) ? types[1] : Object.class;
 
-		final Deque<Comportement> tmp = new ArrayDeque<>();
+		final var fakeChampKey = new FakeChamp("K", genericTypeKey, fi.getRelation(), fi.getAnnotations());
+		final var fakeChampValue = new FakeChamp("V", genericTypeValue, fi.getRelation(), fi.getAnnotations());
+
+		final var tmp = new ArrayDeque<Comportement>();
 		if (!isDejaVu) {
-			if (strategieSerialiseTout(marshaller, fi))
+			if (strategieSerialiseTout(marshaller, fi)) {
 				setDejaTotalementSerialise(marshaller, map);
+			}
 			writeInt(marshaller, map.size());
-			for (final Object entry : map.entrySet()) {
-				tmp.push(traiteChamp(marshaller, ((Entry) entry).getKey(), fakeChampKey));
-				tmp.push(traiteChamp(marshaller, ((Entry) entry).getValue(), fakeChampValue));
+			for (final var entry : map.entrySet()) {
+				if (entry instanceof Entry<?, ?> e) {
+					tmp.push(traiteChamp(marshaller, e.getKey(), fakeChampKey));
+					tmp.push(traiteChamp(marshaller, e.getValue(), fakeChampValue));
+				}
 			}
 		} else if (!isDejaTotalementSerialise(marshaller, map) && strategieSerialiseTout(marshaller, fi)) {
 			setDejaTotalementSerialise(marshaller, map);
-			for (final Object entry : map.entrySet()) {
-				tmp.push(traiteChamp(marshaller, ((Entry) entry).getKey(), fakeChampKey));
-				tmp.push(traiteChamp(marshaller, ((Entry) entry).getValue(), fakeChampValue));
+			for (final var entry : map.entrySet()) {
+				if (entry instanceof Entry<?, ?> e) {
+					tmp.push(traiteChamp(marshaller, e.getKey(), fakeChampKey));
+					tmp.push(traiteChamp(marshaller, e.getValue(), fakeChampValue));
+				}
 			}
 		}
 		pushComportements(marshaller, tmp);
@@ -59,12 +61,18 @@ public class ActionBinaryDictionaryType extends ActionBinary<Map> {
 
 	@Override
 	protected Class<?> getTypeObjProblemeHibernate(final Object object) {
-		final Class<?> clazz = object.getClass();
-		if (clazz.getName().toLowerCase().indexOf("hibernate") != -1) {
-			if (object.getClass().getName().toLowerCase().indexOf("persistentmap") != -1)
-				return HashMap.class;
-			if (object.getClass().getName().toLowerCase().indexOf("persistentsortedmap") != -1)
-				return TreeMap.class;
+		final var clazz = object.getClass();
+		final var className = clazz.getName().toLowerCase();
+
+		if (!className.contains("hibernate")) {
+			return clazz;
+		}
+
+		if (className.contains("persistentmap")) {
+			return HashMap.class;
+		}
+		if (className.contains("persistentsortedmap")) {
+			return TreeMap.class;
 		}
 		return clazz;
 	}

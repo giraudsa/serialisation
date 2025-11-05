@@ -110,8 +110,8 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 
 	public static <U> U fromJson(final Reader reader, final EntityManager entity) throws UnmarshallExeption {
 		try {
-			final JsonUnmarshaller<U> w = new JsonUnmarshaller<>(reader, entity);
-			return w.parse();
+			final var unmarshaller = new JsonUnmarshaller<U>(reader, entity);
+			return unmarshaller.parse();
 		} catch (FabriqueInstantiationException | ClassNotFoundException | IOException
 				| EntityManagerImplementationException | InstanciationException | NotImplementedSerializeException
 				| JsonHandlerException | IllegalAccessException | DataFormatException | SetValueException e) {
@@ -121,18 +121,20 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	}
 
 	public static <U> U fromJson(final String stringToUnmarshall) throws UnmarshallExeption {
-		if (stringToUnmarshall == null || stringToUnmarshall.length() == 0)
+		if (stringToUnmarshall == null || stringToUnmarshall.isEmpty()) {
 			return null;
-		try (StringReader sr = new StringReader(stringToUnmarshall)) {
+		}
+		try (var sr = new StringReader(stringToUnmarshall)) {
 			return fromJson(sr);
 		}
 	}
 
 	public static <U> U fromJson(final String stringToUnmarshall, final EntityManager entity)
 			throws UnmarshallExeption {
-		if (stringToUnmarshall == null || stringToUnmarshall.length() == 0)
+		if (stringToUnmarshall == null || stringToUnmarshall.isEmpty()) {
 			return null;
-		try (StringReader sr = new StringReader(stringToUnmarshall)) {
+		}
+		try (var sr = new StringReader(stringToUnmarshall)) {
 			return fromJson(sr, entity);
 		}
 	}
@@ -171,13 +173,14 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	private void integreObject() throws EntityManagerImplementationException, InstanciationException,
 			IllegalAccessException, SetValueException {
 		construitObjet(getActionEnCours());
-		final ActionJson<?> actionATraiter = (ActionJson<?>) pileAction.pop();
-		if (pileAction.isEmpty())
-			obj = (T) getObjet(actionATraiter);
-		else {
-			final String nom = getNom(actionATraiter);
-			final Object objet = getObjet(actionATraiter);
-			integreObjet(getActionEnCours(), nom, objet);
+		if (pileAction.pop() instanceof ActionJson<?> actionATraiter) {
+			if (pileAction.isEmpty()) {
+				obj = (T) getObjet(actionATraiter);
+			} else {
+				final var nom = getNom(actionATraiter);
+				final var objet = getObjet(actionATraiter);
+				integreObjet(getActionEnCours(), nom, objet);
+			}
 		}
 	}
 
@@ -186,7 +189,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 				|| clef.equals(Constants.CLEF_TYPE_ID_UNIVERSEL)) {
 			if (clefType == null) {
 				// récuperation de la configuration idUniversel de celui qui a encodé
-				final boolean isIdUniversel = clef.equals(Constants.CLEF_TYPE_ID_UNIVERSEL) ? true : false;
+				final var isIdUniversel = clef.equals(Constants.CLEF_TYPE_ID_UNIVERSEL);
 				clefType = clef;
 				setCache(isIdUniversel);
 			}
@@ -200,23 +203,26 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	}
 
 	protected void ouvreChrochet() throws NotImplementedSerializeException {
-		Class<?> type = getActionEnCours() == null ? ArrayList.class : getType(clefEnCours);
-		if (type == null)
+		var type = getActionEnCours() == null ? ArrayList.class : getType(clefEnCours);
+		if (type == null) {
 			type = ArrayList.class;
-		final ActionJson<?> action = (ActionJson<?>) getAction(type);
-		setNom(action, clefEnCours);
-		setFieldInformation(action);
-		clefEnCours = null;
-		pileAction.push(action);
+		}
+		if (getAction(type) instanceof ActionJson<?> action) {
+			setNom(action, clefEnCours);
+			setFieldInformation(action);
+			clefEnCours = null;
+			pileAction.push(action);
+		}
 	}
 
 	private T parse() throws ClassNotFoundException, IOException, EntityManagerImplementationException,
 			InstanciationException, NotImplementedSerializeException, JsonHandlerException, UnmarshallExeption,
 			IllegalAccessException, DataFormatException, SetValueException {
-		final JsonUnmarshallerHandler handler = new JsonUnmarshallerHandler(this);
+		final var handler = new JsonUnmarshallerHandler(this);
 		handler.parse(reader);
-		if (obj == null)
+		if (obj == null) {
 			throw new DataFormatException("le format n'est pas un json");
+		}
 		return obj;
 	}
 

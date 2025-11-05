@@ -42,35 +42,23 @@ public abstract class Marshaller {
 
 	@SuppressWarnings("rawtypes")
 	private <T> ActionAbstrait choisiAction(final Class<T> type) throws NotImplementedSerializeException {
-		final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = getDicoTypeToAction();
-
-		final Class<?> genericType = determineGenericType(type);
-
-		final ActionAbstrait action = dicoTypeToAction.get(genericType);
+		final var dicoTypeToAction = getDicoTypeToAction();
+		Class<?> genericType = switch (type) {
+			case Class<?> t when t.isEnum() -> Constants.enumType;
+			case Class<?> t when Constants.dictionaryType.isAssignableFrom(t) -> Constants.dictionaryType;
+			case Class<?> t when Constants.dateType.isAssignableFrom(t) -> Constants.dateType;
+			case Class<?> t when Constants.collectionType.isAssignableFrom(t) -> Constants.collectionType;
+			case Class<?> t when t.isArray() -> Constants.arrayType;
+			case Class<?> t when Constants.inetAdress.isAssignableFrom(t) -> Constants.inetAdress;
+			case Class<?> t when Constants.calendarType.isAssignableFrom(t) -> Constants.calendarType;
+			case Class<?> t when t.getPackage() == null || !t.getPackage().getName().startsWith("System") -> Constants.objectType;
+			default -> type;
+		};
+		var action = dicoTypeToAction.get(genericType);
 		dicoTypeToAction.put(type, action);
 		if (action == null)
 			throw new NotImplementedSerializeException("not implemented: " + type);
 		return action;
-	}
-
-	private <T> Class<?> determineGenericType(final Class<T> type) {
-		if (type.isEnum())
-			return Constants.enumType;
-		if (Constants.dictionaryType.isAssignableFrom(type))
-			return Constants.dictionaryType;
-		if (Constants.dateType.isAssignableFrom(type))
-			return Constants.dateType;
-		if (Constants.collectionType.isAssignableFrom(type))
-			return Constants.collectionType;
-		if (type.isArray())
-			return Constants.arrayType;
-		if (Constants.inetAdress.isAssignableFrom(type))
-			return Constants.inetAdress;
-		if (Constants.calendarType.isAssignableFrom(type))
-			return Constants.calendarType;
-		if (type.getPackage() == null || !type.getPackage().getName().startsWith("System"))
-			return Constants.objectType;
-		return type;
 	}
 
 	protected void deserialisePile() throws InstantiationException, IllegalAccessException, InvocationTargetException,
@@ -84,17 +72,13 @@ public abstract class Marshaller {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected <T> ActionAbstrait getAction(final T obj) throws NotImplementedSerializeException {
-		final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = getDicoTypeToAction();
-		ActionAbstrait action;
-		if (obj == null)
-			action = dicoTypeToAction.get(void.class);
-		else {
-			final Class<T> type = (Class<T>) obj.getClass();
-			action = dicoTypeToAction.get(type);
-			if (action == null)
-				action = choisiAction(type);
+		final var dicoTypeToAction = getDicoTypeToAction();
+		if (obj == null) {
+			return dicoTypeToAction.get(void.class);
 		}
-		return action;
+		final Class<T> type = (Class<T>) obj.getClass();
+		var action = dicoTypeToAction.get(type);
+		return action == null ? choisiAction(type) : action;
 	}
 
 	protected Map<Object, UUID> getDicoObjToFakeId() {

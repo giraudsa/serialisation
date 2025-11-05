@@ -26,39 +26,41 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 			final FieldInformations fieldInformations, final boolean isDejaVu)
 			throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException,
 			NotImplementedSerializeException, IOException, MarshallExeption {
-		final Deque<Comportement> tmp = new ArrayDeque<>();
+		final var tmp = new ArrayDeque<Comportement>();
 
-		final boolean serialiseToutSaufId = serialiseToutSaufId(marshaller, objetASerialiser, fieldInformations);
-		final boolean serialiseId = serialiseId(objetASerialiser, isDejaVu);
+		final var serialiseToutSaufId = serialiseToutSaufId(marshaller, objetASerialiser, fieldInformations);
+		final var serialiseId = serialiseId(objetASerialiser, isDejaVu);
 
-		if (serialiseToutSaufId)
+		if (serialiseToutSaufId) {
 			setDejaTotalementSerialise(marshaller, objetASerialiser);
+		}
 
-		final List<Champ> champs = getListeChamp(objetASerialiser, serialiseId, serialiseToutSaufId);
-		for (final Champ champ : champs) {
-			final Comportement comportement = traiteChamp(marshaller, objetASerialiser, champ);
-			if (comportement != null)
+		final var champs = getListeChamp(objetASerialiser, serialiseId, serialiseToutSaufId);
+		for (final var champ : champs) {
+			final var comportement = traiteChamp(marshaller, objetASerialiser, champ);
+			if (comportement != null) {
 				tmp.push(comportement);
+			}
 		}
 		pushComportements(marshaller, tmp);
 	}
 
 	private List<Champ> getListeChamp(final Object objetASerialiser, final boolean serialiseId,
 			final boolean serialiseToutSaufId) {
-		final List<Champ> ret = new ArrayList<>();
-		final Champ champId = TypeExtension.getChampId(objetASerialiser.getClass());
-		final List<Champ> champs = TypeExtension.getSerializableFields(objetASerialiser.getClass());
-		for (final Champ champ : champs)
-			if (champ == champId && serialiseId || champ != champId && serialiseToutSaufId)
+		final var ret = new ArrayList<Champ>();
+		final var champId = TypeExtension.getChampId(objetASerialiser.getClass());
+		final var champs = TypeExtension.getSerializableFields(objetASerialiser.getClass());
+		for (final var champ : champs) {
+			if ((champ == champId && serialiseId) || (champ != champId && serialiseToutSaufId)) {
 				ret.add(champ);
+			}
+		}
 		return ret;
 	}
 
 	private boolean serialiseId(final Object objetASerialiser, final boolean isDejaVu) {
-		final boolean isFakeId = TypeExtension.getChampId(objetASerialiser.getClass()).isFakeId();
-		if (isFakeId)
-			return false;
-		return !isDejaVu;
+		final var isFakeId = TypeExtension.getChampId(objetASerialiser.getClass()).isFakeId();
+		return !isFakeId && !isDejaVu;
 	}
 
 	private boolean serialiseToutSaufId(final Marshaller marshaller, final Object objetASerialiser,
