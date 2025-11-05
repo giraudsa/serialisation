@@ -58,26 +58,16 @@ public class JsonUnmarshallerHandler {
 		} catch (final IOException e) {
 			erreurParsing("message tronqué", e);
 		}
-		switch (escaped) {
-		case 'u':
-			return escapeCharactere(reader);
-		case 't':
-			return '\t';
-		case 'b':
-			return '\b';
-		case 'n':
-			return '\n';
-		case 'r':
-			return '\r';
-		case 'f':
-			return '\f';
-		case '\n':
-		case '\'':
-		case '"':
-		case '\\':
-		default:
-			return escaped;
-		}
+		return switch (escaped) {
+			case 'u' -> escapeCharactere(reader);
+			case 't' -> '\t';
+			case 'b' -> '\b';
+			case 'n' -> '\n';
+			case 'r' -> '\r';
+			case 'f' -> '\f';
+			case '\n', '\'', '"', '\\' -> escaped;
+			default -> escaped;
+		};
 	}
 
 	private final ArrayList<Character> buff = new ArrayList<>();
@@ -195,15 +185,11 @@ public class JsonUnmarshallerHandler {
 	}
 
 	private Class<?> guessType() {
-		switch (buff.get(0)) {
-		case 't':
-		case 'f':
-			return Boolean.class;
-		case 'n':
-			return Void.class;
-		default:
-			return Integer.class;
-		}
+		return switch (buff.get(0)) {
+			case 't', 'f' -> Boolean.class;
+			case 'n' -> Void.class;
+			default -> Integer.class;
+		};
 	}
 
 	private void ouvreAccolade() {

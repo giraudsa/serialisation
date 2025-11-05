@@ -36,29 +36,34 @@ public abstract class Unmarshaller<T> {
 
 	private <U> ActionAbstrait<?> choseAction(final Class<U> type) throws NotImplementedSerializeException {
 		final Map<Class<?>, ActionAbstrait<?>> actions = getdicoTypeToAction();
-		ActionAbstrait<?> behavior;
-		Class<?> genericType = type;
-		if (type.isEnum())
-			genericType = Constants.enumType;
-		else if (Constants.dictionaryType.isAssignableFrom(type))
-			genericType = Constants.dictionaryType;
-		else if (Constants.dateType.isAssignableFrom(type))
-			genericType = Constants.dateType;
-		else if (Constants.collectionType.isAssignableFrom(type))
-			genericType = Constants.collectionType;
-		else if (type.isArray())
-			genericType = Constants.arrayType;
-		else if (Constants.inetAdress.isAssignableFrom(type))
-			genericType = Constants.inetAdress;
-		else if (Constants.calendarType.isAssignableFrom(type))
-			genericType = Constants.calendarType;
-		else if (type.getPackage() == null || !type.getPackage().getName().startsWith("System"))
-			genericType = Constants.objectType;
-		behavior = actions.get(genericType);
+
+		final Class<?> genericType = determineGenericType(type);
+
+		final ActionAbstrait<?> behavior = actions.get(genericType);
 		actions.put(type, behavior);
 		if (behavior == null)
 			throw new NotImplementedSerializeException("not implemented: " + type);
 		return behavior;
+	}
+
+	private <U> Class<?> determineGenericType(final Class<U> type) {
+		if (type.isEnum())
+			return Constants.enumType;
+		if (Constants.dictionaryType.isAssignableFrom(type))
+			return Constants.dictionaryType;
+		if (Constants.dateType.isAssignableFrom(type))
+			return Constants.dateType;
+		if (Constants.collectionType.isAssignableFrom(type))
+			return Constants.collectionType;
+		if (type.isArray())
+			return Constants.arrayType;
+		if (Constants.inetAdress.isAssignableFrom(type))
+			return Constants.inetAdress;
+		if (Constants.calendarType.isAssignableFrom(type))
+			return Constants.calendarType;
+		if (type.getPackage() == null || !type.getPackage().getName().startsWith("System"))
+			return Constants.objectType;
+		return type;
 	}
 
 	protected void construitObjet(final ActionAbstrait<?> action)

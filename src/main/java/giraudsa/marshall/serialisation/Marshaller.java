@@ -43,29 +43,34 @@ public abstract class Marshaller {
 	@SuppressWarnings("rawtypes")
 	private <T> ActionAbstrait choisiAction(final Class<T> type) throws NotImplementedSerializeException {
 		final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = getDicoTypeToAction();
-		ActionAbstrait action;
-		Class<?> genericType = type;
-		if (type.isEnum())
-			genericType = Constants.enumType;
-		else if (Constants.dictionaryType.isAssignableFrom(type))
-			genericType = Constants.dictionaryType;
-		else if (Constants.dateType.isAssignableFrom(type))
-			genericType = Constants.dateType;
-		else if (Constants.collectionType.isAssignableFrom(type))
-			genericType = Constants.collectionType;
-		else if (type.isArray())
-			genericType = Constants.arrayType;
-		else if (Constants.inetAdress.isAssignableFrom(type))
-			genericType = Constants.inetAdress;
-		else if (Constants.calendarType.isAssignableFrom(type))
-			genericType = Constants.calendarType;
-		else if (type.getPackage() == null || !type.getPackage().getName().startsWith("System"))
-			genericType = Constants.objectType;
-		action = dicoTypeToAction.get(genericType);
+
+		final Class<?> genericType = determineGenericType(type);
+
+		final ActionAbstrait action = dicoTypeToAction.get(genericType);
 		dicoTypeToAction.put(type, action);
 		if (action == null)
 			throw new NotImplementedSerializeException("not implemented: " + type);
 		return action;
+	}
+
+	private <T> Class<?> determineGenericType(final Class<T> type) {
+		if (type.isEnum())
+			return Constants.enumType;
+		if (Constants.dictionaryType.isAssignableFrom(type))
+			return Constants.dictionaryType;
+		if (Constants.dateType.isAssignableFrom(type))
+			return Constants.dateType;
+		if (Constants.collectionType.isAssignableFrom(type))
+			return Constants.collectionType;
+		if (type.isArray())
+			return Constants.arrayType;
+		if (Constants.inetAdress.isAssignableFrom(type))
+			return Constants.inetAdress;
+		if (Constants.calendarType.isAssignableFrom(type))
+			return Constants.calendarType;
+		if (type.getPackage() == null || !type.getPackage().getName().startsWith("System"))
+			return Constants.objectType;
+		return type;
 	}
 
 	protected void deserialisePile() throws InstantiationException, IllegalAccessException, InvocationTargetException,
