@@ -42,18 +42,14 @@ public class ActionBinaryDictionaryType extends ActionBinary<Map> {
 			}
 			writeInt(marshaller, map.size());
 			for (final var entry : map.entrySet()) {
-				if (entry instanceof Entry<?, ?> e) {
-					tmp.push(traiteChamp(marshaller, e.getKey(), fakeChampKey));
-					tmp.push(traiteChamp(marshaller, e.getValue(), fakeChampValue));
-				}
+				tmp.push(traiteChamp(marshaller, entry.getKey(), fakeChampKey));
+				tmp.push(traiteChamp(marshaller, entry.getValue(), fakeChampValue));
 			}
 		} else if (!isDejaTotalementSerialise(marshaller, map) && strategieSerialiseTout(marshaller, fi)) {
 			setDejaTotalementSerialise(marshaller, map);
 			for (final var entry : map.entrySet()) {
-				if (entry instanceof Entry<?, ?> e) {
-					tmp.push(traiteChamp(marshaller, e.getKey(), fakeChampKey));
-					tmp.push(traiteChamp(marshaller, e.getValue(), fakeChampValue));
-				}
+				tmp.push(traiteChamp(marshaller, entry.getKey(), fakeChampKey));
+				tmp.push(traiteChamp(marshaller, entry.getValue(), fakeChampValue));
 			}
 		}
 		pushComportements(marshaller, tmp);
