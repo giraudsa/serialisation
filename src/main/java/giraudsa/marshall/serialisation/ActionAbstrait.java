@@ -140,7 +140,7 @@ public abstract class ActionAbstrait<T> {
 	protected Comportement traiteChamp(final Marshaller marshaller, final Object obj,
 			final FieldInformations fieldInformations, final boolean ecrisSeparateur)
 			throws IllegalAccessException, MarshallExeption {
-		final Object value = fieldInformations.get(obj, getDicoObjToFakeId(marshaller), getEntityManager(marshaller));
+		final var value = fieldInformations.get(obj, getDicoObjToFakeId(marshaller), getEntityManager(marshaller));
 		if (aTraiter(value, fieldInformations))
 			return new ComportementMarshallValue(value, fieldInformations, ecrisSeparateur);
 		return null;

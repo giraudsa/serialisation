@@ -42,7 +42,7 @@ public abstract class Marshaller {
 
 	@SuppressWarnings("rawtypes")
 	private <T> ActionAbstrait choisiAction(final Class<T> type) throws NotImplementedSerializeException {
-		final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = getDicoTypeToAction();
+		final var dicoTypeToAction = getDicoTypeToAction();
 		ActionAbstrait action;
 		Class<?> genericType = type;
 		if (type.isEnum())
@@ -79,12 +79,12 @@ public abstract class Marshaller {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected <T> ActionAbstrait getAction(final T obj) throws NotImplementedSerializeException {
-		final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = getDicoTypeToAction();
+		final var dicoTypeToAction = getDicoTypeToAction();
 		ActionAbstrait action;
 		if (obj == null)
 			action = dicoTypeToAction.get(void.class);
 		else {
-			final Class<T> type = (Class<T>) obj.getClass();
+			final var type = (Class<T>) obj.getClass();
 			action = dicoTypeToAction.get(type);
 			if (action == null)
 				action = choisiAction(type);
@@ -121,7 +121,7 @@ public abstract class Marshaller {
 	protected <T> void marshall(final T value, final FieldInformations fieldInformations)
 			throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
 			IOException, NotImplementedSerializeException, MarshallExeption {
-		final ActionAbstrait<?> action = getAction(value);
+		final var action = getAction(value);
 		action.marshall(this, value, fieldInformations);
 	}
 

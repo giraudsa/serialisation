@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static java.util.Map.entry;
+
 import giraudsa.marshall.exception.ChampNotFound;
 import utils.champ.Champ;
 import utils.champ.ChampUid;
@@ -21,36 +23,27 @@ import utils.champ.FieldInformations;
 import utils.champ.NullChamp;
 
 public class TypeExtension {
-	private static final Map<Class<?>, Class<?>> dicoTypePrimitifToEnveloppe = new HashMap<>();
+	private static final Map<Class<?>, Class<?>> dicoTypePrimitifToEnveloppe = Map.ofEntries(
+        entry(void.class, Void.class),
+        entry(boolean.class, Boolean.class),
+        entry(char.class, Character.class),
+        entry(byte.class, Byte.class),
+        entry(short.class, Short.class),
+        entry(int.class, Integer.class),
+        entry(long.class, Long.class),
+        entry(float.class, Float.class),
+        entry(double.class, Double.class)
+    );
 	private static final Map<Class<?>, Champ> dicoTypeTochampId = new HashMap<>();
 	private static final Map<Class<?>, List<Champ>> fieldsOfType = new HashMap<>();
 	private static final Map<Class<?>, Map<String, Champ>> serializablefieldsOfType = new HashMap<>();
-	private static final Set<Class<?>> simpleEnveloppe = new HashSet<>();
+	private static final Set<Class<?>> simpleEnveloppe = Set.of(
+        Boolean.class, Byte.class, Character.class, Short.class, Integer.class, Long.class,
+        Double.class, Float.class, void.class, Void.class
+    );
 	private static final Set<Class<?>> simpleTypes = new HashSet<>(
 			Arrays.asList(Boolean.class, Byte.class, Short.class, Integer.class, Long.class, Float.class, Double.class,
 					String.class, Date.class, void.class, UUID.class, Character.class, Void.class));
-
-	static {
-		dicoTypePrimitifToEnveloppe.put(void.class, Void.class);
-		dicoTypePrimitifToEnveloppe.put(boolean.class, Boolean.class);
-		dicoTypePrimitifToEnveloppe.put(char.class, Character.class);
-		dicoTypePrimitifToEnveloppe.put(byte.class, Byte.class);
-		dicoTypePrimitifToEnveloppe.put(short.class, Short.class);
-		dicoTypePrimitifToEnveloppe.put(int.class, Integer.class);
-		dicoTypePrimitifToEnveloppe.put(long.class, Long.class);
-		dicoTypePrimitifToEnveloppe.put(float.class, Float.class);
-		dicoTypePrimitifToEnveloppe.put(double.class, Double.class);
-		simpleEnveloppe.add(Boolean.class);
-		simpleEnveloppe.add(Byte.class);
-		simpleEnveloppe.add(Character.class);
-		simpleEnveloppe.add(Short.class);
-		simpleEnveloppe.add(Integer.class);
-		simpleEnveloppe.add(Long.class);
-		simpleEnveloppe.add(Double.class);
-		simpleEnveloppe.add(Float.class);
-		simpleEnveloppe.add(void.class);
-		simpleEnveloppe.add(Void.class);
-	}
 
 	static synchronized void clear() {
 		serializablefieldsOfType.clear();
@@ -68,7 +61,7 @@ public class TypeExtension {
 	}
 
 	public static synchronized Champ getChampId(final Class<?> typeObjetParent) {
-		Champ champId = dicoTypeTochampId.get(typeObjetParent);
+		var champId = dicoTypeTochampId.get(typeObjetParent);
 		if (champId == null) {
 			getSerializableFields(typeObjetParent);
 			champId = serializablefieldsOfType.get(typeObjetParent).get(ChampUid.UID_FIELD_NAME);
@@ -78,33 +71,33 @@ public class TypeExtension {
 	}
 
 	public static synchronized List<Champ> getSerializableFields(final Class<?> typeObj) {
-		List<Champ> fields = fieldsOfType.get(typeObj);
+		var fields = fieldsOfType.get(typeObj);
 		if (fields == null) {
 			fields = new ArrayList<>();
 			final Map<String, Champ> mapFields = new HashMap<>();
 			serializablefieldsOfType.put(typeObj, mapFields);
-			Boolean hasUid = false;
-			Class<?> parent = typeObj;
-			final List<Field> fieldstmp = new ArrayList<>();
+			var hasUid = false;
+			var parent = typeObj;
+			final var fieldstmp = new ArrayList<Field>();
 			while (parent != Object.class) {
 				Collections.addAll(fieldstmp, parent.getDeclaredFields());
 				parent = parent.getSuperclass();
 			}
-			for (final Field info : fieldstmp) {
+			for (final var info : fieldstmp) {
 				info.setAccessible(true);
 				if (!isTransient(info)
 						&& !(Modifier.isFinal(info.getModifiers()) && Modifier.isStatic(info.getModifiers()))
 						&& info.getType().getName().indexOf("Logger") == -1) {
 					// on ne sérialise pas les attributs static finaux ni ceux a ne pas sérialiser
 					// ni les attributs techniques de log.
-					final Champ champ = FabriqueChamp.createChamp(info);
+					final var champ = FabriqueChamp.createChamp(info);
 					mapFields.put(champ.getName(), champ);
 					fields.add(champ);
 					hasUid = hasUid || champ.getName().equals(ChampUid.UID_FIELD_NAME);
 				}
 			}
 			if (!hasUid) {
-				final Champ champId = FabriqueChamp.createChampId(typeObj);
+				final var champId = FabriqueChamp.createChampId(typeObj);
 				fields.add(champId);
 				mapFields.put(ChampUid.UID_FIELD_NAME, champId);
 			}
