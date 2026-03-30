@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import static java.util.Map.entry;
 
 import giraudsa.marshall.exception.UnmarshallExeption;
 import giraudsa.marshall.strategie.StrategieDeSerialisation;
@@ -33,9 +34,6 @@ public class Constants {
 	public static final Class<?> collectionType = Collection.class;
 	private static final String DATE_TYPE = "date";
 	public static final Class<?> dateType = Date.class;
-	private static final Map<Class<?>, String> dicoClassToSimpleName = new HashMap<>();
-	private static final Map<String, String> dicoSimpleNameToName = new HashMap<>();
-
 	public static final Class<?> dictionaryType = Map.class;
 	private static final String DICTIONNAIRE_TYPE = "map";
 	private static final String DOUBLE_TYPE = "double";
@@ -59,34 +57,39 @@ public class Constants {
 	public static final String VALEUR = "__valeur";
 	private static final String VOID_TYPE = "void";
 
-	static {
-		dicoSimpleNameToName.put(DICTIONNAIRE_TYPE, HashMap.class.getName());
-		dicoSimpleNameToName.put(COLLECTION_TYPE, ArrayList.class.getName());
-		dicoSimpleNameToName.put(INTEGER_TYPE, Integer.class.getName());
-		dicoSimpleNameToName.put(DOUBLE_TYPE, Double.class.getName());
-		dicoSimpleNameToName.put(FLOAT_TYPE, Float.class.getName());
-		dicoSimpleNameToName.put(BOOLEAN_TYPE, Boolean.class.getName());
-		dicoSimpleNameToName.put(SHORT_TYPE, Short.class.getName());
-		dicoSimpleNameToName.put(BYTE_TYPE, Byte.class.getName());
-		dicoSimpleNameToName.put(LONG_TYPE, Long.class.getName());
-		dicoSimpleNameToName.put(UUID_TYPE, UUID.class.getName());
-		dicoSimpleNameToName.put(STRING_TYPE, String.class.getName());
-		dicoSimpleNameToName.put(DATE_TYPE, Date.class.getName());
-		dicoSimpleNameToName.put(VOID_TYPE, Void.class.getName());
-		dicoClassToSimpleName.put(HashMap.class, DICTIONNAIRE_TYPE);
-		dicoClassToSimpleName.put(ArrayList.class, COLLECTION_TYPE);
-		dicoClassToSimpleName.put(Integer.class, INTEGER_TYPE);
-		dicoClassToSimpleName.put(Double.class, DOUBLE_TYPE);
-		dicoClassToSimpleName.put(Float.class, FLOAT_TYPE);
-		dicoClassToSimpleName.put(Boolean.class, BOOLEAN_TYPE);
-		dicoClassToSimpleName.put(Short.class, SHORT_TYPE);
-		dicoClassToSimpleName.put(Byte.class, BYTE_TYPE);
-		dicoClassToSimpleName.put(Long.class, LONG_TYPE);
-		dicoClassToSimpleName.put(UUID.class, UUID_TYPE);
-		dicoClassToSimpleName.put(String.class, STRING_TYPE);
-		dicoClassToSimpleName.put(Date.class, DATE_TYPE);
-		dicoClassToSimpleName.put(Void.class, VOID_TYPE);
+    private static final Map<String, String> dicoSimpleNameToName = Map.ofEntries(
+        entry(DICTIONNAIRE_TYPE, HashMap.class.getName()),
+        entry(COLLECTION_TYPE, ArrayList.class.getName()),
+        entry(INTEGER_TYPE, Integer.class.getName()),
+        entry(DOUBLE_TYPE, Double.class.getName()),
+        entry(FLOAT_TYPE, Float.class.getName()),
+        entry(BOOLEAN_TYPE, Boolean.class.getName()),
+        entry(SHORT_TYPE, Short.class.getName()),
+        entry(BYTE_TYPE, Byte.class.getName()),
+        entry(LONG_TYPE, Long.class.getName()),
+        entry(UUID_TYPE, UUID.class.getName()),
+        entry(STRING_TYPE, String.class.getName()),
+        entry(DATE_TYPE, Date.class.getName()),
+        entry(VOID_TYPE, Void.class.getName())
+    );
 
+    private static final Map<Class<?>, String> dicoClassToSimpleName = Map.ofEntries(
+        entry(HashMap.class, DICTIONNAIRE_TYPE),
+        entry(ArrayList.class, COLLECTION_TYPE),
+        entry(Integer.class, INTEGER_TYPE),
+        entry(Double.class, DOUBLE_TYPE),
+        entry(Float.class, FLOAT_TYPE),
+        entry(Boolean.class, BOOLEAN_TYPE),
+        entry(Short.class, SHORT_TYPE),
+        entry(Byte.class, BYTE_TYPE),
+        entry(Long.class, LONG_TYPE),
+        entry(UUID.class, UUID_TYPE),
+        entry(String.class, STRING_TYPE),
+        entry(Date.class, DATE_TYPE),
+        entry(Void.class, VOID_TYPE)
+    );
+
+	static {
 		byteToStrategie.put(SERIALISATION_COMPLETE, StrategieSerialisationComplete.class);
 		byteToStrategie.put((byte) 1, StrategieParComposition.class);
 		byteToStrategie.put((byte) 2, StrategieParCompositionOuAgregationEtClasseConcrete.class);
@@ -105,7 +108,7 @@ public class Constants {
 	}
 
 	public static String getNameType(final String smallName) {
-		String typeName = dicoSimpleNameToName.get(smallName);
+		var typeName = dicoSimpleNameToName.get(smallName);
 		if (typeName == null)
 			typeName = smallName;
 		return typeName;
@@ -116,7 +119,7 @@ public class Constants {
 	}
 
 	public static String getSmallNameType(final Class<?> clazz) {
-		String smallName = dicoClassToSimpleName.get(clazz);
+		var smallName = dicoClassToSimpleName.get(clazz);
 		if (smallName == null)
 			smallName = clazz.getName();
 		return smallName;
