@@ -3,22 +3,31 @@ package utils.headers;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.Date;
 import java.util.UUID;
 
 import giraudsa.marshall.exception.UnmarshallExeption;
-import utils.BiHashMap;
 
 public class HeaderTypeCourant extends Header {
 
-	private static final BiHashMap<Class<?>, Integer, HeaderTypeCourant> typeCourantAndEncodageSmallIdToHeader = new BiHashMap<>();
+	/** headers indexés par la taille de codage du smallId (1 à 4). */
+	private static final HeaderTypeCourant[] headersDate = new HeaderTypeCourant[5];
+	private static final HeaderTypeCourant[] headersString = new HeaderTypeCourant[5];
+	private static final HeaderTypeCourant[] headersUuid = new HeaderTypeCourant[5];
 
 	public static HeaderTypeCourant getHeader(final Object o, final int smallId) {
-		final Class<?> type = o.getClass();
-		int encodageSmallId = 0;
-		encodageSmallId = ByteHelper.getMinimumEncodage(smallId);
-		return typeCourantAndEncodageSmallIdToHeader.get(type, encodageSmallId);
+		Registre.init();
+		return headers(o.getClass())[ByteHelper.getMinimumEncodage(smallId)];
+	}
+
+	private static HeaderTypeCourant[] headers(final Class<?> type) {
+		if (type == String.class)
+			return headersString;
+		if (type == UUID.class)
+			return headersUuid;
+		if (type == Date.class)
+			return headersDate;
+		throw new IllegalArgumentException("pas de header courant pour le type " + type);
 	}
 
 	protected static void init() {
@@ -43,7 +52,7 @@ public class HeaderTypeCourant extends Header {
 		super();
 		this.typeCourant = typeCourant;
 		this.encodageSmallId = encodageSmallId;
-		typeCourantAndEncodageSmallIdToHeader.put(typeCourant, encodageSmallId, this);
+		headers(typeCourant)[encodageSmallId] = this;
 	}
 
 	public Class<?> getTypeCourant() {
@@ -52,15 +61,12 @@ public class HeaderTypeCourant extends Header {
 
 	@Override
 	public int readSmallId(final DataInputStream input, final int maxId) throws IOException, UnmarshallExeption {
-		final byte[] tmp = new byte[encodageSmallId];
-		input.readFully(tmp);
-		final BigInteger bi = new BigInteger(tmp);
-		return bi.intValue();
+		return (int) ByteHelper.read(input, encodageSmallId);
 	}
 
 	public void write(final DataOutput output, final int smallId) throws IOException {
 		output.writeByte(headerByte);
-		output.write(BigInteger.valueOf(smallId).toByteArray());
+		ByteHelper.write(output, smallId);
 	}
 
 }

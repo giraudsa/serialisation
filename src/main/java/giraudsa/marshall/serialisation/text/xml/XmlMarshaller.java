@@ -13,10 +13,8 @@ import java.net.URL;
 import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Currency;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -25,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,8 +56,7 @@ import utils.Constants;
 import utils.EntityManager;
 
 public class XmlMarshaller extends TextMarshaller {
-	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections
-			.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
+	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(XmlMarshaller.class);
 	static {
@@ -73,6 +71,7 @@ public class XmlMarshaller extends TextMarshaller {
 		dicoTypeToAction.put(Enum.class, new ActionXmlSimpleComportement<Enum>());
 		dicoTypeToAction.put(UUID.class, new ActionXmlSimpleComportement<UUID>());
 		dicoTypeToAction.put(String.class, new ActionXmlSimpleComportement<String>());
+		dicoTypeToAction.put(Character.class, new ActionXmlSimpleComportement<Character>());
 		dicoTypeToAction.put(Byte.class, new ActionXmlSimpleComportement<Byte>());
 		dicoTypeToAction.put(Float.class, new ActionXmlSimpleComportement<Float>());
 		dicoTypeToAction.put(Double.class, new ActionXmlSimpleComportement<Double>());
@@ -203,7 +202,7 @@ public class XmlMarshaller extends TextMarshaller {
 			writeInfoUniversal();
 		if (id != null) {
 			writer.write(" id=\"");
-			writer.write(id);
+			ActionXml.ECHAPPEMENT_ATTRIBUT.ecris(writer, id);
 			writer.write("\"");
 		}
 		writer.write("/>");
@@ -230,7 +229,8 @@ public class XmlMarshaller extends TextMarshaller {
 	}
 
 	private void writeHeader() throws IOException {
-		writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		// XML 1.1 : seule version capable de transporter les caractères de contrôle
+		writer.write("<?xml version=\"1.1\" encoding=\"UTF-8\"?>");
 	}
 
 	private void writeInfoUniversal() throws IOException {

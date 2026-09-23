@@ -1,7 +1,6 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -82,8 +81,10 @@ public class ActionJsonDictionaryType<T extends Map> extends ActionJson<T> {
 
 	@Override
 	protected Class<?> getTypeAttribute(final String nomAttribut) {
+		// le tableau "__valeur" alterne clefs et valeurs : il est lu par une action
+		// dictionnaire (et non une liste qui typerait tout comme une clef).
 		if (Constants.VALEUR.equals(nomAttribut))
-			return ArrayList.class;
+			return type.isInterface() ? HashMap.class : type;
 		return getFakeChamp().getValueType();
 	}
 
@@ -99,13 +100,7 @@ public class ActionJsonDictionaryType<T extends Map> extends ActionJson<T> {
 			}
 
 		} else
-			for (final Object o : (ArrayList<?>) objet)
-				if (clefTampon == null)
-					clefTampon = o;
-				else {
-					((Map) obj).put(clefTampon, o);
-					clefTampon = null;
-				}
+			((Map) obj).putAll((Map) objet);
 	}
 
 	@Override

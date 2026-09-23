@@ -3,18 +3,18 @@ package utils.headers;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class HeaderVerySmallId extends Header {
 	private static int maxVerySmallId = 0;
-	private static final Map<Integer, HeaderVerySmallId> verySmallIdToHeader = new HashMap<>();
+	/** headers indexés par smallId (1 à maxVerySmallId). */
+	private static final HeaderVerySmallId[] verySmallIdToHeader = new HeaderVerySmallId[256];
 
 	protected static Header getHeader(final int smallId) {
-		return verySmallIdToHeader.get(smallId);
+		return verySmallIdToHeader[smallId];
 	}
 
 	protected static int getMaxVerySmallId() {
+		Registre.init();
 		return maxVerySmallId;
 	}
 
@@ -22,7 +22,7 @@ public class HeaderVerySmallId extends Header {
 
 	HeaderVerySmallId() {
 		smallId = ++maxVerySmallId;
-		verySmallIdToHeader.put(smallId, this);
+		verySmallIdToHeader[smallId] = this;
 	}
 
 	@Override

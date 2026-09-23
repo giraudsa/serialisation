@@ -3,27 +3,49 @@ package utils.headers;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 public abstract class Header {
-	private static byte constructionByte = 0;
-	private static final Map<Byte, Header> dicoByteToHeader = new HashMap<>();
-	static {
-		HeaderSimpleType.init();
-		HeaderTypeCourant.init();
-		HeaderEnum.init();
-		HeaderTypeDevinable.init();
-		HeaderTypeNonDevinable.init();
-		while (constructionByte != 0)
-			new HeaderVerySmallId();
+	/**
+	 * Registre des headers. Il est porté par une classe à part pour ne pas
+	 * dépendre de l'ordre d'initialisation statique entre Header et ses classes
+	 * dérivées : l'octet de chaque header dépend de l'ordre de création, qui doit
+	 * être identique à l'écriture et à la lecture.
+	 */
+	static final class Registre {
+		private static final Header[] headers = new Header[256];
+		private static int prochainOctet = 0;
+
+		static {
+			HeaderSimpleType.init();
+			HeaderTypeCourant.init();
+			HeaderEnum.init();
+			HeaderTypeDevinable.init();
+			HeaderTypeNonDevinable.init();
+			while (prochainOctet < 256)
+				new HeaderVerySmallId();
+		}
+
+		private static byte enregistre(final Header header) {
+			final int octet = prochainOctet++;
+			headers[octet] = header;
+			return (byte) octet;
+		}
+
+		/** Force l'initialisation du registre. */
+		static void init() {
+			// le travail est fait dans le bloc statique
+		}
+
+		private Registre() {
+		}
 	}
 
 	// type autre
 	public static Header getHeader(final boolean isDejaVu, final boolean isTypeDevinable, final int smallId,
 			final short smallIdType) {
+		Registre.init();
 		if (isDejaVu)
 			return smallId <= HeaderVerySmallId.getMaxVerySmallId() ? HeaderVerySmallId.getHeader(smallId)
 					: HeaderTypeDevinable.getHeader(smallId);
@@ -33,15 +55,15 @@ public abstract class Header {
 	}
 
 	public static Header getHeader(final byte b) {
-		return dicoByteToHeader.get(b);
+		Registre.init();
+		return Registre.headers[b & 0xFF];
 	}
 
-	protected byte headerByte;
+	protected final byte headerByte;
 
 	protected Header() {
 		super();
-		headerByte = constructionByte++;
-		dicoByteToHeader.put(headerByte, this);
+		headerByte = Registre.enregistre(this);
 	}
 
 	public short getSmallIdType(final DataInputStream input) throws IOException, UnmarshallExeption {

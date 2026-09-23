@@ -13,10 +13,8 @@ import java.net.URL;
 import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Currency;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -25,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,8 +60,7 @@ import utils.Constants;
 import utils.EntityManager;
 
 public class JsonMarshaller extends TextMarshaller {
-	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections
-			.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
+	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonMarshaller.class);
 
 	static {
@@ -77,6 +75,7 @@ public class JsonMarshaller extends TextMarshaller {
 		dicoTypeToAction.put(Enum.class, new ActionJsonSimpleWithQuote<Enum>());
 		dicoTypeToAction.put(UUID.class, new ActionJsonSimpleWithQuote<UUID>());
 		dicoTypeToAction.put(String.class, new ActionJsonString());
+		dicoTypeToAction.put(Character.class, new ActionJsonSimpleWithQuote<Character>());
 		dicoTypeToAction.put(Byte.class, new ActionJsonSimpleWithoutQuote<Byte>());
 		dicoTypeToAction.put(Float.class, new ActionJsonSimpleWithoutQuote<Float>());
 		dicoTypeToAction.put(Double.class, new ActionJsonSimpleWithoutQuote<Double>());
@@ -190,8 +189,11 @@ public class JsonMarshaller extends TextMarshaller {
 	protected void ecritClef(final String nomClef) throws IOException {
 		if (isPrettyPrint())
 			aLaLigne();
-		if (nomClef != null)
-			writer.write("\"" + nomClef + "\":");
+		if (nomClef != null) {
+			writer.write('"');
+			writer.write(nomClef);
+			writer.write("\":");
+		}
 	}
 
 	protected void ecritType(final Class<?> type) throws IOException {
@@ -204,14 +206,14 @@ public class JsonMarshaller extends TextMarshaller {
 		--profondeur;
 		if (isPrettyPrint())
 			aLaLigne();
-		writer.write("}");
+		writer.write('}');
 	}
 
 	protected void fermeCrochet(final boolean aLaLigne) throws IOException {
 		profondeur--;
 		if (isPrettyPrint() && aLaLigne)
 			aLaLigne();
-		writer.write("]");
+		writer.write(']');
 	}
 
 	@Override
@@ -221,20 +223,20 @@ public class JsonMarshaller extends TextMarshaller {
 
 	protected void ouvreAccolade() throws IOException {
 		++profondeur;
-		writer.write("{");
+		writer.write('{');
 	}
 
 	protected void ouvreCrochet() throws IOException {
 		++profondeur;
-		writer.write("[");
+		writer.write('[');
 	}
 
 	protected void writeQuote() throws IOException {
-		writer.write("\"");
+		writer.write('"');
 	}
 
 	protected void writeSeparator() throws IOException {
-		writer.write(",");
+		writer.write(',');
 	}
 
 	protected void writeWithQuote(final String string) throws IOException {

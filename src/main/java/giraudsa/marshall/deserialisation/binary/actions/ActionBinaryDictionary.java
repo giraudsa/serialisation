@@ -1,8 +1,8 @@
 package giraudsa.marshall.deserialisation.binary.actions;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -17,6 +17,7 @@ import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
+import utils.TypeExtension;
 import utils.champ.FakeChamp;
 
 @SuppressWarnings("rawtypes")
@@ -26,6 +27,7 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 		return new ActionBinaryDictionary<>(Map.class, null);
 	}
 
+	private boolean clefLue = false;
 	private Object clefTampon;
 	private boolean deserialisationFini = false;
 	private FakeChamp fakeChampKey;
@@ -43,7 +45,7 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 			throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption,
 			InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
 		if (!deserialisationFini) {
-			if (clefTampon == null)
+			if (!clefLue)
 				litObject(fakeChampKey);
 			else
 				litObject(fakeChampValue);
@@ -91,11 +93,13 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 	@Override
 	protected void integreObjet(final String name, final Object objet) throws IllegalAccessException,
 			EntityManagerImplementationException, InstanciationException, SetValueException {
-		if (clefTampon == null)
+		if (!clefLue) {
 			clefTampon = objet;
-		else if (((Collection) obj).size() < index) {
+			clefLue = true;
+		} else {
 			((Map) obj).put(clefTampon, objet);
 			clefTampon = null;
+			clefLue = false;
 			deserialisationFini = ++index >= tailleCollection;
 		}
 		if (deserialisationFini)
@@ -105,11 +109,11 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 	private Object newInstance() throws UnmarshallExeption {
 		Map objetADeserialiser = null;
 		try {
-			if (type == HashMap.class || type.getName().indexOf("HashMap") != -1)
+			if (type == HashMap.class)
 				objetADeserialiser = new HashMap<>();
 			else if (type == LinkedHashMap.class)
 				objetADeserialiser = new LinkedHashMap<>();
-			else if (type.getName().toLowerCase().indexOf("hibernate") != -1) {
+			else if (TypeExtension.isHibernate(type)) {
 				if (fieldInformations.getValueType().isAssignableFrom(ConcurrentHashMap.class))
 					objetADeserialiser = new ConcurrentHashMap<>();
 				else if (fieldInformations.getValueType().isAssignableFrom(LinkedHashMap.class))
@@ -120,8 +124,16 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 					throw new UnmarshallExeption("Probleme avec un type hibernate " + type.getName(),
 							new InstantiationException());
 			} else
-				objetADeserialiser = type.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
+				try {
+					objetADeserialiser = type.getDeclaredConstructor().newInstance();
+				} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+					// map sans constructeur accessible : on se rabat sur HashMap comme
+					// historiquement
+					if (type.getName().indexOf("HashMap") == -1)
+						throw new InstantiationException(e.toString());
+					objetADeserialiser = new HashMap<>();
+				}
+		} catch (final InstantiationException e) {
 			throw new UnmarshallExeption("impossible d'instancier la collection " + type.getName(), e);
 		}
 		return objetADeserialiser;

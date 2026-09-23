@@ -2,6 +2,7 @@ package utils.champ;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import utils.EntityManager;
 
@@ -30,16 +31,30 @@ public class ChampUid extends Champ {
 		return false;
 	}
 
+	/**
+	 * UUID version 4 tiré avec {@link ThreadLocalRandom} : l'identifiant doit
+	 * seulement être unique dans le graphe, pas imprévisible. Évite le coût et la
+	 * contention de SecureRandom utilisé par {@link UUID#randomUUID()}.
+	 */
+	static UUID nouveauFakeId() {
+		final ThreadLocalRandom random = ThreadLocalRandom.current();
+		long msb = random.nextLong();
+		long lsb = random.nextLong();
+		msb = msb & ~0xF000L | 0x4000L; // version 4
+		lsb = lsb & 0x3FFFFFFFFFFFFFFFL | 0x8000000000000000L; // variante IETF
+		return new UUID(msb, lsb);
+	}
+
 	@Override
-	public synchronized String get(final Object obj, final Map<Object, UUID> dicoObjToFakeId,
-			final EntityManager entity) {
-		if (entity != null && entity.getId(obj) != null)
-			return entity.getId(obj);
+	public String get(final Object obj, final Map<Object, UUID> dicoObjToFakeId, final EntityManager entity) {
+		if (entity != null) {
+			final String id = entity.getId(obj);
+			if (id != null)
+				return id;
+		}
 		if (dicoObjToFakeId == null)
-			return UUID.randomUUID().toString();
-		if (!dicoObjToFakeId.containsKey(obj))
-			dicoObjToFakeId.put(obj, UUID.randomUUID());
-		return dicoObjToFakeId.get(obj).toString();
+			return nouveauFakeId().toString();
+		return dicoObjToFakeId.computeIfAbsent(obj, o -> nouveauFakeId()).toString();
 	}
 
 	@Override

@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -17,14 +17,17 @@ import giraudsa.marshall.strategie.StrategieDeSerialisation;
 import utils.Constants;
 import utils.EntityManager;
 import utils.champ.FieldInformations;
+import utils.TypeExtension;
 
 public abstract class Marshaller {
 
 	@SuppressWarnings("rawtypes")
 	protected Deque<Comportement> aFaire = new ArrayDeque<>();
-	protected Set<Object> dejaTotalementSerialise = new HashSet<>();
-	private final Set<Object> dejaVu = new HashSet<>();
-	private final Map<Object, UUID> dicoObjToFakeId = new HashMap<>();
+	// comparaison par identité : deux objets distincts mais égaux au sens de
+	// equals() sont deux noeuds différents du graphe.
+	protected Set<Object> dejaTotalementSerialise = Collections.newSetFromMap(new IdentityHashMap<>());
+	private final Set<Object> dejaVu = Collections.newSetFromMap(new IdentityHashMap<>());
+	private final Map<Object, UUID> dicoObjToFakeId = new IdentityHashMap<>();
 	private final EntityManager entityManager;
 	////// ATTRIBUT
 	protected int profondeur;
@@ -45,7 +48,7 @@ public abstract class Marshaller {
 		final var dicoTypeToAction = getDicoTypeToAction();
 		ActionAbstrait action;
 		Class<?> genericType = type;
-		if (type.isEnum())
+		if (TypeExtension.isEnum(type))
 			genericType = Constants.enumType;
 		else if (Constants.dictionaryType.isAssignableFrom(type))
 			genericType = Constants.dictionaryType;
@@ -62,9 +65,9 @@ public abstract class Marshaller {
 		else if (type.getPackage() == null || !type.getPackage().getName().startsWith("System"))
 			genericType = Constants.objectType;
 		action = dicoTypeToAction.get(genericType);
-		dicoTypeToAction.put(type, action);
 		if (action == null)
 			throw new NotImplementedSerializeException("not implemented: " + type);
+		dicoTypeToAction.put(type, action);
 		return action;
 	}
 
@@ -84,7 +87,7 @@ public abstract class Marshaller {
 		if (obj == null)
 			action = dicoTypeToAction.get(void.class);
 		else {
-			final var type = (Class<T>) obj.getClass();
+			final var type = (Class<T>) TypeExtension.getClasseASerialiser(obj);
 			action = dicoTypeToAction.get(type);
 			if (action == null)
 				action = choisiAction(type);

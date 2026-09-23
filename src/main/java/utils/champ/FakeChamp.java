@@ -89,7 +89,7 @@ public class FakeChamp implements FieldInformations {
 
 	@Override
 	public boolean isTypeDevinable(final Object o) {
-		final Class<?> valueType = o.getClass();
+		final Class<?> valueType = TypeExtension.getClasseASerialiser(o);
 		return isSimple || typeToken.getRawType() == valueType;
 	}
 

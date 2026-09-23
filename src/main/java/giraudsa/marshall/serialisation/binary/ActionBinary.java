@@ -15,6 +15,7 @@ import giraudsa.marshall.serialisation.ActionAbstrait;
 import giraudsa.marshall.serialisation.Marshaller;
 import utils.champ.FieldInformations;
 import utils.headers.Header;
+import utils.TypeExtension;
 
 public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	protected class ComportementDiminueProfondeur extends Comportement {
@@ -71,7 +72,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	protected Class<?> getTypeObjProblemeHibernate(final Object object) {
 		if (object == null)
 			return void.class;
-		return object.getClass();
+		return TypeExtension.getClasseASerialiser(object);
 	}
 
 	@Override

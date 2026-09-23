@@ -3,29 +3,37 @@ package utils.headers;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 
 import giraudsa.marshall.exception.UnmarshallExeption;
-import utils.BiHashMap;
 import utils.TypeExtension;
 
 public class HeaderSimpleType<T> extends Header {
-	private static final HeaderSimpleType<Boolean> booleanFalse = new HeaderSimpleType<>(false, boolean.class);
-	private static final HeaderSimpleType<Boolean> booleanTrue = new HeaderSimpleType<>(true, boolean.class);
-	private static final BiHashMap<Class<?>, Integer, Header> classAndEncodageMiniToHeader = new BiHashMap<>();
-	private static final HeaderSimpleType<Void> nullHeader = new HeaderSimpleType<>(void.class, 0);
+	private static HeaderSimpleType<Boolean> booleanFalse;
+	private static HeaderSimpleType<Boolean> booleanTrue;
+	/** type (primitif ou enveloppe) -> header indexé par la taille de codage. */
+	private static final Map<Class<?>, HeaderSimpleType<?>[]> classAndEncodageMiniToHeader = new HashMap<>();
+	private static HeaderSimpleType<Void> nullHeader;
 
 	public static Header getHeader(final Object o) {
+		Registre.init();
 		if (o == null)
 			return nullHeader;
-		if (Boolean.class.isInstance(o))
+		if (o instanceof Boolean)
 			return ((Boolean) o).booleanValue() ? booleanTrue : booleanFalse;
-		final Class<?> classeO = o.getClass();
-		final int encodage = ByteHelper.getMinimumEncodage((Number) o);
-		return classAndEncodageMiniToHeader.get(TypeExtension.getTypeEnveloppe(classeO), encodage);
+		final int encodage;
+		if (o instanceof Character)
+			encodage = (Character) o == 0 ? 0 : 2;
+		else
+			encodage = ByteHelper.getMinimumEncodage((Number) o);
+		return classAndEncodageMiniToHeader.get(o.getClass())[encodage];
 	}
 
 	protected static void init() {
+		booleanFalse = new HeaderSimpleType<>(false, boolean.class);
+		booleanTrue = new HeaderSimpleType<>(true, boolean.class);
+		nullHeader = new HeaderSimpleType<>(void.class, 0);
 		new HeaderSimpleType<>((byte) 0, byte.class);
 		new HeaderSimpleType<>(byte.class, 1);
 		new HeaderSimpleType<>((char) 0, char.class);
@@ -53,6 +61,10 @@ public class HeaderSimpleType<T> extends Header {
 		new HeaderSimpleType<>(double.class, 8);
 	}
 
+	private static void enregistre(final Class<?> type, final int tailleCodageValeur, final HeaderSimpleType<?> header) {
+		classAndEncodageMiniToHeader.computeIfAbsent(type, t -> new HeaderSimpleType<?>[9])[tailleCodageValeur] = header;
+	}
+
 	private T defautValue;
 	private final Class<T> simpleType;
 
@@ -62,8 +74,8 @@ public class HeaderSimpleType<T> extends Header {
 		super();
 		this.simpleType = simpleType;
 		this.tailleCodageValeur = tailleCodageValeur;
-		classAndEncodageMiniToHeader.put(simpleType, tailleCodageValeur, this);
-		classAndEncodageMiniToHeader.put(TypeExtension.getTypeEnveloppe(simpleType), tailleCodageValeur, this);
+		enregistre(simpleType, tailleCodageValeur, this);
+		enregistre(TypeExtension.getTypeEnveloppe(simpleType), tailleCodageValeur, this);
 	}
 
 	private HeaderSimpleType(final T value, final Class<T> simpleType) {
@@ -71,8 +83,8 @@ public class HeaderSimpleType<T> extends Header {
 		this.simpleType = simpleType;
 		this.defautValue = value;
 		tailleCodageValeur = 0;
-		classAndEncodageMiniToHeader.put(simpleType, tailleCodageValeur, this);
-		classAndEncodageMiniToHeader.put(TypeExtension.getTypeEnveloppe(simpleType), tailleCodageValeur, this);
+		enregistre(simpleType, tailleCodageValeur, this);
+		enregistre(TypeExtension.getTypeEnveloppe(simpleType), tailleCodageValeur, this);
 	}
 
 	public Object read(final DataInputStream input) throws IOException, UnmarshallExeption {
@@ -82,10 +94,9 @@ public class HeaderSimpleType<T> extends Header {
 			return input.readFloat();
 		if (simpleType == double.class)
 			return input.readDouble();
-		final byte[] tmp = new byte[tailleCodageValeur];
-		input.readFully(tmp);
-		final BigInteger bi = new BigInteger(tmp);
-		return ByteHelper.getObject(simpleType, bi);
+		if (simpleType == char.class)
+			return input.readChar();
+		return ByteHelper.getObject(simpleType, ByteHelper.read(input, tailleCodageValeur));
 	}
 
 	@Override
@@ -98,12 +109,14 @@ public class HeaderSimpleType<T> extends Header {
 		output.writeByte(headerByte);
 		if (tailleCodageValeur == 0)
 			return;// rien à ecrire
-		if (Float.class.isInstance(o))
+		if (o instanceof Float)
 			output.writeFloat((float) o);
-		else if (Double.class.isInstance(o))
+		else if (o instanceof Double)
 			output.writeDouble((double) o);
+		else if (o instanceof Character)
+			output.writeChar((char) o);
 		else
-			output.write(BigInteger.valueOf(((Number) o).longValue()).toByteArray());
+			ByteHelper.write(output, ((Number) o).longValue());
 	}
 
 }

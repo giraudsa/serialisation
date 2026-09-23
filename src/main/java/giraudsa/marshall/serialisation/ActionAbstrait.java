@@ -12,6 +12,7 @@ import giraudsa.marshall.strategie.StrategieDeSerialisation;
 import utils.EntityManager;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
+import utils.TypeExtension;
 
 public abstract class ActionAbstrait<T> {
 
@@ -84,7 +85,7 @@ public abstract class ActionAbstrait<T> {
 	protected Class<?> getType(final T obj) {
 		if (obj == null)
 			return Void.class;
-		return obj.getClass();
+		return TypeExtension.getClasseASerialiser(obj);
 	}
 
 	protected <U> boolean isDejaTotalementSerialise(final Marshaller marshaller, final U object) {

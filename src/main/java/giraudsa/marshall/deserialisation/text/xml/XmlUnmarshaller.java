@@ -12,10 +12,8 @@ import java.net.URL;
 import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Currency;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -24,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -64,10 +63,14 @@ import utils.ConfigurationMarshalling;
 import utils.EntityManager;
 
 public class XmlUnmarshaller<U> extends TextUnmarshaller<U> {
-	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections
-			.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
+	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
 
 	private static final String FEATURE_DISALLOW_DOCTYPE = "http://apache.org/xml/features/disallow-doctype-decl";
+	/**
+	 * SAXParserFactory.newInstance() et newSAXParser() sont coûteux : un parseur
+	 * par thread, réinitialisé après chaque usage.
+	 */
+	private static final ThreadLocal<SAXParser> PARSER = new ThreadLocal<>();
 	private static final Logger LOGGER = LoggerFactory.getLogger(XmlUnmarshaller.class);
 	static {
 		dicoTypeToAction.put(Date.class, ActionXmlDate.getInstance());
@@ -196,18 +199,36 @@ public class XmlUnmarshaller<U> extends TextUnmarshaller<U> {
 	}
 
 	////// METHODES PRIVEES
+	/**
+	 * Prend le parseur du thread (il est retiré pendant l'usage pour qu'un parsing
+	 * imbriqué dans le même thread en crée un autre).
+	 */
+	private static SAXParser prendParser() throws SAXException, UnmarshallExeption {
+		final SAXParser parser = PARSER.get();
+		if (parser != null) {
+			PARSER.remove();
+			return parser;
+		}
+		try {
+			final SAXParserFactory factory = SAXParserFactory.newInstance();
+			factory.setFeature(FEATURE_DISALLOW_DOCTYPE, true);
+			return factory.newSAXParser();
+		} catch (final ParserConfigurationException e) {
+			throw new UnmarshallExeption("Impossible de creer le parseur", e);
+		}
+	}
+
 	private U parse() throws IOException, SAXException, UnmarshallExeption {
 		final XmlUnmarshallerHandler handler = new XmlUnmarshallerHandler(this);
-		final SAXParserFactory factory = SAXParserFactory.newInstance();
+		final SAXParser parser = prendParser();
 		try {
-			factory.setFeature(FEATURE_DISALLOW_DOCTYPE, true);
-			final SAXParser parser = factory.newSAXParser();
 			final InputSource source = new InputSource(reader);
 			source.setEncoding("UTF-8");
 			parser.parse(source, handler);
 			return obj;
-		} catch (final ParserConfigurationException e) {
-			throw new UnmarshallExeption("Impossible de creer le parseur", e);
+		} finally {
+			parser.reset();
+			PARSER.set(parser);
 		}
 	}
 

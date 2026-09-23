@@ -13,6 +13,7 @@ import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
 import utils.Constants;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
+import utils.TypeExtension;
 
 @SuppressWarnings("rawtypes")
 public class ActionJsonCollectionType<T extends Collection> extends ActionJsonComplexeObject<T> {
@@ -28,7 +29,7 @@ public class ActionJsonCollectionType<T extends Collection> extends ActionJsonCo
 	private ActionJsonCollectionType(final Class<T> type, final JsonUnmarshaller<?> jsonUnmarshaller) {
 		super(type, jsonUnmarshaller);
 		Class<?> ttype = type;
-		if (type.getName().toLowerCase().indexOf("hibernate") != -1 || type.isInterface())
+		if (TypeExtension.isHibernate(type) || type.isInterface())
 			ttype = ArrayList.class;
 		try {
 			obj = ttype.newInstance();

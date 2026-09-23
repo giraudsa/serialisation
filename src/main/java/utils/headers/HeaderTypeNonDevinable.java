@@ -3,23 +3,20 @@ package utils.headers;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.math.BigInteger;
 
 import giraudsa.marshall.exception.UnmarshallExeption;
-import utils.BiHashMap;
 
 public class HeaderTypeNonDevinable extends Header {
-	private static final BiHashMap<Integer, Integer, HeaderTypeNonDevinable> encodageSmallIdEtSmallIdTypeToHeader = new BiHashMap<>();
+	/** headers indexés par [taille de codage du smallId (1 à 4)][taille de codage du smallIdType (1 à 2)]. */
+	private static final HeaderTypeNonDevinable[][] encodageSmallIdEtSmallIdTypeToHeader = new HeaderTypeNonDevinable[5][3];
 
 	protected static Header getHeader(final int smallId, final short smallIdType) {
 		final int toBeConsideredForNextBytes = smallId > HeaderVerySmallId.getMaxVerySmallId()
 				? smallId - HeaderVerySmallId.getMaxVerySmallId()
 				: smallId;
-		int encodageSmallId = 0;
-		int encodageSmallIdType = 0;
-		encodageSmallId = ByteHelper.getMinimumEncodage(toBeConsideredForNextBytes);
-		encodageSmallIdType = ByteHelper.getMinimumEncodage(smallIdType);
-		return encodageSmallIdEtSmallIdTypeToHeader.get(encodageSmallId, encodageSmallIdType);
+		final int encodageSmallId = ByteHelper.getMinimumEncodage(toBeConsideredForNextBytes);
+		final int encodageSmallIdType = ByteHelper.getMinimumEncodage(smallIdType);
+		return encodageSmallIdEtSmallIdTypeToHeader[encodageSmallId][encodageSmallIdType];
 	}
 
 	protected static void init() {
@@ -40,15 +37,12 @@ public class HeaderTypeNonDevinable extends Header {
 		super();
 		this.encodageSmallId = encodageSmallId;
 		this.encodageSmallIdType = encodageSmallIdType;
-		encodageSmallIdEtSmallIdTypeToHeader.put(encodageSmallId, encodageSmallIdType, this);
+		encodageSmallIdEtSmallIdTypeToHeader[encodageSmallId][encodageSmallIdType] = this;
 	}
 
 	@Override
 	public short getSmallIdType(final DataInputStream input) throws IOException, UnmarshallExeption {
-		final byte[] tmp = new byte[encodageSmallIdType];
-		input.readFully(tmp);
-		final BigInteger bi = new BigInteger(tmp);
-		return bi.shortValue();
+		return (short) ByteHelper.read(input, encodageSmallIdType);
 	}
 
 	@Override
@@ -58,11 +52,8 @@ public class HeaderTypeNonDevinable extends Header {
 
 	@Override
 	public int readSmallId(final DataInputStream input, final int maxId) throws IOException, UnmarshallExeption {
-		final byte[] tmp = new byte[encodageSmallId];
-		input.readFully(tmp);
-		final BigInteger bi = new BigInteger(tmp);
-		return maxId >= HeaderVerySmallId.getMaxVerySmallId() ? bi.intValue() + HeaderVerySmallId.getMaxVerySmallId()
-				: bi.intValue();
+		final int lu = (int) ByteHelper.read(input, encodageSmallId);
+		return maxId >= HeaderVerySmallId.getMaxVerySmallId() ? lu + HeaderVerySmallId.getMaxVerySmallId() : lu;
 	}
 
 	@Override
@@ -72,8 +63,8 @@ public class HeaderTypeNonDevinable extends Header {
 		final int toBeConsideredForNextBytes = smallId > HeaderVerySmallId.getMaxVerySmallId()
 				? smallId - HeaderVerySmallId.getMaxVerySmallId()
 				: smallId;
-		output.write(BigInteger.valueOf(toBeConsideredForNextBytes).toByteArray());
-		output.write(BigInteger.valueOf(smallIdType).toByteArray());
+		ByteHelper.write(output, toBeConsideredForNextBytes);
+		ByteHelper.write(output, smallIdType);
 		if (!isDejaVuType)
 			output.writeUTF(type.getName());
 

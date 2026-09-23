@@ -3,8 +3,8 @@ package giraudsa.marshall.deserialisation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import giraudsa.marshall.exception.ConstructorException;
 import giraudsa.marshall.exception.FabriqueInstantiationException;
@@ -18,17 +18,25 @@ import giraudsa.marshall.exception.InstanciationException;
  *
  */
 public class Fabrique {
-	private static Fabrique instance;
+	private static volatile Fabrique instance;
 	private static final Object[] noArgument = new Object[0];
 
-	public static synchronized Fabrique getInstance() throws FabriqueInstantiationException {
-		if (instance == null)
-			instance = new Fabrique();
-		return instance;
+	public static Fabrique getInstance() throws FabriqueInstantiationException {
+		Fabrique res = instance;
+		if (res == null)
+			synchronized (Fabrique.class) {
+				res = instance;
+				if (res == null) {
+					res = new Fabrique();
+					instance = res;
+				}
+			}
+		return res;
 	}
 
 	private final Constructor<Object> constructeurObject;// constructeur par défaut de la classe Object
-	private final Map<Class<?>, Object> dicoClassToConstructeur = new HashMap<>();
+	// partagé entre threads (singleton)
+	private final Map<Class<?>, Constructor<?>> dicoClassToConstructeur = new ConcurrentHashMap<>();
 	private final Method newConstructorForSerializationMethod; // methode public Constructor
 																// newConstructorForSerialization(Class
 																// classToInstantiate, Constructor constructorToCall)
@@ -53,18 +61,20 @@ public class Fabrique {
 	// "return reflectionFactory.newConstructorForSerialization(type, constructor);"
 	@SuppressWarnings("unchecked")
 	private <T> Constructor<T> getConstructor(final Class<T> type) throws ConstructorException {
-		try {
-			if (!dicoClassToConstructeur.containsKey(type)) {
-
-				final Object constr = newConstructorForSerializationMethod.invoke(reflectionFactory, type,
+		Constructor<?> constr = dicoClassToConstructeur.get(type);
+		if (constr == null) {
+			try {
+				constr = (Constructor<?>) newConstructorForSerializationMethod.invoke(reflectionFactory, type,
 						constructeurObject);
-				dicoClassToConstructeur.put(type, constr);
-				((Constructor<?>) constr).setAccessible(true);
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				throw new ConstructorException("impossible de creer le constructeur pour le type " + type.getName(), e);
 			}
-			return (Constructor<T>) dicoClassToConstructeur.get(type);
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			throw new ConstructorException("impossible de creer le constructeur pour le type " + type.getName(), e);
+			constr.setAccessible(true);
+			final Constructor<?> existant = dicoClassToConstructeur.putIfAbsent(type, constr);
+			if (existant != null)
+				constr = existant;
 		}
+		return (Constructor<T>) constr;
 	}
 
 	/**

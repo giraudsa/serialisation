@@ -6,6 +6,7 @@ import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinarySimple;
+import utils.TypeExtension;
 
 @SuppressWarnings("rawtypes")
 public class ActionBinaryEnum<E extends Enum> extends ActionBinarySimple<E> {
@@ -25,7 +26,7 @@ public class ActionBinaryEnum<E extends Enum> extends ActionBinarySimple<E> {
 
 	@Override
 	protected void initialise() throws IOException {
-		final Enum[] enums = type.getEnumConstants();
+		final Enum[] enums = TypeExtension.getEnumConstants(type);
 		if (enums.length < 254)
 			obj = enums[readByte()];
 		else

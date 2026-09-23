@@ -1,6 +1,7 @@
 package giraudsa.marshall.deserialisation.binary.actions;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,6 +21,7 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.champ.FakeChamp;
+import utils.TypeExtension;
 
 @SuppressWarnings("rawtypes")
 public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C> {
@@ -94,13 +96,13 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 	private Collection newInstance() throws UnmarshallExeption {
 		Collection objetADeserialiser = null;
 		try {
-			if (type == ArrayList.class || type.getName().indexOf("ArrayList") != -1)
+			if (type == ArrayList.class)
 				objetADeserialiser = new ArrayList();
 			else if (type == LinkedList.class)
 				objetADeserialiser = new LinkedList();
 			else if (type == HashSet.class)
 				objetADeserialiser = new HashSet();
-			else if (type.getName().toLowerCase().indexOf("hibernate") != -1) {
+			else if (TypeExtension.isHibernate(type)) {
 				if (fieldInformations.getValueType().isAssignableFrom(ArrayList.class))
 					objetADeserialiser = new ArrayList();
 				else if (fieldInformations.getValueType().isAssignableFrom(HashSet.class))
@@ -109,8 +111,16 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 					throw new UnmarshallExeption("Probleme avec un type hibernate " + type.getName(),
 							new InstantiationException());
 			} else
-				objetADeserialiser = type.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
+				try {
+					objetADeserialiser = type.getDeclaredConstructor().newInstance();
+				} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+					// liste sans constructeur accessible (Arrays$ArrayList...) : on se rabat
+					// sur ArrayList comme historiquement
+					if (type.getName().indexOf("ArrayList") == -1)
+						throw new InstantiationException(e.toString());
+					objetADeserialiser = new ArrayList();
+				}
+		} catch (final InstantiationException e) {
 			LOGGER.error("impossible d'instancier la collection " + type.getName(), e);
 			throw new UnmarshallExeption("impossible d'instancier la collection " + type.getName(), e);
 		}

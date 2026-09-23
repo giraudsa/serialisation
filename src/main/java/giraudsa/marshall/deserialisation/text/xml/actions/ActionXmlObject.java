@@ -8,7 +8,6 @@ import java.util.UUID;
 
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
-import giraudsa.marshall.deserialisation.text.xml.XmlEscapeUtil;
 import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.InstanciationException;
@@ -78,11 +77,11 @@ public class ActionXmlObject<T> extends ActionXmlComplexeObject<T> {
 		typeId = TypeExtension.getTypeEnveloppe(typeId);
 		if (TypeExtension.isEnveloppe(typeId) || typeId.isAssignableFrom(String.class)) {
 			try {
-				objId = typeId.getConstructor(String.class).newInstance(XmlEscapeUtil.unescape(id));
+				objId = typeId.getConstructor(String.class).newInstance(id);
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				throw new InstanciationException("impossible d'instancier un objet de type " + typeId
-						+ " avec la valeur " + System.lineSeparator() + XmlEscapeUtil.unescape(id), e);
+						+ " avec la valeur " + System.lineSeparator() + id, e);
 			}
 			dicoNomChampToValue.put(ChampUid.UID_FIELD_NAME, objId);
 		}

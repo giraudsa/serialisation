@@ -1,7 +1,6 @@
 package giraudsa.marshall.serialisation.text;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.text.DateFormat;
 import java.util.Map;
 
@@ -19,6 +18,15 @@ public abstract class ActionText<T> extends ActionAbstrait<T> {
 	}
 
 	protected abstract Map<Character, String> getRemplacementChar();
+
+	/**
+	 * Table construite à partir de {@link #getRemplacementChar()}. Les classes
+	 * dérivées la redéfinissent avec une instance statique pour ne pas la
+	 * reconstruire à chaque écriture.
+	 */
+	protected TableEchappement getTableEchappement() {
+		return new TableEchappement(getRemplacementChar());
+	}
 
 	private TextMarshaller getTextMarshaller(final Marshaller marshaller) {
 		return (TextMarshaller) marshaller;
@@ -43,18 +51,7 @@ public abstract class ActionText<T> extends ActionAbstrait<T> {
 	}
 
 	protected void writeEscape(final Marshaller marshaller, final String toBeEscaped) throws IOException {
-		if (toBeEscaped.isEmpty())
-			write(marshaller, toBeEscaped);
-		final StringReader sr = new StringReader(toBeEscaped);
-		int i = sr.read();
-		while (i != -1) {
-			final String r = getRemplacementChar().get((char) i);
-			if (r == null)
-				write(marshaller, (char) i);
-			else
-				write(marshaller, r);
-			i = sr.read();
-		}
+		getTableEchappement().ecris(getTextMarshaller(marshaller).writer, toBeEscaped);
 	}
 
 }

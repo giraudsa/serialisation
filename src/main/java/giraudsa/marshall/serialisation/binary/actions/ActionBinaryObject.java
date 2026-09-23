@@ -3,7 +3,7 @@ package giraudsa.marshall.serialisation.binary.actions;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -45,13 +45,11 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 
 	private List<Champ> getListeChamp(final Object objetASerialiser, final boolean serialiseId,
 			final boolean serialiseToutSaufId) {
-		final List<Champ> ret = new ArrayList<>();
-		final Champ champId = TypeExtension.getChampId(objetASerialiser.getClass());
-		final List<Champ> champs = TypeExtension.getSerializableFields(objetASerialiser.getClass());
-		for (final Champ champ : champs)
-			if (champ == champId && serialiseId || champ != champId && serialiseToutSaufId)
-				ret.add(champ);
-		return ret;
+		final Class<?> type = objetASerialiser.getClass();
+		if (serialiseToutSaufId)
+			return serialiseId ? TypeExtension.getSerializableFields(type)
+					: TypeExtension.getSerializableFieldsSaufId(type);
+		return serialiseId ? Collections.singletonList(TypeExtension.getChampId(type)) : Collections.emptyList();
 	}
 
 	private boolean serialiseId(final Object objetASerialiser, final boolean isDejaVu) {

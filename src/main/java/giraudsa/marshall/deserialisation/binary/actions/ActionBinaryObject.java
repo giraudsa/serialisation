@@ -2,6 +2,7 @@ package giraudsa.marshall.deserialisation.binary.actions;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -44,7 +45,7 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 			throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption,
 			InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
 		if (champEnAttente != null) {
-			if (champEnAttente != TypeExtension.getChampId(type))
+			if (champEnAttente != champId)
 				setDejaTotalementDeSerialise();
 			litObject(champEnAttente);
 		} else
@@ -82,13 +83,22 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 	}
 
 	private void initialiseListeChamps(final boolean deserialiseToutSaufId, final boolean deserialiseId) {
-		listeChamps = new ArrayList<>();
-		if (deserialiseId)
-			listeChamps.add(champId);
-		if (deserialiseToutSaufId)
-			for (final Champ champ : TypeExtension.getSerializableFields(type))
-				if (champ != champId)
-					listeChamps.add(champ);
+		// l'id d'abord, puis les autres champs : on réutilise les listes précalculées
+		// quand c'est possible pour ne pas allouer une liste par objet.
+		if (!deserialiseToutSaufId)
+			listeChamps = deserialiseId ? Collections.singletonList(champId) : Collections.emptyList();
+		else if (!deserialiseId)
+			listeChamps = TypeExtension.getSerializableFieldsSaufId(type);
+		else {
+			final List<Champ> tous = TypeExtension.getSerializableFields(type);
+			if (!tous.isEmpty() && tous.get(0) == champId)
+				listeChamps = tous;
+			else {
+				listeChamps = new ArrayList<>(tous.size());
+				listeChamps.add(champId);
+				listeChamps.addAll(TypeExtension.getSerializableFieldsSaufId(type));
+			}
+		}
 	}
 
 	@Override
