@@ -1,45 +1,27 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.json.ActionJson;
 import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
 import utils.Constants;
+import utils.TypeExtension;
 
 @SuppressWarnings("rawtypes")
 public class ActionJsonEnum<T extends Enum> extends ActionJson<T> {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ActionJsonEnum.class);
-
 	public static ActionAbstrait<Enum> getInstance() {
 		return new ActionJsonEnum<>(Enum.class, null);
 	}
 
-	private final Map<String, T> dicoStringEnumToObjEnum = new HashMap<>();
+	private Map<String, T> dicoStringEnumToObjEnum = Collections.emptyMap();
 
-	@SuppressWarnings("unchecked")
 	private ActionJsonEnum(final Class<T> type, final JsonUnmarshaller<?> jsonUnmarshaller) {
 		super(type, jsonUnmarshaller);
-		if (type != Enum.class) {
-			Method values;
-			try {
-				values = type.getDeclaredMethod("values");
-				final T[] listeEnum = (T[]) values.invoke(null);
-				for (final T objEnum : listeEnum)
-					dicoStringEnumToObjEnum.put(objEnum.toString(), objEnum);
-			} catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException e) {
-				LOGGER.error("T n'est pas un Enum... étrange", e);
-				throw new NullPointerException();
-			}
-		}
+		if (type != Enum.class)
+			dicoStringEnumToObjEnum = TypeExtension.getEnumParNom(type);
 	}
 
 	@Override

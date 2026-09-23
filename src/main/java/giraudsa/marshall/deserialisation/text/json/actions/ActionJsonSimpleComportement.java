@@ -38,13 +38,23 @@ public class ActionJsonSimpleComportement<T> extends ActionJson<T> {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected <W> void integreObjet(final String nomAttribut, final W objet) {
-		// rien à faire
+		// valeur enveloppée {"__type":..., "__valeur":...} quand le type n'est pas devinable
+		if (Constants.VALEUR.equals(nomAttribut))
+			obj = (T) objet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void rempliData(final String donnees) throws InstanciationException {
+		if (type == Character.class) { // pas de constructeur Character(String)
+			if (donnees.length() != 1)
+				throw new InstanciationException("un caractère est attendu au lieu de \"" + donnees + "\"");
+			obj = (T) Character.valueOf(donnees.charAt(0));
+			return;
+		}
 		try {
 			obj = type.getConstructor(String.class).newInstance(donnees);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException

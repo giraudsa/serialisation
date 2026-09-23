@@ -7,6 +7,7 @@ import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
 import utils.champ.FieldInformations;
 import utils.headers.HeaderEnum;
+import utils.TypeExtension;
 
 @SuppressWarnings("rawtypes")
 public class ActionBinaryEnum extends ActionBinary<Enum> {
@@ -18,7 +19,7 @@ public class ActionBinaryEnum extends ActionBinary<Enum> {
 	@Override
 	protected void ecritValeur(final Marshaller marshaller, final Enum enumASerialiser,
 			final FieldInformations fieldInformations, final boolean isDejaVu) throws IOException, MarshallExeption {
-		final Enum[] enums = enumASerialiser.getClass().getEnumConstants();
+		final Enum[] enums = TypeExtension.getEnumConstants(enumASerialiser.getDeclaringClass());
 		if (enums.length < 254)
 			writeByte(marshaller, (byte) enumASerialiser.ordinal());
 		else

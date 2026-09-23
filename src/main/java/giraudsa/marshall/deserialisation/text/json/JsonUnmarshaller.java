@@ -13,10 +13,8 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Currency;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -26,6 +24,7 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.zip.DataFormatException;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,8 +61,7 @@ import utils.EntityManager;
 import utils.TypeExtension;
 
 public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
-	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections
-			.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
+	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUnmarshaller.class);
 	static {
 		dicoTypeToAction.put(Date.class, ActionJsonDate.getInstance());

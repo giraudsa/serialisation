@@ -3,19 +3,18 @@ package utils.headers;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
 
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 public class HeaderEnum extends Header {
 
-	private static final Map<Integer, HeaderEnum> encodageSmallIdToHeaderEnum = new HashMap<>();
+	/** headers indexés par la taille de codage du smallIdType (0 = type devinable). */
+	private static final HeaderEnum[] encodageSmallIdToHeaderEnum = new HeaderEnum[3];
 
 	public static HeaderEnum getHeader(final short smallIdType, final boolean typeDevinable) {
+		Registre.init();
 		final int encodageSmallIdType = typeDevinable ? 0 : ByteHelper.getMinimumEncodage(smallIdType);
-		return encodageSmallIdToHeaderEnum.get(encodageSmallIdType);
+		return encodageSmallIdToHeaderEnum[encodageSmallIdType];
 	}
 
 	protected static void init() {
@@ -29,15 +28,12 @@ public class HeaderEnum extends Header {
 	public HeaderEnum(final int encodageSmallIdType) {
 		super();
 		this.encodageSmallIdType = encodageSmallIdType;
-		encodageSmallIdToHeaderEnum.put(encodageSmallIdType, this);
+		encodageSmallIdToHeaderEnum[encodageSmallIdType] = this;
 	}
 
 	@Override
 	public short getSmallIdType(final DataInputStream input) throws IOException, UnmarshallExeption {
-		final byte[] tmp = new byte[encodageSmallIdType];
-		input.readFully(tmp);
-		final BigInteger bi = new BigInteger(tmp);
-		return bi.shortValue();
+		return (short) ByteHelper.read(input, encodageSmallIdType);
 	}
 
 	@Override
@@ -54,7 +50,7 @@ public class HeaderEnum extends Header {
 			throws IOException {
 		output.writeByte(headerByte);
 		if (encodageSmallIdType > 0) {// type non devinable
-			output.write(BigInteger.valueOf(smallIdType).toByteArray());
+			ByteHelper.write(output, smallIdType);
 			if (!isDejaVuType)
 				output.writeUTF(type.getName());
 		}

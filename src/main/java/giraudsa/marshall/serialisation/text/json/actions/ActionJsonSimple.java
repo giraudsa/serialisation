@@ -1,15 +1,41 @@
 package giraudsa.marshall.serialisation.text.json.actions;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
+import giraudsa.marshall.exception.MarshallExeption;
+import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.json.ActionJson;
 import utils.Constants;
+import utils.champ.FieldInformations;
 
 public abstract class ActionJsonSimple<T> extends ActionJson<T> {
 
 	protected ActionJsonSimple() {
 		super();
+	}
+
+	/**
+	 * Une valeur simple n'empile aucun travail : on écrit directement clef,
+	 * valeur et fermeture, dans le même ordre que les deux comportements empilés
+	 * par {@link ActionJson#marshall}, sans les allouer.
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	protected void marshall(final Marshaller marshaller, final Object obj, final FieldInformations fieldInformations)
+			throws MarshallExeption {
+		final boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
+		final boolean nePasEcrireType = writeType(marshaller) ? typeDevinable : true;
+		try {
+			ecritClef(marshaller, fieldInformations.getName());
+			final boolean separateurAEcrire = commenceObject(marshaller, (T) obj, nePasEcrireType);
+			ecritValeur(marshaller, (T) obj, fieldInformations, separateurAEcrire);
+			clotureObject(marshaller, (T) obj, nePasEcrireType);
+		} catch (IOException | IllegalAccessException | InstantiationException | InvocationTargetException
+				| NoSuchMethodException | NotImplementedSerializeException e) {
+			throw new MarshallExeption(e);
+		}
 	}
 
 	@Override

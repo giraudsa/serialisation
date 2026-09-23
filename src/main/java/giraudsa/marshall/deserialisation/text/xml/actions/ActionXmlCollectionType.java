@@ -12,6 +12,7 @@ import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
+import utils.TypeExtension;
 
 @SuppressWarnings("rawtypes")
 public class ActionXmlCollectionType<C extends Collection> extends ActionXmlComplexeObject<C> {
@@ -26,7 +27,7 @@ public class ActionXmlCollectionType<C extends Collection> extends ActionXmlComp
 	private ActionXmlCollectionType(final Class<C> type, final XmlUnmarshaller<?> unmarshaller) {
 		super(type, unmarshaller);
 		Class<?> ttype = type;
-		if (type.getName().toLowerCase().indexOf("hibernate") != -1 || type.isInterface())
+		if (TypeExtension.isHibernate(type) || type.isInterface())
 			ttype = ArrayList.class;
 		try {
 			obj = ttype.newInstance();

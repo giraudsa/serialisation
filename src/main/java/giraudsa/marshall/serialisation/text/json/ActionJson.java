@@ -10,6 +10,7 @@ import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.ActionText;
+import giraudsa.marshall.serialisation.text.TableEchappement;
 import utils.champ.FieldInformations;
 
 public abstract class ActionJson<T> extends ActionText<T> {
@@ -83,6 +84,8 @@ public abstract class ActionJson<T> extends ActionText<T> {
 		REMPLACEMENT_CHARS = Collections.unmodifiableMap(t);
 	}
 
+	private static final TableEchappement ECHAPPEMENT = new TableEchappement(REMPLACEMENT_CHARS);
+
 	protected ActionJson() {
 		super();
 	}
@@ -121,7 +124,13 @@ public abstract class ActionJson<T> extends ActionText<T> {
 	}
 
 	@Override
-	protected void marshall(final Marshaller marshaller, final Object obj, final FieldInformations fieldInformations) {
+	protected TableEchappement getTableEchappement() {
+		return ECHAPPEMENT;
+	}
+
+	@Override
+	protected void marshall(final Marshaller marshaller, final Object obj, final FieldInformations fieldInformations)
+			throws MarshallExeption {
 		final String nomClef = fieldInformations.getName();
 		final boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
 		pushComportement(marshaller, new ComportementFermeAccolade(obj, typeDevinable));

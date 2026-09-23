@@ -11,6 +11,7 @@ import giraudsa.marshall.exception.FabriqueInstantiationException;
 import utils.EntityManager;
 import utils.TypeExtension;
 import utils.champ.FakeChamp;
+import utils.CopieFormatDate;
 import utils.champ.FieldInformations;
 
 public abstract class TextUnmarshaller<T> extends Unmarshaller<T> {
@@ -22,8 +23,7 @@ public abstract class TextUnmarshaller<T> extends Unmarshaller<T> {
 			throws FabriqueInstantiationException {
 		super(entity);
 		this.reader = reader;
-		df = new SimpleDateFormat(dateFormat.toPattern());
-		df.setTimeZone(dateFormat.getTimeZone());
+		df = CopieFormatDate.copie(dateFormat);
 	}
 
 	@Override

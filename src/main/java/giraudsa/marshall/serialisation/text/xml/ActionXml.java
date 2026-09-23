@@ -10,6 +10,7 @@ import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.ActionText;
+import giraudsa.marshall.serialisation.text.TableEchappement;
 import utils.TypeExtension;
 import utils.champ.Champ;
 import utils.champ.FieldInformations;
@@ -148,17 +149,48 @@ public abstract class ActionXml<T> extends ActionText<T> {
 
 	}
 
-	private static final Map<Character, String> REMPLACEMENT_CHARS;
+	/**
+	 * Remplacements pour le contenu texte (document XML 1.1). En XML 1.1 :
+	 * <ul>
+	 * <li>\u0000 est interdit sous toute forme : remplacé par \uFFFD ;</li>
+	 * <li>les autres caractères de contrôle ne sont admis que sous forme de
+	 * référence (&amp;#x1;) ;</li>
+	 * <li>\r, \u0085 et \u2028 littéraux sont normalisés en \n par le parseur :
+	 * on les écrit aussi en référence.</li>
+	 * </ul>
+	 */
+	private static final Map<Character, String> REMPLACEMENT_CHARS = Collections.unmodifiableMap(remplacements(false));
 
-	static {
+	private static final TableEchappement ECHAPPEMENT = new TableEchappement(REMPLACEMENT_CHARS);
+
+	/**
+	 * Remplacements pour une valeur d'attribut : en plus du texte, le guillemet
+	 * et les blancs \t et \n (que la normalisation des attributs changerait en
+	 * espaces).
+	 */
+	static final TableEchappement ECHAPPEMENT_ATTRIBUT = new TableEchappement(remplacements(true));
+
+	private static Map<Character, String> remplacements(final boolean pourAttribut) {
 		final Map<Character, String> tmp = new HashMap<>();
-		for (char c = 0; c <= 0x1F; c++)
-			if (c != '\t' && c != '\n' && c != '\r')
-				tmp.put(c, "\uFFFD");
+		for (char c = 1; c <= 0x1F; c++)
+			tmp.put(c, reference(c));
+		for (char c = 0x7F; c <= 0x9F; c++)
+			tmp.put(c, reference(c));
+		tmp.put('\u2028', reference('\u2028'));
+		tmp.put('\u0000', "\uFFFD");
+		if (!pourAttribut) {
+			tmp.remove('\t');
+			tmp.remove('\n');
+		} else
+			tmp.put('"', "&quot;");
 		tmp.put('&', "&amp;");
 		tmp.put('<', "&lt;");
 		tmp.put('>', "&gt;");
-		REMPLACEMENT_CHARS = Collections.unmodifiableMap(tmp);
+		return tmp;
+	}
+
+	private static String reference(final char c) {
+		return "&#x" + Integer.toHexString(c).toUpperCase() + ";";
 	}
 
 	public ActionXml() {
@@ -180,6 +212,11 @@ public abstract class ActionXml<T> extends ActionText<T> {
 	@Override
 	protected Map<Character, String> getRemplacementChar() {
 		return REMPLACEMENT_CHARS;
+	}
+
+	@Override
+	protected TableEchappement getTableEchappement() {
+		return ECHAPPEMENT;
 	}
 
 	protected XmlMarshaller getXmlMarshaller(final Marshaller marshaller) {

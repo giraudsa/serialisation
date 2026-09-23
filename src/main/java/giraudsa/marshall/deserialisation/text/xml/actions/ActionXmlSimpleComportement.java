@@ -5,7 +5,6 @@ import java.lang.reflect.InvocationTargetException;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.ActionXml;
-import giraudsa.marshall.deserialisation.text.xml.XmlEscapeUtil;
 import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 import giraudsa.marshall.exception.InstanciationException;
 
@@ -15,8 +14,12 @@ public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 		return (ActionAbstrait<U>) new ActionXmlSimpleComportement<>(Object.class, null);
 	}
 
+	/**
+	 * Le parseur SAX a déjà décodé les entités et références : un second
+	 * décodage corromprait un texte contenant par exemple "&amp;lt;".
+	 */
 	protected static String unescapeXml(final String text) {
-		return XmlEscapeUtil.unescape(text);
+		return text;
 	}
 
 	protected StringBuilder sb = new StringBuilder();
@@ -25,8 +28,15 @@ public class ActionXmlSimpleComportement<T> extends ActionXml<T> {
 		super(type, xmlUnmarshaller);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void construitObjet() throws InstanciationException {
+		if (type == Character.class) { // pas de constructeur Character(String)
+			if (sb.length() != 1)
+				throw new InstanciationException("un caractère est attendu au lieu de \"" + sb + "\"");
+			obj = (T) Character.valueOf(sb.charAt(0));
+			return;
+		}
 		try {
 			obj = type.getConstructor(String.class).newInstance(unescapeXml(sb.toString()));
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException

@@ -17,6 +17,7 @@ import giraudsa.marshall.serialisation.text.json.ActionJson;
 import utils.Constants;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
+import utils.TypeExtension;
 
 @SuppressWarnings("rawtypes")
 public class ActionJsonCollectionType extends ActionJson<Collection> {
@@ -74,7 +75,7 @@ public class ActionJsonCollectionType extends ActionJson<Collection> {
 	protected Class<?> getType(final Collection obj) {
 		final Class<?> clazz = obj.getClass();
 
-		if (clazz.getName().toLowerCase().indexOf("hibernate") != -1) {
+		if (TypeExtension.isHibernate(clazz)) {
 			if (obj.getClass().getName().toLowerCase().indexOf("persistentlist") != -1)
 				return ArrayList.class;
 			if (obj.getClass().getName().toLowerCase().indexOf("persistentbag") != -1)

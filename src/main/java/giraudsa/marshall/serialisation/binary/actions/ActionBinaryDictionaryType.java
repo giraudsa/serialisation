@@ -16,6 +16,7 @@ import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
+import utils.TypeExtension;
 
 @SuppressWarnings("rawtypes")
 public class ActionBinaryDictionaryType extends ActionBinary<Map> {
@@ -60,7 +61,7 @@ public class ActionBinaryDictionaryType extends ActionBinary<Map> {
 	@Override
 	protected Class<?> getTypeObjProblemeHibernate(final Object object) {
 		final Class<?> clazz = object.getClass();
-		if (clazz.getName().toLowerCase().indexOf("hibernate") != -1) {
+		if (TypeExtension.isHibernate(clazz)) {
 			if (object.getClass().getName().toLowerCase().indexOf("persistentmap") != -1)
 				return HashMap.class;
 			if (object.getClass().getName().toLowerCase().indexOf("persistentsortedmap") != -1)

@@ -3,22 +3,18 @@ package utils.headers;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
 
 import giraudsa.marshall.exception.UnmarshallExeption;
 
 public class HeaderTypeDevinable extends Header {
-	private static final Map<Integer, HeaderTypeDevinable> encodageSmallIdToHeaderTypeDevinable = new HashMap<>();
+	/** headers indexés par la taille de codage du smallId (1 à 4). */
+	private static final HeaderTypeDevinable[] encodageSmallIdToHeaderTypeDevinable = new HeaderTypeDevinable[5];
 
 	protected static Header getHeader(final int smallId) {
 		final int toBeConsideredForNextBytes = smallId > HeaderVerySmallId.getMaxVerySmallId()
 				? smallId - HeaderVerySmallId.getMaxVerySmallId()
 				: smallId;
-		int encodageSmallId = 0;
-		encodageSmallId = ByteHelper.getMinimumEncodage(toBeConsideredForNextBytes);
-		return encodageSmallIdToHeaderTypeDevinable.get(encodageSmallId);
+		return encodageSmallIdToHeaderTypeDevinable[ByteHelper.getMinimumEncodage(toBeConsideredForNextBytes)];
 	}
 
 	protected static void init() {
@@ -33,16 +29,13 @@ public class HeaderTypeDevinable extends Header {
 	private HeaderTypeDevinable(final int encodageSmallId) {
 		super();
 		this.encodageSmallId = encodageSmallId;
-		encodageSmallIdToHeaderTypeDevinable.put(encodageSmallId, this);
+		encodageSmallIdToHeaderTypeDevinable[encodageSmallId] = this;
 	}
 
 	@Override
 	public int readSmallId(final DataInputStream input, final int maxId) throws IOException, UnmarshallExeption {
-		final byte[] tmp = new byte[encodageSmallId];
-		input.readFully(tmp);
-		final BigInteger bi = new BigInteger(tmp);
-		return maxId >= HeaderVerySmallId.getMaxVerySmallId() ? bi.intValue() + HeaderVerySmallId.getMaxVerySmallId()
-				: bi.intValue();
+		final int lu = (int) ByteHelper.read(input, encodageSmallId);
+		return maxId >= HeaderVerySmallId.getMaxVerySmallId() ? lu + HeaderVerySmallId.getMaxVerySmallId() : lu;
 	}
 
 	@Override
@@ -52,7 +45,7 @@ public class HeaderTypeDevinable extends Header {
 		final int toBeConsideredForNextBytes = smallId > HeaderVerySmallId.getMaxVerySmallId()
 				? smallId - HeaderVerySmallId.getMaxVerySmallId()
 				: smallId;
-		output.write(BigInteger.valueOf(toBeConsideredForNextBytes).toByteArray());
+		ByteHelper.write(output, toBeConsideredForNextBytes);
 	}
 
 }

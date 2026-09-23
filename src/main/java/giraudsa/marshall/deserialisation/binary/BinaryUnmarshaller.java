@@ -11,20 +11,20 @@ import java.net.URI;
 import java.net.URL;
 import java.util.BitSet;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,8 +71,7 @@ import utils.headers.HeaderSimpleType;
 import utils.headers.HeaderTypeCourant;
 
 public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
-	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections
-			.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
+	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
 	private static final Logger LOGGER = LoggerFactory.getLogger(BinaryUnmarshaller.class);
 	static {
 		dicoTypeToAction.put(Constants.dateType, ActionBinaryDate.getInstance());
@@ -125,13 +124,15 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	private short biggestSmallIdType = 0;
-	private final Map<Short, Class<?>> dicoSmallIdToClazz = new HashMap<>();
-	private final Map<Integer, Date> dicoSmallIdToDate = new HashMap<>();
+	// les smallIds de types, dates, chaînes et UUID sont attribués séquentiellement
+	// à partir de 1 : on les range dans des tables indexées par smallId.
+	private final TableParId<Class<?>> dicoSmallIdToClazz = new TableParId<>();
+	private final TableParId<Date> dicoSmallIdToDate = new TableParId<>();
 	private final Map<Integer, Object> dicoSmallIdToObject = new HashMap<>();
-	private final Map<Integer, String> dicoSmallIdToString = new HashMap<>();
-	private final Map<Integer, UUID> dicoSmallIdToUUID = new HashMap<>();
+	private final TableParId<String> dicoSmallIdToString = new TableParId<>();
+	private final TableParId<UUID> dicoSmallIdToUUID = new TableParId<>();
 	private final DataInputStream input;
-	private final Set<Integer> isDejaTotalementDeSerialise = new HashSet<>();
+	private final BitSet isDejaTotalementDeSerialise = new BitSet();
 	private final Set<Class<?>> listeClasseDejaRencontre = new HashSet<>();
 
 	protected int profondeur = 0;
@@ -183,7 +184,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	protected boolean isDejaTotalementDeSerialise(final int smallId) {
-		return isDejaTotalementDeSerialise.contains(smallId);
+		return smallId >= 0 && isDejaTotalementDeSerialise.get(smallId);
 	}
 
 	protected boolean isDejaVu(final int smallId) {
@@ -195,19 +196,19 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	protected boolean isDejaVuClazz(final short smallIdType) {
-		return dicoSmallIdToClazz.containsKey(smallIdType);
+		return dicoSmallIdToClazz.contient(smallIdType);
 	}
 
 	protected boolean isDejaVuDate(final int dateId) {
-		return dicoSmallIdToDate.containsKey(dateId);
+		return dicoSmallIdToDate.contient(dateId);
 	}
 
 	protected boolean isDejaVuString(final int stringId) {
-		return dicoSmallIdToString.containsKey(stringId);
+		return dicoSmallIdToString.contient(stringId);
 	}
 
 	protected boolean isDejaVuUuid(final int uuidId) {
-		return dicoSmallIdToUUID.containsKey(uuidId);
+		return dicoSmallIdToUUID.contient(uuidId);
 	}
 
 	protected void litObject(final FieldInformations fieldInformations)
@@ -264,7 +265,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		} else {
 			final short smallIdType = header.getSmallIdType(input);
 			if (!isDejaVuClazz(smallIdType))
-				stockClass(Class.forName(readUTF()), smallIdType);
+				stockClass(getClasse(readUTF()), smallIdType);
 			type = dicoSmallIdToClazz.get(smallIdType);
 		}
 		final ActionAbstrait<?> action = getAction(type);
@@ -296,7 +297,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		} else {
 			final short smallIdType = header.getSmallIdType(input);
 			if (!isDejaVuClazz(smallIdType))
-				stockClass(Class.forName(readUTF()), smallIdType);
+				stockClass(getClasse(readUTF()), smallIdType);
 			type = dicoSmallIdToClazz.get(smallIdType);
 		}
 		final ActionAbstrait<?> action = getAction(type);
@@ -362,15 +363,15 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	private UUID readUUID() throws IOException {
-		final byte[] tmp = new byte[16];
-		final int r = input.read(tmp);
-		if (r != 16)
-			throw new IOException("pas possible de lire un UUID");
-		return UUID.nameUUIDFromBytes(tmp);
+		// symétrique de ActionBinaryUUID : bits de poids fort puis de poids faible
+		final long mostSigBits = input.readLong();
+		final long leastSigBits = input.readLong();
+		return new UUID(mostSigBits, leastSigBits);
 	}
 
 	protected void setDejaTotalementDeSerialise(final int smallId) {
-		isDejaTotalementDeSerialise.add(smallId);
+		if (smallId >= 0)
+			isDejaTotalementDeSerialise.set(smallId);
 	}
 
 	private void stockClass(final Class<?> type) {
@@ -379,12 +380,12 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 
 	private void stockClass(final Class<?> type, final short smallIdType) {
 		listeClasseDejaRencontre.add(type);
-		dicoSmallIdToClazz.put(smallIdType, type);
+		dicoSmallIdToClazz.set(smallIdType, type);
 		biggestSmallIdType = smallIdType;
 	}
 
 	private void stockDateSmallId(final Date date, final int smallId) {
-		dicoSmallIdToDate.put(smallId, date);
+		dicoSmallIdToDate.set(smallId, date);
 	}
 
 	protected void stockObjectSmallId(final int smallId, final Object obj) {
@@ -392,11 +393,11 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	private void stockStringSmallId(final String string, final int smallId) {
-		dicoSmallIdToString.put(smallId, string);
+		dicoSmallIdToString.set(smallId, string);
 	}
 
 	private void stockUuidSmallId(final UUID id, final int smallId) {
-		dicoSmallIdToUUID.put(smallId, id);
+		dicoSmallIdToUUID.set(smallId, id);
 	}
 
 }

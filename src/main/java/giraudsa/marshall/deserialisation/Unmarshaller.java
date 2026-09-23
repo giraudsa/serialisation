@@ -1,11 +1,12 @@
 package giraudsa.marshall.deserialisation;
 
 import java.io.IOException;
+import java.util.IdentityHashMap;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import giraudsa.marshall.exception.EntityManagerImplementationException;
 import giraudsa.marshall.exception.FabriqueInstantiationException;
@@ -14,14 +15,27 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SetValueException;
 import utils.Constants;
 import utils.EntityManager;
+import utils.TypeExtension;
 
 public abstract class Unmarshaller<T> {
+	/** Class.forName est coûteux : les classes déjà résolues sont gardées par nom. */
+	private static final Map<String, Class<?>> classesParNom = new ConcurrentHashMap<>();
+
+	protected static Class<?> getClasse(final String nom) throws ClassNotFoundException {
+		Class<?> classe = classesParNom.get(nom);
+		if (classe == null) {
+			classe = Class.forName(nom);
+			classesParNom.put(nom, classe);
+		}
+		return classe;
+	}
+
 	protected static Class<?> getTypeDepuisNom(final String smallNameType) throws ClassNotFoundException {
-		return Class.forName(Constants.getNameType(smallNameType));
+		return getClasse(Constants.getNameType(smallNameType));
 	}
 
 	protected CacheObject cacheObject;
-	private final Map<Object, UUID> dicoObjToFakeId = new HashMap<>();
+	private final Map<Object, UUID> dicoObjToFakeId = new IdentityHashMap<>();
 	protected final EntityManager entity;
 	private final Fabrique fabrique;
 	protected T obj;
@@ -38,7 +52,7 @@ public abstract class Unmarshaller<T> {
 		final Map<Class<?>, ActionAbstrait<?>> actions = getdicoTypeToAction();
 		ActionAbstrait<?> behavior;
 		Class<?> genericType = type;
-		if (type.isEnum())
+		if (TypeExtension.isEnum(type))
 			genericType = Constants.enumType;
 		else if (Constants.dictionaryType.isAssignableFrom(type))
 			genericType = Constants.dictionaryType;
@@ -55,9 +69,9 @@ public abstract class Unmarshaller<T> {
 		else if (type.getPackage() == null || !type.getPackage().getName().startsWith("System"))
 			genericType = Constants.objectType;
 		behavior = actions.get(genericType);
-		actions.put(type, behavior);
 		if (behavior == null)
 			throw new NotImplementedSerializeException("not implemented: " + type);
+		actions.put(type, behavior);
 		return behavior;
 	}
 

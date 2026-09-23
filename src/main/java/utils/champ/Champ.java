@@ -18,6 +18,9 @@ import utils.generic.TypeToken;
 public class Champ implements Comparable<Champ>, FieldInformations {
 	private static final Annotation[] noAnnotation = new Annotation[0];
 	private String comparaison;
+	private int hash;
+	/** le nom sérialisé est "id" (peut venir de MarshallAsAttribute). */
+	private boolean nomEstId;
 	private final Field info;
 
 	private final boolean isChampId;
@@ -36,6 +39,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 			valueType = info.getType();
 			final MarshallAsAttribute metadata = info.getAnnotation(MarshallAsAttribute.class);
 			name = metadata != null ? metadata.name() : info.getName();
+			nomEstId = ChampUid.UID_FIELD_NAME.equals(name);
 			final Relation maRelation = info.getAnnotation(Relation.class);
 			if (isSimple)
 				relation = TypeRelation.COMPOSITION;
@@ -130,8 +134,9 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 
 	@Override
 	public int hashCode() {
-		final String that = name + info.getDeclaringClass().getName();
-		return that.hashCode();
+		if (hash == 0)
+			hash = (name + info.getDeclaringClass().getName()).hashCode();
+		return hash;
 	}
 
 	@Override
@@ -150,7 +155,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 
 	@Override
 	public boolean isTypeDevinable(final Object value) {
-		final Class<?> type = value.getClass();
+		final Class<?> type = TypeExtension.getClasseASerialiser(value);
 		return TypeExtension.getTypeEnveloppe(valueType) == TypeExtension.getTypeEnveloppe(type);
 	}
 
@@ -159,7 +164,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 			throws SetValueException {
 		try {
 			if (obj != null)
-				if (name.equals(ChampUid.UID_FIELD_NAME))
+				if (nomEstId)
 					setChampId(obj, value);
 				else
 					info.set(obj, value);
@@ -173,9 +178,8 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 
 	private void setChampId(final Object obj, final Object value)
 			throws IllegalArgumentException, IllegalAccessException {
-		if (info.get(obj) == null)
-			info.set(obj, value);
-		else if ("0".equals(info.get(obj).toString()))
+		final Object actuel = info.get(obj);
+		if (actuel == null || "0".equals(actuel.toString()))
 			info.set(obj, value);
 	}
 

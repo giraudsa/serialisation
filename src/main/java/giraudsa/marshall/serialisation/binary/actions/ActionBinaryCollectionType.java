@@ -16,6 +16,7 @@ import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
+import utils.TypeExtension;
 
 @SuppressWarnings("rawtypes")
 public class ActionBinaryCollectionType extends ActionBinary<Collection> {
@@ -53,7 +54,7 @@ public class ActionBinaryCollectionType extends ActionBinary<Collection> {
 	protected Class<?> getTypeObjProblemeHibernate(final Object object) {
 		final Class<?> clazz = object.getClass();
 
-		if (clazz.getName().toLowerCase().indexOf("hibernate") != -1) {
+		if (TypeExtension.isHibernate(clazz)) {
 			if (object.getClass().getName().toLowerCase().indexOf("persistentbag") != -1)
 				return ArrayList.class;
 			if (object.getClass().getName().toLowerCase().indexOf("persistentset") != -1)

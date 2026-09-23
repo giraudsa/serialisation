@@ -12,10 +12,10 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
+import java.util.IdentityHashMap;
 import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,8 +78,7 @@ import utils.TypeExtension;
 import utils.champ.FakeChamp;
 
 public class BinaryMarshaller extends Marshaller {
-	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = Collections
-			.synchronizedMap(new HashMap<Class<?>, ActionAbstrait<?>>());
+	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
 	private static final Logger LOGGER = LoggerFactory.getLogger(BinaryMarshaller.class);
 	static {
 		dicoTypeToAction.put(void.class, new ActionBinaryVoid());
@@ -157,7 +157,7 @@ public class BinaryMarshaller extends Marshaller {
 	private final Map<Class<?>, Short> dejaVuType = new HashMap<>();
 	private final Map<UUID, Integer> dejaVuUuid = new HashMap<>();
 	protected DataOutputStream output;
-	private final Map<Object, Integer> smallIds = new HashMap<>();
+	private final Map<Object, Integer> smallIds = new IdentityHashMap<>();
 
 	private BinaryMarshaller(final DataOutputStream output, final StrategieDeSerialisation strategie)
 			throws IOException, MarshallExeption {
@@ -172,35 +172,44 @@ public class BinaryMarshaller extends Marshaller {
 	}
 
 	protected int getSmallIdAndStockDate(final Date date) {
-		if (!isDejaVuDate(date))
-			dejaVuDate.put(date, compteurDate++);
-		return dejaVuDate.get(date);
+		final Integer smallId = dejaVuDate.get(date);
+		if (smallId != null)
+			return smallId;
+		dejaVuDate.put(date, compteurDate);
+		return compteurDate++;
 	}
 
 	protected int getSmallIdAndStockObj(final Object obj) {
-		if (!isSmallIdDefined(obj)) {
-			final int smallid = TypeExtension.isSimpleBinary(obj.getClass()) ? -1 : compteur++;
-			smallIds.put(obj, smallid);
-		}
-		return smallIds.get(obj);
+		final Integer smallId = smallIds.get(obj);
+		if (smallId != null)
+			return smallId;
+		final int nouveau = TypeExtension.isSimpleBinary(obj.getClass()) ? -1 : compteur++;
+		smallIds.put(obj, nouveau);
+		return nouveau;
 	}
 
 	protected int getSmallIdAndStockString(final String string) {
-		if (!isDejaVuString(string))
-			dejaVuString.put(string, compteurString++);
-		return dejaVuString.get(string);
+		final Integer smallId = dejaVuString.get(string);
+		if (smallId != null)
+			return smallId;
+		dejaVuString.put(string, compteurString);
+		return compteurString++;
 	}
 
 	protected int getSmallIdAndStockUUID(final UUID id) {
-		if (!isDejaVuUUID(id))
-			dejaVuUuid.put(id, compteurUuid++);
-		return dejaVuUuid.get(id);
+		final Integer smallId = dejaVuUuid.get(id);
+		if (smallId != null)
+			return smallId;
+		dejaVuUuid.put(id, compteurUuid);
+		return compteurUuid++;
 	}
 
 	protected short getSmallIdTypeAndStockType(final Class<?> typeObj) {
-		if (!isDejaVuType(typeObj))
-			dejaVuType.put(typeObj, compteurType++);
-		return dejaVuType.get(typeObj);
+		final Short smallId = dejaVuType.get(typeObj);
+		if (smallId != null)
+			return smallId;
+		dejaVuType.put(typeObj, compteurType);
+		return compteurType++;
 	}
 
 	protected boolean isDejaVuDate(final Date date) {

@@ -1,46 +1,29 @@
 package giraudsa.marshall.deserialisation.text.xml.actions;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.xml.ActionXml;
 import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
+import utils.TypeExtension;
 
 @SuppressWarnings("rawtypes")
 public class ActionXmlEnum<T extends Enum> extends ActionXml<T> {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ActionXmlEnum.class);
-
 	public static ActionAbstrait<Enum> getInstance() {
 		return new ActionXmlEnum<>(Enum.class, null);
 	}
 
-	private final Map<String, T> dicoStringEnumToObjEnum = new HashMap<>();
+	private Map<String, T> dicoStringEnumToObjEnum = Collections.emptyMap();
 
 	private final StringBuilder sb = new StringBuilder();
 
-	@SuppressWarnings("unchecked")
 	private ActionXmlEnum(final Class<T> type, final XmlUnmarshaller<?> xmlUnmarshaller) {
 		super(type, xmlUnmarshaller);
 		if (type == Enum.class)
 			return;
-		Method values;
-		try {
-			values = type.getDeclaredMethod("values");
-			final T[] listeEnum = (T[]) values.invoke(null);
-			for (final T objEnum : listeEnum)
-				dicoStringEnumToObjEnum.put(objEnum.toString(), objEnum);
-		} catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException
-				| InvocationTargetException e) {
-			LOGGER.error("T n'est pas un Enum... étrange", e);
-			throw new NullPointerException();
-		}
+		dicoStringEnumToObjEnum = TypeExtension.getEnumParNom(type);
 	}
 
 	@Override
