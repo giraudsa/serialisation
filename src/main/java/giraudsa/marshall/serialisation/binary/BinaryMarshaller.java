@@ -81,6 +81,7 @@ import utils.champ.EcrivainChamps;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 import utils.headers.Header;
+import utils.headers.TypesPredefinis;
 import utils.io.Primitifs;
 import utils.io.SortieBinaire;
 
@@ -346,7 +347,7 @@ public class BinaryMarshaller extends Marshaller {
 	private int compteur = 1;
 	private int compteurDate = 1;
 	private int compteurString = 1;
-	private short compteurType = 1;
+	private short compteurType = TypesPredefinis.PREMIER_LIBRE;
 	private int compteurUuid = 1;
 	private final EgaliteIntMap dejaVuDate;
 	private final EgaliteIntMap dejaVuString;
@@ -436,6 +437,9 @@ public class BinaryMarshaller extends Marshaller {
 	}
 
 	protected int smallIdType(final Class<?> type) {
+		final short predefini = TypesPredefinis.numero(type);
+		if (predefini > 0)
+			return predefini; // numéro fixe, connu du lecteur : « déjà vu », le nom n'est pas écrit
 		final int existant = dejaVuType.putIfAbsent(type, compteurType);
 		return existant != IdentiteIntMap.ABSENT ? existant : -compteurType++;
 	}

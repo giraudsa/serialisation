@@ -75,6 +75,7 @@ import utils.champ.FieldInformations;
 import utils.headers.Header;
 import utils.headers.HeaderSimpleType;
 import utils.headers.HeaderTypeCourant;
+import utils.headers.TypesPredefinis;
 import utils.io.EntreeBinaire;
 import utils.io.Primitifs;
 
@@ -411,9 +412,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		Class<?> type = fi.getValueType();
 		if (!header.isTypeDevinable()) { // un type devinable n'est pas numéroté (voir l'écriture)
 			final short smallIdType = header.getSmallIdType(input);
-			if (!isDejaVuClazz(smallIdType))
-				stockClass(getClasse(readUTF()), smallIdType);
-			type = dicoSmallIdToClazz.get(smallIdType);
+			type = classeDuType(smallIdType);
 		}
 		// symétrique de serialisation.binary.actions.ActionBinaryEnum : ordinal non signé sur 1 octet, ou sur 2
 		final Object[] enums = TypeExtension.getEnumConstants(type);
@@ -440,6 +439,17 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 
 	private Class<?> typeLu(final Header header) throws IOException, UnmarshallExeption, ClassNotFoundException {
 		final short smallIdType = header.getSmallIdType(input);
+		return classeDuType(smallIdType);
+	}
+
+	/**
+	 * Classe d'un numéro de type : numéro fixe (TypesPredefinis), type déjà rencontré, ou nouveau type dont le nom
+	 * suit dans le flux.
+	 */
+	private Class<?> classeDuType(final short smallIdType)
+			throws IOException, UnmarshallExeption, ClassNotFoundException {
+		if (smallIdType > 0 && smallIdType < TypesPredefinis.PREMIER_LIBRE)
+			return TypesPredefinis.classe(smallIdType);
 		if (!isDejaVuClazz(smallIdType))
 			stockClass(getClasse(readUTF()), smallIdType);
 		return dicoSmallIdToClazz.get(smallIdType);

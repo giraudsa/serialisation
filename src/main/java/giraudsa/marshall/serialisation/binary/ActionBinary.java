@@ -2,6 +2,7 @@ package giraudsa.marshall.serialisation.binary;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.UUID;
 
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.ActionAbstrait;
+import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryBigDecimal;
 import giraudsa.marshall.serialisation.Marshaller;
 import utils.champ.AccesChamp;
 import utils.champ.FieldInformations;
@@ -57,6 +59,17 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 		if (binaryMarshaller.debutAttente < 0) {
 			if (valeur != null && valeur.getClass() == String.class) { // cas le plus fréquent : sans aiguillage
 				ecritChaine(binaryMarshaller, (String) valeur, fieldInformations);
+				return;
+			}
+			if (valeur != null && valeur.getClass() == BigDecimal.class) {
+				// valeur immuable fréquente : même en-tête que writeHeadersObjet, puis la valeur, sans aiguillage
+				try {
+					binaryMarshaller.ecritEnTeteNouveau(fieldInformations.isTypeDevinable(valeur), BigDecimal.class,
+							0);
+					ActionBinaryBigDecimal.ecrit(binaryMarshaller.output, (BigDecimal) valeur);
+				} catch (final IOException e) {
+					throw new MarshallExeption(e);
+				}
 				return;
 			}
 			final ActionAbstrait action;
