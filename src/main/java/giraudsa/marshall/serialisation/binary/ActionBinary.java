@@ -47,7 +47,12 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 		ecritOuDiffere(getBinaryMarshaller(marshaller), valeur, fieldInformations);
 	}
 
-	static void ecritOuDiffere(final BinaryMarshaller binaryMarshaller, final Object valeur,
+	/** Accès au BinaryMarshaller depuis une classe imbriquée d'action (sans instance d'action). */
+	protected static BinaryMarshaller binaryMarshaller(final Marshaller marshaller) {
+		return (BinaryMarshaller) marshaller;
+	}
+
+	protected static void ecritOuDiffere(final BinaryMarshaller binaryMarshaller, final Object valeur,
 			final FieldInformations fieldInformations) throws NotImplementedSerializeException, MarshallExeption {
 		if (binaryMarshaller.debutAttente < 0) {
 			if (valeur != null && valeur.getClass() == String.class) { // cas le plus fréquent : sans aiguillage
