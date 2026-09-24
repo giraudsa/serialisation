@@ -4,6 +4,8 @@ import static java.util.Map.entry;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -23,9 +25,16 @@ import utils.champ.NullChamp;
 
 public class TypeExtension {
 	/** Champs sérialisables d'une classe, calculés une seule fois. */
-	private static final class ChampsDuType {
+	public static final class ChampsDuType {
 		private final Champ champId;
 		private final List<Champ> champs;
+		/** le champ id en tête, puis les autres champs. */
+		private final List<Champ> champsIdEnTete;
+		/** mêmes listes en tableaux (parcours sans indirection) ; à ne pas modifier. */
+		private final Champ[] tableauChamps;
+		private final Champ[] tableauIdEnTete;
+		private final Champ[] tableauIdSeul;
+		private final Champ[] tableauSaufId;
 		private final Map<String, Champ> champsParNom;
 		private final List<Champ> champsSaufId;
 
@@ -36,10 +45,73 @@ public class TypeExtension {
 			final List<Champ> saufId = new ArrayList<>(champs);
 			saufId.remove(champId);
 			champsSaufId = Collections.unmodifiableList(saufId);
+			if (!champs.isEmpty() && champs.get(0) == champId)
+				champsIdEnTete = this.champs;
+			else {
+				final List<Champ> idEnTete = new ArrayList<>(champs.size());
+				idEnTete.add(champId);
+				idEnTete.addAll(saufId);
+				champsIdEnTete = Collections.unmodifiableList(idEnTete);
+			}
+			tableauChamps = this.champs.toArray(new Champ[0]);
+			tableauIdEnTete = champsIdEnTete.toArray(new Champ[0]);
+			tableauIdSeul = new Champ[] { champId };
+			tableauSaufId = champsSaufId.toArray(new Champ[0]);
+		}
+
+		/** @return les champs dans l'ordre de {@link #getChamps()} (tableau partagé : ne pas modifier). */
+		public Champ[] getTableauChamps() {
+			return tableauChamps;
+		}
+
+		/** @return le champ id en tête puis les autres (tableau partagé : ne pas modifier). */
+		public Champ[] getTableauIdEnTete() {
+			return tableauIdEnTete;
+		}
+
+		/** @return le seul champ id (tableau partagé : ne pas modifier). */
+		public Champ[] getTableauIdSeul() {
+			return tableauIdSeul;
+		}
+
+		/** @return les champs hors id (tableau partagé : ne pas modifier). */
+		public Champ[] getTableauSaufId() {
+			return tableauSaufId;
+		}
+
+		public Champ getChampId() {
+			return champId;
+		}
+
+		public List<Champ> getChamps() {
+			return champs;
+		}
+
+		public List<Champ> getChampsIdEnTete() {
+			return champsIdEnTete;
+		}
+
+		public List<Champ> getChampsSaufId() {
+			return champsSaufId;
 		}
 	}
 
-	private static final Map<Class<?>, ChampsDuType> champsParType = new ConcurrentHashMap<>();
+	/**
+	 * champs de chaque classe, calculés une seule fois (ClassValue : plus rapide qu'une map concurrente). Remplacé
+	 * par un cache neuf quand la configuration change.
+	 */
+	private static volatile ClassValue<ChampsDuType> champsParType = nouveauCacheChamps();
+	/** incrémentée à chaque changement de configuration qui invalide les champs calculés. */
+	private static volatile int generation;
+
+	private static ClassValue<ChampsDuType> nouveauCacheChamps() {
+		return new ClassValue<>() {
+			@Override
+			protected ChampsDuType computeValue(final Class<?> type) {
+				return calculeChamps(type);
+			}
+		};
+	}
 	private static final Map<Class<?>, Class<?>> dicoTypePrimitifToEnveloppe = Map.ofEntries(
         entry(void.class, Void.class),
         entry(boolean.class, Boolean.class),
@@ -107,7 +179,8 @@ public class TypeExtension {
 	}
 
 	static void clear() {
-		champsParType.clear();
+		champsParType = nouveauCacheChamps();
+		generation++;
 	}
 
 	public static FieldInformations getChampByName(final Class<?> typeObjetParent, final String name) {
@@ -125,18 +198,18 @@ public class TypeExtension {
 	}
 
 	private static ChampsDuType getChamps(final Class<?> typeObj) {
-		var champs = champsParType.get(typeObj);
-		if (champs == null) {
-			// calcul hors verrou : si deux threads calculent en même temps, le premier
-			// résultat enregistré est conservé.
-			champs = calculeChamps(typeObj);
-			final var existant = champsParType.putIfAbsent(typeObj, champs);
-			if (existant != null)
-				champs = existant;
-		}
-		return champs;
+		return champsParType.get(typeObj);
 	}
 
+	/** @return le numéro de la configuration des champs : change quand les caches de champs sont invalidés. */
+	public static int getGeneration() {
+		return generation;
+	}
+
+	/** @return les champs sérialisables du type (un seul accès au cache pour l'id et les listes). */
+	public static ChampsDuType getChampsDuType(final Class<?> typeObj) {
+		return champsParType.get(typeObj);
+	}
 	/**
 	 * @return la classe sous laquelle sérialiser l'objet : pour une constante
 	 *         d'énumération avec un corps (dont la classe est une sous-classe
@@ -210,6 +283,14 @@ public class TypeExtension {
 
 	public static boolean isSimple(final Class<?> type) { // Simple types become XML Attributes and JSON Values
 		return type.isPrimitive() || isEnum(type) || simpleTypes.contains(type);
+	}
+
+	/**
+	 * @return true pour une valeur immuable (BigDecimal, BigInteger) : en binaire, elle est écrite comme une valeur,
+	 *         sans identité (pas de smallId, pas de référence arrière).
+	 */
+	public static boolean isValeurImmuableBinaire(final Class<?> clazz) {
+		return clazz == BigDecimal.class || clazz == BigInteger.class;
 	}
 
 	public static boolean isSimpleBinary(final Class<?> clazz) {

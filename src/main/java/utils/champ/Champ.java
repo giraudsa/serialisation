@@ -22,6 +22,13 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	/** le nom sérialisé est "id" (peut venir de MarshallAsAttribute). */
 	private boolean nomEstId;
 	private final Field info;
+	/** nature primitive du champ (voir {@link AccesChamp}), AUCUNE pour un type objet. */
+	private final int naturePrimitive;
+	/**
+	 * accès direct au champ, créé au premier usage. Pas volatile : les accès sont immuables (champs final), une
+	 * publication concurrente est donc sûre ; au pire deux threads en créent chacun un.
+	 */
+	private AccesChamp acces;
 
 	private final boolean isChampId;
 	private final boolean isSimple;
@@ -34,6 +41,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 		this.info = info;
 		this.isSimple = isSimple;
 		this.isChampId = isChampId;
+		naturePrimitive = info == null ? AccesChamp.AUCUNE : AccesChamp.nature(info.getType());
 		if (info != null) {
 			typeToken = TypeToken.get(info.getGenericType());
 			valueType = info.getType();
@@ -74,7 +82,40 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	@Override
 	public Object get(final Object obj, final Map<Object, UUID> dicoObjToFakeId, final EntityManager entity)
 			throws IllegalAccessException {
-		return info.get(obj);
+		if (obj == null)
+			return info.get(obj); // même exception qu'avant
+		return acces().get(obj);
+	}
+
+	/** @return la nature primitive du champ (constantes de {@link AccesChamp}), AUCUNE pour un type objet. */
+	public int getNaturePrimitive() {
+		return naturePrimitive;
+	}
+
+	/** @return l'accès direct au champ (null pour un faux id). */
+	public AccesChamp getAcces() {
+		return info == null ? null : acces();
+	}
+
+	private AccesChamp acces() {
+		AccesChamp a = acces;
+		if (a == null) {
+			a = GenerateurAcces.cree(info);
+			acces = a; // course bénigne : deux accès équivalents
+		}
+		return a;
+	}
+
+	/**
+	 * Écrit la valeur par l'accès direct ; en cas de valeur à convertir (élargissement, null dans un primitif,
+	 * mauvais type), on repasse par {@link Field#set} qui applique les règles et exceptions de la réflexion.
+	 */
+	private void ecrit(final Object obj, final Object value) throws IllegalAccessException {
+		try {
+			acces().set(obj, value);
+		} catch (final ClassCastException | NullPointerException e) {
+			info.set(obj, value);
+		}
 	}
 
 	@Override
@@ -110,6 +151,24 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	@Override
 	public String getName() {
 		return name;
+	}
+
+	/** FakeChamps des paramètres (éléments, clés, valeurs), calculés à la demande. */
+	private volatile FakeChamp[] champsParametres;
+
+	@Override
+	public FakeChamp getChampParametre(final int role) {
+		FakeChamp[] t = champsParametres;
+		if (t == null) {
+			t = new FakeChamp[3];
+			champsParametres = t;
+		}
+		FakeChamp champ = t[role];
+		if (champ == null) {
+			champ = FakeChamp.pourParametre(this, role);
+			t[role] = champ; // course bénigne : deux calculs donnent des champs équivalents
+		}
+		return champ;
 	}
 
 	@Override
@@ -167,7 +226,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 				if (nomEstId)
 					setChampId(obj, value);
 				else
-					info.set(obj, value);
+					ecrit(obj, value);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			throw new SetValueException(
 					"impossible de setter " + value.toString() + " de type " + value.getClass().getName()
@@ -176,11 +235,24 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 		}
 	}
 
+	/**
+	 * Affecte la valeur à un objet qui vient d'être créé (champs vierges) : pas de contrôle de l'id existant.
+	 */
+	public void affecte(final Object obj, final Object value, final Map<Object, UUID> dicoObjToFakeId)
+			throws SetValueException {
+		try {
+			ecrit(obj, value);
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			throw new SetValueException("impossible de setter " + value + " dans le champ " + name + " de la classe "
+					+ info.getDeclaringClass(), e);
+		}
+	}
+
 	private void setChampId(final Object obj, final Object value)
 			throws IllegalArgumentException, IllegalAccessException {
-		final Object actuel = info.get(obj);
+		final Object actuel = acces().get(obj);
 		if (actuel == null || "0".equals(actuel.toString()))
-			info.set(obj, value);
+			ecrit(obj, value);
 	}
 
 }

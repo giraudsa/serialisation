@@ -35,7 +35,8 @@ public abstract class Unmarshaller<T> {
 	}
 
 	protected CacheObject cacheObject;
-	private final Map<Object, UUID> dicoObjToFakeId = new IdentityHashMap<>();
+	/** créée à la demande : seuls les objets à faux id s'en servent. */
+	private Map<Object, UUID> dicoObjToFakeId;
 	protected final EntityManager entity;
 	private final Fabrique fabrique;
 	protected T obj;
@@ -49,7 +50,12 @@ public abstract class Unmarshaller<T> {
 	}
 
 	private <U> ActionAbstrait<?> choseAction(final Class<U> type) throws NotImplementedSerializeException {
-		final Map<Class<?>, ActionAbstrait<?>> actions = getdicoTypeToAction();
+		return choisiAction(getdicoTypeToAction(), type);
+	}
+
+	/** Choisit l'action d'un type à partir de sa famille (enum, map, date, collection...) et la mémorise. */
+	protected static ActionAbstrait<?> choisiAction(final Map<Class<?>, ActionAbstrait<?>> actions,
+			final Class<?> type) throws NotImplementedSerializeException {
 		ActionAbstrait<?> behavior;
 		Class<?> genericType = type;
 		if (TypeExtension.isEnum(type))
@@ -108,6 +114,8 @@ public abstract class Unmarshaller<T> {
 	}
 
 	protected Map<Object, UUID> getDicoObjToFakeId() {
+		if (dicoObjToFakeId == null)
+			dicoObjToFakeId = new IdentityHashMap<>();
 		return dicoObjToFakeId;
 	}
 

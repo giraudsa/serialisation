@@ -1,10 +1,10 @@
 package utils.headers;
 
-import java.io.DataInputStream;
-import java.io.DataOutput;
 import java.io.IOException;
 
 import giraudsa.marshall.exception.UnmarshallExeption;
+import utils.io.EntreeBinaire;
+import utils.io.SortieBinaire;
 
 public class HeaderEnum extends Header {
 
@@ -32,7 +32,12 @@ public class HeaderEnum extends Header {
 	}
 
 	@Override
-	public short getSmallIdType(final DataInputStream input) throws IOException, UnmarshallExeption {
+	protected int categorie() {
+		return ENUM;
+	}
+
+	@Override
+	public short getSmallIdType(final EntreeBinaire input) throws IOException, UnmarshallExeption {
 		return (short) ByteHelper.read(input, encodageSmallIdType);
 	}
 
@@ -42,17 +47,17 @@ public class HeaderEnum extends Header {
 	}
 
 	@Override
-	public int readSmallId(final DataInputStream input, final int i) throws IOException, UnmarshallExeption {
+	public int readSmallId(final EntreeBinaire input, final int i) throws IOException, UnmarshallExeption {
 		return -1;
 	}
 
-	public void write(final DataOutput output, final short smallIdType, final Class<?> type, final boolean isDejaVuType)
+	public void write(final SortieBinaire output, final short smallIdType, final Class<?> type, final boolean isDejaVuType)
 			throws IOException {
 		output.writeByte(headerByte);
 		if (encodageSmallIdType > 0) {// type non devinable
 			ByteHelper.write(output, smallIdType);
 			if (!isDejaVuType)
-				output.writeUTF(type.getName());
+				output.writeString(type.getName());
 		}
 	}
 

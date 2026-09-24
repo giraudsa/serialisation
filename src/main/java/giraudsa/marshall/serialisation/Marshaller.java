@@ -25,9 +25,10 @@ public abstract class Marshaller {
 	protected Deque<Comportement> aFaire = new ArrayDeque<>();
 	// comparaison par identité : deux objets distincts mais égaux au sens de
 	// equals() sont deux noeuds différents du graphe.
-	protected Set<Object> dejaTotalementSerialise = Collections.newSetFromMap(new IdentityHashMap<>());
-	private final Set<Object> dejaVu = Collections.newSetFromMap(new IdentityHashMap<>());
-	private final Map<Object, UUID> dicoObjToFakeId = new IdentityHashMap<>();
+	// tables créées à la demande : le binaire ne s'en sert presque jamais, leur allocation pèse sur les petits graphes
+	protected Set<Object> dejaTotalementSerialise;
+	private Set<Object> dejaVu;
+	private Map<Object, UUID> dicoObjToFakeId;
 	private final EntityManager entityManager;
 	////// ATTRIBUT
 	protected int profondeur;
@@ -45,7 +46,13 @@ public abstract class Marshaller {
 
 	@SuppressWarnings("rawtypes")
 	private <T> ActionAbstrait choisiAction(final Class<T> type) throws NotImplementedSerializeException {
-		final var dicoTypeToAction = getDicoTypeToAction();
+		return choisiAction(getDicoTypeToAction(), type);
+	}
+
+	/** Choisit l'action d'un type à partir de sa famille (enum, map, date, collection...) et la mémorise. */
+	@SuppressWarnings("rawtypes")
+	protected static ActionAbstrait choisiAction(final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction,
+			final Class<?> type) throws NotImplementedSerializeException {
 		ActionAbstrait action;
 		Class<?> genericType = type;
 		if (TypeExtension.isEnum(type))
@@ -96,6 +103,8 @@ public abstract class Marshaller {
 	}
 
 	protected Map<Object, UUID> getDicoObjToFakeId() {
+		if (dicoObjToFakeId == null)
+			dicoObjToFakeId = new IdentityHashMap<>();
 		return dicoObjToFakeId;
 	}
 
@@ -114,11 +123,11 @@ public abstract class Marshaller {
 	}
 
 	protected <T> boolean isDejaTotalementSerialise(final T obj) {
-		return dejaTotalementSerialise.contains(obj);
+		return dejaTotalementSerialise != null && dejaTotalementSerialise.contains(obj);
 	}
 
 	protected <T> boolean isDejaVu(final T obj) {
-		return dejaVu.contains(obj);
+		return dejaVu != null && dejaVu.contains(obj);
 	}
 
 	protected <T> void marshall(final T value, final FieldInformations fieldInformations)
@@ -129,10 +138,14 @@ public abstract class Marshaller {
 	}
 
 	protected <T> void setDejaTotalementSerialise(final T obj) {
+		if (dejaTotalementSerialise == null)
+			dejaTotalementSerialise = Collections.newSetFromMap(new IdentityHashMap<>());
 		dejaTotalementSerialise.add(obj);
 	}
 
 	protected <T> void setDejaVu(final T obj) {
+		if (dejaVu == null)
+			dejaVu = Collections.newSetFromMap(new IdentityHashMap<>());
 		dejaVu.add(obj);
 	}
 }

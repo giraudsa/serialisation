@@ -34,10 +34,13 @@ public class ActionBinaryArray<T> extends ActionBinary<T> {
 	public void deserialisePariellement()
 			throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption,
 			InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
-		if (!deserialisationFini)
-			litObject(fakeChamp);
-		else
-			exporteObject();
+		while (!deserialisationFini) {
+			final Object valeur = litValeur(fakeChamp);
+			if (isEnAttente(valeur))
+				return;
+			ajoute(valeur);
+		}
+		exporteObject();
 	}
 
 	@Override
@@ -60,7 +63,7 @@ public class ActionBinaryArray<T> extends ActionBinary<T> {
 			deserialisationFini = true;
 			obj = getObjet();
 		} else { // !dejavu
-			tailleCollection = readInt();
+			tailleCollection = readVarInt();
 			obj = Array.newInstance(componentType, tailleCollection);
 			stockeObjetId();
 			if (strategieDeSerialiseTout())
@@ -72,9 +75,13 @@ public class ActionBinaryArray<T> extends ActionBinary<T> {
 	@Override
 	protected void integreObjet(final String nom, final Object objet) throws IllegalAccessException,
 			EntityManagerImplementationException, InstanciationException, SetValueException {
-		Array.set(obj, index++, objet);
-		deserialisationFini = index >= tailleCollection;
+		ajoute(objet);
 		if (deserialisationFini)
 			exporteObject();
+	}
+
+	private void ajoute(final Object objet) {
+		Array.set(obj, index++, objet);
+		deserialisationFini = index >= tailleCollection;
 	}
 }

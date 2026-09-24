@@ -47,6 +47,11 @@ public class NullChamp implements FieldInformations {
 	}
 
 	@Override
+	public FakeChamp getChampParametre(final int role) {
+		return FakeChamp.pourParametre(this, role);
+	}
+
+	@Override
 	public Type[] getParametreType() {
 		return TypeNull;
 	}

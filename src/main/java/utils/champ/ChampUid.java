@@ -68,6 +68,11 @@ public class ChampUid extends Champ {
 	}
 
 	@Override
+	public void affecte(final Object obj, final Object value, final Map<Object, UUID> dicoObjToFakeId) {
+		set(obj, value, dicoObjToFakeId);
+	}
+
+	@Override
 	public void set(final Object obj, final Object value, final Map<Object, UUID> dicoObjToFakeId) {
 		dicoObjToFakeId.put(obj, UUID.fromString(value.toString()));
 	}

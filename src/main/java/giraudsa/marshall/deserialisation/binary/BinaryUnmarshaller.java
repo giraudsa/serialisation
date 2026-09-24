@@ -1,7 +1,5 @@
 package giraudsa.marshall.deserialisation.binary;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -9,13 +7,12 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Currency;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -37,6 +34,7 @@ import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryCollection;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryDictionary;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryEnum;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryObject;
+import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinarySimple;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryAtomicBoolean;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryAtomicInteger;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryAtomicIntegerArray;
@@ -63,15 +61,21 @@ import giraudsa.marshall.exception.UnmarshallExeption;
 import giraudsa.marshall.strategie.StrategieDeSerialisation;
 import utils.Constants;
 import utils.EntityManager;
+import utils.IdentiteIntMap;
+import utils.TypeExtension;
+import utils.champ.AccesChamp;
+import utils.champ.Champ;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 import utils.headers.Header;
-import utils.headers.HeaderEnum;
 import utils.headers.HeaderSimpleType;
 import utils.headers.HeaderTypeCourant;
+import utils.io.EntreeBinaire;
 
 public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
+	/** champ fictif de la racine du graphe (sans état propre : partagé). */
+	private static final FakeChamp RACINE = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
 	private static final Logger LOGGER = LoggerFactory.getLogger(BinaryUnmarshaller.class);
 	static {
 		dicoTypeToAction.put(Constants.dateType, ActionBinaryDate.getInstance());
@@ -111,48 +115,174 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	 * @throws UnmarshallExeption
 	 */
 	public static <U> U fromBinary(final InputStream reader, final EntityManager entity) throws UnmarshallExeption {
-		try (DataInputStream in = new DataInputStream(new BufferedInputStream(reader))) {
-			final BinaryUnmarshaller<U> w = new BinaryUnmarshaller<U>(in, entity) {
-			};
-			return w.parse();
+		// une stratégie inconnue est relue par un appel imbriqué sur le même flux : on réutilise alors son
+		// tampon, sans le fermer
+		final boolean imbrique = reader instanceof EntreeBinaire;
+		EtatLecture etat = ETATS.get();
+		if (etat.enUsage) // appel imbriqué : état à part
+			etat = new EtatLecture();
+		etat.enUsage = true;
+		try {
+			final EntreeBinaire in;
+			if (imbrique)
+				in = (EntreeBinaire) reader;
+			else {
+				in = etat.entree;
+				in.reinitialise(reader);
+			}
+			try {
+				final BinaryUnmarshaller<U> w = new BinaryUnmarshaller<U>(in, entity, etat) {
+				};
+				return w.parse();
+			} finally {
+				if (!imbrique)
+					in.close();
+			}
 		} catch (UnmarshallExeption | FabriqueInstantiationException | IOException | IllegalAccessException
 				| ClassNotFoundException | NotImplementedSerializeException | InstanciationException
 				| EntityManagerImplementationException | SetValueException e) {
 			LOGGER.error("Impossible de désérialiser", e);
 			throw new UnmarshallExeption("Impossible de désérialiser", e);
+		} finally {
+			etat.libere();
 		}
 	}
 
+	/**
+	 * Tables et tampon d'une désérialisation, réutilisés d'un appel à l'autre sur le même thread : on évite de les
+	 * réallouer et de les agrandir à chaque graphe. Elles sont vidées après usage (aucun objet lu n'est retenu).
+	 */
+	private static final class EtatLecture {
+		private final ArrayDeque<ActionBinaryObject<?>> actionsObjetLibres = new ArrayDeque<>();
+		private final TableParId<Class<?>> dicoSmallIdToClazz = new TableParId<>();
+		private final TableParId<Date> dicoSmallIdToDate = new TableParId<>();
+		private final TableParId<Object> dicoSmallIdToObject = new TableParId<>();
+		private final TableParId<String> dicoSmallIdToString = new TableParId<>();
+		private final TableParId<UUID> dicoSmallIdToUUID = new TableParId<>();
+		private boolean enUsage;
+		private final EntreeBinaire entree = new EntreeBinaire(null);
+		private final IdentiteIntMap listeClasseDejaRencontre = new IdentiteIntMap(16);
+		private boolean[] totalementLus = new boolean[256];
+		/** nombre d'objets lus par le dernier appel : partie de totalementLus à effacer. */
+		private int nbObjets;
+
+		private void libere() {
+			dicoSmallIdToClazz.vide();
+			dicoSmallIdToDate.vide();
+			dicoSmallIdToObject.vide();
+			dicoSmallIdToString.vide();
+			dicoSmallIdToUUID.vide();
+			listeClasseDejaRencontre.vide();
+			if (totalementLus.length > 1 << 16)
+				totalementLus = new boolean[256];
+			else
+				Arrays.fill(totalementLus, 0, Math.min(nbObjets + 1, totalementLus.length), false);
+			nbObjets = 0;
+			for (final ActionBinaryObject<?> action : actionsObjetLibres)
+				action.nettoie();
+			if (actionsObjetLibres.size() > 1024)
+				actionsObjetLibres.clear();
+			entree.reinitialise(null);
+			enUsage = false;
+		}
+	}
+
+	private static final ThreadLocal<EtatLecture> ETATS = ThreadLocal.withInitial(EtatLecture::new);
+
+	/** renvoyé par {@link #litValeur} quand la valeur sera transmise plus tard par l'action empilée. */
+	protected static final Object EN_ATTENTE = new Object();
+
+	/** prototype d'action de chaque classe, résolu une fois. */
+	private static final ClassValue<ActionAbstrait<?>> ACTIONS = new ClassValue<>() {
+		@Override
+		protected ActionAbstrait<?> computeValue(final Class<?> type) {
+			ActionAbstrait<?> action = dicoTypeToAction.get(type);
+			if (action == null)
+				try {
+					action = choisiAction(dicoTypeToAction, type);
+				} catch (final NotImplementedSerializeException e) {
+					throw new IllegalStateException(e);
+				}
+			// un prototype par classe d'objet, qui porte les champs du type
+			return action instanceof ActionBinaryObject ? ActionBinaryObject.prototype(type) : action;
+		}
+	};
+
+	/** actions d'objet terminées, réutilisables (une action par objet lu sinon). */
+	private final ArrayDeque<ActionBinaryObject<?>> actionsObjetLibres;
+	private final EtatLecture etat;
+	private ActionBinary<?> actionSimple;
+	private Class<?> typeActionSimple;
 	private short biggestSmallIdType = 0;
+	// dernier smallId attribué : à leur première apparition, objets, dates, chaînes et UUID
+	// ne portent pas leur smallId, il est attribué ici dans l'ordre de lecture (comme à l'écriture).
+	private int compteurDate = 0;
+	private int compteurObjet = 0;
+	private int compteurString = 0;
+	private int compteurUuid = 0;
 	// les smallIds de types, dates, chaînes et UUID sont attribués séquentiellement
 	// à partir de 1 : on les range dans des tables indexées par smallId.
-	private final TableParId<Class<?>> dicoSmallIdToClazz = new TableParId<>();
-	private final TableParId<Date> dicoSmallIdToDate = new TableParId<>();
-	private final Map<Integer, Object> dicoSmallIdToObject = new HashMap<>();
-	private final TableParId<String> dicoSmallIdToString = new TableParId<>();
-	private final TableParId<UUID> dicoSmallIdToUUID = new TableParId<>();
-	private final DataInputStream input;
-	private final BitSet isDejaTotalementDeSerialise = new BitSet();
-	private final Set<Class<?>> listeClasseDejaRencontre = new HashSet<>();
+	private final TableParId<Class<?>> dicoSmallIdToClazz;
+	private final TableParId<Date> dicoSmallIdToDate;
+	private final TableParId<Object> dicoSmallIdToObject;
+	private final TableParId<String> dicoSmallIdToString;
+	private final TableParId<UUID> dicoSmallIdToUUID;
+	private final EntreeBinaire input;
+	/** objets totalement désérialisés, indexés par smallId. */
+	private boolean[] totalementLus;
+	/** classes déjà rencontrées (valeur sans importance). */
+	private final IdentiteIntMap listeClasseDejaRencontre;
 
 	protected int profondeur = 0;
 
 	private final StrategieDeSerialisation strategie;
 
-	protected BinaryUnmarshaller(final DataInputStream input, final EntityManager entity)
+	protected BinaryUnmarshaller(final EntreeBinaire input, final EntityManager entity)
+			throws FabriqueInstantiationException, IOException, UnmarshallExeption {
+		this(input, entity, new EtatLecture());
+	}
+
+	private BinaryUnmarshaller(final EntreeBinaire input, final EntityManager entity, final EtatLecture etat)
 			throws FabriqueInstantiationException, IOException, UnmarshallExeption {
 		super(entity);
 		this.input = input;
+		this.etat = etat;
+		actionsObjetLibres = etat.actionsObjetLibres;
+		dicoSmallIdToClazz = etat.dicoSmallIdToClazz;
+		dicoSmallIdToDate = etat.dicoSmallIdToDate;
+		dicoSmallIdToObject = etat.dicoSmallIdToObject;
+		dicoSmallIdToString = etat.dicoSmallIdToString;
+		dicoSmallIdToUUID = etat.dicoSmallIdToUUID;
+		totalementLus = etat.totalementLus;
+		listeClasseDejaRencontre = etat.listeClasseDejaRencontre;
 		strategie = readStrategie();
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override
+	protected <U> ActionAbstrait getAction(final Class<U> type) throws NotImplementedSerializeException {
+		if (type == null)
+			return null;
+		try {
+			final ActionAbstrait<?> prototype = ACTIONS.get(type);
+			if (prototype instanceof ActionBinaryObject) {
+				final ActionBinaryObject action = actionsObjetLibres.isEmpty()
+						? (ActionBinaryObject) prototype.getNewInstance((Class) type, this)
+						: actionsObjetLibres.pop();
+				action.recycle(type, (ActionBinaryObject) prototype, this);
+				return action;
+			}
+			return prototype.getNewInstance((Class) type, this);
+		} catch (final IllegalStateException e) {
+			if (e.getCause() instanceof NotImplementedSerializeException)
+				throw (NotImplementedSerializeException) e.getCause();
+			throw e;
+		}
 	}
 
 	@Override
 	protected Map<Class<?>, ActionAbstrait<?>> getdicoTypeToAction() {
 		return dicoTypeToAction;
-	}
-
-	private int getMaxId() {
-		return dicoSmallIdToObject.size();
 	}
 
 	protected Object getObject(final int smallId) {
@@ -183,81 +313,137 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 			integreObjet(action, null, obj);
 	}
 
+	/** Rend une action d'objet terminée réutilisable. */
+	public void libere(final ActionBinaryObject<?> action) {
+		actionsObjetLibres.push(action);
+	}
+
 	protected boolean isDejaTotalementDeSerialise(final int smallId) {
-		return smallId >= 0 && isDejaTotalementDeSerialise.get(smallId);
+		return smallId >= 0 && smallId < totalementLus.length && totalementLus[smallId];
 	}
 
 	protected boolean isDejaVu(final int smallId) {
-		return dicoSmallIdToObject.containsKey(smallId);
+		return dicoSmallIdToObject.contient(smallId);
 	}
 
 	protected boolean isDejaVuClazz(final Class<?> type) {
-		return listeClasseDejaRencontre.contains(type);
+		return listeClasseDejaRencontre.contient(type);
 	}
 
 	protected boolean isDejaVuClazz(final short smallIdType) {
 		return dicoSmallIdToClazz.contient(smallIdType);
 	}
 
-	protected boolean isDejaVuDate(final int dateId) {
-		return dicoSmallIdToDate.contient(dateId);
-	}
-
-	protected boolean isDejaVuString(final int stringId) {
-		return dicoSmallIdToString.contient(stringId);
-	}
-
-	protected boolean isDejaVuUuid(final int uuidId) {
-		return dicoSmallIdToUUID.contient(uuidId);
-	}
-
 	protected void litObject(final FieldInformations fieldInformations)
 			throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption,
 			InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
-		if (fieldInformations.getValueType() == byte.class) {
-			integreObjectDirectement(readByte()); // seul cas ou le header n'est pas nécessaire.
-			return;
-		}
-		final byte headerByte = readByte();
-		final Header header = Header.getHeader(headerByte);
-		if (header instanceof HeaderSimpleType)
-			litObjectSimple(header);
-		else if (header instanceof HeaderTypeCourant)
-			litObjectCourant(header);
-		else if (header instanceof HeaderEnum)
-			litObjectEnum(fieldInformations, header);
-		else
-			litObjetComplexe(fieldInformations, header);
+		final Object valeur = litValeur(fieldInformations);
+		if (valeur != EN_ATTENTE)
+			integreObjectDirectement(valeur);
 	}
 
-	private void litObjectCourant(final Header header) throws IOException, UnmarshallExeption, IllegalAccessException,
-			EntityManagerImplementationException, InstanciationException, SetValueException {
-		final HeaderTypeCourant headerTypeCourant = (HeaderTypeCourant) header;
+	/**
+	 * Lit la valeur suivante du flux. Une valeur complète (type simple, chaîne, date, enum, référence à un objet
+	 * déjà lu, BigDecimal...) est renvoyée directement ; sinon l'action qui la lira est empilée et
+	 * {@link #EN_ATTENTE} est renvoyé : elle transmettra la valeur à l'action en cours une fois lue.
+	 */
+	protected Object litValeur(final FieldInformations fieldInformations)
+			throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption,
+			InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
+		if (fieldInformations.getValueType() == byte.class)
+			return readByte(); // seul cas ou le header n'est pas nécessaire.
+		final Header header = Header.getHeader(readByte());
+		switch (header.categorie) {
+		case Header.SIMPLE:
+			return ((HeaderSimpleType<?>) header).read(input);
+		case Header.COURANT:
+			return litObjectCourant((HeaderTypeCourant) header);
+		case Header.ENUM:
+			return litObjectEnum(fieldInformations, header);
+		default:
+			return litObjetComplexe(fieldInformations, header);
+		}
+	}
+
+	/**
+	 * Lit la valeur d'un champ primitif et l'écrit dans l'objet sans boxing.
+	 *
+	 * @return false si le flux porte une valeur d'un autre type que le champ : rien n'a été lu, il faut passer par
+	 *         {@link #litValeur}.
+	 */
+	protected boolean litPrimitif(final Champ champ, final Object objet) throws IOException {
+		final AccesChamp acces = champ.getAcces();
+		final int nature = champ.getNaturePrimitive();
+		if (nature == AccesChamp.BYTE) {
+			acces.setByte(objet, readByte()); // pas d'en-tête pour un byte primitif
+			return true;
+		}
+		final Header header = Header.getHeader(input.regardeOctet());
+		if (header.categorie != Header.SIMPLE || ((HeaderSimpleType<?>) header).getNature() != nature)
+			return false;
+		input.readByte();
+		final HeaderSimpleType<?> simple = (HeaderSimpleType<?>) header;
+		switch (nature) {
+		case AccesChamp.INT:
+			acces.setInt(objet, (int) simple.litEntier(input));
+			break;
+		case AccesChamp.LONG:
+			acces.setLong(objet, simple.litEntier(input));
+			break;
+		case AccesChamp.DOUBLE:
+			acces.setDouble(objet, simple.litDouble(input));
+			break;
+		case AccesChamp.BOOLEAN:
+			acces.setBoolean(objet, simple.litBooleen());
+			break;
+		case AccesChamp.FLOAT:
+			acces.setFloat(objet, simple.litFloat(input));
+			break;
+		case AccesChamp.SHORT:
+			acces.setShort(objet, (short) simple.litEntier(input));
+			break;
+		default: // CHAR
+			acces.setChar(objet, simple.litChar(input));
+			break;
+		}
+		return true;
+	}
+
+	private Object litObjectCourant(final HeaderTypeCourant headerTypeCourant)
+			throws IOException, UnmarshallExeption {
 		final Class<?> clazz = headerTypeCourant.getTypeCourant();
-		final int smallId = headerTypeCourant.readSmallId(input, 0); // le 0 n a pas d importance ici
-		if (clazz == Date.class) {
-			if (!isDejaVuDate(smallId)) {
-				final Date date = new Date(readLong());
-				stockDateSmallId(date, smallId);
-			}
-			integreObjectDirectement(dicoSmallIdToDate.get(smallId));
-		} else if (clazz == UUID.class) {
-			if (!isDejaVuUuid(smallId)) {
-				final UUID id = readUUID();
-				stockUuidSmallId(id, smallId);
-			}
-			integreObjectDirectement(dicoSmallIdToUUID.get(smallId));
-		} else if (clazz == String.class) {
-			if (!isDejaVuString(smallId)) {
-				final String string = readUTF();
-				stockStringSmallId(string, smallId);
-			}
-			integreObjectDirectement(dicoSmallIdToString.get(smallId));
+		final boolean nouveau = headerTypeCourant.isNouveau();
+		final int smallId = nouveau ? 0 : headerTypeCourant.readSmallId(input, 0);
+		if (clazz == String.class) {
+			if (!nouveau)
+				return litReference(dicoSmallIdToString, smallId);
+			final String string = readUTF();
+			stockStringSmallId(string, ++compteurString);
+			return string;
 		}
+		if (clazz == Date.class) {
+			if (!nouveau)
+				return litReference(dicoSmallIdToDate, smallId);
+			final Date date = new Date(readLong());
+			stockDateSmallId(date, ++compteurDate);
+			return date;
+		}
+		if (!nouveau)
+			return litReference(dicoSmallIdToUUID, smallId);
+		final UUID id = readUUID();
+		stockUuidSmallId(id, ++compteurUuid);
+		return id;
 	}
 
-	private void litObjectEnum(final FieldInformations fi, final Header header) throws NotImplementedSerializeException,
-			ClassNotFoundException, IOException, UnmarshallExeption, InstanciationException {
+	private static <V> V litReference(final TableParId<V> table, final int smallId) throws UnmarshallExeption {
+		final V valeur = table.get(smallId);
+		if (valeur == null)
+			throw new UnmarshallExeption("référence inconnue : " + smallId);
+		return valeur;
+	}
+
+	private Object litObjectEnum(final FieldInformations fi, final Header header)
+			throws ClassNotFoundException, IOException, UnmarshallExeption {
 		Class<?> type = fi.getValueType();
 		if (header.isTypeDevinable()) {
 			if (!isDejaVuClazz(type))
@@ -268,47 +454,74 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 				stockClass(getClasse(readUTF()), smallIdType);
 			type = dicoSmallIdToClazz.get(smallIdType);
 		}
-		final ActionAbstrait<?> action = getAction(type);
-		((ActionBinary<?>) action).set(fi, 0);
-		pileAction.push(action);
+		// symétrique de serialisation.binary.actions.ActionBinaryEnum : ordinal non signé sur 1 octet, ou sur 2
+		final Object[] enums = TypeExtension.getEnumConstants(type);
+		return enums[enums.length < 254 ? readByte() & 0xFF : readShort() & 0xFFFF];
 	}
 
-	private void litObjectSimple(final Header header) throws IOException, UnmarshallExeption, IllegalAccessException,
-			EntityManagerImplementationException, InstanciationException, SetValueException {
-		final HeaderSimpleType<?> headerSimpleType = (HeaderSimpleType<?>) header;
-		integreObjectDirectement(headerSimpleType.read(input));
-	}
-
-	private void litObjetComplexe(final FieldInformations fieldInformations, final Header header)
+	private Object litObjetComplexe(final FieldInformations fieldInformations, final Header header)
 			throws NotImplementedSerializeException, ClassNotFoundException, IOException, UnmarshallExeption,
 			InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
+		if (!header.isNouveau())
+			return litReferenceObjet(fieldInformations, header);
 		// il faut trouver le type de l'objet
-		Class<?> type = fieldInformations.getValueType();
-		final int smallId = header.readSmallId(input, getMaxId());
-		if (isDejaVu(smallId)) {
-			if (isDejaTotalementDeSerialise(smallId)) {
-				integreObjectDirectement(getObject(smallId));
-				return;
-			}
-			type = getObject(smallId).getClass();
-		} else if (header.isTypeDevinable()) {
-			if (!isDejaVuClazz(type))
-				stockClass(type);
-		} else {
-			final short smallIdType = header.getSmallIdType(input);
-			if (!isDejaVuClazz(smallIdType))
-				stockClass(getClasse(readUTF()), smallIdType);
-			type = dicoSmallIdToClazz.get(smallIdType);
+		final Class<?> type = header.isTypeDevinable() ? typeDevine(fieldInformations) : typeLu(header);
+		// même numérotation qu'à l'écriture (BinaryMarshaller.smallIdObjet) ; une valeur immuable n'a pas d'identité
+		final int smallId = TypeExtension.isValeurImmuableBinaire(type) ? -1 : ++compteurObjet;
+		etat.nbObjets = compteurObjet;
+		return litObjet(fieldInformations, type, smallId);
+	}
+
+	private Class<?> typeDevine(final FieldInformations fieldInformations) {
+		final Class<?> type = fieldInformations.getValueType();
+		if (!isDejaVuClazz(type))
+			stockClass(type);
+		return type;
+	}
+
+	private Class<?> typeLu(final Header header) throws IOException, UnmarshallExeption, ClassNotFoundException {
+		final short smallIdType = header.getSmallIdType(input);
+		if (!isDejaVuClazz(smallIdType))
+			stockClass(getClasse(readUTF()), smallIdType);
+		return dicoSmallIdToClazz.get(smallIdType);
+	}
+
+	/** Référence arrière : l'objet déjà lu, ou sa suite s'il n'a pas encore été lu entièrement. */
+	private Object litReferenceObjet(final FieldInformations fieldInformations, final Header header)
+			throws NotImplementedSerializeException, ClassNotFoundException, IOException, UnmarshallExeption,
+			InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
+		final int smallId = header.readSmallId(input, 0);
+		final Object dejaLu = dicoSmallIdToObject.get(smallId);
+		if (dejaLu == null)
+			throw new UnmarshallExeption("référence à un objet inconnu : " + smallId);
+		if (isDejaTotalementDeSerialise(smallId))
+			return dejaLu;
+		return litObjet(fieldInformations, dejaLu.getClass(), smallId);
+	}
+
+	private Object litObjet(final FieldInformations fieldInformations, final Class<?> type, final int smallId)
+			throws NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException {
+		// une action simple (BigDecimal, BigInteger, Calendar...) lit tout dans set : elle n'est pas empilée et peut
+		// être réutilisée pour la valeur suivante du même type
+		final ActionBinary<?> action;
+		if (type == typeActionSimple)
+			action = actionSimple;
+		else
+			action = (ActionBinary<?>) getAction(type);
+		action.set(fieldInformations, smallId);
+		if (action instanceof ActionBinarySimple) {
+			typeActionSimple = type;
+			actionSimple = action;
+			return action.valeurLue();
 		}
-		final ActionAbstrait<?> action = getAction(type);
-		((ActionBinary<?>) action).set(fieldInformations, smallId);
 		pileAction.push(action);
+		return EN_ATTENTE;
 	}
 
 	private T parse()
 			throws IllegalAccessException, ClassNotFoundException, IOException, NotImplementedSerializeException,
 			UnmarshallExeption, InstanciationException, EntityManagerImplementationException, SetValueException {
-		final FakeChamp fc = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
+		final FakeChamp fc = RACINE;
 		litObject(fc);
 		while (!pileAction.isEmpty()) {
 			final ActionBinary<?> actionEnCours = (ActionBinary<?>) getActionEnCours();
@@ -359,7 +572,17 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	protected String readUTF() throws IOException {
-		return input.readUTF();
+		return input.readString();
+	}
+
+	protected int readVarInt() throws IOException {
+		return input.readVarInt();
+	}
+
+	protected byte[] readBytes(final int taille) throws IOException {
+		final byte[] octets = new byte[taille];
+		input.readFully(octets);
+		return octets;
 	}
 
 	private UUID readUUID() throws IOException {
@@ -370,8 +593,17 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	protected void setDejaTotalementDeSerialise(final int smallId) {
-		if (smallId >= 0)
-			isDejaTotalementDeSerialise.set(smallId);
+		final boolean[] t = totalementLus;
+		if (smallId >= 0 && smallId < t.length)
+			t[smallId] = true;
+		else if (smallId >= 0)
+			agranditTotalementLus(smallId);
+	}
+
+	private void agranditTotalementLus(final int smallId) {
+		totalementLus = Arrays.copyOf(totalementLus, Math.max(smallId + 1, totalementLus.length * 2));
+		totalementLus[smallId] = true;
+		etat.totalementLus = totalementLus;
 	}
 
 	private void stockClass(final Class<?> type) {
@@ -379,7 +611,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	private void stockClass(final Class<?> type, final short smallIdType) {
-		listeClasseDejaRencontre.add(type);
+		listeClasseDejaRencontre.putIfAbsent(type, 1);
 		dicoSmallIdToClazz.set(smallIdType, type);
 		biggestSmallIdType = smallIdType;
 	}
@@ -389,7 +621,8 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	protected void stockObjectSmallId(final int smallId, final Object obj) {
-		dicoSmallIdToObject.put(smallId, obj);
+		if (smallId >= 0)
+			dicoSmallIdToObject.set(smallId, obj);
 	}
 
 	private void stockStringSmallId(final String string, final int smallId) {

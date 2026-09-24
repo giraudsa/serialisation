@@ -1,13 +1,14 @@
 package utils.headers;
 
-import java.io.DataInputStream;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.TypeExtension;
+import utils.champ.AccesChamp;
+import utils.io.EntreeBinaire;
+import utils.io.SortieBinaire;
 
 public class HeaderSimpleType<T> extends Header {
 	private static HeaderSimpleType<Boolean> booleanFalse;
@@ -15,6 +16,9 @@ public class HeaderSimpleType<T> extends Header {
 	/** type (primitif ou enveloppe) -> header indexé par la taille de codage. */
 	private static final Map<Class<?>, HeaderSimpleType<?>[]> classAndEncodageMiniToHeader = new HashMap<>();
 	private static HeaderSimpleType<Void> nullHeader;
+	private static HeaderSimpleType<?>[] headersDouble;
+	private static HeaderSimpleType<?>[] headersInteger;
+	private static HeaderSimpleType<?>[] headersLong;
 
 	public static Header getHeader(final Object o) {
 		Registre.init();
@@ -27,7 +31,57 @@ public class HeaderSimpleType<T> extends Header {
 			encodage = (Character) o == 0 ? 0 : 2;
 		else
 			encodage = ByteHelper.getMinimumEncodage((Number) o);
-		return classAndEncodageMiniToHeader.get(o.getClass())[encodage];
+		return headersDuType(o.getClass())[encodage];
+	}
+
+	/**
+	 * Écrit la valeur d'un champ primitif sans boxing : mêmes octets que {@link #getHeader(Object)} puis
+	 * {@link #writeValue} sur la valeur enveloppée. Le byte primitif, sans en-tête, n'est pas traité ici.
+	 */
+	public static void ecritPrimitif(final SortieBinaire output, final AccesChamp acces, final int nature,
+			final Object objet) throws IOException {
+		switch (nature) {
+		case AccesChamp.INT: {
+			final int v = acces.getInt(objet);
+			output.writeByte(headersInteger[ByteHelper.getMinimumEncodage(v)].headerByte);
+			if (v != 0)
+				ByteHelper.write(output, v);
+			break;
+		}
+		case AccesChamp.LONG: {
+			final long v = acces.getLong(objet);
+			output.writeByte(headersLong[ByteHelper.getMinimumEncodage(v)].headerByte);
+			if (v != 0)
+				ByteHelper.write(output, v);
+			break;
+		}
+		case AccesChamp.DOUBLE: {
+			final double v = acces.getDouble(objet);
+			output.writeByte(headersDouble[v == 0.0 ? 0 : 8].headerByte);
+			if (v != 0.0)
+				output.writeDouble(v);
+			break;
+		}
+		case AccesChamp.BOOLEAN:
+			output.writeByte((acces.getBoolean(objet) ? booleanTrue : booleanFalse).headerByte);
+			break;
+		default:
+			// short, float, char : moins fréquents, par la valeur enveloppée
+			final Object valeur = acces.get(objet);
+			((HeaderSimpleType<?>) getHeader(valeur)).writeValue(output, valeur);
+			break;
+		}
+	}
+
+	/** Évite la HashMap sur le chemin courant : les types enveloppes sont testés directement. */
+	private static HeaderSimpleType<?>[] headersDuType(final Class<?> type) {
+		if (type == Integer.class)
+			return headersInteger;
+		if (type == Long.class)
+			return headersLong;
+		if (type == Double.class)
+			return headersDouble;
+		return classAndEncodageMiniToHeader.get(type);
 	}
 
 	protected static void init() {
@@ -59,6 +113,9 @@ public class HeaderSimpleType<T> extends Header {
 		new HeaderSimpleType<>(float.class, 4);
 		new HeaderSimpleType<>(0.0, double.class);
 		new HeaderSimpleType<>(double.class, 8);
+		headersInteger = classAndEncodageMiniToHeader.get(Integer.class);
+		headersLong = classAndEncodageMiniToHeader.get(Long.class);
+		headersDouble = classAndEncodageMiniToHeader.get(Double.class);
 	}
 
 	private static void enregistre(final Class<?> type, final int tailleCodageValeur, final HeaderSimpleType<?> header) {
@@ -66,6 +123,8 @@ public class HeaderSimpleType<T> extends Header {
 	}
 
 	private T defautValue;
+	/** nature du type (voir AccesChamp) : aiguillage de lecture par switch. */
+	private final int nature;
 	private final Class<T> simpleType;
 
 	private final int tailleCodageValeur;
@@ -74,6 +133,7 @@ public class HeaderSimpleType<T> extends Header {
 		super();
 		this.simpleType = simpleType;
 		this.tailleCodageValeur = tailleCodageValeur;
+		nature = AccesChamp.nature(simpleType);
 		enregistre(simpleType, tailleCodageValeur, this);
 		enregistre(TypeExtension.getTypeEnveloppe(simpleType), tailleCodageValeur, this);
 	}
@@ -83,29 +143,72 @@ public class HeaderSimpleType<T> extends Header {
 		this.simpleType = simpleType;
 		this.defautValue = value;
 		tailleCodageValeur = 0;
+		nature = AccesChamp.nature(simpleType);
 		enregistre(simpleType, tailleCodageValeur, this);
 		enregistre(TypeExtension.getTypeEnveloppe(simpleType), tailleCodageValeur, this);
 	}
 
-	public Object read(final DataInputStream input) throws IOException, UnmarshallExeption {
+	@Override
+	protected int categorie() {
+		return SIMPLE;
+	}
+
+	/** @return la nature du type codé (constantes de AccesChamp). */
+	public int getNature() {
+		return nature;
+	}
+
+	public Object read(final EntreeBinaire input) throws IOException, UnmarshallExeption {
 		if (tailleCodageValeur == 0)
 			return defautValue; // 0 ou true ou false ou null
-		if (simpleType == float.class)
-			return input.readFloat();
-		if (simpleType == double.class)
+		switch (nature) {
+		case AccesChamp.INT:
+			return (int) ByteHelper.read(input, tailleCodageValeur);
+		case AccesChamp.LONG:
+			return ByteHelper.read(input, tailleCodageValeur);
+		case AccesChamp.DOUBLE:
 			return input.readDouble();
-		if (simpleType == char.class)
+		case AccesChamp.FLOAT:
+			return input.readFloat();
+		case AccesChamp.CHAR:
 			return input.readChar();
-		return ByteHelper.getObject(simpleType, ByteHelper.read(input, tailleCodageValeur));
+		case AccesChamp.SHORT:
+			return (short) ByteHelper.read(input, tailleCodageValeur);
+		case AccesChamp.BYTE:
+			return (byte) ByteHelper.read(input, tailleCodageValeur);
+		default:
+			return ByteHelper.getObject(simpleType, ByteHelper.read(input, tailleCodageValeur));
+		}
+	}
+
+	/** Lecture sans boxing d'un entier (byte, short, int, long). */
+	public long litEntier(final EntreeBinaire input) throws IOException {
+		return tailleCodageValeur == 0 ? 0 : ByteHelper.read(input, tailleCodageValeur);
+	}
+
+	public boolean litBooleen() {
+		return (Boolean) defautValue;
+	}
+
+	public char litChar(final EntreeBinaire input) throws IOException {
+		return tailleCodageValeur == 0 ? 0 : input.readChar();
+	}
+
+	public double litDouble(final EntreeBinaire input) throws IOException {
+		return tailleCodageValeur == 0 ? 0 : input.readDouble();
+	}
+
+	public float litFloat(final EntreeBinaire input) throws IOException {
+		return tailleCodageValeur == 0 ? 0 : input.readFloat();
 	}
 
 	@Override
-	public int readSmallId(final DataInputStream input, final int maxId) {
+	public int readSmallId(final EntreeBinaire input, final int maxId) {
 		return 0;
 	}
 
 	@Override
-	public void writeValue(final DataOutput output, final Object o) throws IOException {
+	public void writeValue(final SortieBinaire output, final Object o) throws IOException {
 		output.writeByte(headerByte);
 		if (tailleCodageValeur == 0)
 			return;// rien à ecrire

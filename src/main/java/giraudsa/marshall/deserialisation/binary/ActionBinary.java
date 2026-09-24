@@ -8,6 +8,7 @@ import giraudsa.marshall.exception.InstanciationException;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
+import utils.champ.Champ;
 import utils.champ.FieldInformations;
 
 public abstract class ActionBinary<T> extends ActionAbstrait<T> {
@@ -18,6 +19,16 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 		super(type, unmarshaller);
 		if (unmarshaller != null)
 			profondeur = getBinaryUnmarshaller().getProfondeur() + 1;
+	}
+
+	/** Remet l'action à zéro pour lire une nouvelle valeur de type nouveauType (sous-classes : leurs champs). */
+	protected void recycle(final Class<T> nouveauType, final BinaryUnmarshaller<?> nouvelUnmarshaller) {
+		type = nouveauType;
+		unmarshaller = nouvelUnmarshaller; // une action en réserve peut venir d'une désérialisation précédente
+		obj = null;
+		fieldInformations = null;
+		smallId = 0;
+		profondeur = getBinaryUnmarshaller().getProfondeur() + 1;
 	}
 
 	@Override
@@ -55,6 +66,27 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 
 	protected boolean isDejaVu() {
 		return getBinaryUnmarshaller().isDejaVu(smallId);
+	}
+
+	/** voir {@link BinaryUnmarshaller#litValeur(FieldInformations)}. */
+	protected Object litValeur(final FieldInformations f)
+			throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption,
+			InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
+		return getBinaryUnmarshaller().litValeur(f);
+	}
+
+	/** voir {@link BinaryUnmarshaller#litPrimitif(Champ, Object)}. */
+	protected boolean litPrimitif(final Champ champ, final Object objet) throws IOException {
+		return getBinaryUnmarshaller().litPrimitif(champ, objet);
+	}
+
+	protected static boolean isEnAttente(final Object valeur) {
+		return valeur == BinaryUnmarshaller.EN_ATTENTE;
+	}
+
+	/** valeur construite par l'action (et non l'objet déjà vu de même smallId). */
+	Object valeurLue() {
+		return obj;
 	}
 
 	protected void litObject(final FieldInformations f)
@@ -97,6 +129,14 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 
 	protected String readUTF() throws IOException {
 		return getBinaryUnmarshaller().readUTF();
+	}
+
+	protected int readVarInt() throws IOException {
+		return getBinaryUnmarshaller().readVarInt();
+	}
+
+	protected byte[] readBytes(final int taille) throws IOException {
+		return getBinaryUnmarshaller().readBytes(taille);
 	}
 
 	// methode inutiles en binary

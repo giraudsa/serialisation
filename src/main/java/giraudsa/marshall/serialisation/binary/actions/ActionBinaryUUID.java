@@ -26,10 +26,10 @@ public class ActionBinaryUUID extends ActionBinary<UUID> {
 	@Override
 	protected boolean writeHeaders(final Marshaller marshaller, final UUID id,
 			final FieldInformations fieldInformations) throws IOException {
-		final boolean isDejaVu = isDejaVuUUID(marshaller, id);
-		final int smallId = getSmallIdUUIDAndStockUUID(marshaller, id);
-		final HeaderTypeCourant header = HeaderTypeCourant.getHeader(id, smallId);
-		header.write(getOutput(marshaller), smallId);
+		final int smallIdSigne = smallIdUUID(marshaller, id);
+		final boolean isDejaVu = smallIdSigne > 0;
+		final int smallId = isDejaVu ? smallIdSigne : -smallIdSigne;
+		HeaderTypeCourant.getHeader(id, smallId, isDejaVu).write(getOutput(marshaller), smallId);
 		return isDejaVu;
 	}
 }

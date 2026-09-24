@@ -2,10 +2,12 @@ package giraudsa.marshall.deserialisation.binary.actions.simple;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
+import utils.headers.ByteHelper;
 
 @SuppressWarnings("rawtypes")
 public class ActionBinaryBigDecimal extends ActionBinarySimple<BigDecimal> {
@@ -29,7 +31,16 @@ public class ActionBinaryBigDecimal extends ActionBinarySimple<BigDecimal> {
 		if (isDejaVu())
 			obj = getObjet();
 		else {
-			obj = new BigDecimal(readUTF());
+			final int scale = ByteHelper.unzigzag(readVarInt());
+			final int taille = readVarInt();
+			if (taille <= 8) {
+				// unscaledValue tient dans un long : BigDecimal compact, sans BigInteger intermédiaire
+				long unscaled = readByte(); // extension de signe
+				for (int i = 1; i < taille; i++)
+					unscaled = unscaled << 8 | readByte() & 0xFF;
+				obj = BigDecimal.valueOf(unscaled, scale);
+			} else
+				obj = new BigDecimal(new BigInteger(readBytes(taille)), scale);
 			stockeObjetId();
 			setDejaTotalementDeSerialise();
 		}

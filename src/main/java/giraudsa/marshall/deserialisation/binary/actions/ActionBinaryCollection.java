@@ -2,7 +2,6 @@ package giraudsa.marshall.deserialisation.binary.actions;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -21,6 +20,7 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.champ.FakeChamp;
+import utils.champ.FieldInformations;
 import utils.TypeExtension;
 
 @SuppressWarnings("rawtypes")
@@ -45,10 +45,13 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 	public void deserialisePariellement()
 			throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption,
 			InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
-		if (!deserialisationFini)
-			litObject(fakeChamp);
-		else
-			exporteObject();
+		while (!deserialisationFini) {
+			final Object valeur = litValeur(fakeChamp);
+			if (isEnAttente(valeur))
+				return;
+			ajoute(valeur);
+		}
+		exporteObject();
 	}
 
 	@Override
@@ -71,26 +74,26 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 			stockeObjetId();
 			if (strategieDeSerialiseTout())
 				setDejaTotalementDeSerialise();
-			tailleCollection = readInt();
+			tailleCollection = readVarInt();
 			deserialisationFini = index >= tailleCollection;
 		}
 
-		final Type[] types = fieldInformations.getParametreType();
-		Type parametreType = Object.class;
-		if (types.length > 0)
-			parametreType = types[0];
-		fakeChamp = new FakeChamp(null, parametreType, fieldInformations.getRelation(),
-				fieldInformations.getAnnotations());
+		fakeChamp = fieldInformations.getChampParametre(FieldInformations.ELEMENT);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void integreObjet(final String nom, final Object objet) throws IllegalAccessException,
 			EntityManagerImplementationException, InstanciationException, SetValueException {
-		((Collection) obj).add(objet);
-		deserialisationFini = ++index >= tailleCollection;
+		ajoute(objet);
 		if (deserialisationFini)
 			exporteObject();
+	}
+
+	@SuppressWarnings("unchecked")
+	private void ajoute(final Object objet) {
+		((Collection) obj).add(objet);
+		deserialisationFini = ++index >= tailleCollection;
 	}
 
 	private Collection newInstance() throws UnmarshallExeption {

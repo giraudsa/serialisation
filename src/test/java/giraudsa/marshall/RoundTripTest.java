@@ -470,4 +470,85 @@ class RoundTripTest {
 			assertSame(Operation.PLUS, lu.nonDeclaree);
 		}
 	}
+
+	@Test
+	void binaireReferencesLointaines() throws Exception {
+		// références arrière vers des objets, chaînes, dates et UUID dont le smallId dépasse les "very small id"
+		final Noeud racine = graphe("");
+		final Date[] dates = new Date[700];
+		for (int i = 0; i < dates.length; i++)
+			dates[i] = new Date(i * 1000L);
+		for (int i = 0; i < 1500; i++) {
+			final Noeud enfant = new Noeud();
+			enfant.id = "n" + i;
+			enfant.nom = "nom" + i;
+			enfant.entier = i;
+			enfant.date = dates[i % dates.length];
+			enfant.uuid = new UUID(i % 600, 7);
+			enfant.parent = i >= 300 ? racine.enfants.get(i - 300 + 3) : racine;
+			racine.enfants.add(enfant);
+		}
+		for (int i = 0; i < 1500; i += 7)
+			racine.tags.add("nom" + i);
+		final Noeud lu = BINARY.roundTrip(racine);
+		assertEquals(racine.tags, lu.tags);
+		assertEquals(racine.enfants.size(), lu.enfants.size());
+		for (int i = 3; i < racine.enfants.size(); i++) {
+			final Noeud attendu = racine.enfants.get(i);
+			final Noeud l = lu.enfants.get(i);
+			assertEquals(attendu.id, l.id);
+			assertEquals(attendu.nom, l.nom);
+			assertEquals(attendu.date, l.date);
+			assertEquals(attendu.uuid, l.uuid);
+			if (i >= 303)
+				assertSame(lu.enfants.get(i - 300), l.parent);
+			else
+				assertSame(lu, l.parent);
+		}
+		// les instances partagées restent partagées
+		assertSame(lu.enfants.get(3).date, lu.enfants.get(3 + dates.length).date);
+	}
+
+	@Test
+	void binaireAppelsSuccessifs() throws Exception {
+		// les tables sont réutilisées d'un appel à l'autre sur un même thread : aucun état ne doit fuir,
+		// y compris après un flux tronqué
+		for (int i = 0; i < 3; i++) {
+			grapheComplet(BINARY);
+			sansId(BINARY);
+			identite(BINARY);
+		}
+		final ByteArrayOutputStream out = new ByteArrayOutputStream();
+		BinaryMarshaller.toCompleteBinary(graphe(""), out);
+		final byte[] octets = out.toByteArray();
+		final byte[] tronque = java.util.Arrays.copyOf(octets, octets.length / 2);
+		org.junit.jupiter.api.Assertions.assertThrows(Exception.class,
+				() -> BinaryUnmarshaller.fromBinary(new ByteArrayInputStream(tronque)));
+		verifie(graphe(""), BinaryUnmarshaller.fromBinary(new ByteArrayInputStream(octets)));
+		grapheComplet(BINARY);
+	}
+
+	@Test
+	void binaireChainesEtDecimaux() throws Exception {
+		final Melange m = new Melange();
+		m.valeurs.put("long", "é".repeat(70_000) + "fin");
+		m.valeurs.put("unicode", "\uD83D\uDE00 surrogate isolé \uD800 nul \u0000 \u07FF \u0800 \uFFFF");
+		m.valeurs.put("vide", "");
+		m.valeurs.put("negatif", new BigDecimal("-1.5E+30"));
+		m.valeurs.put("precis", new BigDecimal("123456789012345678901234567890.123456789"));
+		m.valeurs.put("zero", BigDecimal.ZERO);
+		m.valeurs.put("petit", new BigDecimal("1E-400"));
+		m.valeurs.put("long max", new BigDecimal(Long.MAX_VALUE).movePointLeft(3));
+		m.valeurs.put("long min", BigDecimal.valueOf(Long.MIN_VALUE, 2));
+		// valeurs immuables : écrites sans identité, une instance partagée reste égale
+		final BigDecimal partage = new BigDecimal("42.00");
+		m.valeurs.put("partage 1", partage);
+		m.valeurs.put("partage 2", partage);
+		m.valeurs.put("bigint", new java.math.BigInteger("-123456789012345678901234567890"));
+		for (int i = 0; i < 300; i++)
+			m.nombres.put(i, (long) i * i);
+		final Melange lu = BINARY.roundTrip(m);
+		assertEquals(m.valeurs, lu.valeurs);
+		assertEquals(m.nombres, lu.nombres);
+	}
 }

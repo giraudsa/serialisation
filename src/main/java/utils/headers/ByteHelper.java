@@ -1,8 +1,9 @@
 package utils.headers;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
+
+import utils.io.EntreeBinaire;
+import utils.io.SortieBinaire;
 
 /**
  * Encodage des entiers sur le nombre minimal d'octets en complément à deux,
@@ -46,13 +47,23 @@ public class ByteHelper {
 	}
 
 	/** Lit un entier signé codé sur nbOctets octets. */
-	protected static long read(final DataInput input, final int nbOctets) throws IOException {
+	protected static long read(final EntreeBinaire input, final int nbOctets) throws IOException {
 		if (nbOctets == 0)
 			return 0;
 		long res = input.readByte(); // extension de signe
 		for (int i = 1; i < nbOctets; i++)
 			res = res << 8 | input.readUnsignedByte();
 		return res;
+	}
+
+	/** @return le nombre d'octets de v en complément à deux minimal (1 pour 0), comme BigInteger.toByteArray(). */
+	public static int taille(final long v) {
+		return tailleComplementADeux(v);
+	}
+
+	/** Écrit v sur {@link #taille(long)} octets, big-endian. */
+	public static void ecrit(final SortieBinaire output, final long v) throws IOException {
+		write(output, v);
 	}
 
 	private static int tailleComplementADeux(final long v) {
@@ -64,10 +75,18 @@ public class ByteHelper {
 	 * Écrit v sur le nombre minimal d'octets (1 octet pour 0), comme
 	 * {@code output.write(BigInteger.valueOf(v).toByteArray())}.
 	 */
-	protected static void write(final DataOutput output, final long v) throws IOException {
+	protected static void write(final SortieBinaire output, final long v) throws IOException {
 		final int nbOctets = tailleComplementADeux(v);
 		for (int i = nbOctets - 1; i >= 0; i--)
 			output.writeByte((int) (v >>> (i << 3)));
+	}
+
+	public static int zigzag(final int v) {
+		return v << 1 ^ v >> 31;
+	}
+
+	public static int unzigzag(final int v) {
+		return v >>> 1 ^ -(v & 1);
 	}
 
 	private ByteHelper() {

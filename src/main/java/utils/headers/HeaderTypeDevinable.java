@@ -1,51 +1,43 @@
 package utils.headers;
 
-import java.io.DataInputStream;
-import java.io.DataOutput;
 import java.io.IOException;
 
-import giraudsa.marshall.exception.UnmarshallExeption;
+import utils.io.EntreeBinaire;
+import utils.io.SortieBinaire;
 
+/**
+ * Premier passage d'un objet dont le type est déduit du champ. Le smallId n'est pas écrit : il est attribué
+ * séquentiellement à la lecture, dans l'ordre d'apparition.
+ */
 public class HeaderTypeDevinable extends Header {
-	/** headers indexés par la taille de codage du smallId (1 à 4). */
-	private static final HeaderTypeDevinable[] encodageSmallIdToHeaderTypeDevinable = new HeaderTypeDevinable[5];
+	private static HeaderTypeDevinable instance;
 
-	protected static Header getHeader(final int smallId) {
-		final int toBeConsideredForNextBytes = smallId > HeaderVerySmallId.getMaxVerySmallId()
-				? smallId - HeaderVerySmallId.getMaxVerySmallId()
-				: smallId;
-		return encodageSmallIdToHeaderTypeDevinable[ByteHelper.getMinimumEncodage(toBeConsideredForNextBytes)];
+	protected static Header getHeader() {
+		return instance;
 	}
 
 	protected static void init() {
-		new HeaderTypeDevinable(1);
-		new HeaderTypeDevinable(2);
-		new HeaderTypeDevinable(3);
-		new HeaderTypeDevinable(4);
+		instance = new HeaderTypeDevinable();
 	}
 
-	private final int encodageSmallId;
-
-	private HeaderTypeDevinable(final int encodageSmallId) {
+	private HeaderTypeDevinable() {
 		super();
-		this.encodageSmallId = encodageSmallId;
-		encodageSmallIdToHeaderTypeDevinable[encodageSmallId] = this;
 	}
 
 	@Override
-	public int readSmallId(final DataInputStream input, final int maxId) throws IOException, UnmarshallExeption {
-		final int lu = (int) ByteHelper.read(input, encodageSmallId);
-		return maxId >= HeaderVerySmallId.getMaxVerySmallId() ? lu + HeaderVerySmallId.getMaxVerySmallId() : lu;
+	public boolean isNouveau() {
+		return true;
 	}
 
 	@Override
-	public void write(final DataOutput output, final int smallId, final short smallIdType, final boolean isDejaVuType,
+	public int readSmallId(final EntreeBinaire input, final int maxId) {
+		return 0;
+	}
+
+	@Override
+	public void write(final SortieBinaire output, final int smallId, final short smallIdType, final boolean isDejaVuType,
 			final Class<?> type) throws IOException {
 		output.writeByte(headerByte);
-		final int toBeConsideredForNextBytes = smallId > HeaderVerySmallId.getMaxVerySmallId()
-				? smallId - HeaderVerySmallId.getMaxVerySmallId()
-				: smallId;
-		ByteHelper.write(output, toBeConsideredForNextBytes);
 	}
 
 }

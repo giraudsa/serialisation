@@ -23,10 +23,10 @@ public class ActionBinaryString extends ActionBinary<String> {
 	@Override
 	protected boolean writeHeaders(final Marshaller marshaller, final String string,
 			final FieldInformations fieldInformations) throws IOException {
-		final boolean isDejaVu = isDejaVuString(marshaller, string);
-		final int smallId = getSmallIdStringAndStockString(marshaller, string);
-		final HeaderTypeCourant header = HeaderTypeCourant.getHeader(string, smallId);
-		header.write(getOutput(marshaller), smallId);
+		final int id = smallIdString(marshaller, string);
+		final boolean isDejaVu = id > 0;
+		final int smallId = isDejaVu ? id : -id;
+		HeaderTypeCourant.getHeader(string, smallId, isDejaVu).write(getOutput(marshaller), smallId);
 		return isDejaVu;
 	}
 }

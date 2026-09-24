@@ -1,0 +1,502 @@
+package utils.champ;
+
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Crée l'accès à un champ : de préférence une petite classe cachée (JDK 15+), membre du nid de la classe du champ, qui
+ * lit et écrit le champ directement, même privé ; à défaut (JDK plus ancien, champ final ou statique, classe d'un
+ * module fermé...), un accès par réflexion.
+ */
+final class GenerateurAcces {
+
+	/** Accès par réflexion : solution de repli. */
+	static final class AccesParReflexion implements AccesChamp {
+		private final Field champ;
+
+		AccesParReflexion(final Field champ) {
+			this.champ = champ;
+		}
+
+		@Override
+		public Object get(final Object objet) {
+			try {
+				return champ.get(objet);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public void set(final Object objet, final Object valeur) {
+			try {
+				champ.set(objet, valeur);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public boolean getBoolean(final Object objet) {
+			try {
+				return champ.getBoolean(objet);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public byte getByte(final Object objet) {
+			try {
+				return champ.getByte(objet);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public char getChar(final Object objet) {
+			try {
+				return champ.getChar(objet);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public double getDouble(final Object objet) {
+			try {
+				return champ.getDouble(objet);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public float getFloat(final Object objet) {
+			try {
+				return champ.getFloat(objet);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public int getInt(final Object objet) {
+			try {
+				return champ.getInt(objet);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public long getLong(final Object objet) {
+			try {
+				return champ.getLong(objet);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public short getShort(final Object objet) {
+			try {
+				return champ.getShort(objet);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public void setBoolean(final Object objet, final boolean valeur) {
+			try {
+				champ.setBoolean(objet, valeur);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public void setByte(final Object objet, final byte valeur) {
+			try {
+				champ.setByte(objet, valeur);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public void setChar(final Object objet, final char valeur) {
+			try {
+				champ.setChar(objet, valeur);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public void setDouble(final Object objet, final double valeur) {
+			try {
+				champ.setDouble(objet, valeur);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public void setFloat(final Object objet, final float valeur) {
+			try {
+				champ.setFloat(objet, valeur);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public void setInt(final Object objet, final int valeur) {
+			try {
+				champ.setInt(objet, valeur);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public void setLong(final Object objet, final long valeur) {
+			try {
+				champ.setLong(objet, valeur);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		public void setShort(final Object objet, final short valeur) {
+			try {
+				champ.setShort(objet, valeur);
+			} catch (final IllegalAccessException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+	}
+
+	/** Constructeur de bytecode minimal : pool de constantes. */
+	private static final class Pool {
+		private final ByteArrayOutputStream octets = new ByteArrayOutputStream();
+		private final Map<String, Integer> index = new HashMap<>();
+		private final DataOutputStream out = new DataOutputStream(octets);
+		private int prochain = 1;
+
+		private int ajoute(final String cle, final Ecriture ecriture) throws IOException {
+			final Integer existant = index.get(cle);
+			if (existant != null)
+				return existant;
+			ecriture.ecrit(out);
+			index.put(cle, prochain);
+			return prochain++;
+		}
+
+		int classe(final String nomInterne) throws IOException {
+			final int nom = utf8(nomInterne);
+			return ajoute("C" + nomInterne, o -> {
+				o.writeByte(7);
+				o.writeShort(nom);
+			});
+		}
+
+		int champ(final String classe, final String nom, final String descripteur) throws IOException {
+			final int c = classe(classe);
+			final int nt = nomEtType(nom, descripteur);
+			return ajoute("F" + classe + "." + nom + ":" + descripteur, o -> {
+				o.writeByte(9);
+				o.writeShort(c);
+				o.writeShort(nt);
+			});
+		}
+
+		int methode(final String classe, final String nom, final String descripteur) throws IOException {
+			final int c = classe(classe);
+			final int nt = nomEtType(nom, descripteur);
+			return ajoute("M" + classe + "." + nom + descripteur, o -> {
+				o.writeByte(10);
+				o.writeShort(c);
+				o.writeShort(nt);
+			});
+		}
+
+		int nomEtType(final String nom, final String descripteur) throws IOException {
+			final int n = utf8(nom);
+			final int d = utf8(descripteur);
+			return ajoute("N" + nom + ":" + descripteur, o -> {
+				o.writeByte(12);
+				o.writeShort(n);
+				o.writeShort(d);
+			});
+		}
+
+		int utf8(final String s) throws IOException {
+			return ajoute("U" + s, o -> {
+				o.writeByte(1);
+				o.writeUTF(s);
+			});
+		}
+	}
+
+	private interface Ecriture {
+		void ecrit(DataOutputStream out) throws IOException;
+	}
+
+	private static final String INTERFACE = AccesChamp.class.getName().replace('.', '/');
+	private static final Method DEFINE_HIDDEN_CLASS;
+	private static final Object OPTIONS_NESTMATE;
+
+	static {
+		Method m = null;
+		Object options = null;
+		try {
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			final Class<Enum> classOption = (Class<Enum>) Class
+					.forName("java.lang.invoke.MethodHandles$Lookup$ClassOption");
+			options = Array.newInstance(classOption, 1);
+			Array.set(options, 0, Enum.valueOf(classOption, "NESTMATE"));
+			m = Lookup.class.getMethod("defineHiddenClass", byte[].class, boolean.class, options.getClass());
+		} catch (final ReflectiveOperationException | RuntimeException e) {
+			// JDK < 15 : pas de classes cachées, on reste sur la réflexion
+			m = null;
+		}
+		DEFINE_HIDDEN_CLASS = m;
+		OPTIONS_NESTMATE = options;
+	}
+
+	static AccesChamp cree(final Field champ) {
+		final int modificateurs = champ.getModifiers();
+		if (DEFINE_HIDDEN_CLASS != null && !Modifier.isFinal(modificateurs) && !Modifier.isStatic(modificateurs))
+			try {
+				return genere(champ);
+			} catch (final Throwable e) { // NOSONAR : toute erreur de génération ramène à la réflexion
+				// classe d'un module fermé, chargeur qui ne voit pas AccesChamp...
+			}
+		return new AccesParReflexion(champ);
+	}
+
+	private static String descripteur(final Class<?> type) {
+		if (type == int.class)
+			return "I";
+		if (type == long.class)
+			return "J";
+		if (type == double.class)
+			return "D";
+		if (type == float.class)
+			return "F";
+		if (type == boolean.class)
+			return "Z";
+		if (type == byte.class)
+			return "B";
+		if (type == short.class)
+			return "S";
+		if (type == char.class)
+			return "C";
+		if (type.isArray())
+			return type.getName().replace('.', '/');
+		return "L" + type.getName().replace('.', '/') + ";";
+	}
+
+	private static AccesChamp genere(final Field champ) throws Throwable {
+		final Class<?> cible = champ.getDeclaringClass();
+		final Lookup lookup = MethodHandles.privateLookupIn(cible, MethodHandles.lookup());
+		final byte[] classe = octets(champ);
+		final Lookup cachee = (Lookup) DEFINE_HIDDEN_CLASS.invoke(lookup, classe, true, OPTIONS_NESTMATE);
+		return (AccesChamp) cachee.findConstructor(cachee.lookupClass(), MethodType.methodType(void.class)).invoke();
+	}
+
+	private static byte[] octets(final Field champ) throws IOException {
+		final Class<?> cible = champ.getDeclaringClass();
+		final String nomCible = cible.getName().replace('.', '/');
+		final String nomClasse = nomCible + "$$AccesChamp";
+		final Class<?> typeChamp = champ.getType();
+		final String desc = descripteur(typeChamp);
+		final Class<?> enveloppe = typeChamp.isPrimitive() ? enveloppe(typeChamp) : null;
+		final String nomEnveloppe = enveloppe == null ? null : enveloppe.getName().replace('.', '/');
+
+		final Pool pool = new Pool();
+		final int thisClass = pool.classe(nomClasse);
+		final int superClass = pool.classe("java/lang/Object");
+		final int iface = pool.classe(INTERFACE);
+		final int init = pool.utf8("<init>");
+		final int descInit = pool.utf8("()V");
+		final int superInit = pool.methode("java/lang/Object", "<init>", "()V");
+		final int code = pool.utf8("Code");
+		final int nomGet = pool.utf8("get");
+		final int descGet = pool.utf8("(Ljava/lang/Object;)Ljava/lang/Object;");
+		final int nomSet = pool.utf8("set");
+		final int descSet = pool.utf8("(Ljava/lang/Object;Ljava/lang/Object;)V");
+		final int classeCible = pool.classe(nomCible);
+		final int ref = pool.champ(nomCible, champ.getName(), desc);
+		final int castValeur = pool.classe(enveloppe == null ? typeInterne(typeChamp) : nomEnveloppe);
+		final int boxe = enveloppe == null ? 0
+				: pool.methode(nomEnveloppe, "valueOf", "(" + desc + ")L" + nomEnveloppe + ";");
+		final int deboxe = enveloppe == null ? 0
+				: pool.methode(nomEnveloppe, typeChamp.getName() + "Value", "()" + desc);
+
+		// setter primitif : setInt(Object, int)...
+		final String suffixe = enveloppe == null ? null
+				: Character.toUpperCase(typeChamp.getName().charAt(0)) + typeChamp.getName().substring(1);
+		final int nomSetPrimitif = enveloppe == null ? 0 : pool.utf8("set" + suffixe);
+		final int descSetPrimitif = enveloppe == null ? 0 : pool.utf8("(Ljava/lang/Object;" + desc + ")V");
+		final int nomGetPrimitif = enveloppe == null ? 0 : pool.utf8("get" + suffixe);
+		final int descGetPrimitif = enveloppe == null ? 0 : pool.utf8("(Ljava/lang/Object;)" + desc);
+
+		final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		final DataOutputStream out = new DataOutputStream(bos);
+		out.writeInt(0xCAFEBABE);
+		out.writeShort(0);
+		out.writeShort(52); // Java 8 : pas de branchement, donc pas de StackMapTable
+		out.writeShort(pool.prochain);
+		pool.out.flush();
+		out.write(pool.octets.toByteArray());
+		out.writeShort(0x0031); // public final super
+		out.writeShort(thisClass);
+		out.writeShort(superClass);
+		out.writeShort(1);
+		out.writeShort(iface);
+		out.writeShort(0); // aucun champ
+		out.writeShort(enveloppe == null ? 3 : 5); // méthodes
+
+		// public <init>() { super(); }
+		methode(out, init, descInit, code, 1, 1, new byte[] { 0x2a, (byte) 0xb7, hi(superInit), lo(superInit),
+				(byte) 0xb1 });
+
+		// public Object get(Object o) { return ((Cible) o).champ; } (+ valueOf pour un primitif)
+		final ByteArrayOutputStream g = new ByteArrayOutputStream();
+		g.write(0x2b); // aload_1
+		g.write(0xc0); // checkcast Cible
+		g.write(hi(classeCible));
+		g.write(lo(classeCible));
+		g.write(0xb4); // getfield
+		g.write(hi(ref));
+		g.write(lo(ref));
+		if (enveloppe != null) {
+			g.write(0xb8); // invokestatic Enveloppe.valueOf
+			g.write(hi(boxe));
+			g.write(lo(boxe));
+		}
+		g.write(0xb0); // areturn
+		methode(out, nomGet, descGet, code, 2, 2, g.toByteArray());
+
+		// public void set(Object o, Object v) { ((Cible) o).champ = (Type) v; } (+ xxxValue pour un primitif)
+		final ByteArrayOutputStream s = new ByteArrayOutputStream();
+		s.write(0x2b); // aload_1
+		s.write(0xc0); // checkcast Cible
+		s.write(hi(classeCible));
+		s.write(lo(classeCible));
+		s.write(0x2c); // aload_2
+		s.write(0xc0); // checkcast Type (ou enveloppe)
+		s.write(hi(castValeur));
+		s.write(lo(castValeur));
+		if (enveloppe != null) {
+			s.write(0xb6); // invokevirtual Enveloppe.xxxValue
+			s.write(hi(deboxe));
+			s.write(lo(deboxe));
+		}
+		s.write(0xb5); // putfield
+		s.write(hi(ref));
+		s.write(lo(ref));
+		s.write(0xb1); // return
+		methode(out, nomSet, descSet, code, 3, 3, s.toByteArray());
+
+		if (enveloppe != null) {
+			// public void setXxx(Object o, xxx v) { ((Cible) o).champ = v; } : sans boxing
+			final ByteArrayOutputStream p = new ByteArrayOutputStream();
+			p.write(0x2b); // aload_1
+			p.write(0xc0); // checkcast Cible
+			p.write(hi(classeCible));
+			p.write(lo(classeCible));
+			final boolean large = typeChamp == long.class || typeChamp == double.class;
+			// lload_2, dload_2, fload_2 ou iload_2
+			p.write(typeChamp == long.class ? 0x20 : typeChamp == double.class ? 0x28 : typeChamp == float.class ? 0x24 : 0x1c);
+			p.write(0xb5); // putfield
+			p.write(hi(ref));
+			p.write(lo(ref));
+			p.write(0xb1); // return
+			methode(out, nomSetPrimitif, descSetPrimitif, code, large ? 3 : 2, large ? 4 : 3, p.toByteArray());
+
+			// public xxx getXxx(Object o) { return ((Cible) o).champ; } : sans boxing
+			final ByteArrayOutputStream q = new ByteArrayOutputStream();
+			q.write(0x2b); // aload_1
+			q.write(0xc0); // checkcast Cible
+			q.write(hi(classeCible));
+			q.write(lo(classeCible));
+			q.write(0xb4); // getfield
+			q.write(hi(ref));
+			q.write(lo(ref));
+			// lreturn, dreturn, freturn ou ireturn
+			q.write(typeChamp == long.class ? 0xad : typeChamp == double.class ? 0xaf : typeChamp == float.class ? 0xae : 0xac);
+			methode(out, nomGetPrimitif, descGetPrimitif, code, 2, 2, q.toByteArray());
+		}
+
+		out.writeShort(0); // attributs de classe
+		out.flush();
+		return bos.toByteArray();
+	}
+
+	private static Class<?> enveloppe(final Class<?> primitif) {
+		if (primitif == int.class)
+			return Integer.class;
+		if (primitif == long.class)
+			return Long.class;
+		if (primitif == double.class)
+			return Double.class;
+		if (primitif == float.class)
+			return Float.class;
+		if (primitif == boolean.class)
+			return Boolean.class;
+		if (primitif == byte.class)
+			return Byte.class;
+		if (primitif == short.class)
+			return Short.class;
+		return Character.class;
+	}
+
+	private static byte hi(final int v) {
+		return (byte) (v >> 8);
+	}
+
+	private static byte lo(final int v) {
+		return (byte) v;
+	}
+
+	private static void methode(final DataOutputStream out, final int nom, final int descripteur, final int code,
+			final int maxStack, final int maxLocals, final byte[] instructions) throws IOException {
+		out.writeShort(0x0001); // public
+		out.writeShort(nom);
+		out.writeShort(descripteur);
+		out.writeShort(1); // attribut Code
+		out.writeShort(code);
+		out.writeInt(12 + instructions.length);
+		out.writeShort(maxStack);
+		out.writeShort(maxLocals);
+		out.writeInt(instructions.length);
+		out.write(instructions);
+		out.writeShort(0); // table d'exceptions
+		out.writeShort(0); // attributs
+	}
+
+	/** Nom interne pour checkcast (pour un tableau, c'est son descripteur, que getName donne déjà). */
+	private static String typeInterne(final Class<?> type) {
+		return type.getName().replace('.', '/');
+	}
+
+	private GenerateurAcces() {
+	}
+}

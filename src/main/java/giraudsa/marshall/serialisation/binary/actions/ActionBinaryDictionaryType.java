@@ -2,9 +2,6 @@ package giraudsa.marshall.serialisation.binary.actions;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Type;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,33 +26,31 @@ public class ActionBinaryDictionaryType extends ActionBinary<Map> {
 	protected void ecritValeur(final Marshaller marshaller, final Map map, final FieldInformations fi,
 			final boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException,
 			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
-		final Type[] types = fi.getParametreType();
-		Type genericTypeKey = Object.class;
-		Type genericTypeValue = Object.class;
-		if (types != null && types.length > 1) {
-			genericTypeKey = types[0];
-			genericTypeValue = types[1];
-		}
-		final FakeChamp fakeChampKey = new FakeChamp("K", genericTypeKey, fi.getRelation(), fi.getAnnotations());
-		final FakeChamp fakeChampValue = new FakeChamp("V", genericTypeValue, fi.getRelation(), fi.getAnnotations());
-
-		final Deque<Comportement> tmp = new ArrayDeque<>();
+		final FakeChamp fakeChampKey = fi.getChampParametre(FieldInformations.CLE);
+		final FakeChamp fakeChampValue = fi.getChampParametre(FieldInformations.VALEUR);
 		if (!isDejaVu) {
 			if (strategieSerialiseTout(marshaller, fi))
 				setDejaTotalementSerialise(marshaller, map);
-			writeInt(marshaller, map.size());
-			for (final Object entry : map.entrySet()) {
-				tmp.push(traiteChamp(marshaller, ((Entry) entry).getKey(), fakeChampKey));
-				tmp.push(traiteChamp(marshaller, ((Entry) entry).getValue(), fakeChampValue));
-			}
+			writeVarInt(marshaller, map.size());
+			ecritEntrees(marshaller, map, fakeChampKey, fakeChampValue);
 		} else if (!isDejaTotalementSerialise(marshaller, map) && strategieSerialiseTout(marshaller, fi)) {
 			setDejaTotalementSerialise(marshaller, map);
-			for (final Object entry : map.entrySet()) {
-				tmp.push(traiteChamp(marshaller, ((Entry) entry).getKey(), fakeChampKey));
-				tmp.push(traiteChamp(marshaller, ((Entry) entry).getValue(), fakeChampValue));
-			}
+			ecritEntrees(marshaller, map, fakeChampKey, fakeChampValue);
 		}
-		pushComportements(marshaller, tmp);
+		empileDifferes(marshaller);
+	}
+
+	private void ecritEntrees(final Marshaller marshaller, final Map map, final FakeChamp fakeChampKey,
+			final FakeChamp fakeChampValue) throws NotImplementedSerializeException, MarshallExeption {
+		for (final Object entry : map.entrySet()) {
+			ecritOuDiffere(marshaller, ((Entry) entry).getKey(), fakeChampKey);
+			ecritOuDiffere(marshaller, ((Entry) entry).getValue(), fakeChampValue);
+		}
+	}
+
+	@Override
+	protected boolean isFeuille() {
+		return false;
 	}
 
 	@Override
