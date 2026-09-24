@@ -74,10 +74,14 @@ public class JsonUnmarshallerHandler {
 			break;
 		case '"':
 			quote();
+			noteGuillemet();
 			buff.append(c);
 			break;
 		case '\\':
-			buff.append(readEscapeCharacter());
+			final char echappe = readEscapeCharacter();
+			if (echappe == '"')
+				noteGuillemet(); // comme la recherche historique (indexOf), un \" compte aussi
+			buff.append(echappe);
 			break;
 		default:
 			buff.append(c);
@@ -121,9 +125,28 @@ public class JsonUnmarshallerHandler {
 	 *
 	 * @return false s'il n'y a pas deux guillemets distincts.
 	 */
+	/** Le guillemet qui va être ajouté à buff : premier et dernier guillemets de buff, suivis au fil de l'eau. */
+	private void noteGuillemet() {
+		final int position = buff.length();
+		if (premierGuillemetBuff < 0)
+			premierGuillemetBuff = position;
+		dernierGuillemetBuff = position;
+	}
+
+	/** Vide buff (et le suivi de ses guillemets). */
+	private void videBuff() {
+		buff.setLength(0);
+		premierGuillemetBuff = -1;
+		dernierGuillemetBuff = -1;
+	}
+
+	/** positions du premier et du dernier guillemet de buff (-1 : aucun), comme indexOf / lastIndexOf. */
+	private int premierGuillemetBuff = -1;
+	private int dernierGuillemetBuff = -1;
+
 	private boolean enleveGuillemets() {
-		final int firstQuote = buff.indexOf("\"");
-		final int lastQuote = buff.lastIndexOf("\"");
+		final int firstQuote = premierGuillemetBuff;
+		final int lastQuote = dernierGuillemetBuff;
 		if (firstQuote != -1 && lastQuote != firstQuote) {
 			premierGuillemet = firstQuote;
 			dernierGuillemet = lastQuote;
@@ -183,7 +206,7 @@ public class JsonUnmarshallerHandler {
 			dernierGuillemet = -1;
 		} else
 			s = buff.toString();
-		buff.setLength(0);
+		videBuff();
 		return s;
 	}
 
@@ -219,7 +242,7 @@ public class JsonUnmarshallerHandler {
 
 	private void ouvreAccolade() {
 		if (!isBetweenQuote) {
-			buff.setLength(0);
+			videBuff();
 			jsonUnmarshaller.ouvreAccolade();
 		} else
 			buff.append('{');
