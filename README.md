@@ -113,6 +113,14 @@ il y a 4 méthodes public static à la sérialisation en json et 4 pour la dés�
 	JsonUnmarshaller.fromJson(String)
 	JsonUnmarshaller.fromJson(String, EntityManager)
 
+###3.3 - Performances
+
+Sans EntityManager, la lecture analyse le texte d'un bloc et construit les objets au fil de l'eau, sans événements intermédiaires : clés retrouvées d'après leurs octets (la clé suivante d'une classe est prévue), champ résolu une fois par classe, nombres lus sans chaîne intermédiaire (décimaux par un algorithme exact, identique au bit près à `Double.parseDouble`). Un texte hors des cas courants (JSON non strict, tabulations, types particuliers...) est relu par le lecteur historique : tout ce qui était accepté l'est toujours, avec le même résultat. Avec un EntityManager, le lecteur historique est utilisé.
+
+L'écriture prépare une fois par champ et par classe les clés et les noms de type, écrit les champs primitifs sans boxing et accumule le texte en octets Latin-1 tant qu'il le permet. Le texte produit est inchangé.
+
+Les mesures sont au paragraphe 4.5.
+
 
 ##4 - Format Binaire
 ------------------
@@ -151,22 +159,24 @@ Le moteur binaire est conçu pour la vitesse, sans rien exiger du code métier (
 * les tables et tampons sont réutilisés d'un appel à l'autre sur un même thread ;
 * les graphes sont parcourus par récursion jusqu'à 200 niveaux, puis par une pile explicite : un graphe très profond (longue liste chaînée...) ne provoque pas de `StackOverflowError`.
 
-Mesures (JMH, JDK 25, Linux arm64, 2 forks) sur un catalogue de commandes : « petit » = 1 commande et 10 lignes (13 objets), « gros » = 1 000 commandes (13 000 objets). Kryo et Fory ont le suivi des références activé, pour la même sémantique d'identité ; Jackson et Gson ne gèrent ni les cycles, ni l'identité, ni le polymorphisme.
+Mesures (JMH, JDK 25, Linux arm64, 10 itérations de 2 s) sur un catalogue de commandes : « petit » = 1 commande et 10 lignes (13 objets), « gros » = 1 000 commandes (13 000 objets). Kryo et Fory ont le suivi des références activé, pour la même sémantique d'identité ; Jackson et Gson ne gèrent ni les cycles, ni l'identité, ni le polymorphisme.
 
 | Format | écriture petit (µs) | écriture gros (ms) | lecture petit (µs) | lecture gros (ms) | taille gros (Ko) |
 |---|---:|---:|---:|---:|---:|
-| **giraudsa binaire** | 1,10 | 1,29 | **1,43** | **1,04** | **393** |
-| Fory 0.12 | **0,74** | **1,21** | 1,63 | 1,42 | 602 |
-| Kryo 5.6 | 1,90 | 4 à 13 (instable) | 2,32 | 2,11 | 508 |
-| Java natif | 7,07 | 7,71 | 37,9 | 9,00 | 1 174 |
-| Jackson JSON 2.17 | 3,30 | 3,68 | 9,25 | 7,17 | 1 458 |
-| Gson 2.10 | 7,83 | 7,67 | 8,32 | 7,65 | 1 458 |
-| giraudsa JSON | 10,1 | 11,6 | 23,2 | 25,0 | 1 519 |
-| Jackson XML 2.17 | 6,57 | 6,78 | 15,7 | 13,7 | 2 116 |
-| giraudsa XML | 12,3 | 16,8 | 34,3 | 29,9 | 2 213 |
-| XStream 1.4 | 26,5 | 27,2 | 51,9 | 64,4 | 3 534 |
+| **giraudsa binaire** | **1,07** | **1,16** | **1,41** | **0,98** | **393** |
+| Fory 0.12 | 1,08 (± 0,19) | 1,28 | 1,74 | 1,45 | 602 |
+| Kryo 5.6 | 1,75 | 3,76 | 2,27 | 1,96 | 508 |
+| Java natif | 7,12 | 7,53 | 36,5 | 8,87 | 1 174 |
+| **giraudsa JSON** | **3,01** | **3,03** | **4,33** | **4,51** | 1 519 |
+| Jackson JSON 2.17 | 3,19 | 3,54 | 7,63 | 6,84 | 1 458 |
+| Gson 2.10 | 7,48 | 7,27 | 8,01 | 7,33 | 1 458 |
+| Jackson XML 2.17 | 6,45 | 6,94 | 15,1 | 13,4 | 2 116 |
+| giraudsa XML | 7,73 | 7,40 | 32,6 | 26,3 | 2 213 |
+| XStream 1.4 | 24,3 | 25,2 | 49,1 | 50,5 | 3 534 |
 
-Fory copie le contenu des chaînes par `sun.misc.Unsafe`, ce qui lui donne l'avantage en écriture sur les petits graphes, au prix de l'avertissement du JDK 24+ au démarrage.
+Parmi les formats JSON, giraudsa est le plus rapide en écriture comme en lecture (en gras : meilleur de sa famille de formats).
+
+Fory copie le contenu des chaînes par `sun.misc.Unsafe`, ce qui le place à égalité en écriture sur les petits graphes, au prix de l'avertissement du JDK 24+ au démarrage.
 
 Le module `benchmark/` (JMH) permet de refaire ces mesures :
 
