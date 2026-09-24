@@ -52,19 +52,17 @@ public abstract class Marshaller {
 
 	/** Rend les tables d'identité pour la sérialisation suivante ; à appeler en fin de sérialisation. */
 	protected void rendTables() {
-		if (dejaVu != null) {
-			rend(dejaVu);
-			dejaVu = null;
-		}
-		if (dejaTotalementSerialise != null) {
-			rend(dejaTotalementSerialise);
-			dejaTotalementSerialise = null;
+		if (etats != null) {
+			rend(etats);
+			etats = null;
 		}
 	}
 
 	// ensembles par identité (table à adressage ouvert : ni entrée allouée ni boxing)
-	protected IdentiteIntMap dejaTotalementSerialise;
-	private IdentiteIntMap dejaVu;
+	/** état de chaque objet rencontré : bits DEJA_VU et TOTALEMENT_SERIALISE (une seule recherche par accès). */
+	private IdentiteIntMap etats;
+	private static final int DEJA_VU = 1;
+	private static final int TOTALEMENT_SERIALISE = 2;
 	private Map<Object, UUID> dicoObjToFakeId;
 	private final EntityManager entityManager;
 	////// ATTRIBUT
@@ -160,11 +158,11 @@ public abstract class Marshaller {
 	}
 
 	protected <T> boolean isDejaTotalementSerialise(final T obj) {
-		return dejaTotalementSerialise != null && dejaTotalementSerialise.contient(obj);
+		return etats != null && (etats.get(obj) & TOTALEMENT_SERIALISE) != 0; // ABSENT n'a aucun des deux bits
 	}
 
 	protected <T> boolean isDejaVu(final T obj) {
-		return dejaVu != null && dejaVu.contient(obj);
+		return etats != null && (etats.get(obj) & DEJA_VU) != 0;
 	}
 
 	protected <T> void marshall(final T value, final FieldInformations fieldInformations)
@@ -175,14 +173,14 @@ public abstract class Marshaller {
 	}
 
 	protected <T> void setDejaTotalementSerialise(final T obj) {
-		if (dejaTotalementSerialise == null)
-			dejaTotalementSerialise = prendTable();
-		dejaTotalementSerialise.putIfAbsent(obj, 1);
+		if (etats == null)
+			etats = prendTable();
+		etats.ou(obj, TOTALEMENT_SERIALISE);
 	}
 
 	protected <T> void setDejaVu(final T obj) {
-		if (dejaVu == null)
-			dejaVu = prendTable();
-		dejaVu.putIfAbsent(obj, 1);
+		if (etats == null)
+			etats = prendTable();
+		etats.ou(obj, DEJA_VU);
 	}
 }

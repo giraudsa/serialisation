@@ -96,6 +96,31 @@ public final class IdentiteIntMap {
 		}
 	}
 
+	/**
+	 * Ajoute les bits à la valeur de la clé (valeur 0 si absente). @return la valeur précédente, ou {@link #ABSENT}.
+	 */
+	public int ou(final Object cle, final int bits) {
+		final Object[] t = cles;
+		int i = indice(cle, masque);
+		while (true) {
+			final Object c = t[i];
+			if (c == cle) {
+				final int precedente = valeurs[i];
+				valeurs[i] = precedente | bits;
+				return precedente;
+			}
+			if (c == null) {
+				t[i] = cle;
+				valeurs[i] = bits;
+				noteOccupee(i);
+				if (++taille * 2 > t.length)
+					agrandit();
+				return ABSENT;
+			}
+			i = i + 1 & masque;
+		}
+	}
+
 	private void noteOccupee(final int i) {
 		final int[] o = occupees;
 		if (o != null) {
