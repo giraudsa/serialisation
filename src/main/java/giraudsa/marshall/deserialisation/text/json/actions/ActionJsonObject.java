@@ -1,7 +1,6 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,10 +26,9 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 	 * valeurs lues, dans l'ordre (une clé répétée : la dernière valeur l'emporte, comme avec une map), avec le champ
 	 * résolu et le type pour lequel il l'a été
 	 */
-	private final List<String> noms = new ArrayList<>();
-	private final List<Object> valeurs = new ArrayList<>();
-	private final List<FieldInformations> champs = new ArrayList<>();
-	private final List<Class<?>> typesDesChamps = new ArrayList<>();
+	/** par valeur, 4 cases : nom, valeur, champ, type pour lequel le champ a été résolu. */
+	private Object[] lues = new Object[32];
+	private int nbLues;
 	/** dernier champ résolu : le même nom (même instance) est demandé pour le type, les informations et la valeur. */
 	private String dernierNom;
 	private Class<?> dernierType;
@@ -53,12 +51,12 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 	@Override
 	protected void construitObjet()
 			throws EntityManagerImplementationException, InstanciationException, SetValueException {
-		final int n = noms.size();
-		for (int i = 0; i < n; i++) {
+		final Object[] t = lues;
+		for (int i = 0; i < nbLues; i += 4) {
 			// le type a pu changer depuis (id connu d'un objet d'une sous-classe) : le champ est alors recherché
-			final FieldInformations champ = typesDesChamps.get(i) == type ? champs.get(i)
-					: TypeExtension.getChampByName(type, noms.get(i));
-			champ.set(obj, valeurs.get(i), getDicoObjToFakeId());
+			final FieldInformations champ = t[i + 3] == type ? (FieldInformations) t[i + 2]
+					: TypeExtension.getChampByName(type, (String) t[i]);
+			champ.set(obj, t[i + 1], getDicoObjToFakeId());
 		}
 	}
 
@@ -86,10 +84,12 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 	protected <W> void integreObjet(final String nomAttribut, final W objet)
 			throws EntityManagerImplementationException, InstanciationException {
 		preciseLeTypeSiIdConnu(nomAttribut, objet != null ? objet.toString() : null);
-		noms.add(nomAttribut);
-		valeurs.add(objet);
-		champs.add(champ(nomAttribut));
-		typesDesChamps.add(type);
+		if (nbLues + 4 > lues.length)
+			lues = Arrays.copyOf(lues, lues.length * 2);
+		lues[nbLues++] = nomAttribut;
+		lues[nbLues++] = objet;
+		lues[nbLues++] = champ(nomAttribut);
+		lues[nbLues++] = type;
 	}
 
 	@Override

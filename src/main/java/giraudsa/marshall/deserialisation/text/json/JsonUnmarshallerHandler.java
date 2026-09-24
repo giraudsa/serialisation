@@ -18,6 +18,13 @@ public class JsonUnmarshallerHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUnmarshallerHandler.class);
 	private static final char QUOTE = '\"';
 	private static final int TAILLE_BLOC = 8192;
+	/** caractères qui déclenchent une action hors guillemets (voir comportement). */
+	private static final boolean[] SPECIAL_HORS_GUILLEMETS = new boolean[128];
+
+	static {
+		for (final char c : "\"\\{}[]:,".toCharArray())
+			SPECIAL_HORS_GUILLEMETS[c] = true;
+	}
 
 	private static void erreurParsing(final String message, final Exception e) throws UnmarshallExeption {
 		LOGGER.error(message, e);
@@ -118,12 +125,16 @@ public class JsonUnmarshallerHandler {
 		final int firstQuote = buff.indexOf("\"");
 		final int lastQuote = buff.lastIndexOf("\"");
 		if (firstQuote != -1 && lastQuote != firstQuote) {
-			buff.setLength(lastQuote);
-			buff.delete(0, firstQuote + 1);
+			premierGuillemet = firstQuote;
+			dernierGuillemet = lastQuote;
 			return true;
 		}
 		return false;
 	}
+
+	/** positions trouvées par enleveGuillemets : getString rend ce qui est entre elles (sans décaler buff). */
+	private int premierGuillemet = -1;
+	private int dernierGuillemet = -1;
 
 	private char escapeCharactere() throws UnmarshallExeption {
 		char result = 0;
@@ -165,7 +176,13 @@ public class JsonUnmarshallerHandler {
 	}
 
 	private String getString() {
-		final String s = buff.toString();
+		final String s;
+		if (premierGuillemet >= 0) {
+			s = buff.substring(premierGuillemet + 1, dernierGuillemet);
+			premierGuillemet = -1;
+			dernierGuillemet = -1;
+		} else
+			s = buff.toString();
 		buff.setLength(0);
 		return s;
 	}
@@ -246,7 +263,7 @@ public class JsonUnmarshallerHandler {
 		else
 			while (i < fin) {
 				final char c = b[i];
-				if (c == '"' || c == '\\' || c == '{' || c == '}' || c == '[' || c == ']' || c == ':' || c == ',')
+				if (c < 128 && SPECIAL_HORS_GUILLEMETS[c])
 					break;
 				i++;
 			}

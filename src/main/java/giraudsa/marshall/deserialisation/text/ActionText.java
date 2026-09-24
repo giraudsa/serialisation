@@ -20,6 +20,11 @@ public abstract class ActionText<T> extends ActionAbstrait<T> {
 		return getTextUnarshaller().df;
 	}
 
+	/** @return true si les dates sont au format ISO UTC par défaut (lecture rapide possible). */
+	protected boolean isDateIsoUtc() {
+		return getTextUnarshaller().dateIsoUtc;
+	}
+
 	FieldInformations getFieldInformation(final String nom) {
 		return getFieldInformationSpecialise(nom);
 	}
