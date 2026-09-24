@@ -80,9 +80,12 @@ public abstract class Codec {
 			};
 		case "giraudsa-binaire":
 			return new Codec() {
+				// tampon réutilisé d'un appel à l'autre (comme Kryo et Fory) : seule la copie du résultat est payée
+				private final ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
+
 				@Override
 				public Object encode(final Catalogue c) throws Exception {
-					final ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
+					out.reset();
 					BinaryMarshaller.toCompleteBinary(c, out);
 					return out.toByteArray();
 				}
@@ -164,9 +167,12 @@ public abstract class Codec {
 			k.register(ArrayList.class);
 			k.register(LinkedHashMap.class);
 			return new Codec() {
+				// tampon réutilisé d'un appel à l'autre, usage normal de Kryo
+				private final Output out = new Output(4096, -1);
+
 				@Override
 				public Object encode(final Catalogue c) {
-					final Output out = new Output(4096, -1);
+					out.reset();
 					k.writeObject(out, c);
 					return out.toBytes();
 				}

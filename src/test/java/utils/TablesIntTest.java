@@ -27,13 +27,14 @@ class TablesIntTest {
 	void egaliteVideApresPeuOuBeaucoupDEntrees() {
 		final EgaliteIntMap table = new EgaliteIntMap(16);
 		for (final int n : new int[] { 3, 5000, 2, 40, 100_000, 1 }) {
+			// valeurs > 0 : ce sont des smallIds
 			for (int i = 0; i < n; i++)
-				assertEquals(IdentiteIntMap.ABSENT, table.putIfAbsent("cle" + i, i));
+				assertEquals(IdentiteIntMap.ABSENT, table.putIfAbsent("cle" + i, i + 1));
 			for (int i = 0; i < n; i++)
-				assertEquals(i, table.putIfAbsent(new String("cle" + i), -1)); // égalité, pas identité
+				assertEquals(i + 1, table.putIfAbsent(new String("cle" + i), 7)); // égalité, pas identité
 			table.vide();
 			for (int i = 0; i < n; i++)
-				assertEquals(IdentiteIntMap.ABSENT, table.putIfAbsent("cle" + i, i), "entrée restée après vide()");
+				assertEquals(IdentiteIntMap.ABSENT, table.putIfAbsent("cle" + i, i + 1), "entrée restée après vide()");
 			table.vide();
 		}
 	}

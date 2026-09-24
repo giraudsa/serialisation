@@ -55,7 +55,9 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 				return;
 			}
 			final ActionAbstrait action = binaryMarshaller.getAction(valeur);
-			if (action instanceof ActionBinary && ((ActionBinary) action).isFeuille()) {
+			// feuille, ou sous-objet écrit récursivement tant que la profondeur le permet
+			if (action instanceof ActionBinary && (((ActionBinary) action).isFeuille()
+					|| binaryMarshaller.recursion < BinaryMarshaller.RECURSION_MAX)) {
 				marshallAvec(action, binaryMarshaller, valeur, fieldInformations);
 				return;
 			}
@@ -162,8 +164,23 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 				ecritValeur(marshaller, (T) objetASerialiser, fieldInformation, isDejaVu);
 				return;
 			}
+			final BinaryMarshaller binaryMarshaller = getBinaryMarshaller(marshaller);
 			augmenteProdondeur(marshaller);
-			getBinaryMarshaller(marshaller).empile(null, null); // fin de l'objet : la profondeur diminuera
+			if (binaryMarshaller.recursion < BinaryMarshaller.RECURSION_MAX) {
+				// écriture récursive : les sous-objets sont écrits sur place (même ordre que par la pile)
+				final int base = binaryMarshaller.hautPile();
+				binaryMarshaller.recursion++;
+				try {
+					ecritValeur(marshaller, (T) objetASerialiser, fieldInformation, isDejaVu);
+					// valeurs mises en attente au-delà de la limite : écrites avant de rendre la main
+					binaryMarshaller.videPileJusqua(base);
+				} finally {
+					binaryMarshaller.recursion--;
+				}
+				diminueProfondeur(marshaller);
+				return;
+			}
+			binaryMarshaller.empile(null, null); // fin de l'objet : la profondeur diminuera
 			ecritValeur(marshaller, (T) objetASerialiser, fieldInformation, isDejaVu);
 		} catch (MarshallExeption | IOException | IllegalAccessException | InstantiationException
 				| InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {

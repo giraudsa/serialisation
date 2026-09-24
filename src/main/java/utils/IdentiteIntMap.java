@@ -8,7 +8,7 @@ import java.util.Arrays;
  */
 public final class IdentiteIntMap {
 	public static final int ABSENT = Integer.MIN_VALUE;
-	private static final int CAPACITE_MAX_CONSERVEE = 1 << 17;
+	private static final int CAPACITE_MAX_CONSERVEE = 1 << 18; // au plus ~3 Mo retenus par table
 
 	private static int indice(final Object cle, final int masque) {
 		final int h = System.identityHashCode(cle);

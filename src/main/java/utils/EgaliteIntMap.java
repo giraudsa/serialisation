@@ -4,10 +4,13 @@ import java.util.Arrays;
 
 /**
  * Table objet → int à adressage ouvert, comparaison par equals : remplace {@code HashMap<K, Integer>} sans boxing ni
- * entrée allouée par clé. Le hash de chaque clé est conservé pour n'appeler equals qu'en cas de hash égal.
+ * entrée allouée par clé. Les valeurs doivent être non nulles (> 0 : ce sont des smallIds).
+ * <p>
+ * Le hash et la valeur de chaque case sont rangés côte à côte dans un même tableau d'int : un sondage ne touche
+ * qu'une ligne de cache, et la clé n'est lue (equals) qu'en cas de hash égal.
  */
 public final class EgaliteIntMap {
-	private static final int CAPACITE_MAX_CONSERVEE = 1 << 16;
+	private static final int CAPACITE_MAX_CONSERVEE = 1 << 18; // au plus ~3 Mo retenus par table
 
 	private static int melange(final int h) {
 		// mélange (Fibonacci) : les hashCode de String ou Date sont mal répartis sur les bits faibles
@@ -17,15 +20,15 @@ public final class EgaliteIntMap {
 
 	private final int capaciteInitiale;
 	private Object[] cles;
-	private int[] hashs;
+	/** [2i] = hash de la case i, [2i + 1] = valeur (0 : case vide). */
+	private int[] hashsEtValeurs;
 	private int masque;
-	private int taille;
-	private int[] valeurs;
 	/**
 	 * cases occupées, dans l'ordre d'insertion, tant que la table est peu remplie : vide() n'efface alors que ces
 	 * cases au lieu de tout le tableau (coût fixe important pour un petit graphe). null au-delà.
 	 */
 	private int[] occupees;
+	private int taille;
 
 	public EgaliteIntMap() {
 		this(64);
@@ -38,30 +41,35 @@ public final class EgaliteIntMap {
 
 	private void alloue(final int capacite) {
 		cles = new Object[capacite];
-		hashs = new int[capacite];
-		valeurs = new int[capacite];
+		hashsEtValeurs = new int[capacite * 2];
 		masque = capacite - 1;
-		occupees = new int[Math.max(4, capacite >> 3)];
+		occupees = new int[Math.max(4, capacite >> 1)]; // une table est au plus à moitié pleine
 	}
 
-	/** Associe la valeur si la clé est absente. @return la valeur existante, ou {@link IdentiteIntMap#ABSENT}. */
+	/**
+	 * Associe la valeur (> 0) si la clé est absente. @return la valeur existante, ou {@link IdentiteIntMap#ABSENT}
+	 * si la clé vient d'être ajoutée.
+	 */
 	public int putIfAbsent(final Object cle, final int valeur) {
 		final int h = melange(cle.hashCode());
-		final Object[] t = cles;
+		final int[] hv = hashsEtValeurs;
 		int i = h & masque;
 		while (true) {
-			final Object c = t[i];
-			if (c == null) {
-				t[i] = cle;
-				hashs[i] = h;
-				valeurs[i] = valeur;
+			final int v = hv[2 * i + 1];
+			if (v == 0) {
+				cles[i] = cle;
+				hv[2 * i] = h;
+				hv[2 * i + 1] = valeur;
 				noteOccupee(i);
-				if (++taille * 2 > t.length)
+				if (++taille * 2 > cles.length)
 					agrandit();
 				return IdentiteIntMap.ABSENT;
 			}
-			if (c == cle || hashs[i] == h && c.equals(cle))
-				return valeurs[i];
+			if (hv[2 * i] == h) {
+				final Object c = cles[i];
+				if (c == cle || c.equals(cle))
+					return v;
+			}
 			i = i + 1 & masque;
 		}
 	}
@@ -71,12 +79,17 @@ public final class EgaliteIntMap {
 		if (cles.length > CAPACITE_MAX_CONSERVEE)
 			alloue(capaciteInitiale);
 		else if (occupees != null)
-			for (int i = 0; i < taille; i++)
-				cles[occupees[i]] = null;
-		else if (taille > 0)
+			for (int k = 0; k < taille; k++) {
+				final int i = occupees[k];
+				cles[i] = null;
+				hashsEtValeurs[2 * i + 1] = 0;
+			}
+		else if (taille > 0) {
 			Arrays.fill(cles, null);
+			Arrays.fill(hashsEtValeurs, 0);
+		}
 		if (occupees == null)
-			occupees = new int[Math.max(4, cles.length >> 3)];
+			occupees = new int[Math.max(4, cles.length >> 1)];
 		taille = 0;
 	}
 
@@ -92,20 +105,24 @@ public final class EgaliteIntMap {
 
 	private void agrandit() {
 		final Object[] anciennesCles = cles;
-		final int[] anciensHashs = hashs;
-		final int[] anciennesValeurs = valeurs;
+		final int[] anciens = hashsEtValeurs;
 		alloue(anciennesCles.length * 2);
 		for (int j = 0; j < anciennesCles.length; j++) {
-			final Object cle = anciennesCles[j];
-			if (cle != null) {
-				int i = anciensHashs[j] & masque;
-				while (cles[i] != null)
+			final int v = anciens[2 * j + 1];
+			if (v != 0) {
+				final int h = anciens[2 * j];
+				int i = h & masque;
+				while (hashsEtValeurs[2 * i + 1] != 0)
 					i = i + 1 & masque;
-				cles[i] = cle;
-				hashs[i] = anciensHashs[j];
-				valeurs[i] = anciennesValeurs[j];
+				cles[i] = anciennesCles[j];
+				hashsEtValeurs[2 * i] = h;
+				hashsEtValeurs[2 * i + 1] = v;
 			}
 		}
-		occupees = null; // positions changées : le journal n'est plus valable
+		// positions changées : on reconstruit le journal
+		int k = 0;
+		for (int i = 0; i < cles.length; i++)
+			if (hashsEtValeurs[2 * i + 1] != 0)
+				occupees[k++] = i;
 	}
 }

@@ -231,6 +231,13 @@ public class BinaryMarshaller extends Marshaller {
 	private int hautPile;
 	/** début, dans la pile, des valeurs de l'objet courant en attente (-1 si aucune). */
 	int debutAttente = -1;
+	/**
+	 * Au-delà de cette profondeur de récursion, les sous-objets sont mis sur la pile au lieu d'être écrits par un
+	 * appel récursif : pas de débordement de pile sur un graphe profond.
+	 */
+	static final int RECURSION_MAX = 200;
+	/** nombre d'écritures récursives d'objets imbriquées en cours. */
+	int recursion;
 
 	private BinaryMarshaller(final EtatEcriture etat, final StrategieDeSerialisation strategie)
 			throws IOException, MarshallExeption {
@@ -421,6 +428,10 @@ public class BinaryMarshaller extends Marshaller {
 		debutAttente = -1;
 	}
 
+	int hautPile() {
+		return hautPile;
+	}
+
 	protected boolean isSmallIdDefined(final Object obj) {
 		return smallIds.get(obj) != IdentiteIntMap.ABSENT;
 	}
@@ -431,7 +442,16 @@ public class BinaryMarshaller extends Marshaller {
 			IOException, NotImplementedSerializeException, MarshallExeption {
 		final FakeChamp fieldsInfo = RACINE;
 		marshall(obj, fieldsInfo);
-		while (hautPile > 0) {
+		videPileJusqua(0);
+	}
+
+	/**
+	 * Traite les valeurs empilées au-dessus de base (dans l'ordre), y compris celles qu'elles empilent à leur tour.
+	 */
+	void videPileJusqua(final int base)
+			throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
+			IOException, NotImplementedSerializeException, MarshallExeption {
+		while (hautPile > base) {
 			final int i = --hautPile;
 			final FieldInformations champ = pileChamps[i];
 			final Object valeur = pileValeurs[i];

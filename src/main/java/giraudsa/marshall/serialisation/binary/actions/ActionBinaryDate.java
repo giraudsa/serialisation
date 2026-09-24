@@ -17,10 +17,10 @@ public class ActionBinaryDate extends ActionBinary<Date> {
 	@Override
 	protected void ecritValeur(final Marshaller marshaller, final Date date, final FieldInformations fieldInformations,
 			final boolean isDejaVu) throws IOException {
-		if (!isDejaVu) {
-			setDejaTotalementSerialise(marshaller, date);
+		// feuille : l'indicateur « totalement sérialisé » n'est jamais relu. Le poser coûtait cher pour une Date,
+		// sans smallId d'objet (dédupliquée par valeur) : table d'identité générique qui grossit à chaque date
+		if (!isDejaVu)
 			writeLong(marshaller, date.getTime());
-		}
 	}
 
 	@Override
