@@ -644,6 +644,12 @@ class RoundTripTest {
 		m.valeurs.put("bigint", new java.math.BigInteger("-123456789012345678901234567890"));
 		for (int i = 0; i < 300; i++)
 			m.nombres.put(i, (long) i * i);
+		// toutes les longueurs autour des tailles d'en-tête (varint 1 à 3 octets), ASCII ou non
+		for (int n = 0; n <= 300; n++) {
+			m.valeurs.put("ascii" + n, "a".repeat(n));
+			m.valeurs.put("latin" + n, "é".repeat(n));
+			m.valeurs.put("mixte" + n, "x€".repeat(n / 2) + (n % 2 == 0 ? "" : "y"));
+		}
 		final Melange lu = BINARY.roundTrip(m);
 		assertEquals(m.valeurs, lu.valeurs);
 		assertEquals(m.nombres, lu.nombres);

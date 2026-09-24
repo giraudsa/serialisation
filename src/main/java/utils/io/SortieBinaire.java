@@ -178,27 +178,56 @@ public final class SortieBinaire extends OutputStream implements DataOutput {
 	 */
 	public void writeString(final String s) throws IOException {
 		final int nbChars = s.length();
-		// cas courant : chaîne ASCII qui tient dans le tampon. On l'écrit en un seul passage en supposant l'ASCII, et
-		// on revient en arrière au premier caractère qui ne l'est pas.
-		if (nbChars + 5 <= buffer.length) {
-			assure(nbChars + 5);
+		final int maxOctets = 3 * nbChars;
+		// cas courant : la chaîne tient dans le tampon, en un seul parcours. Boucle serrée tant que les caractères
+		// sont ASCII (en-tête provisoire de chaîne ASCII) ; au premier qui ne l'est pas, l'encodage continue sur
+		// place et l'en-tête est corrigé à la fin (octets recollés si sa taille change).
+		if (maxOctets + 5 <= buffer.length) {
+			assure(maxOctets + 5);
 			final int debut = position;
 			writeVarInt(nbChars << 1 | 1);
+			final int reserve = position - debut;
 			final byte[] b = buffer;
 			int j = position;
-			for (int i = 0; i < nbChars; i++) {
+			int i = 0;
+			for (; i < nbChars; i++) {
 				final char c = s.charAt(i);
-				if (c >= 0x80) {
-					position = debut;
-					writeStringGenerale(s);
-					return;
-				}
+				if (c >= 0x80)
+					break;
 				b[j++] = (byte) c;
 			}
-			position = j;
+			if (i == nbChars) {
+				position = j;
+				return;
+			}
+			for (; i < nbChars; i++) {
+				final char c = s.charAt(i);
+				if (c < 0x80)
+					b[j++] = (byte) c;
+				else if (c < 0x800) {
+					b[j++] = (byte) (0xC0 | c >> 6);
+					b[j++] = (byte) (0x80 | c & 0x3F);
+				} else {
+					b[j++] = (byte) (0xE0 | c >> 12);
+					b[j++] = (byte) (0x80 | c >> 6 & 0x3F);
+					b[j++] = (byte) (0x80 | c & 0x3F);
+				}
+			}
+			final int nbOctets = j - debut - reserve;
+			final int entete = nbOctets << 1; // non ASCII
+			final int taille = tailleVarInt(entete);
+			if (taille != reserve)
+				System.arraycopy(b, debut + reserve, b, debut + taille, nbOctets);
+			position = debut;
+			writeVarInt(entete); // l'espace est déjà assuré
+			position = debut + taille + nbOctets;
 			return;
 		}
 		writeStringGenerale(s);
+	}
+
+	private static int tailleVarInt(final int v) {
+		return v >>> 7 == 0 ? 1 : v >>> 14 == 0 ? 2 : v >>> 21 == 0 ? 3 : v >>> 28 == 0 ? 4 : 5;
 	}
 
 	private void writeStringGenerale(final String s) throws IOException {
