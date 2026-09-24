@@ -509,6 +509,48 @@ class RoundTripTest {
 		assertSame(lu.enfants.get(3).date, lu.enfants.get(3 + dates.length).date);
 	}
 
+	static class Tableaux {
+		String id = "t";
+		int[] entiers;
+		long[] longs;
+		double[] reels;
+		boolean[] booleens;
+		char[] caracteres;
+		short[] courts;
+		byte[] octets;
+		float[] flottants;
+		Integer[] boites;
+		Object entierDansObjet;
+		Integer boiteNulle;
+	}
+
+	@Test
+	void binaireTableauxDePrimitifs() throws Exception {
+		final Tableaux t = new Tableaux();
+		t.entiers = new int[] { 0, -1, 63, -64, 64, Integer.MAX_VALUE, Integer.MIN_VALUE };
+		t.longs = new long[] { 0, Long.MIN_VALUE, Long.MAX_VALUE, 1L << 40 };
+		t.reels = new double[] { 0.0, -0.0, Double.NaN, 1e300 };
+		t.booleens = new boolean[] { true, false };
+		t.caracteres = new char[] { 'a', 'é', '\u0000', '\uffff' };
+		t.courts = new short[] { Short.MIN_VALUE, 0, Short.MAX_VALUE };
+		t.octets = new byte[] { -128, 0, 127 };
+		t.flottants = new float[] { -1.5f, Float.MAX_VALUE };
+		t.boites = new Integer[] { 1, null, -5 };
+		t.entierDansObjet = 12;
+		final Tableaux lu = BINARY.roundTrip(t);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.entiers, lu.entiers);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.longs, lu.longs);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.reels, lu.reels);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.booleens, lu.booleens);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.caracteres, lu.caracteres);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.courts, lu.courts);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.octets, lu.octets);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.flottants, lu.flottants);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.boites, lu.boites);
+		assertEquals(12, lu.entierDansObjet);
+		assertEquals(null, lu.boiteNulle);
+	}
+
 	@Test
 	void binaireGrapheProfond() throws Exception {
 		// chaîne de 50 000 objets : bien au-delà de la lecture directe (récursive), la pile d'actions prend le relais

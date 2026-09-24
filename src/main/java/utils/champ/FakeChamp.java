@@ -19,6 +19,7 @@ public class FakeChamp implements FieldInformations {
 	private final String name;
 	private final TypeRelation relation;
 	private final TypeToken<?> typeToken;
+	private final int naturePrimitive;
 
 	/** Construit le FakeChamp des éléments, clés ou valeurs portés par un champ. */
 	static FakeChamp pourParametre(final FieldInformations fi, final int role) {
@@ -38,6 +39,7 @@ public class FakeChamp implements FieldInformations {
 		typeToken = TypeToken.get(type);
 		this.relation = relation;
 		isSimple = TypeExtension.isSimple(typeToken.getRawType());
+		naturePrimitive = AccesChamp.nature(typeToken.getRawType());
 		this.annotations = annotations == null ? noAnnotation : annotations;
 	}
 
@@ -87,6 +89,11 @@ public class FakeChamp implements FieldInformations {
 			t[role] = champ; // course bénigne : deux calculs donnent des champs équivalents
 		}
 		return champ;
+	}
+
+	@Override
+	public int getNaturePrimitive() {
+		return naturePrimitive;
 	}
 
 	@Override

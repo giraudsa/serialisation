@@ -22,6 +22,8 @@ public class ActionBinaryChar extends ActionBinary<Character> {
 	@Override
 	protected boolean writeHeaders(final Marshaller marshaller, final Character caractere,
 			final FieldInformations fieldInformations) throws IOException {
+		if (ecritSansEnTeteSiPrimitif(marshaller, fieldInformations, caractere))
+			return false;
 		final HeaderSimpleType<?> header = (HeaderSimpleType<?>) HeaderSimpleType.getHeader(caractere);
 		header.writeValue(getOutput(marshaller), caractere);
 		return false;

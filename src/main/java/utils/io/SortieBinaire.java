@@ -162,6 +162,16 @@ public final class SortieBinaire extends OutputStream implements DataOutput {
 		buffer[position++] = (byte) v;
 	}
 
+	/** Écrit un long positif en varint (7 bits par octet). */
+	public void writeVarLong(long v) throws IOException {
+		assure(10);
+		while ((v & ~0x7FL) != 0) {
+			buffer[position++] = (byte) (v & 0x7F | 0x80);
+			v >>>= 7;
+		}
+		buffer[position++] = (byte) v;
+	}
+
 	/**
 	 * Écrit une chaîne : (nombre d'octets &lt;&lt; 1 | 1 si ASCII) en varint, puis chaque char en UTF-8 sur 1 à 3
 	 * octets (surrogates codés un par un). Le bit ASCII permet au lecteur de copier les octets sans les examiner.

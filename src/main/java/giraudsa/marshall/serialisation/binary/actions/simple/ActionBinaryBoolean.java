@@ -22,6 +22,8 @@ public class ActionBinaryBoolean extends ActionBinary<Boolean> {
 	@Override
 	protected boolean writeHeaders(final Marshaller marshaller, final Boolean bool, final FieldInformations fi)
 			throws IOException {
+		if (ecritSansEnTeteSiPrimitif(marshaller, fi, bool))
+			return false;
 		final HeaderSimpleType<?> header = (HeaderSimpleType<?>) HeaderSimpleType.getHeader(bool);
 		header.writeValue(getOutput(marshaller), bool);
 		return false;

@@ -15,7 +15,7 @@ import utils.TypeExtension.ChampsDuType;
 import utils.champ.AccesChamp;
 import utils.champ.Champ;
 import utils.champ.FieldInformations;
-import utils.headers.HeaderSimpleType;
+import utils.io.Primitifs;
 
 public class ActionBinaryObject extends ActionBinary<Object> {
 	private static final Champ[] AUCUN_CHAMP = new Champ[0];
@@ -48,9 +48,10 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 		final EntityManager entityManager = getEntityManager(marshaller);
 		for (final Champ champ : champs) {
 			final int nature = champ.getNaturePrimitive();
-			// champ primitif (hors byte, écrit sans en-tête) : sans boxing, s'il peut être écrit tout de suite
-			if (nature != AccesChamp.AUCUNE && nature != AccesChamp.BYTE && aucuneAttente(marshaller)) {
-				HeaderSimpleType.ecritPrimitif(getOutput(marshaller), champ.getAcces(), nature, objetASerialiser);
+			// champ primitif : sans en-tête ni boxing, s'il peut être écrit tout de suite (sinon, même codage par
+			// l'action du type enveloppe)
+			if (nature != AccesChamp.AUCUNE && aucuneAttente(marshaller)) {
+				Primitifs.ecrit(getOutput(marshaller), nature, champ.getAcces(), objetASerialiser);
 				continue;
 			}
 			final Object valeur = champ.get(objetASerialiser, dicoObjToFakeId, entityManager);

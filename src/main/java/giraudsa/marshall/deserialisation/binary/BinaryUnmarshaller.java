@@ -75,6 +75,7 @@ import utils.headers.Header;
 import utils.headers.HeaderSimpleType;
 import utils.headers.HeaderTypeCourant;
 import utils.io.EntreeBinaire;
+import utils.io.Primitifs;
 
 public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
@@ -359,8 +360,9 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	protected Object litValeur(final FieldInformations fieldInformations)
 			throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption,
 			InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
-		if (fieldInformations.getValueType() == byte.class)
-			return readByte(); // seul cas ou le header n'est pas nécessaire.
+		final int nature = fieldInformations.getNaturePrimitive();
+		if (nature != AccesChamp.AUCUNE) // type déclaré primitif : pas d'en-tête
+			return Primitifs.lit(input, nature);
 		final Header header = Header.getHeader(readByte());
 		switch (header.categorie) {
 		case Header.SIMPLE:
@@ -374,47 +376,9 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		}
 	}
 
-	/**
-	 * Lit la valeur d'un champ primitif et l'écrit dans l'objet sans boxing.
-	 *
-	 * @return false si le flux porte une valeur d'un autre type que le champ : rien n'a été lu, il faut passer par
-	 *         {@link #litValeur}.
-	 */
+	/** Lit la valeur d'un champ primitif (sans en-tête) et l'écrit dans l'objet, sans boxing. */
 	protected boolean litPrimitif(final Champ champ, final Object objet) throws IOException {
-		final AccesChamp acces = champ.getAcces();
-		final int nature = champ.getNaturePrimitive();
-		if (nature == AccesChamp.BYTE) {
-			acces.setByte(objet, readByte()); // pas d'en-tête pour un byte primitif
-			return true;
-		}
-		final Header header = Header.getHeader(input.regardeOctet());
-		if (header.categorie != Header.SIMPLE || ((HeaderSimpleType<?>) header).getNature() != nature)
-			return false;
-		input.readByte();
-		final HeaderSimpleType<?> simple = (HeaderSimpleType<?>) header;
-		switch (nature) {
-		case AccesChamp.INT:
-			acces.setInt(objet, (int) simple.litEntier(input));
-			break;
-		case AccesChamp.LONG:
-			acces.setLong(objet, simple.litEntier(input));
-			break;
-		case AccesChamp.DOUBLE:
-			acces.setDouble(objet, simple.litDouble(input));
-			break;
-		case AccesChamp.BOOLEAN:
-			acces.setBoolean(objet, simple.litBooleen());
-			break;
-		case AccesChamp.FLOAT:
-			acces.setFloat(objet, simple.litFloat(input));
-			break;
-		case AccesChamp.SHORT:
-			acces.setShort(objet, (short) simple.litEntier(input));
-			break;
-		default: // CHAR
-			acces.setChar(objet, simple.litChar(input));
-			break;
-		}
+		Primitifs.litEtAffecte(input, champ.getNaturePrimitive(), champ.getAcces(), objet);
 		return true;
 	}
 

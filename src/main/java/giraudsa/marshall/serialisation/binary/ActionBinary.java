@@ -12,9 +12,11 @@ import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.ActionAbstrait;
 import giraudsa.marshall.serialisation.Marshaller;
+import utils.champ.AccesChamp;
 import utils.champ.FieldInformations;
 import utils.headers.Header;
 import utils.headers.HeaderTypeCourant;
+import utils.io.Primitifs;
 import utils.io.SortieBinaire;
 import utils.TypeExtension;
 
@@ -70,6 +72,19 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 		} catch (final IOException e) {
 			throw new MarshallExeption(e);
 		}
+	}
+
+	/**
+	 * Valeur d'un type déclaré primitif (champ, élément de tableau) : écrite sans en-tête, le lecteur connaît le type
+	 * (voir Primitifs). @return true si c'est le cas et que la valeur est écrite.
+	 */
+	protected boolean ecritSansEnTeteSiPrimitif(final Marshaller marshaller, final FieldInformations fi,
+			final Object valeur) throws IOException {
+		final int nature = fi.getNaturePrimitive();
+		if (nature == AccesChamp.AUCUNE)
+			return false;
+		Primitifs.ecritValeur(getOutput(marshaller), nature, valeur);
+		return true;
 	}
 
 	/** @return true si aucune valeur de l'objet courant n'est en attente : une valeur peut être écrite tout de suite. */

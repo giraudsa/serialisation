@@ -52,6 +52,11 @@ public class NullChamp implements FieldInformations {
 	}
 
 	@Override
+	public int getNaturePrimitive() {
+		return AccesChamp.AUCUNE;
+	}
+
+	@Override
 	public Type[] getParametreType() {
 		return TypeNull;
 	}

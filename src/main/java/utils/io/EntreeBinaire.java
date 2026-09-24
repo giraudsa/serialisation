@@ -106,13 +106,6 @@ public final class EntreeBinaire extends InputStream implements DataInput {
 		return read(b, off, len);
 	}
 
-	/** @return l'octet suivant sans le consommer. */
-	public byte regardeOctet() throws IOException {
-		if (position == fin)
-			assure(1);
-		return buffer[position];
-	}
-
 	@Override
 	public boolean readBoolean() throws IOException {
 		return readByte() != 0;
@@ -221,6 +214,18 @@ public final class EntreeBinaire extends InputStream implements DataInput {
 		for (int decalage = 7; decalage < 35; decalage += 7) {
 			final int b = readByte() & 0xFF;
 			res |= (b & 0x7F) << decalage;
+			if (b < 0x80)
+				return res;
+		}
+		throw new IOException("varint mal formé");
+	}
+
+	/** Lit un long positif codé en varint. */
+	public long readVarLong() throws IOException {
+		long res = 0;
+		for (int decalage = 0; decalage < 70; decalage += 7) {
+			final int b = readByte() & 0xFF;
+			res |= (long) (b & 0x7F) << decalage;
 			if (b < 0x80)
 				return res;
 		}

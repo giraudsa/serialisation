@@ -34,45 +34,6 @@ public class HeaderSimpleType<T> extends Header {
 		return headersDuType(o.getClass())[encodage];
 	}
 
-	/**
-	 * Écrit la valeur d'un champ primitif sans boxing : mêmes octets que {@link #getHeader(Object)} puis
-	 * {@link #writeValue} sur la valeur enveloppée. Le byte primitif, sans en-tête, n'est pas traité ici.
-	 */
-	public static void ecritPrimitif(final SortieBinaire output, final AccesChamp acces, final int nature,
-			final Object objet) throws IOException {
-		switch (nature) {
-		case AccesChamp.INT: {
-			final int v = acces.getInt(objet);
-			output.writeByte(headersInteger[ByteHelper.getMinimumEncodage(v)].headerByte);
-			if (v != 0)
-				ByteHelper.write(output, v);
-			break;
-		}
-		case AccesChamp.LONG: {
-			final long v = acces.getLong(objet);
-			output.writeByte(headersLong[ByteHelper.getMinimumEncodage(v)].headerByte);
-			if (v != 0)
-				ByteHelper.write(output, v);
-			break;
-		}
-		case AccesChamp.DOUBLE: {
-			final double v = acces.getDouble(objet);
-			output.writeByte(headersDouble[v == 0.0 ? 0 : 8].headerByte);
-			if (v != 0.0)
-				output.writeDouble(v);
-			break;
-		}
-		case AccesChamp.BOOLEAN:
-			output.writeByte((acces.getBoolean(objet) ? booleanTrue : booleanFalse).headerByte);
-			break;
-		default:
-			// short, float, char : moins fréquents, par la valeur enveloppée
-			final Object valeur = acces.get(objet);
-			((HeaderSimpleType<?>) getHeader(valeur)).writeValue(output, valeur);
-			break;
-		}
-	}
-
 	/** Évite la HashMap sur le chemin courant : les types enveloppes sont testés directement. */
 	private static HeaderSimpleType<?>[] headersDuType(final Class<?> type) {
 		if (type == Integer.class)
@@ -153,11 +114,6 @@ public class HeaderSimpleType<T> extends Header {
 		return SIMPLE;
 	}
 
-	/** @return la nature du type codé (constantes de AccesChamp). */
-	public int getNature() {
-		return nature;
-	}
-
 	public Object read(final EntreeBinaire input) throws IOException, UnmarshallExeption {
 		if (tailleCodageValeur == 0)
 			return defautValue; // 0 ou true ou false ou null
@@ -179,27 +135,6 @@ public class HeaderSimpleType<T> extends Header {
 		default:
 			return ByteHelper.getObject(simpleType, ByteHelper.read(input, tailleCodageValeur));
 		}
-	}
-
-	/** Lecture sans boxing d'un entier (byte, short, int, long). */
-	public long litEntier(final EntreeBinaire input) throws IOException {
-		return tailleCodageValeur == 0 ? 0 : ByteHelper.read(input, tailleCodageValeur);
-	}
-
-	public boolean litBooleen() {
-		return (Boolean) defautValue;
-	}
-
-	public char litChar(final EntreeBinaire input) throws IOException {
-		return tailleCodageValeur == 0 ? 0 : input.readChar();
-	}
-
-	public double litDouble(final EntreeBinaire input) throws IOException {
-		return tailleCodageValeur == 0 ? 0 : input.readDouble();
-	}
-
-	public float litFloat(final EntreeBinaire input) throws IOException {
-		return tailleCodageValeur == 0 ? 0 : input.readFloat();
 	}
 
 	@Override

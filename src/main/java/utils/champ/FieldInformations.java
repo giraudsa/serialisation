@@ -33,6 +33,9 @@ public interface FieldInformations {
 
 	public Type[] getParametreType();
 
+	/** @return la nature primitive du type déclaré (constantes de {@link AccesChamp}), AUCUNE pour un type objet. */
+	public int getNaturePrimitive();
+
 	public TypeRelation getRelation();
 
 	public Class<?> getValueType();

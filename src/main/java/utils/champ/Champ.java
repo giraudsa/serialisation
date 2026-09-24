@@ -88,6 +88,7 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 	}
 
 	/** @return la nature primitive du champ (constantes de {@link AccesChamp}), AUCUNE pour un type objet. */
+	@Override
 	public int getNaturePrimitive() {
 		return naturePrimitive;
 	}
