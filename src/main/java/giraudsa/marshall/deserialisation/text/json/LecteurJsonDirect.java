@@ -203,6 +203,11 @@ final class LecteurJsonDirect {
 		private Clef[] cases = new Clef[256];
 		private int nb;
 		private int generation = TypeExtension.getGeneration();
+		/**
+		 * champs des éléments (collection, map, tableau) par champ porteur : { élément, clé, valeur, élément de
+		 * tableau }.
+		 */
+		private final IdentityHashMap<FieldInformations, FakeChamp[]> champsElements = new IdentityHashMap<>();
 
 		/** oublie les champs résolus si la configuration des champs a changé. */
 		private void verifieGeneration() {
@@ -210,6 +215,7 @@ final class LecteurJsonDirect {
 			if (g != generation) {
 				cases = new Clef[256];
 				nb = 0;
+				champsElements.clear();
 				generation = g;
 			}
 		}
@@ -261,6 +267,9 @@ final class LecteurJsonDirect {
 			t[i] = clef;
 		}
 	}
+
+	/** champ de l'objet racine, comme pour le lecteur historique. */
+	private static final FieldInformations RACINE = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
 
 	private static final ThreadLocal<TableClefs> TABLES = ThreadLocal.withInitial(TableClefs::new);
 
@@ -317,8 +326,6 @@ final class LecteurJsonDirect {
 	private final TableClefs clefs;
 	/** une clé de type a été rencontrée (la première fixe le mode de cache des ids, comme le lecteur historique). */
 	private boolean clefTypeVue;
-	/** champs des éléments (collection, map, tableau) par champ porteur : { élément ou clé, valeur }. */
-	private IdentityHashMap<FieldInformations, FakeChamp[]> champsElements;
 
 	private LecteurJsonDirect(final byte[] texte, final boolean latin1) throws Exception {
 		c = texte;
@@ -333,12 +340,11 @@ final class LecteurJsonDirect {
 		saute();
 		if (p >= n)
 			throw ABANDON;
-		final FieldInformations racine = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
 		final Object o;
 		if (c[p] == '{')
-			o = litAccolade(null, racine);
+			o = litAccolade(null, RACINE);
 		else if (c[p] == '[')
-			o = litCrochet(ArrayList.class, racine);
+			o = litCrochet(ArrayList.class, RACINE);
 		else
 			throw ABANDON;
 		saute();
@@ -917,8 +923,7 @@ final class LecteurJsonDirect {
 	}
 
 	private FakeChamp[] champsElements(final FieldInformations fi) {
-		if (champsElements == null)
-			champsElements = new IdentityHashMap<>();
+		final IdentityHashMap<FieldInformations, FakeChamp[]> champsElements = clefs.champsElements;
 		FakeChamp[] champs = champsElements.get(fi);
 		if (champs == null) {
 			final Type[] types = fi.getParametreType();
@@ -926,7 +931,9 @@ final class LecteurJsonDirect {
 			final Type t1 = types != null && types.length > 1 ? types[1] : Object.class;
 			champs = new FakeChamp[] { new FakeChamp("V", t0, fi.getRelation(), fi.getAnnotations()),
 					new FakeChamp("K", t0, fi.getRelation(), fi.getAnnotations()),
-					new FakeChamp("V", t1, fi.getRelation(), fi.getAnnotations()) };
+					new FakeChamp("V", t1, fi.getRelation(), fi.getAnnotations()), null };
+			if (champsElements.size() >= TableClefs.TAILLE_MAX)
+				champsElements.clear();
 			champsElements.put(fi, champs);
 		}
 		return champs;
@@ -1030,7 +1037,10 @@ final class LecteurJsonDirect {
 		final Class<?> composantChamp = fi.getValueType().getComponentType();
 		if (composantChamp == null)
 			throw ABANDON;
-		final FakeChamp champ = new FakeChamp("V", composantChamp, fi.getRelation(), fi.getAnnotations());
+		final FakeChamp[] champs = champsElements(fi);
+		FakeChamp champ = champs[3];
+		if (champ == null)
+			champs[3] = champ = new FakeChamp("V", composantChamp, fi.getRelation(), fi.getAnnotations());
 		final ArrayList<Object> tampon = new ArrayList<>();
 		litElements(tampon, champ);
 		final Object tableau = Array.newInstance(type.getComponentType(), tampon.size());

@@ -10,6 +10,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -58,6 +59,7 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.ConfigurationMarshalling;
+import utils.CopieFormatDate;
 import utils.Constants;
 import utils.EntityManager;
 import utils.TypeExtension;
@@ -210,7 +212,16 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	//////// accès pour LecteurJsonDirect
 
 	static JsonUnmarshaller<?> pourLectureDirecte() throws FabriqueInstantiationException {
-		return new JsonUnmarshaller<>(null, null);
+		return new JsonUnmarshaller<>(ConfigurationMarshalling.getDatFormatJson());
+	}
+
+	/** format de date de la lecture directe, copié à la première date qui n'est pas au format ISO UTC. */
+	private SimpleDateFormat formatSource;
+	private DateFormat formatCopie;
+
+	private JsonUnmarshaller(final SimpleDateFormat formatSource) throws FabriqueInstantiationException {
+		super(null, formatSource);
+		this.formatSource = formatSource;
 	}
 
 	static Class<?> classeDepuisNom(final String nom) throws ClassNotFoundException {
@@ -231,7 +242,11 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	}
 
 	DateFormat formatDate() {
-		return df;
+		if (df != null)
+			return df;
+		if (formatCopie == null)
+			formatCopie = CopieFormatDate.copie(formatSource);
+		return formatCopie;
 	}
 
 	boolean datesIsoUtc() {

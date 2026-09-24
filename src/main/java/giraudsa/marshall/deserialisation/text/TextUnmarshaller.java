@@ -30,6 +30,18 @@ public abstract class TextUnmarshaller<T> extends Unmarshaller<T> {
 		dateIsoUtc = DatesIso.estMotifIsoUtc(df);
 	}
 
+	/**
+	 * Sans copie du format de date (df null) : pour une lecture qui ne s'en sert qu'au besoin, en le copiant alors
+	 * elle-même.
+	 */
+	protected TextUnmarshaller(final EntityManager entity, final SimpleDateFormat dateFormat)
+			throws FabriqueInstantiationException {
+		super(entity);
+		reader = null;
+		df = null;
+		dateIsoUtc = CopieFormatDate.estIsoUtc(dateFormat);
+	}
+
 	@Override
 	public void dispose() throws IOException {
 		reader.close();
