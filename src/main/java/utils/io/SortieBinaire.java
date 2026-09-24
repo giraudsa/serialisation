@@ -196,34 +196,48 @@ public final class SortieBinaire extends OutputStream implements DataOutput {
 					break;
 				b[j++] = (byte) c;
 			}
-			if (i == nbChars) {
+			if (i == nbChars)
 				position = j;
-				return;
-			}
-			for (; i < nbChars; i++) {
-				final char c = s.charAt(i);
-				if (c < 0x80)
-					b[j++] = (byte) c;
-				else if (c < 0x800) {
-					b[j++] = (byte) (0xC0 | c >> 6);
-					b[j++] = (byte) (0x80 | c & 0x3F);
-				} else {
-					b[j++] = (byte) (0xE0 | c >> 12);
-					b[j++] = (byte) (0x80 | c >> 6 & 0x3F);
-					b[j++] = (byte) (0x80 | c & 0x3F);
-				}
-			}
-			final int nbOctets = j - debut - reserve;
-			final int entete = nbOctets << 1; // non ASCII
-			final int taille = tailleVarInt(entete);
-			if (taille != reserve)
-				System.arraycopy(b, debut + reserve, b, debut + taille, nbOctets);
-			position = debut;
-			writeVarInt(entete); // l'espace est déjà assuré
-			position = debut + taille + nbOctets;
+			else
+				continueNonAscii(s, i, j, debut, reserve);
 			return;
 		}
 		writeStringGenerale(s);
+	}
+
+	/**
+	 * Suite de writeString à partir du premier caractère non ASCII (indice i, octet j) : encode le reste puis corrige
+	 * l'en-tête écrit en debut (taille reserve). Méthode à part pour que la boucle ASCII reste petite et inlinée.
+	 */
+	private void continueNonAscii(final String s, int i, int j, final int debut, final int reserve) {
+		final byte[] b = buffer;
+		final int nbChars = s.length();
+		for (; i < nbChars; i++) {
+			final char c = s.charAt(i);
+			if (c < 0x80)
+				b[j++] = (byte) c;
+			else if (c < 0x800) {
+				b[j++] = (byte) (0xC0 | c >> 6);
+				b[j++] = (byte) (0x80 | c & 0x3F);
+			} else {
+				b[j++] = (byte) (0xE0 | c >> 12);
+				b[j++] = (byte) (0x80 | c >> 6 & 0x3F);
+				b[j++] = (byte) (0x80 | c & 0x3F);
+			}
+		}
+		final int nbOctets = j - debut - reserve;
+		final int entete = nbOctets << 1; // non ASCII
+		final int taille = tailleVarInt(entete);
+		if (taille != reserve)
+			System.arraycopy(b, debut + reserve, b, debut + taille, nbOctets);
+		int p = debut; // l'espace de l'en-tête est déjà assuré
+		int v = entete;
+		while ((v & ~0x7F) != 0) {
+			b[p++] = (byte) (v & 0x7F | 0x80);
+			v >>>= 7;
+		}
+		b[p] = (byte) v;
+		position = debut + taille + nbOctets;
 	}
 
 	private static int tailleVarInt(final int v) {
