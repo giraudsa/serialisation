@@ -265,6 +265,9 @@ public final class EntreeBinaire extends InputStream implements DataInput {
 		finOctets = i + nbOctets;
 		if (ascii)
 			return new String(octets, 0, i, nbOctets);
+		final String latin1 = decodeLatin1(octets, i, finOctets);
+		if (latin1 != null)
+			return latin1;
 		final char[] chars = new char[nbOctets];
 		int nbChars = 0;
 		for (; i < finOctets; i++) {
@@ -279,6 +282,26 @@ public final class EntreeBinaire extends InputStream implements DataInput {
 			}
 		}
 		return new String(chars, 0, nbChars);
+	}
+
+	/**
+	 * Décode directement en latin-1 compact si tous les caractères sont ≤ 0xFF (é, °, à... : séquences C2/C3), sans
+	 * tableau de char intermédiaire ni recompression. @return null si un caractère dépasse 0xFF.
+	 */
+	@SuppressWarnings("deprecation")
+	private static String decodeLatin1(final byte[] octets, int i, final int fin) {
+		final byte[] latin1 = new byte[fin - i];
+		int n = 0;
+		for (; i < fin; i++) {
+			final int b = octets[i] & 0xFF;
+			if (b < 0x80)
+				latin1[n++] = (byte) b;
+			else if (b == 0xC2 || b == 0xC3)
+				latin1[n++] = (byte) ((b & 0x03) << 6 | octets[++i] & 0x3F);
+			else
+				return null;
+		}
+		return new String(latin1, 0, 0, n);
 	}
 
 	@Override

@@ -461,6 +461,8 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	private Object litObjet(final FieldInformations fieldInformations, final Class<?> type, final int smallId)
 			throws NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException,
 			ClassNotFoundException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
+		if (type == BigDecimal.class) // valeur immuable, fréquente : lue directement (voir ActionBinaryBigDecimal)
+			return ActionBinaryBigDecimal.lit(input);
 		// objet neuf, peu profond, sans EntityManager : lu directement, par récursion (voir litObjetDirect)
 		if (smallId > 0 && entity == null && profondeurDirecte < PROFONDEUR_MAX_DIRECTE && !isDejaVu(smallId)) {
 			final ActionAbstrait<?> prototype = prototype(type);
@@ -800,6 +802,11 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 
 	protected int readVarInt() throws IOException {
 		return input.readVarInt();
+	}
+
+	/** @return l'entrée binaire (pour les lectures directes des actions). */
+	public EntreeBinaire getEntree() {
+		return input;
 	}
 
 	protected byte[] readBytes(final int taille) throws IOException {
