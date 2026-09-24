@@ -74,8 +74,11 @@ import utils.Constants;
 import utils.EgaliteIntMap;
 import utils.IdentiteIntMap;
 import utils.TypeExtension;
+import utils.TypeExtension.ChampsDuType;
+import utils.champ.EcrivainChamps;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
+import utils.headers.Header;
 import utils.io.Primitifs;
 import utils.io.SortieBinaire;
 
@@ -188,6 +191,133 @@ public class BinaryMarshaller extends Marshaller {
 	}
 
 	private static final ThreadLocal<EtatEcriture> ETATS = ThreadLocal.withInitial(EtatEcriture::new);
+
+	/**
+	 * Plan d'écriture d'une classe, résolu une fois : de quoi écrire directement un objet (écrivain généré) ou une
+	 * collection vus pour la première fois, sans passer par l'aiguillage générique des actions.
+	 */
+	static final class Plan {
+		private static final int AUTRE = 0;
+		private static final int OBJET = 1;
+		private static final int COLLECTION = 2;
+		/** action de la classe (null si aucune : NotImplementedSerializeException au moment d'écrire). */
+		final ActionAbstrait<?> action;
+		private final ChampsDuType champs;
+		private final EcrivainChamps ecrivain;
+		/** l'action écrit sa valeur sans rien empiler (voir ActionBinary.isFeuille). */
+		final boolean feuille;
+		/** configuration des champs pour laquelle le plan a été calculé (voir TypeExtension.getGeneration). */
+		private final int generation;
+		private final int genre;
+
+		private Plan(final ActionAbstrait<?> action, final int genre, final ChampsDuType champs,
+				final EcrivainChamps ecrivain) {
+			this.action = action;
+			feuille = action instanceof ActionBinary && ((ActionBinary<?>) action).isFeuille();
+			this.genre = genre;
+			this.champs = champs;
+			this.ecrivain = ecrivain;
+			generation = TypeExtension.getGeneration();
+		}
+	}
+
+	private static final ClassValue<Plan> PLANS = new ClassValue<>() {
+		@Override
+		protected Plan computeValue(final Class<?> type) {
+			// classe sous laquelle l'objet est sérialisé (celle de l'enum pour une constante avec corps)
+			final Class<?> classe = TypeExtension.isEnum(type) && !type.isEnum() ? type.getSuperclass() : type;
+			ActionAbstrait<?> action;
+			try {
+				action = ACTIONS.get(classe);
+			} catch (final IllegalStateException e) {
+				action = null; // type non géré : l'erreur sera levée par le chemin générique
+			}
+			// valeur immuable, proxy Hibernate... : chemin générique
+			if (action == null || TypeExtension.isEnum(type) || TypeExtension.isValeurImmuableBinaire(type)
+					|| TypeExtension.isHibernate(type))
+				return new Plan(action, Plan.AUTRE, null, null);
+			if (action instanceof ActionBinaryObject) {
+				final ChampsDuType champs = TypeExtension.getChampsDuType(type);
+				final EcrivainChamps ecrivain = champs.getChampId().isFakeId() ? null
+						: ActionBinaryObject.ecrivain(champs, type);
+				return new Plan(action, ecrivain == null ? Plan.AUTRE : Plan.OBJET, champs, ecrivain);
+			}
+			if (action instanceof ActionBinaryCollectionType)
+				return new Plan(action, Plan.COLLECTION, null, null);
+			return new Plan(action, Plan.AUTRE, null, null);
+		}
+	};
+
+	/**
+	 * Écrit directement un objet (par son écrivain généré) ou une collection vus pour la première fois : mêmes octets
+	 * que le chemin des actions (ActionBinary.marshall, ActionBinaryObject, ActionBinaryCollectionType), sans
+	 * l'aiguillage générique.
+	 *
+	 * @return false si le chemin direct ne s'applique pas (rien n'a été écrit) : il faut passer par les actions.
+	 */
+	/** @return le plan d'écriture de la classe de la valeur (non nulle). */
+	static Plan plan(final Object valeur) {
+		return PLANS.get(valeur.getClass());
+	}
+
+	@SuppressWarnings("rawtypes")
+	boolean ecritDirect(final Plan plan, final Object valeur, final FieldInformations champ)
+			throws NotImplementedSerializeException, MarshallExeption {
+		if (plan.genre == Plan.AUTRE || plan.generation != TypeExtension.getGeneration())
+			return false;
+		// un objet dont la stratégie ne veut pas tous les champs passe par le chemin générique
+		if (plan.genre == Plan.OBJET && !strategie.serialiseTout(profondeur + 1, champ))
+			return false;
+		final int id = smallIdObjet(valeur);
+		if (id > 0)
+			return false; // déjà vu : le chemin générique retrouve son smallId et écrit la référence
+		final int smallId = -id;
+		try {
+			ecritEnTeteNouveau(champ.isTypeDevinable(valeur), valeur.getClass(), smallId);
+			++profondeur;
+			if (plan.genre == Plan.OBJET || strategie.serialiseTout(profondeur, champ))
+				totalementSerialises.set(smallId);
+			final int base = hautPile;
+			recursion++;
+			try {
+				if (plan.genre == Plan.OBJET)
+					plan.ecrivain.ecrit(valeur, this, plan.champs.getTableauChamps());
+				else {
+					final Collection collection = (Collection) valeur;
+					final FakeChamp element = champ.getChampParametre(FieldInformations.ELEMENT);
+					output.writeVarInt(collection.size());
+					for (final Object e : collection)
+						ActionBinary.ecritOuDiffere(this, e, element);
+				}
+				empileDifferes();
+				videPileJusqua(base);
+			} finally {
+				recursion--;
+			}
+			--profondeur;
+			return true;
+		} catch (NotImplementedSerializeException | MarshallExeption | RuntimeException e) {
+			throw e;
+		} catch (final Exception e) {
+			throw new MarshallExeption(e);
+		}
+	}
+
+	/**
+	 * En-tête d'une première apparition. Un type devinable (celui du champ) n'est pas écrit et ne reçoit pas de
+	 * numéro : seuls les types écrits sont numérotés, dans l'ordre (même règle à la lecture).
+	 */
+	void ecritEnTeteNouveau(final boolean typeDevinable, final Class<?> typeObj, final int smallId)
+			throws IOException {
+		if (typeDevinable) {
+			Header.getHeader(false, true, smallId, (short) 0).write(output, smallId, (short) 0, true, typeObj);
+			return;
+		}
+		final int idType = smallIdType(typeObj);
+		final short smallIdType = (short) Math.abs(idType);
+		Header.getHeader(false, false, smallId, smallIdType).write(output, smallId, smallIdType, idType > 0,
+				typeObj);
+	}
 
 	/** action de chaque classe, résolue une fois (ClassValue est plus rapide qu'une map concurrente). */
 	private static final ClassValue<ActionAbstrait<?>> ACTIONS = new ClassValue<>() {

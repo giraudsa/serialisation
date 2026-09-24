@@ -73,7 +73,8 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 		empileDifferes(marshaller);
 	}
 
-	private static EcrivainChamps ecrivain(final ChampsDuType champsDuType, final Class<?> type) {
+	/** @return l'écrivain généré pour la classe (créé au premier appel), ou null s'il ne peut pas l'être. */
+	public static EcrivainChamps ecrivain(final ChampsDuType champsDuType, final Class<?> type) {
 		Object ecrivain = champsDuType.getEcrivainBinaire();
 		if (ecrivain == null) {
 			ecrivain = GenerateurSerialiseurs.ecrivain(type, champsDuType.getTableauChamps(), BinaryMarshaller.class);

@@ -54,7 +54,21 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 				ecritChaine(binaryMarshaller, (String) valeur);
 				return;
 			}
-			final ActionAbstrait action = binaryMarshaller.getAction(valeur);
+			final ActionAbstrait action;
+			if (valeur != null) {
+				// un seul accès au plan de la classe : action, feuille, chemin direct
+				final BinaryMarshaller.Plan plan = BinaryMarshaller.plan(valeur);
+				if (plan.feuille) {
+					marshallAvec(plan.action, binaryMarshaller, valeur, fieldInformations);
+					return;
+				}
+				// objet ou collection neufs : chemin direct (voir BinaryMarshaller.ecritDirect)
+				if (binaryMarshaller.recursion < BinaryMarshaller.RECURSION_MAX
+						&& binaryMarshaller.ecritDirect(plan, valeur, fieldInformations))
+					return;
+				action = plan.action != null ? plan.action : binaryMarshaller.getAction(valeur);
+			} else
+				action = binaryMarshaller.getAction(valeur);
 			// feuille, ou sous-objet écrit récursivement tant que la profondeur le permet
 			if (action instanceof ActionBinary && (((ActionBinary) action).isFeuille()
 					|| binaryMarshaller.recursion < BinaryMarshaller.RECURSION_MAX)) {
@@ -246,15 +260,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	private void ecritEnTeteNouveau(final Marshaller marshaller, final BinaryMarshaller binaryMarshaller,
 			final Object objet, final FieldInformations fieldInformations, final Class<?> typeObj, final int smallId)
 			throws IOException {
-		if (isTypeDevinable(marshaller, objet, fieldInformations)) {
-			Header.getHeader(false, true, smallId, (short) 0).write(binaryMarshaller.output, smallId, (short) 0, true,
-					typeObj);
-			return;
-		}
-		final int idType = binaryMarshaller.smallIdType(typeObj);
-		final short smallIdType = (short) Math.abs(idType);
-		Header.getHeader(false, false, smallId, smallIdType).write(binaryMarshaller.output, smallId, smallIdType,
-				idType > 0, typeObj);
+		binaryMarshaller.ecritEnTeteNouveau(isTypeDevinable(marshaller, objet, fieldInformations), typeObj, smallId);
 	}
 
 	protected void writeInt(final Marshaller marshaller, final int v) throws IOException {
