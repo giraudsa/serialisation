@@ -2,6 +2,7 @@ package utils.io;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
@@ -9,29 +10,38 @@ import java.util.Arrays;
  * synchronisé) et BufferedWriter, qui prennent un verrou à chaque petite écriture.
  * <p>
  * Deux modes : vers un Writer de destination (tampon vidé au besoin), ou en chaîne ({@link #pourChaine()}) : le
- * texte est accumulé puis rendu par {@link #toString()}.
+ * texte est accumulé puis rendu par {@link #toString()} ou {@link #termine()}. En chaîne, le texte est gardé en
+ * octets Latin-1 tant que ses caractères le permettent (la chaîne rendue en est une simple copie, sans compression
+ * d'un tableau de caractères), puis en caractères à partir du premier qui dépasse U+00FF.
  */
 public final class SortieTexte extends Writer {
 	private static final int TAILLE = 8192;
-
 	/** au-delà, le tampon d'une sortie en chaîne n'est pas gardé pour la suivante. */
-	private static final int TAILLE_GARDEE = 1 << 18;
+	private static final int TAILLE_GARDEE = 1 << 19;
+	private static final int LATIN1_MAX = 0xFF;
 
 	/** tampon libre de la dernière sortie en chaîne terminée, par thread (évite l'allocation et sa mise à zéro). */
-	private static final ThreadLocal<char[][]> TAMPONS = ThreadLocal.withInitial(() -> new char[1][]);
+	private static final ThreadLocal<byte[][]> TAMPONS = ThreadLocal.withInitial(() -> new byte[1][]);
 
 	/** @return une sortie qui accumule le texte, rendu par toString() ou {@link #termine()}. */
 	public static SortieTexte pourChaine() {
-		final char[][] libre = TAMPONS.get();
-		final char[] tampon = libre[0];
+		final byte[][] libre = TAMPONS.get();
+		final byte[] tampon = libre[0];
 		libre[0] = null;
-		return new SortieTexte(null, tampon != null ? tampon : new char[TAILLE]);
+		final SortieTexte sortie = new SortieTexte(null, null);
+		sortie.octets = tampon != null ? tampon : new byte[TAILLE];
+		return sortie;
 	}
 
+	/** tampon en caractères (null tant que la sortie en chaîne est en Latin-1). */
 	private char[] buffer;
+	/** tampon Latin-1 de la sortie en chaîne (null sinon). */
+	private byte[] octets;
 	/** null en mode chaîne. */
 	private final Writer destination;
 	private int position;
+	/** date en cours d'écriture, en mode Latin-1. */
+	private char[] date;
 
 	public SortieTexte(final Writer destination) {
 		this(destination, new char[TAILLE]);
@@ -47,16 +57,32 @@ public final class SortieTexte extends Writer {
 	 * servir.
 	 */
 	public String termine() {
-		final String s = new String(buffer, 0, position);
-		if (destination == null && buffer.length <= TAILLE_GARDEE)
-			TAMPONS.get()[0] = buffer;
+		final String s = toString();
+		if (octets != null && octets.length <= TAILLE_GARDEE)
+			TAMPONS.get()[0] = octets;
+		octets = null;
 		buffer = null;
 		position = 0;
 		return s;
 	}
 
+	/** passe du tampon Latin-1 au tampon en caractères (un caractère au-delà de U+00FF arrive). */
+	private void versCaracteres() {
+		final byte[] o = octets;
+		final char[] b = new char[Math.max(TAILLE, o.length)];
+		for (int i = 0; i < position; i++)
+			b[i] = (char) (o[i] & 0xFF);
+		buffer = b;
+		octets = null;
+	}
+
 	/** Garantit n caractères de place : vide le tampon vers la destination, ou l'agrandit en mode chaîne. */
 	private void assure(final int n) throws IOException {
+		if (octets != null) {
+			if (position + n > octets.length)
+				octets = Arrays.copyOf(octets, Math.max(octets.length * 2, position + n));
+			return;
+		}
 		if (position + n <= buffer.length)
 			return;
 		if (destination == null)
@@ -92,18 +118,42 @@ public final class SortieTexte extends Writer {
 
 	@Override
 	public String toString() {
+		if (octets != null)
+			return new String(octets, 0, position, StandardCharsets.ISO_8859_1);
 		return new String(buffer, 0, position);
 	}
 
 	@Override
 	public void write(final char[] cbuf, final int off, final int len) throws IOException {
 		assure(len);
+		if (octets != null) {
+			final byte[] o = octets;
+			for (int i = 0; i < len; i++) {
+				final char c = cbuf[off + i];
+				if (c > LATIN1_MAX) {
+					versCaracteres();
+					write(cbuf, off + i, len - i);
+					return;
+				}
+				o[position++] = (byte) c;
+			}
+			return;
+		}
 		System.arraycopy(cbuf, off, buffer, position, len);
 		position += len;
 	}
 
 	@Override
 	public void write(final int c) throws IOException {
+		if (octets != null) {
+			if ((char) c <= LATIN1_MAX) {
+				if (position == octets.length)
+					assure(1);
+				octets[position++] = (byte) c;
+				return;
+			}
+			versCaracteres();
+		}
 		if (position == buffer.length)
 			assure(1);
 		buffer[position++] = (char) c;
@@ -117,6 +167,19 @@ public final class SortieTexte extends Writer {
 	@Override
 	public void write(final String s, final int off, final int len) throws IOException {
 		assure(len);
+		if (octets != null) {
+			final byte[] o = octets;
+			for (int i = 0; i < len; i++) {
+				final char c = s.charAt(off + i);
+				if (c > LATIN1_MAX) {
+					versCaracteres();
+					write(s, off + i, len - i);
+					return;
+				}
+				o[position++] = (byte) c;
+			}
+			return;
+		}
 		s.getChars(off, off + len, buffer, position);
 		position += len;
 	}
@@ -129,16 +192,29 @@ public final class SortieTexte extends Writer {
 		}
 		assure(20);
 		long reste = v;
-		if (reste < 0) {
-			buffer[position++] = '-';
-			reste = -reste;
-		}
 		int n = 1;
-		for (long p = 10; n < 19 && reste >= p; p *= 10)
+		for (long p = 10; n < 19 && (reste < 0 ? -reste : reste) >= p; p *= 10)
 			n++;
-		for (int i = position + n - 1; i >= position; i--) {
-			buffer[i] = (char) ('0' + reste % 10);
-			reste /= 10;
+		if (octets != null) {
+			final byte[] o = octets;
+			if (reste < 0) {
+				o[position++] = '-';
+				reste = -reste;
+			}
+			for (int i = position + n - 1; i >= position; i--) {
+				o[i] = (byte) ('0' + reste % 10);
+				reste /= 10;
+			}
+		} else {
+			final char[] b = buffer;
+			if (reste < 0) {
+				b[position++] = '-';
+				reste = -reste;
+			}
+			for (int i = position + n - 1; i >= position; i--) {
+				b[i] = (char) ('0' + reste % 10);
+				reste /= 10;
+			}
 		}
 		position += n;
 	}
@@ -146,6 +222,17 @@ public final class SortieTexte extends Writer {
 	/** Écrit "date" au format ISO UTC par défaut (voir DatesIso), entre guillemets. */
 	public void writeDateIso(final long millis) throws IOException {
 		assure(DatesIso.LONGUEUR + 2);
+		if (octets != null) {
+			if (date == null)
+				date = new char[DatesIso.LONGUEUR];
+			DatesIso.ecris(millis, date, 0);
+			final byte[] o = octets;
+			o[position++] = '"';
+			for (int i = 0; i < DatesIso.LONGUEUR; i++)
+				o[position++] = (byte) date[i];
+			o[position++] = '"';
+			return;
+		}
 		buffer[position++] = '"';
 		DatesIso.ecris(millis, buffer, position);
 		position += DatesIso.LONGUEUR;
@@ -156,6 +243,27 @@ public final class SortieTexte extends Writer {
 	public void writeClef(final String nom) throws IOException {
 		final int n = nom.length();
 		assure(n + 3);
+		if (octets != null) {
+			final byte[] o = octets;
+			int p = position;
+			o[p++] = '"';
+			for (int i = 0; i < n; i++) {
+				final char c = nom.charAt(i);
+				if (c > LATIN1_MAX) {
+					position = p;
+					versCaracteres();
+					write(nom, i, n - i);
+					write('"');
+					write(':');
+					return;
+				}
+				o[p++] = (byte) c;
+			}
+			o[p++] = '"';
+			o[p++] = ':';
+			position = p;
+			return;
+		}
 		final char[] b = buffer;
 		int p = position;
 		b[p++] = '"';
@@ -180,10 +288,26 @@ public final class SortieTexte extends Writer {
 	public void writeEchappe(final String s, final String[] remplacements) throws IOException {
 		final int n = s.length();
 		assure(n);
+		final int nbRemplacables = remplacements.length;
+		if (octets != null) {
+			final byte[] o = octets;
+			int p = position;
+			for (int k = 0; k < n; k++) {
+				final char c = s.charAt(k);
+				if (c < nbRemplacables && remplacements[c] != null || c > LATIN1_MAX) {
+					// à remplacer ou hors Latin-1 : on reprend à partir de lui, caractère par caractère
+					position = p;
+					writeEchappeDepuis(s, k, remplacements);
+					return;
+				}
+				o[p++] = (byte) c;
+			}
+			position = p;
+			return;
+		}
 		final char[] b = buffer;
 		final int debut = position;
 		s.getChars(0, n, b, debut);
-		final int nbRemplacables = remplacements.length;
 		for (int k = 0; k < n; k++) {
 			final char c = b[debut + k];
 			if (c < nbRemplacables && remplacements[c] != null) {
@@ -204,13 +328,19 @@ public final class SortieTexte extends Writer {
 		for (int i = depuis; i < n; i++) {
 			final char c = s.charAt(i);
 			final String r = c < nbRemplacables ? remplacements[c] : null;
-			if (r == null)
+			if (r == null) {
+				if (octets != null) {
+					if (c <= LATIN1_MAX) {
+						octets[position++] = (byte) c;
+						continue;
+					}
+					versCaracteres();
+				}
 				buffer[position++] = c;
-			else {
+			} else {
 				final int lr = r.length();
 				assure(lr + n - i); // le remplacement et tous les caractères restants
-				r.getChars(0, lr, buffer, position);
-				position += lr;
+				write(r, 0, lr);
 			}
 		}
 	}
