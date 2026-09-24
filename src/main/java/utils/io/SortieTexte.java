@@ -94,6 +94,28 @@ public final class SortieTexte extends Writer {
 		position += len;
 	}
 
+	/**
+	 * Écrit la chaîne en remplaçant chaque caractère c qui a un remplacement (remplacements[c] non nul), directement
+	 * dans le tampon.
+	 */
+	public void writeEchappe(final String s, final String[] remplacements) throws IOException {
+		final int n = s.length();
+		assure(n);
+		final int nbRemplacables = remplacements.length;
+		for (int i = 0; i < n; i++) {
+			final char c = s.charAt(i);
+			final String r = c < nbRemplacables ? remplacements[c] : null;
+			if (r == null)
+				buffer[position++] = c;
+			else {
+				final int lr = r.length();
+				assure(lr + n - i); // le remplacement et tous les caractères restants
+				r.getChars(0, lr, buffer, position);
+				position += lr;
+			}
+		}
+	}
+
 	@Override
 	public Writer append(final char c) throws IOException {
 		write(c);

@@ -5,6 +5,8 @@ import java.io.Writer;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import utils.io.SortieTexte;
+
 /**
  * Table de remplacement des caractères à échapper, indexée directement par le
  * caractère (pas de boxing ni de hachage), et écriture par tronçons des parties
@@ -23,6 +25,10 @@ public final class TableEchappement {
 	}
 
 	public void ecris(final Writer writer, final String aEchapper) throws IOException {
+		if (writer instanceof SortieTexte) { // cas courant : directement dans le tampon
+			((SortieTexte) writer).writeEchappe(aEchapper, remplacements);
+			return;
+		}
 		final int longueur = aEchapper.length();
 		int debut = 0;
 		for (int i = 0; i < longueur; i++) {

@@ -53,13 +53,17 @@ public abstract class TextMarshaller extends Marshaller {
 	protected <U> void marshall(final U obj)
 			throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
 			IOException, NotImplementedSerializeException, MarshallExeption {
-		if (obj != null) {
-			final FakeChamp fieldsInfo = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
-			marshall(obj, fieldsInfo);
-			while (!aFaire.isEmpty())
-				deserialisePile();
+		try {
+			if (obj != null) {
+				final FakeChamp fieldsInfo = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
+				marshall(obj, fieldsInfo);
+				while (!aFaire.isEmpty())
+					deserialisePile();
+			}
+			writer.flush(); // le writer de l'appelant est derrière un tampon
+		} finally {
+			rendTables();
 		}
-		writer.flush(); // le writer de l'appelant peut avoir été bufferisé
 	}
 
 	protected void write(final char c) throws IOException {

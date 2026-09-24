@@ -25,6 +25,43 @@ public abstract class Marshaller {
 	// comparaison par identité : deux objets distincts mais égaux au sens de
 	// equals() sont deux noeuds différents du graphe.
 	// tables créées à la demande : le binaire ne s'en sert presque jamais, leur allocation pèse sur les petits graphes
+	/** tables d'identité réutilisées d'une sérialisation à l'autre sur un même thread (voir rendTables). */
+	private static final ThreadLocal<IdentiteIntMap[]> TABLES_LIBRES = ThreadLocal
+			.withInitial(() -> new IdentiteIntMap[2]);
+
+	private static IdentiteIntMap prendTable() {
+		final IdentiteIntMap[] libres = TABLES_LIBRES.get();
+		for (int i = 0; i < libres.length; i++)
+			if (libres[i] != null) {
+				final IdentiteIntMap table = libres[i];
+				libres[i] = null;
+				return table;
+			}
+		return new IdentiteIntMap(1024);
+	}
+
+	private static void rend(final IdentiteIntMap table) {
+		table.vide(); // ne retient pas les objets sérialisés
+		final IdentiteIntMap[] libres = TABLES_LIBRES.get();
+		for (int i = 0; i < libres.length; i++)
+			if (libres[i] == null) {
+				libres[i] = table;
+				return;
+			}
+	}
+
+	/** Rend les tables d'identité pour la sérialisation suivante ; à appeler en fin de sérialisation. */
+	protected void rendTables() {
+		if (dejaVu != null) {
+			rend(dejaVu);
+			dejaVu = null;
+		}
+		if (dejaTotalementSerialise != null) {
+			rend(dejaTotalementSerialise);
+			dejaTotalementSerialise = null;
+		}
+	}
+
 	// ensembles par identité (table à adressage ouvert : ni entrée allouée ni boxing)
 	protected IdentiteIntMap dejaTotalementSerialise;
 	private IdentiteIntMap dejaVu;
@@ -139,13 +176,13 @@ public abstract class Marshaller {
 
 	protected <T> void setDejaTotalementSerialise(final T obj) {
 		if (dejaTotalementSerialise == null)
-			dejaTotalementSerialise = new IdentiteIntMap(64);
+			dejaTotalementSerialise = prendTable();
 		dejaTotalementSerialise.putIfAbsent(obj, 1);
 	}
 
 	protected <T> void setDejaVu(final T obj) {
 		if (dejaVu == null)
-			dejaVu = new IdentiteIntMap(64);
+			dejaVu = prendTable();
 		dejaVu.putIfAbsent(obj, 1);
 	}
 }

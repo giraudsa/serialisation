@@ -150,7 +150,11 @@ public class BinaryMarshaller extends Marshaller {
 		try {
 			etat.sortie.reinitialise(output);
 			final BinaryMarshaller v = new BinaryMarshaller(etat, strategie);
-			v.marshall(obj);
+			try {
+				v.marshall(obj);
+			} finally {
+				v.rendTables();
+			}
 			etat.sortie.flush();
 		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException
 				| NoSuchMethodException | NotImplementedSerializeException e) {

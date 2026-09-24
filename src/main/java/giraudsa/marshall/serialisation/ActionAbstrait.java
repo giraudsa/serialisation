@@ -133,7 +133,8 @@ public abstract class ActionAbstrait<T> {
 			final FieldInformations fieldInformations) {
 		if (value == null)
 			return false;
-		if (isDejaVu(marshaller, value) && isUniversalId(marshaller))
+		// test le moins coûteux d'abord : les id sont rarement universels, la recherche d'identité est évitée
+		if (isUniversalId(marshaller) && isDejaVu(marshaller, value))
 			return true;
 		return fieldInformations.isTypeDevinable(value);
 	}
