@@ -1,9 +1,6 @@
 package giraudsa.marshall.serialisation.text;
 
-import java.io.BufferedWriter;
-import java.io.CharArrayWriter;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
@@ -18,12 +15,14 @@ import utils.ConfigurationMarshalling;
 import utils.CopieFormatDate;
 import utils.EntityManager;
 import utils.champ.FakeChamp;
+import utils.io.SortieTexte;
 
 public abstract class TextMarshaller extends Marshaller {
+	/** Sortie tamponnée non synchronisée (vidée vers le Writer de l'appelant par flush, en fin de sérialisation). */
 	private static Writer bufferise(final Writer writer) {
-		if (writer instanceof StringWriter || writer instanceof BufferedWriter || writer instanceof CharArrayWriter)
+		if (writer instanceof SortieTexte)
 			return writer;
-		return new BufferedWriter(writer);
+		return new SortieTexte(writer);
 	}
 
 	protected final DateFormat df;

@@ -1,7 +1,6 @@
 package giraudsa.marshall.serialisation.text.json;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
@@ -58,6 +57,7 @@ import giraudsa.marshall.strategie.StrategieSerialisationComplete;
 import utils.ConfigurationMarshalling;
 import utils.Constants;
 import utils.EntityManager;
+import utils.io.SortieTexte;
 
 public class JsonMarshaller extends TextMarshaller {
 	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
@@ -100,13 +100,10 @@ public class JsonMarshaller extends TextMarshaller {
 	}
 
 	public static <U> String toCompleteJson(final U obj) throws MarshallExeption {
-		try (StringWriter sw = new StringWriter()) {
-			toCompleteJson(obj, sw, null);
-			return sw.toString();
-		} catch (final IOException e) {
-			LOGGER.debug("Problème à la création d'un StringWriter", e);
-			throw new MarshallExeption(e);
-		}
+		// sortie non synchronisée qui accumule le texte (StringWriter repose sur un StringBuffer synchronisé)
+		final SortieTexte sortie = SortieTexte.pourChaine();
+		toCompleteJson(obj, sortie, null);
+		return sortie.toString();
 	}
 
 	public static <U> void toCompleteJson(final U obj, final Writer output, final EntityManager entityManager)
@@ -132,13 +129,10 @@ public class JsonMarshaller extends TextMarshaller {
 
 	public static <U> String toJson(final U obj, final StrategieDeSerialisation strategie,
 			final EntityManager entityManager, final boolean writeType) throws MarshallExeption {
-		try (StringWriter sw = new StringWriter()) {
-			toJson(obj, sw, strategie, entityManager, writeType);
-			return sw.toString();
-		} catch (final IOException e) {
-			LOGGER.debug("Problème à la création d'un StringWriter", e);
-			throw new MarshallExeption(e);
-		}
+		// sortie non synchronisée qui accumule le texte (StringWriter repose sur un StringBuffer synchronisé)
+		final SortieTexte sortie = SortieTexte.pourChaine();
+		toJson(obj, sortie, strategie, entityManager, writeType);
+		return sortie.toString();
 	}
 
 	// /////METHODES PUBLIQUES STATIQUES

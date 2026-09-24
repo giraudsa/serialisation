@@ -1,7 +1,6 @@
 package giraudsa.marshall.serialisation.text.xml;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
@@ -54,6 +53,7 @@ import giraudsa.marshall.strategie.StrategieSerialisationComplete;
 import utils.ConfigurationMarshalling;
 import utils.Constants;
 import utils.EntityManager;
+import utils.io.SortieTexte;
 
 public class XmlMarshaller extends TextMarshaller {
 	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
@@ -96,13 +96,10 @@ public class XmlMarshaller extends TextMarshaller {
 	}
 
 	public static <U> String toCompleteXml(final U obj) throws MarshallExeption {
-		try (StringWriter sw = new StringWriter()) {
-			toCompleteXml(obj, sw, null);
-			return sw.toString();
-		} catch (final IOException e) {
-			LOGGER.error("impossible de sérialiser completement en String " + obj.toString(), e);
-			throw new MarshallExeption(e);
-		}
+		// sortie non synchronisée qui accumule le texte (StringWriter repose sur un StringBuffer synchronisé)
+		final SortieTexte sortie = SortieTexte.pourChaine();
+		toCompleteXml(obj, sortie, null);
+		return sortie.toString();
 	}
 
 	public static <U> void toCompleteXml(final U obj, final Writer output, final EntityManager entityManager)
@@ -127,13 +124,10 @@ public class XmlMarshaller extends TextMarshaller {
 
 	public static <U> String toXml(final U obj, final StrategieDeSerialisation strategie,
 			final EntityManager entityManager) throws MarshallExeption {
-		try (StringWriter sw = new StringWriter()) {
-			toXml(obj, sw, strategie, entityManager);
-			return sw.toString();
-		} catch (final IOException e) {
-			LOGGER.error("impossible de sérialiser en String " + obj.toString(), e);
-			throw new MarshallExeption(e);
-		}
+		// sortie non synchronisée qui accumule le texte (StringWriter repose sur un StringBuffer synchronisé)
+		final SortieTexte sortie = SortieTexte.pourChaine();
+		toXml(obj, sortie, strategie, entityManager);
+		return sortie.toString();
 	}
 
 	///// METHODES STATICS PUBLICS

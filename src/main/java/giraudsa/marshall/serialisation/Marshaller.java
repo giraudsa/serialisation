@@ -4,10 +4,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import giraudsa.marshall.exception.MarshallExeption;
@@ -16,6 +14,7 @@ import giraudsa.marshall.serialisation.ActionAbstrait.Comportement;
 import giraudsa.marshall.strategie.StrategieDeSerialisation;
 import utils.Constants;
 import utils.EntityManager;
+import utils.IdentiteIntMap;
 import utils.champ.FieldInformations;
 import utils.TypeExtension;
 
@@ -26,8 +25,9 @@ public abstract class Marshaller {
 	// comparaison par identité : deux objets distincts mais égaux au sens de
 	// equals() sont deux noeuds différents du graphe.
 	// tables créées à la demande : le binaire ne s'en sert presque jamais, leur allocation pèse sur les petits graphes
-	protected Set<Object> dejaTotalementSerialise;
-	private Set<Object> dejaVu;
+	// ensembles par identité (table à adressage ouvert : ni entrée allouée ni boxing)
+	protected IdentiteIntMap dejaTotalementSerialise;
+	private IdentiteIntMap dejaVu;
 	private Map<Object, UUID> dicoObjToFakeId;
 	private final EntityManager entityManager;
 	////// ATTRIBUT
@@ -123,11 +123,11 @@ public abstract class Marshaller {
 	}
 
 	protected <T> boolean isDejaTotalementSerialise(final T obj) {
-		return dejaTotalementSerialise != null && dejaTotalementSerialise.contains(obj);
+		return dejaTotalementSerialise != null && dejaTotalementSerialise.contient(obj);
 	}
 
 	protected <T> boolean isDejaVu(final T obj) {
-		return dejaVu != null && dejaVu.contains(obj);
+		return dejaVu != null && dejaVu.contient(obj);
 	}
 
 	protected <T> void marshall(final T value, final FieldInformations fieldInformations)
@@ -139,13 +139,13 @@ public abstract class Marshaller {
 
 	protected <T> void setDejaTotalementSerialise(final T obj) {
 		if (dejaTotalementSerialise == null)
-			dejaTotalementSerialise = Collections.newSetFromMap(new IdentityHashMap<>());
-		dejaTotalementSerialise.add(obj);
+			dejaTotalementSerialise = new IdentiteIntMap(64);
+		dejaTotalementSerialise.putIfAbsent(obj, 1);
 	}
 
 	protected <T> void setDejaVu(final T obj) {
 		if (dejaVu == null)
-			dejaVu = Collections.newSetFromMap(new IdentityHashMap<>());
-		dejaVu.add(obj);
+			dejaVu = new IdentiteIntMap(64);
+		dejaVu.putIfAbsent(obj, 1);
 	}
 }
