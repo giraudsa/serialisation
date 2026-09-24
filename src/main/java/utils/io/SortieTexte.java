@@ -239,6 +239,19 @@ public final class SortieTexte extends Writer {
 		buffer[position++] = '"';
 	}
 
+	/**
+	 * Écrit des octets Latin-1 préparés, si la sortie est en mode Latin-1. @return false sinon (rien n'est écrit :
+	 * l'appelant écrit le texte équivalent).
+	 */
+	public boolean writeOctets(final byte[] texte) throws IOException {
+		if (octets == null)
+			return false;
+		assure(texte.length);
+		System.arraycopy(texte, 0, octets, position, texte.length);
+		position += texte.length;
+		return true;
+	}
+
 	/** Écrit une clé JSON déjà mise en octets Latin-1 ("nom":, voir Champ.getClefJson). */
 	public void writeClef(final byte[] clef, final String nom) throws IOException {
 		if (octets == null) {

@@ -9,6 +9,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Collection;
@@ -252,10 +253,33 @@ public class JsonMarshaller extends TextMarshaller {
 	}
 
 	protected void ecritType(final Class<?> type) throws IOException {
-		ecritClef(clefType);
+		if (isPrettyPrint())
+			aLaLigne();
+		final ClassValue<byte[]> octets = clefType == Constants.CLEF_TYPE ? TYPES : TYPES_ID_UNIVERSEL; // NOSONAR
+		final byte[] texte = octets.get(type);
+		if (texte != null && writer.writeOctets(texte))
+			return;
+		writer.writeClef(clefType);
 		final String stringType = Constants.getSmallNameType(type);
 		writeWithQuote(stringType);
 	}
+
+	/** "clé de type":"nom du type" en octets Latin-1 par classe (null si le texte n'est pas Latin-1). */
+	private static ClassValue<byte[]> typesEnOctets(final String clef) {
+		return new ClassValue<>() {
+			@Override
+			protected byte[] computeValue(final Class<?> type) {
+				final String texte = '"' + clef + "\":\"" + Constants.getSmallNameType(type) + '"';
+				for (int i = 0; i < texte.length(); i++)
+					if (texte.charAt(i) > 0xFF)
+						return null;
+				return texte.getBytes(StandardCharsets.ISO_8859_1);
+			}
+		};
+	}
+
+	private static final ClassValue<byte[]> TYPES = typesEnOctets(Constants.CLEF_TYPE);
+	private static final ClassValue<byte[]> TYPES_ID_UNIVERSEL = typesEnOctets(Constants.CLEF_TYPE_ID_UNIVERSEL);
 
 	protected void fermeAccolade() throws IOException {
 		--profondeur;

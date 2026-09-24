@@ -35,7 +35,10 @@ public abstract class ActionJson<T> extends ActionText<T> {
 		protected void evalue(final Marshaller marshaller)
 				throws IOException, IllegalAccessException, InstantiationException, InvocationTargetException,
 				NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
-			ecritClef(marshaller, nomClef);
+			if (fieldInformations instanceof Champ)
+				ecritClef(marshaller, (Champ) fieldInformations);
+			else
+				ecritClef(marshaller, nomClef);
 			final boolean nePasEcrireType = writeType(marshaller) ? typeDevinable : true;
 			final boolean separateurAEcrire = commenceObject(marshaller, (T) obj, nePasEcrireType);
 			ecritValeur(marshaller, (T) obj, fieldInformations, separateurAEcrire);
