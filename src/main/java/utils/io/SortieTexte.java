@@ -14,18 +14,45 @@ import java.util.Arrays;
 public final class SortieTexte extends Writer {
 	private static final int TAILLE = 8192;
 
-	/** @return une sortie qui accumule le texte, rendu par toString(). */
+	/** au-delà, le tampon d'une sortie en chaîne n'est pas gardé pour la suivante. */
+	private static final int TAILLE_GARDEE = 1 << 18;
+
+	/** tampon libre de la dernière sortie en chaîne terminée, par thread (évite l'allocation et sa mise à zéro). */
+	private static final ThreadLocal<char[][]> TAMPONS = ThreadLocal.withInitial(() -> new char[1][]);
+
+	/** @return une sortie qui accumule le texte, rendu par toString() ou {@link #termine()}. */
 	public static SortieTexte pourChaine() {
-		return new SortieTexte(null);
+		final char[][] libre = TAMPONS.get();
+		final char[] tampon = libre[0];
+		libre[0] = null;
+		return new SortieTexte(null, tampon != null ? tampon : new char[TAILLE]);
 	}
 
-	private char[] buffer = new char[TAILLE];
+	private char[] buffer;
 	/** null en mode chaîne. */
 	private final Writer destination;
 	private int position;
 
 	public SortieTexte(final Writer destination) {
+		this(destination, new char[TAILLE]);
+	}
+
+	private SortieTexte(final Writer destination, final char[] tampon) {
 		this.destination = destination;
+		buffer = tampon;
+	}
+
+	/**
+	 * Sortie en chaîne : rend le texte et libère le tampon pour la sortie suivante du thread ; la sortie ne doit plus
+	 * servir.
+	 */
+	public String termine() {
+		final String s = new String(buffer, 0, position);
+		if (destination == null && buffer.length <= TAILLE_GARDEE)
+			TAMPONS.get()[0] = buffer;
+		buffer = null;
+		position = 0;
+		return s;
 	}
 
 	/** Garantit n caractères de place : vide le tampon vers la destination, ou l'agrandit en mode chaîne. */

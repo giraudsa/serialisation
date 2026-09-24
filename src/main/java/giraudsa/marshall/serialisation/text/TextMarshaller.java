@@ -26,7 +26,9 @@ public abstract class TextMarshaller extends Marshaller {
 		return new SortieTexte(writer);
 	}
 
-	protected final DateFormat df;
+	/** format de date de la configuration ; sa copie privée n'est faite qu'à la première date écrite avec. */
+	private final SimpleDateFormat formatSource;
+	private DateFormat df;
 	/** le format de date est le format ISO UTC par défaut : les dates peuvent être écrites sans lui (DatesIso). */
 	protected final boolean dateIsoUtc;
 	protected final boolean isUniversalId;
@@ -40,10 +42,17 @@ public abstract class TextMarshaller extends Marshaller {
 			final StrategieDeSerialisation strategie, final EntityManager entityManager) {
 		super(strategie, entityManager);
 		this.writer = bufferise(writer);
-		df = CopieFormatDate.copie(dateFormat);
-		dateIsoUtc = DatesIso.estMotifIsoUtc(df);
+		formatSource = dateFormat;
+		dateIsoUtc = CopieFormatDate.estIsoUtc(dateFormat);
 		isUniversalId = ConfigurationMarshalling.getEstIdUniversel();
 		prettyPrint = ConfigurationMarshalling.isPrettyPrint();
+	}
+
+	/** @return la copie privée du format de date (SimpleDateFormat n'est pas thread-safe). */
+	protected DateFormat getDateFormat() {
+		if (df == null)
+			df = CopieFormatDate.copie(formatSource);
+		return df;
 	}
 
 	protected void dispose() throws IOException {

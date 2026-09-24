@@ -105,7 +105,7 @@ public class JsonMarshaller extends TextMarshaller {
 		// sortie non synchronisée qui accumule le texte (StringWriter repose sur un StringBuffer synchronisé)
 		final SortieTexte sortie = SortieTexte.pourChaine();
 		toCompleteJson(obj, sortie, null);
-		return sortie.toString();
+		return sortie.termine();
 	}
 
 	public static <U> void toCompleteJson(final U obj, final Writer output, final EntityManager entityManager)
@@ -134,7 +134,7 @@ public class JsonMarshaller extends TextMarshaller {
 		// sortie non synchronisée qui accumule le texte (StringWriter repose sur un StringBuffer synchronisé)
 		final SortieTexte sortie = SortieTexte.pourChaine();
 		toJson(obj, sortie, strategie, entityManager, writeType);
-		return sortie.toString();
+		return sortie.termine();
 	}
 
 	// /////METHODES PUBLIQUES STATIQUES

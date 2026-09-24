@@ -14,7 +14,7 @@ public abstract class ActionText<T> extends ActionAbstrait<T> {
 	}
 
 	protected DateFormat getDateFormat(final Marshaller marshaller) {
-		return getTextMarshaller(marshaller).df;
+		return getTextMarshaller(marshaller).getDateFormat();
 	}
 
 	protected abstract Map<Character, String> getRemplacementChar();
