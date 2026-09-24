@@ -127,6 +127,52 @@ il y a 2 méthodes public static à la sérialisation en binaire et 2 pour la d�
 
 	BinaryUnmarshaller.fromBinary(InputStream, EntityManager)
 	BinaryUnmarshaller.fromBinary(InputStream)
+
+###4.3 - Compatibilité (version 1.1)
+
+**Le format binaire de la version 1.1 est incompatible avec celui des versions précédentes** : un flux écrit par une version 1.0.x ne peut pas être relu par la 1.1, et inversement. Les formats XML et JSON ne changent pas.
+
+###4.4 - Caractéristiques du format
+
+Le format binaire conserve toutes les garanties de la bibliothèque (polymorphisme, cycles, identité des objets, stratégies de sérialisation) et est plus compact que les formats binaires usuels :
+
+* identifiants implicites : un objet, une chaîne, une date ou un UUID vu pour la première fois ne porte pas de numéro, le lecteur les numérote dans l'ordre de lecture ; seules les références arrière portent un numéro ;
+* chaînes dédupliquées (une chaîne déjà écrite n'est plus qu'une référence), de façon adaptative : un champ dont les valeurs ne se répètent pas (identifiants, adresses...) n'est plus cherché dans la table ;
+* longueurs et tailles en varint, champs de type primitif écrits sans en-tête (entiers en varint zigzag), BigDecimal en binaire ;
+* type écrit seulement s'il n'est pas déductible du champ ; les collections et maps courantes du JDK (ArrayList, HashMap, LinkedHashMap...) ont un numéro fixe, leur nom n'est jamais écrit ;
+* pas de limite de taille pour les chaînes, caractères nuls et surrogates isolés transportés.
+
+###4.5 - Performances et prérequis
+
+Le moteur binaire est conçu pour la vitesse, sans rien exiger du code métier (ni annotation, ni génération de code source) :
+
+* pour chaque classe, un écrivain et un lecteur de ses champs sont générés **en mémoire, à l'exécution** (classes cachées, JDK 15 et plus) : accès direct aux champs, même privés. Sur un JDK plus ancien, pour un champ final ou si la génération échoue, la bibliothèque se replie sur la réflexion ;
+* aucune méthode d'accès mémoire de `sun.misc.Unsafe` n'est utilisée (elles sont dépréciées et signalées par un avertissement depuis le JDK 24) ; seule `Unsafe.allocateInstance`, non dépréciée, sert à créer les objets sans appeler leur constructeur (repli sur le constructeur de sérialisation) ;
+* les tables et tampons sont réutilisés d'un appel à l'autre sur un même thread ;
+* les graphes sont parcourus par récursion jusqu'à 200 niveaux, puis par une pile explicite : un graphe très profond (longue liste chaînée...) ne provoque pas de `StackOverflowError`.
+
+Mesures (JMH, JDK 25, Linux arm64, 2 forks) sur un catalogue de commandes : « petit » = 1 commande et 10 lignes (13 objets), « gros » = 1 000 commandes (13 000 objets). Kryo et Fory ont le suivi des références activé, pour la même sémantique d'identité ; Jackson et Gson ne gèrent ni les cycles, ni l'identité, ni le polymorphisme.
+
+| Format | écriture petit (µs) | écriture gros (ms) | lecture petit (µs) | lecture gros (ms) | taille gros (Ko) |
+|---|---:|---:|---:|---:|---:|
+| **giraudsa binaire** | 1,10 | 1,29 | **1,43** | **1,04** | **393** |
+| Fory 0.12 | **0,74** | **1,21** | 1,63 | 1,42 | 602 |
+| Kryo 5.6 | 1,90 | 4 à 13 (instable) | 2,32 | 2,11 | 508 |
+| Java natif | 7,07 | 7,71 | 37,9 | 9,00 | 1 174 |
+| Jackson JSON 2.17 | 3,30 | 3,68 | 9,25 | 7,17 | 1 458 |
+| Gson 2.10 | 7,83 | 7,67 | 8,32 | 7,65 | 1 458 |
+| giraudsa JSON | 10,1 | 11,6 | 23,2 | 25,0 | 1 519 |
+| Jackson XML 2.17 | 6,57 | 6,78 | 15,7 | 13,7 | 2 116 |
+| giraudsa XML | 12,3 | 16,8 | 34,3 | 29,9 | 2 213 |
+| XStream 1.4 | 26,5 | 27,2 | 51,9 | 64,4 | 3 534 |
+
+Fory copie le contenu des chaînes par `sun.misc.Unsafe`, ce qui lui donne l'avantage en écriture sur les petits graphes, au prix de l'avertissement du JDK 24+ au démarrage.
+
+Le module `benchmark/` (JMH) permet de refaire ces mesures :
+
+	cd benchmark && mvn package -DskipTests
+	java -jar target/benchmarks.jar SerialisationBenchmark
+	java -jar target/benchmarks.jar SerialisationBenchmark -p framework=giraudsa-binaire,kryo,fory
 	
 ##5 - Customisation
 -------------------
