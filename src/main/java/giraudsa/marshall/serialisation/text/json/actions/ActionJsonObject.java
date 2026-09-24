@@ -14,6 +14,7 @@ import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.json.ActionJson;
 import utils.EntityManager;
 import utils.TypeExtension;
+import utils.champ.AccesChamp;
 import utils.champ.Champ;
 import utils.champ.FieldInformations;
 
@@ -40,6 +41,71 @@ public class ActionJsonObject extends ActionJson<Object> {
 		return false;
 	}
 
+	/**
+	 * Champ primitif (hors char) ou chaîne : écrit sans passer par l'action de la valeur, avec le même texte (une
+	 * valeur de ces types a toujours un type devinable et n'est jamais enveloppée) ; les primitifs sont lus sans
+	 * boxing.
+	 *
+	 * @return false si le champ n'est pas de ces types (l'appelant l'écrit par le chemin général).
+	 */
+	private boolean ecritSimple(final Marshaller marshaller, final Object obj, final Champ champ,
+			final boolean virgule, final Map<Object, UUID> dicoObjToFakeId, final EntityManager entityManager)
+			throws IOException, IllegalAccessException, MarshallExeption {
+		final int nature = champ.getNaturePrimitive();
+		if (nature == AccesChamp.AUCUNE) {
+			if (champ.getValueType() != String.class)
+				return false;
+			final Object valeur = champ.get(obj, dicoObjToFakeId, entityManager);
+			if (aTraiter(valeur, champ)) {
+				if (virgule)
+					writeSeparator(marshaller);
+				ecritClef(marshaller, champ.getName());
+				writeWithQuote(marshaller, valeur.toString());
+			}
+			return true;
+		}
+		final AccesChamp acces = champ.getAcces();
+		switch (nature) {
+		case AccesChamp.INT:
+			ecritClefSimple(marshaller, champ, virgule);
+			ecritEntier(marshaller, acces.getInt(obj));
+			return true;
+		case AccesChamp.LONG:
+			ecritClefSimple(marshaller, champ, virgule);
+			ecritEntier(marshaller, acces.getLong(obj));
+			return true;
+		case AccesChamp.SHORT:
+			ecritClefSimple(marshaller, champ, virgule);
+			ecritEntier(marshaller, acces.getShort(obj));
+			return true;
+		case AccesChamp.BYTE:
+			ecritClefSimple(marshaller, champ, virgule);
+			ecritEntier(marshaller, acces.getByte(obj));
+			return true;
+		case AccesChamp.DOUBLE:
+			ecritClefSimple(marshaller, champ, virgule);
+			ecritBrut(marshaller, Double.toString(acces.getDouble(obj)));
+			return true;
+		case AccesChamp.FLOAT:
+			ecritClefSimple(marshaller, champ, virgule);
+			ecritBrut(marshaller, Float.toString(acces.getFloat(obj)));
+			return true;
+		case AccesChamp.BOOLEAN:
+			ecritClefSimple(marshaller, champ, virgule);
+			ecritBrut(marshaller, acces.getBoolean(obj) ? "true" : "false");
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	private void ecritClefSimple(final Marshaller marshaller, final Champ champ, final boolean virgule)
+			throws IOException {
+		if (virgule)
+			writeSeparator(marshaller);
+		ecritClef(marshaller, champ.getName());
+	}
+
 	@Override
 	protected void ecritValeur(final Marshaller marshaller, final Object obj, final FieldInformations fieldInformations,
 			final boolean ecrisSeparateur)
@@ -63,9 +129,11 @@ public class ActionJsonObject extends ActionJson<Object> {
 			setDejaTotalementSerialise(marshaller, obj);
 			boolean virgule = ecrisSeparateur;
 			for (final Champ champ : champs) {
-				final Object valeur = champ.get(obj, dicoObjToFakeId, entityManager);
-				if (aTraiter(valeur, champ))
-					ecritDirect(marshaller, valeur, champ, virgule);
+				if (!ecritSimple(marshaller, obj, champ, virgule, dicoObjToFakeId, entityManager)) {
+					final Object valeur = champ.get(obj, dicoObjToFakeId, entityManager);
+					if (aTraiter(valeur, champ))
+						ecritDirect(marshaller, valeur, champ, virgule);
+				}
 				virgule = true;
 			}
 			return;
