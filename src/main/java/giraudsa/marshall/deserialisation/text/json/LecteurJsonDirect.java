@@ -1,0 +1,956 @@
+package giraudsa.marshall.deserialisation.text.json;
+
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import giraudsa.marshall.annotations.TypeRelation;
+import giraudsa.marshall.deserialisation.ActionAbstrait;
+import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonArrayType;
+import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonCollectionType;
+import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonDate;
+import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonDictionaryType;
+import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonEnum;
+import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonObject;
+import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonSimpleComportement;
+import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonUUID;
+import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonVoid;
+import utils.Constants;
+import utils.TypeExtension;
+import utils.champ.ChampUid;
+import utils.champ.FakeChamp;
+import utils.champ.FieldInformations;
+import utils.champ.NullChamp;
+import utils.io.DatesIso;
+
+/**
+ * Lecture directe d'un JSON sans gestionnaire d'entités : analyse stricte du texte entier (en octets) et construction
+ * des objets au fil de l'eau, sans événements ni actions empilées. Reproduit les règles de typage du lecteur
+ * historique ({@link JsonUnmarshallerHandler} et les actions) pour les cas courants : objets, collections, maps,
+ * tableaux, valeurs simples, dates, enums, UUID, valeurs enveloppées {"__type":..,"__valeur":..} et références par
+ * id. Tout ce qui sort de ces cas (JSON non strict, types particuliers, erreurs...) abandonne la lecture : le texte
+ * est alors relu par le lecteur historique, sans effet de bord puisque rien n'est persisté.
+ */
+final class LecteurJsonDirect {
+
+	/** abandon de la lecture directe : le lecteur historique prend le relais. */
+	private static final class Abandon extends RuntimeException {
+		private static final long serialVersionUID = 1L;
+
+		private Abandon() {
+			super(null, null, false, false);
+		}
+	}
+
+	private static final Abandon ABANDON = new Abandon();
+
+	/** au-delà, on laisse la main au lecteur historique (pile explicite) plutôt que de risquer la pile d'appels. */
+	private static final int PROFONDEUR_MAX = 400;
+
+	private static final int AUTRE = 0;
+	private static final int SIMPLE = 1;
+	private static final int DATE = 2;
+	private static final int ENUM = 3;
+	private static final int UUID_ = 4;
+	private static final int VOID = 5;
+	private static final int OBJET = 6;
+	private static final int COLLECTION = 7;
+	private static final int MAP = 8;
+	private static final int TABLEAU = 9;
+
+	/** famille de lecture de chaque classe, d'après l'action que le lecteur historique lui associe. */
+	private static final ClassValue<Integer> GENRES = new ClassValue<>() {
+		@Override
+		protected Integer computeValue(final Class<?> type) {
+			final ActionAbstrait<?> prototype;
+			try {
+				prototype = JsonUnmarshaller.prototype(type);
+			} catch (final Exception e) {
+				return AUTRE;
+			}
+			final Class<?> k = prototype == null ? null : prototype.getClass();
+			if (k == ActionJsonSimpleComportement.class)
+				return SIMPLE;
+			if (k == ActionJsonDate.class)
+				return DATE;
+			if (k == ActionJsonEnum.class)
+				return ENUM;
+			if (k == ActionJsonUUID.class)
+				return UUID_;
+			if (k == ActionJsonVoid.class)
+				return VOID;
+			if (k == ActionJsonObject.class)
+				return OBJET;
+			if (k == ActionJsonCollectionType.class)
+				return COLLECTION;
+			if (k == ActionJsonDictionaryType.class)
+				return MAP;
+			if (k == ActionJsonArrayType.class)
+				return TABLEAU;
+			return AUTRE;
+		}
+	};
+
+	/** constructeur (long) des sous-classes de Date. */
+	private static final ClassValue<Constructor<?>> CONSTRUCTEURS_DATE = new ClassValue<>() {
+		@Override
+		protected Constructor<?> computeValue(final Class<?> t) {
+			try {
+				return t.getConstructor(long.class);
+			} catch (final NoSuchMethodException | SecurityException e) {
+				return null;
+			}
+		}
+	};
+
+	/** puissances de dix exactes en double (jusqu'à 10^22) et en float (jusqu'à 10^10). */
+	private static final double[] PUISSANCES_DOUBLE = new double[23];
+	private static final float[] PUISSANCES_FLOAT = new float[11];
+
+	static {
+		double d = 1;
+		for (int i = 0; i < PUISSANCES_DOUBLE.length; i++, d *= 10)
+			PUISSANCES_DOUBLE[i] = d;
+		float f = 1;
+		for (int i = 0; i < PUISSANCES_FLOAT.length; i++, f *= 10)
+			PUISSANCES_FLOAT[i] = f;
+	}
+
+	private static final int CLEF_NORMALE = 0;
+	private static final int CLEF_TYPE = 1;
+	private static final int CLEF_TYPE_UNIVERSEL = 2;
+	private static final int CLEF_VALEUR = 3;
+	private static final int CLEF_ID = 4;
+
+	/**
+	 * Clé d'objet lue : son nom et, pour les deux dernières classes où elle a été résolue, le champ et le type
+	 * attendu de sa valeur.
+	 */
+	private static final class Clef {
+		private final String nom;
+		private final byte[] octets;
+		private final int hash;
+		private final int nature;
+		private Class<?> classe1;
+		private FieldInformations champ1;
+		private Class<?> attendu1;
+		private Class<?> classe2;
+		private FieldInformations champ2;
+		private Class<?> attendu2;
+
+		private Clef(final String nom, final byte[] octets, final int hash) {
+			this.nom = nom;
+			this.octets = octets;
+			this.hash = hash;
+			if (nom.equals(Constants.CLEF_TYPE))
+				nature = CLEF_TYPE;
+			else if (nom.equals(Constants.CLEF_TYPE_ID_UNIVERSEL))
+				nature = CLEF_TYPE_UNIVERSEL;
+			else if (nom.equals(Constants.VALEUR))
+				nature = CLEF_VALEUR;
+			else if (nom.equals(ChampUid.UID_FIELD_NAME))
+				nature = CLEF_ID;
+			else
+				nature = CLEF_NORMALE;
+		}
+
+		private void memorise(final Class<?> classe, final FieldInformations champ, final Class<?> attendu) {
+			classe2 = classe1;
+			champ2 = champ1;
+			attendu2 = attendu1;
+			classe1 = classe;
+			champ1 = champ;
+			attendu1 = attendu;
+		}
+	}
+
+	/** clés déjà rencontrées (par thread), retrouvées d'après leurs octets sans créer de chaîne. */
+	private static final class TableClefs {
+		private static final int TAILLE_MAX = 1 << 14;
+		private Clef[] cases = new Clef[256];
+		private int nb;
+		private int generation = TypeExtension.getGeneration();
+
+		/** oublie les champs résolus si la configuration des champs a changé. */
+		private void verifieGeneration() {
+			final int g = TypeExtension.getGeneration();
+			if (g != generation) {
+				cases = new Clef[256];
+				nb = 0;
+				generation = g;
+			}
+		}
+
+		private Clef cherche(final byte[] b, final int debut, final int fin, final int hash) {
+			final Clef[] t = cases;
+			final int masque = t.length - 1;
+			final int taille = fin - debut;
+			int i = (hash ^ hash >>> 16) & masque;
+			Clef e;
+			while ((e = t[i]) != null) {
+				if (e.hash == hash && e.octets.length == taille
+						&& Arrays.equals(e.octets, 0, taille, b, debut, fin))
+					return e;
+				i = i + 1 & masque;
+			}
+			final byte[] octets = Arrays.copyOfRange(b, debut, fin);
+			final Clef clef = new Clef(new String(octets, StandardCharsets.ISO_8859_1), octets, hash);
+			if (2 * (nb + 1) > t.length) {
+				if (t.length >= TAILLE_MAX)
+					return clef; // table pleine : clé non gardée
+				agrandit();
+				ajoute(cases, clef);
+			} else
+				t[i] = clef;
+			nb++;
+			return clef;
+		}
+
+		private void agrandit() {
+			final Clef[] nouvelles = new Clef[cases.length * 2];
+			for (final Clef e : cases)
+				if (e != null)
+					ajoute(nouvelles, e);
+			cases = nouvelles;
+		}
+
+		private static void ajoute(final Clef[] t, final Clef clef) {
+			final int masque = t.length - 1;
+			int i = (clef.hash ^ clef.hash >>> 16) & masque;
+			while (t[i] != null)
+				i = i + 1 & masque;
+			t[i] = clef;
+		}
+	}
+
+	private static final ThreadLocal<TableClefs> TABLES = ThreadLocal.withInitial(TableClefs::new);
+
+	/**
+	 * @return l'objet lu, ou null si la lecture directe n'est pas possible (le lecteur historique doit alors relire le
+	 *         texte).
+	 */
+	static Object lit(final String texte) {
+		// texte en Latin-1 (un octet par caractère, copie directe d'une chaîne compacte) quand il s'y prête, sinon
+		// en UTF-8
+		byte[] octets = texte.getBytes(StandardCharsets.ISO_8859_1);
+		final boolean latin1 = new String(octets, StandardCharsets.ISO_8859_1).equals(texte);
+		if (!latin1) {
+			// un demi-caractère UTF-16 isolé ne survit pas à l'UTF-8 : lecteur historique
+			if (aSubstitutIsole(texte))
+				return null;
+			octets = texte.getBytes(StandardCharsets.UTF_8);
+		}
+		try {
+			return new LecteurJsonDirect(octets, latin1).lit();
+		} catch (final Abandon | StackOverflowError e) {
+			return null;
+		} catch (final Exception e) {
+			// le lecteur historique relira et signalera l'erreur à sa manière
+			return null;
+		}
+	}
+
+	private static boolean aSubstitutIsole(final String s) {
+		final int n = s.length();
+		for (int i = 0; i < n; i++) {
+			final char x = s.charAt(i);
+			if (Character.isHighSurrogate(x)) {
+				if (i + 1 >= n || !Character.isLowSurrogate(s.charAt(i + 1)))
+					return true;
+				i++;
+			} else if (Character.isLowSurrogate(x))
+				return true;
+		}
+		return false;
+	}
+
+	private static int genre(final Class<?> type) {
+		return GENRES.get(type);
+	}
+
+	private final byte[] c;
+	/** codage des caractères non ASCII du texte : Latin-1 ou UTF-8. */
+	private final Charset codage;
+	private final int n;
+	private int p;
+	private int profondeur;
+	private final JsonUnmarshaller<?> u;
+	private final TableClefs clefs;
+	/** une clé de type a été rencontrée (la première fixe le mode de cache des ids, comme le lecteur historique). */
+	private boolean clefTypeVue;
+	/** champs des éléments (collection, map, tableau) par champ porteur : { élément ou clé, valeur }. */
+	private IdentityHashMap<FieldInformations, FakeChamp[]> champsElements;
+
+	private LecteurJsonDirect(final byte[] texte, final boolean latin1) throws Exception {
+		c = texte;
+		codage = latin1 ? StandardCharsets.ISO_8859_1 : StandardCharsets.UTF_8;
+		n = texte.length;
+		u = JsonUnmarshaller.pourLectureDirecte();
+		clefs = TABLES.get();
+		clefs.verifieGeneration();
+	}
+
+	private Object lit() throws Exception {
+		saute();
+		if (p >= n)
+			throw ABANDON;
+		final FieldInformations racine = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
+		final Object o;
+		if (c[p] == '{')
+			o = litAccolade(null, racine);
+		else if (c[p] == '[')
+			o = litCrochet(ArrayList.class, racine);
+		else
+			throw ABANDON;
+		saute();
+		if (p != n || o == null)
+			throw ABANDON;
+		return o;
+	}
+
+	//////// analyse lexicale
+
+	/** saute les blancs ; une tabulation ou un \r isolé abandonnent (le lecteur historique les traite à part). */
+	private void saute() {
+		while (p < n) {
+			final byte x = c[p];
+			if (x == ' ' || x == '\n')
+				p++;
+			else if (x == '\r' && p + 1 < n && c[p + 1] == '\n')
+				p += 2;
+			else if (x == '\t' || x == '\r')
+				throw ABANDON;
+			else
+				return;
+		}
+	}
+
+	/** @return l'octet significatif suivant (sans l'avancer). */
+	private byte suivant() {
+		saute();
+		if (p >= n)
+			throw ABANDON;
+		return c[p];
+	}
+
+	private void attend(final char attendu) {
+		if (suivant() != attendu)
+			throw ABANDON;
+		p++;
+	}
+
+	/** lit une chaîne entre guillemets (p sur le guillemet ouvrant). */
+	private String litChaine() {
+		final byte[] b = c;
+		int i = ++p;
+		int ou = 0;
+		while (i < n) {
+			final byte x = b[i];
+			if (x == '"') {
+				final String s = new String(b, p, i - p,
+						ou < 0 ? codage : StandardCharsets.ISO_8859_1);
+				p = i + 1;
+				return s;
+			}
+			if (x == '\\')
+				return litChaineEchappee(i);
+			ou |= x;
+			i++;
+		}
+		throw ABANDON;
+	}
+
+	private String litChaineEchappee(int i) {
+		final StringBuilder sb = new StringBuilder(i - p + 16);
+		int debut = p;
+		while (i < n) {
+			final byte x = c[i];
+			if (x == '"') {
+				segment(sb, debut, i);
+				p = i + 1;
+				return sb.toString();
+			}
+			if (x != '\\') {
+				i++;
+				continue;
+			}
+			segment(sb, debut, i);
+			if (++i >= n)
+				throw ABANDON;
+			final byte e = c[i++];
+			switch (e) {
+			case 'u':
+				if (i + 4 > n)
+					throw ABANDON;
+				char r = 0;
+				for (int k = 0; k < 4; k++) {
+					final byte h = c[i++];
+					r <<= 4;
+					if (h >= '0' && h <= '9')
+						r += h - '0';
+					else if (h >= 'a' && h <= 'f')
+						r += h - 'a' + 10;
+					else if (h >= 'A' && h <= 'F')
+						r += h - 'A' + 10;
+					else
+						throw ABANDON;
+				}
+				sb.append(r);
+				break;
+			case 't':
+				sb.append('\t');
+				break;
+			case 'b':
+				sb.append('\b');
+				break;
+			case 'n':
+				sb.append('\n');
+				break;
+			case 'r':
+				sb.append('\r');
+				break;
+			case 'f':
+				sb.append('\f');
+				break;
+			default:
+				if (e < 0) // caractère non ASCII échappé
+					throw ABANDON;
+				sb.append((char) e);
+			}
+			debut = i;
+		}
+		throw ABANDON;
+	}
+
+	private void segment(final StringBuilder sb, final int debut, final int fin) {
+		if (fin > debut)
+			sb.append(new String(c, debut, fin - debut, codage));
+	}
+
+	/** lit une clé et le deux-points qui la suit. */
+	private Clef litClef() {
+		if (suivant() != '"')
+			throw ABANDON;
+		final byte[] b = c;
+		final int debut = ++p;
+		int i = debut;
+		int h = 0;
+		while (i < n) {
+			final byte x = b[i];
+			if (x == '"')
+				break;
+			if (x == '\\' || x < 0) { // clé échappée ou non ASCII : non gardée
+				p = debut - 1;
+				final String nom = litChaine();
+				attend(':');
+				return new Clef(nom, null, 0);
+			}
+			h = 31 * h + x;
+			i++;
+		}
+		if (i >= n)
+			throw ABANDON;
+		final Clef clef = clefs.cherche(b, debut, i, h);
+		p = i + 1;
+		attend(':');
+		return clef;
+	}
+
+	/** @return true si la clé est une clé de type ; la première rencontrée fixe le mode de cache. */
+	private boolean isClefType(final Clef clef) {
+		if (clef.nature != CLEF_TYPE && clef.nature != CLEF_TYPE_UNIVERSEL)
+			return false;
+		if (!clefTypeVue) {
+			clefTypeVue = true;
+			u.choisitCache(clef.nature == CLEF_TYPE_UNIVERSEL);
+		}
+		return true;
+	}
+
+	//////// valeurs
+
+	/**
+	 * Lit la valeur suivante.
+	 *
+	 * @param declare type attendu (enveloppe des primitifs)
+	 * @param fi      champ qui recevra la valeur (typage des éléments d'une collection...)
+	 */
+	private Object litValeur(final Class<?> declare, final FieldInformations fi) throws Exception {
+		final byte x = suivant();
+		if (x == '"')
+			return litterale(declare, String.class, litChaine(), -1, -1);
+		if (x == '{')
+			return litAccolade(declare, fi);
+		if (x == '[')
+			return litCrochet(declare == null ? ArrayList.class : declare, fi);
+		// valeur sans guillemets : jusqu'au prochain séparateur
+		final int debut = p;
+		int i = p;
+		while (i < n) {
+			final byte y = c[i];
+			if (y == ',' || y == '}' || y == ']' || y == ' ' || y == '\n' || y == '\r')
+				break;
+			if (y == '"' || y == '{' || y == '[' || y == ':' || y == '\\' || y == '\t' || y < 0)
+				throw ABANDON;
+			i++;
+		}
+		if (i == debut) // valeur vide : ignorée par le lecteur historique
+			throw ABANDON;
+		p = i;
+		final byte s = suivant();
+		if (s != ',' && s != '}' && s != ']')
+			throw ABANDON;
+		final Class<?> typeGuess;
+		switch (x) {
+		case 't':
+		case 'f':
+			typeGuess = Boolean.class;
+			break;
+		case 'n':
+			typeGuess = Void.class;
+			break;
+		default:
+			typeGuess = Integer.class;
+		}
+		return litterale(declare, typeGuess, null, debut, i);
+	}
+
+	/**
+	 * Valeur littérale, typée comme par le lecteur historique : le type deviné, sauf s'il n'est pas compatible avec le
+	 * type attendu. Le texte est soit la chaîne donnée, soit c[debut, fin[ (ASCII).
+	 */
+	private Object litterale(final Class<?> declare, final Class<?> typeGuess, final String chaine, final int debut,
+			final int fin) throws Exception {
+		Class<?> type = typeGuess;
+		if (typeGuess != Void.class && declare != null && !declare.isAssignableFrom(typeGuess))
+			type = declare;
+		switch (genre(type)) {
+		case SIMPLE:
+			if (chaine == null) {
+				final Object rapide = nombreRapide(type, debut, fin);
+				if (rapide != null)
+					return rapide;
+			}
+			return ActionJsonSimpleComportement.construit(type, texte(chaine, debut, fin));
+		case DATE:
+			return date(type, texte(chaine, debut, fin));
+		case ENUM:
+			return type == Enum.class ? null : TypeExtension.getEnumParNom(type).get(texte(chaine, debut, fin));
+		case UUID_:
+			return UUID.fromString(texte(chaine, debut, fin));
+		case VOID:
+			return null;
+		default:
+			throw ABANDON;
+		}
+	}
+
+	/**
+	 * Lecture sans chaîne intermédiaire des cas simples, de résultat identique à valueOf : entiers décimaux, booléen
+	 * vrai, décimaux courts (exacts : mantisse et puissance de dix représentables, une seule division arrondie).
+	 *
+	 * @return null si la valeur n'est pas dans ces cas.
+	 */
+	private Object nombreRapide(final Class<?> type, final int debut, final int fin) {
+		if (type == Integer.class) {
+			final long v = entier(debut, fin, 10);
+			if (v != Long.MIN_VALUE && v >= Integer.MIN_VALUE && v <= Integer.MAX_VALUE)
+				return Integer.valueOf((int) v);
+		} else if (type == Long.class) {
+			final long v = entier(debut, fin, 18);
+			if (v != Long.MIN_VALUE)
+				return Long.valueOf(v);
+		} else if (type == Double.class || type == Float.class)
+			return decimalRapide(type == Float.class, debut, fin);
+		else if (type == Boolean.class) {
+			if (fin - debut == 4 && c[debut] == 't' && c[debut + 1] == 'r' && c[debut + 2] == 'u'
+					&& c[debut + 3] == 'e')
+				return Boolean.TRUE;
+		}
+		return null;
+	}
+
+	/** [-]chiffres[.chiffres], mantisse d'au plus 15 chiffres (7 pour un float). */
+	private Object decimalRapide(final boolean simple, final int debut, final int fin) {
+		int i = debut;
+		final boolean negatif = c[i] == '-';
+		if (negatif)
+			i++;
+		long m = 0;
+		int chiffres = 0;
+		int decimales = -1;
+		for (; i < fin; i++) {
+			final int d = c[i] - '0';
+			if (d >= 0 && d <= 9) {
+				if (++chiffres > 15)
+					return null;
+				m = m * 10 + d;
+				if (decimales >= 0)
+					decimales++;
+			} else if (c[i] == '.' && decimales < 0 && chiffres > 0)
+				decimales = 0;
+			else
+				return null;
+		}
+		if (chiffres == 0 || decimales == 0)
+			return null;
+		final int k = decimales < 0 ? 0 : decimales;
+		if (simple) {
+			if (m > 1 << 24 || k >= PUISSANCES_FLOAT.length)
+				return null;
+			final float f = (float) m / PUISSANCES_FLOAT[k];
+			return Float.valueOf(negatif ? -f : f);
+		}
+		final double v = m / PUISSANCES_DOUBLE[k];
+		return Double.valueOf(negatif ? -v : v);
+	}
+
+	private String texte(final String chaine, final int debut, final int fin) {
+		return chaine != null ? chaine : new String(c, debut, fin - debut, StandardCharsets.ISO_8859_1);
+	}
+
+	/** @return l'entier écrit dans c[debut, fin[ (signe moins et chiffres seulement), ou Long.MIN_VALUE. */
+	private long entier(final int debut, final int fin, final int chiffresMax) {
+		int i = debut;
+		final boolean negatif = c[i] == '-';
+		if (negatif)
+			i++;
+		final int nb = fin - i;
+		if (nb <= 0 || nb > chiffresMax)
+			return Long.MIN_VALUE;
+		long v = 0;
+		for (; i < fin; i++) {
+			final int d = c[i] - '0';
+			if (d < 0 || d > 9)
+				return Long.MIN_VALUE;
+			v = v * 10 + d;
+		}
+		return negatif ? -v : v;
+	}
+
+	private Object date(final Class<?> type, final String donnees) throws Exception {
+		long time = u.datesIsoUtc() ? DatesIso.lit(donnees) : DatesIso.INVALIDE;
+		if (time == DatesIso.INVALIDE)
+			time = u.formatDate().parse(donnees).getTime(); // en cas d'échec, le lecteur historique journalise
+		if (type == Date.class)
+			return new Date(time);
+		final Constructor<?> constructeur = CONSTRUCTEURS_DATE.get(type);
+		if (constructeur == null)
+			throw ABANDON;
+		return constructeur.newInstance(time);
+	}
+
+	//////// structures
+
+	private void entre() {
+		if (++profondeur > PROFONDEUR_MAX)
+			throw ABANDON;
+	}
+
+	/** objet entre accolades (p sur l'accolade) : son type est donné par sa clé de type, sinon par le type attendu. */
+	private Object litAccolade(final Class<?> declare, final FieldInformations fi) throws Exception {
+		entre();
+		p++;
+		if (suivant() == '}')
+			throw ABANDON;
+		Clef clef = litClef();
+		final Class<?> type;
+		if (isClefType(clef)) {
+			if (suivant() != '"')
+				throw ABANDON;
+			type = JsonUnmarshaller.classeDepuisNom(litChaine());
+			if (type.isAssignableFrom(String.class))
+				throw ABANDON;
+			final byte s = suivant();
+			p++;
+			if (s == '}')
+				clef = null;
+			else if (s == ',') {
+				clef = litClef();
+				if (isClefType(clef))
+					throw ABANDON;
+			} else
+				throw ABANDON;
+		} else {
+			if (declare == null) // objet racine sans type
+				throw ABANDON;
+			type = declare;
+		}
+		final Object o;
+		switch (genre(type)) {
+		case OBJET:
+			o = litObjet(type, clef);
+			break;
+		case COLLECTION:
+			o = litCollectionEnveloppee(type, fi, clef);
+			break;
+		case MAP:
+			o = litMapEnveloppee(type, fi, clef);
+			break;
+		case SIMPLE:
+		case DATE:
+		case ENUM:
+		case UUID_:
+		case VOID:
+			o = litValeurEnveloppee(type, clef);
+			break;
+		default:
+			throw ABANDON;
+		}
+		profondeur--;
+		return o;
+	}
+
+	/** passe à la clé suivante de l'objet en cours : null en fin d'objet. */
+	private Clef clefSuivante() {
+		final byte s = suivant();
+		p++;
+		if (s == '}')
+			return null;
+		if (s != ',')
+			throw ABANDON;
+		final Clef clef = litClef();
+		if (isClefType(clef))
+			throw ABANDON;
+		return clef;
+	}
+
+	/**
+	 * Objet métier. Comme ActionJsonObject : l'objet est celui de son id (déjà vu ou créé), son type celui de l'objet
+	 * retrouvé ; les champs sont affectés dans l'ordre de lecture. Les valeurs lues avant l'id attendent l'objet.
+	 */
+	private Object litObjet(final Class<?> typeInitial, Clef clef) throws Exception {
+		Class<?> type = typeInitial;
+		Object obj = null;
+		Object[] enAttente = null;
+		int nbEnAttente = 0;
+		final Map<Object, UUID> fakeIds = u.fakeIds();
+		for (; clef != null; clef = clefSuivante()) {
+			FieldInformations champ;
+			final Class<?> attendu;
+			if (clef.classe1 == type) {
+				champ = clef.champ1;
+				attendu = clef.attendu1;
+			} else if (clef.classe2 == type) {
+				champ = clef.champ2;
+				attendu = clef.attendu2;
+			} else {
+				champ = TypeExtension.getChampByName(type, clef.nom);
+				Class<?> t = champ.getValueType();
+				if (champ.isSimple())
+					t = TypeExtension.getTypeEnveloppe(t);
+				attendu = TypeExtension.getTypeEnveloppe(t);
+				if (champ != NullChamp.getInstance()) // selon la configuration, un champ inconnu est une erreur
+					clef.memorise(type, champ, attendu);
+			}
+			final Object valeur = litValeur(attendu, champ);
+			if (valeur != null && clef.nature == CLEF_ID) {
+				if (obj != null)
+					throw ABANDON;
+				obj = u.objetParId(valeur.toString(), type);
+				if (obj == null)
+					throw ABANDON;
+				if (obj.getClass() != type) {
+					type = obj.getClass();
+					champ = TypeExtension.getChampByName(type, clef.nom);
+				}
+				for (int i = 0; i < nbEnAttente; i += 2)
+					TypeExtension.getChampByName(type, (String) enAttente[i]).set(obj, enAttente[i + 1], fakeIds);
+				nbEnAttente = 0;
+			}
+			if (obj != null)
+				champ.set(obj, valeur, fakeIds);
+			else {
+				if (enAttente == null)
+					enAttente = new Object[8];
+				else if (nbEnAttente == enAttente.length)
+					enAttente = Arrays.copyOf(enAttente, nbEnAttente * 2);
+				enAttente[nbEnAttente++] = clef.nom;
+				enAttente[nbEnAttente++] = valeur;
+			}
+		}
+		if (obj == null && nbEnAttente > 0)
+			throw ABANDON; // objet sans id : le lecteur historique décide
+		return obj;
+	}
+
+	/** valeur simple enveloppée {"__type":T,"__valeur":v}. */
+	private Object litValeurEnveloppee(final Class<?> type, Clef clef) throws Exception {
+		final int genre = genre(type);
+		Object resultat = null;
+		for (; clef != null; clef = clefSuivante()) {
+			if (clef.nature != CLEF_VALEUR)
+				throw ABANDON;
+			final byte x = suivant();
+			if (x == '{' || x == '[')
+				throw ABANDON;
+			final Class<?> declare = genre == DATE ? Date.class : genre == UUID_ ? UUID.class : type;
+			final Object v = litValeur(declare, null);
+			if (genre == UUID_)
+				resultat = v instanceof String ? UUID.fromString((String) v) : v instanceof UUID ? v : resultat;
+			else if (genre != VOID)
+				resultat = v;
+		}
+		return resultat;
+	}
+
+	private FakeChamp[] champsElements(final FieldInformations fi) {
+		if (champsElements == null)
+			champsElements = new IdentityHashMap<>();
+		FakeChamp[] champs = champsElements.get(fi);
+		if (champs == null) {
+			final Type[] types = fi.getParametreType();
+			final Type t0 = types != null && types.length > 0 ? types[0] : Object.class;
+			final Type t1 = types != null && types.length > 1 ? types[1] : Object.class;
+			champs = new FakeChamp[] { new FakeChamp("V", t0, fi.getRelation(), fi.getAnnotations()),
+					new FakeChamp("K", t0, fi.getRelation(), fi.getAnnotations()),
+					new FakeChamp("V", t1, fi.getRelation(), fi.getAnnotations()) };
+			champsElements.put(fi, champs);
+		}
+		return champs;
+	}
+
+	/** tableau entre crochets (p sur le crochet), lu selon le type attendu. */
+	private Object litCrochet(final Class<?> type, final FieldInformations fi) throws Exception {
+		entre();
+		final Object o;
+		switch (genre(type)) {
+		case COLLECTION: {
+			final Collection<Object> coll = nouvelleCollection(type);
+			litElements(coll, champsElements(fi)[0]);
+			o = coll;
+			break;
+		}
+		case MAP: {
+			final Map<Object, Object> map = nouvelleMap(type);
+			litPaires(map, fi);
+			o = map;
+			break;
+		}
+		case TABLEAU:
+			o = litTableau(type, fi);
+			break;
+		default:
+			throw ABANDON;
+		}
+		profondeur--;
+		return o;
+	}
+
+	@SuppressWarnings({ "unchecked", "deprecation" })
+	private static Collection<Object> nouvelleCollection(final Class<?> type) throws Exception {
+		Class<?> t = type;
+		if (TypeExtension.isHibernate(type) || type.isInterface())
+			t = ArrayList.class;
+		if (t == ArrayList.class)
+			return new ArrayList<>();
+		try {
+			return (Collection<Object>) t.newInstance();
+		} catch (InstantiationException | IllegalAccessException e) {
+			return new ArrayList<>();
+		}
+	}
+
+	@SuppressWarnings({ "unchecked", "deprecation" })
+	private static Map<Object, Object> nouvelleMap(final Class<?> type) throws Exception {
+		if (type.isInterface())
+			throw ABANDON;
+		return (Map<Object, Object>) type.newInstance();
+	}
+
+	/** éléments d'une collection : [e1, e2...] (p sur le crochet). */
+	private void litElements(final Collection<Object> coll, final FakeChamp champ) throws Exception {
+		final Class<?> declare = TypeExtension.getTypeEnveloppe(champ.getValueType());
+		p++;
+		if (suivant() == ']') {
+			p++;
+			return;
+		}
+		while (true) {
+			coll.add(litValeur(declare, champ));
+			final byte s = suivant();
+			p++;
+			if (s == ']')
+				return;
+			if (s != ',')
+				throw ABANDON;
+		}
+	}
+
+	/** map écrite à plat : [k1, v1, k2, v2...] (p sur le crochet). Une clé null est suivie d'une nouvelle clé. */
+	private void litPaires(final Map<Object, Object> map, final FieldInformations fi) throws Exception {
+		final FakeChamp[] champs = champsElements(fi);
+		final Class<?> declareClef = TypeExtension.getTypeEnveloppe(champs[1].getValueType());
+		final Class<?> declareValeur = TypeExtension.getTypeEnveloppe(champs[2].getValueType());
+		Object clefTampon = null;
+		p++;
+		if (suivant() == ']') {
+			p++;
+			return;
+		}
+		while (true) {
+			if (clefTampon == null)
+				clefTampon = litValeur(declareClef, champs[1]);
+			else {
+				map.put(clefTampon, litValeur(declareValeur, champs[2]));
+				clefTampon = null;
+			}
+			final byte s = suivant();
+			p++;
+			if (s == ']')
+				return;
+			if (s != ',')
+				throw ABANDON;
+		}
+	}
+
+	private Object litTableau(final Class<?> type, final FieldInformations fi) throws Exception {
+		final Class<?> composantChamp = fi.getValueType().getComponentType();
+		if (composantChamp == null)
+			throw ABANDON;
+		final FakeChamp champ = new FakeChamp("V", composantChamp, fi.getRelation(), fi.getAnnotations());
+		final ArrayList<Object> tampon = new ArrayList<>();
+		litElements(tampon, champ);
+		final Object tableau = Array.newInstance(type.getComponentType(), tampon.size());
+		for (int i = 0; i < tampon.size(); i++)
+			Array.set(tableau, i, tampon.get(i));
+		return tableau;
+	}
+
+	/** collection écrite {"__type":T,"__valeur":[...]} : les éléments du tableau sont ajoutés. */
+	private Object litCollectionEnveloppee(final Class<?> type, final FieldInformations fi, Clef clef)
+			throws Exception {
+		final Collection<Object> coll = nouvelleCollection(type);
+		for (; clef != null; clef = clefSuivante()) {
+			if (clef.nature != CLEF_VALEUR || suivant() != '[')
+				throw ABANDON;
+			entre();
+			litElements(coll, champsElements(fi)[0]);
+			profondeur--;
+		}
+		return coll;
+	}
+
+	/** map écrite {"__type":T,"__valeur":[k1,v1...]}. */
+	private Object litMapEnveloppee(final Class<?> type, final FieldInformations fi, Clef clef) throws Exception {
+		final Map<Object, Object> map = nouvelleMap(type);
+		for (; clef != null; clef = clefSuivante()) {
+			if (clef.nature != CLEF_VALEUR || suivant() != '[')
+				throw ABANDON;
+			entre();
+			litPaires(map, fi);
+			profondeur--;
+		}
+		return map;
+	}
+}

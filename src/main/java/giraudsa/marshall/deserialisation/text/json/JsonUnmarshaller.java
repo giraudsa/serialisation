@@ -9,7 +9,9 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Collection;
@@ -79,7 +81,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	};
 
 	/** @return le prototype d'action de la classe (sans l'instancier). */
-	private static ActionAbstrait<?> prototype(final Class<?> type) throws NotImplementedSerializeException {
+	static ActionAbstrait<?> prototype(final Class<?> type) throws NotImplementedSerializeException {
 		if (type == null)
 			return null;
 		try {
@@ -150,6 +152,8 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 
 	public static <U> U fromJson(final Reader reader, final EntityManager entity) throws UnmarshallExeption {
 		try {
+			if (entity == null)
+				return lit(new String(litTout(reader)));
 			final JsonUnmarshaller<U> w = new JsonUnmarshaller<>(reader, entity);
 			return w.parse();
 		} catch (FabriqueInstantiationException | ClassNotFoundException | IOException
@@ -163,9 +167,75 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	public static <U> U fromJson(final String stringToUnmarshall) throws UnmarshallExeption {
 		if (stringToUnmarshall == null || stringToUnmarshall.length() == 0)
 			return null;
-		try (StringReader sr = new StringReader(stringToUnmarshall)) {
-			return fromJson(sr);
+		return lit(stringToUnmarshall);
+	}
+
+	/**
+	 * Lecture sans gestionnaire d'entités : directe (LecteurJsonDirect) quand le texte s'y prête, sinon par le
+	 * lecteur historique.
+	 */
+	@SuppressWarnings("unchecked")
+	private static <U> U lit(final String texte) throws UnmarshallExeption {
+		final Object direct = LecteurJsonDirect.lit(texte);
+		if (direct != null)
+			return (U) direct;
+		return litHistorique(texte);
+	}
+
+	/** lecture par le lecteur historique (événements et actions). */
+	static <U> U litHistorique(final String texte) throws UnmarshallExeption {
+		try {
+			final JsonUnmarshaller<U> w = new JsonUnmarshaller<>(new StringReader(texte), null);
+			return w.parse();
+		} catch (FabriqueInstantiationException | ClassNotFoundException | IOException
+				| EntityManagerImplementationException | InstanciationException | NotImplementedSerializeException
+				| JsonHandlerException | IllegalAccessException | DataFormatException | SetValueException e) {
+			LOGGER.error("probleme dans la désérialisation JSON", e);
+			throw new UnmarshallExeption("probleme dans la désérialisation JSON", e);
 		}
+	}
+
+	private static char[] litTout(final Reader reader) throws IOException {
+		char[] texte = new char[8192];
+		int taille = 0;
+		int lu;
+		while ((lu = reader.read(texte, taille, texte.length - taille)) != -1) {
+			taille += lu;
+			if (taille == texte.length)
+				texte = Arrays.copyOf(texte, taille * 2);
+		}
+		return Arrays.copyOf(texte, taille);
+	}
+
+	//////// accès pour LecteurJsonDirect
+
+	static JsonUnmarshaller<?> pourLectureDirecte() throws FabriqueInstantiationException {
+		return new JsonUnmarshaller<>(null, null);
+	}
+
+	static Class<?> classeDepuisNom(final String nom) throws ClassNotFoundException {
+		return getTypeDepuisNom(nom);
+	}
+
+	Object objetParId(final String id, final Class<?> type)
+			throws EntityManagerImplementationException, InstanciationException {
+		return getObject(id, type);
+	}
+
+	void choisitCache(final boolean isIdUniversel) {
+		setCache(isIdUniversel);
+	}
+
+	Map<Object, UUID> fakeIds() {
+		return getDicoObjToFakeId();
+	}
+
+	DateFormat formatDate() {
+		return df;
+	}
+
+	boolean datesIsoUtc() {
+		return dateIsoUtc;
 	}
 
 	public static <U> U fromJson(final String stringToUnmarshall, final EntityManager entity)
