@@ -561,6 +561,26 @@ class RoundTripTest {
 	}
 
 	@Test
+	void binaireDedoublonnageAdaptatif() throws Exception {
+		// d'abord des valeurs toutes différentes (la déduplication est abandonnée pour ce champ), puis répétées
+		final Noeud racine = graphe("");
+		for (int i = 0; i < 2000; i++) {
+			final Noeud n = new Noeud();
+			n.id = "a" + i;
+			n.nom = i < 1000 ? "unique" + i : "répété" + (i % 3);
+			n.tags.add(i < 1000 ? "t" + i : "tag");
+			racine.enfants.add(n);
+		}
+		for (int tour = 0; tour < 2; tour++) {
+			final Noeud lu = BINARY.roundTrip(racine);
+			for (int i = 3; i < racine.enfants.size(); i++) {
+				assertEquals(racine.enfants.get(i).nom, lu.enfants.get(i).nom);
+				assertEquals(racine.enfants.get(i).tags, lu.enfants.get(i).tags);
+			}
+		}
+	}
+
+	@Test
 	void binaireGrapheProfond() throws Exception {
 		// chaîne de 50 000 objets : bien au-delà de la lecture directe (récursive), la pile d'actions prend le relais
 		Noeud dernier = null;

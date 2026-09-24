@@ -33,6 +33,15 @@ public interface FieldInformations {
 
 	public Type[] getParametreType();
 
+	/**
+	 * @return true s'il vaut la peine de chercher les chaînes de ce champ parmi celles déjà écrites (voir
+	 *         StatsDedoublonnage)
+	 */
+	public boolean isDedoublonnageUtile();
+
+	/** Note le résultat d'une recherche de chaîne déjà écrite pour ce champ. */
+	public void noteDedoublonnage(boolean trouvee);
+
 	/** @return la nature primitive du type déclaré (constantes de {@link AccesChamp}), AUCUNE pour un type objet. */
 	public int getNaturePrimitive();
 

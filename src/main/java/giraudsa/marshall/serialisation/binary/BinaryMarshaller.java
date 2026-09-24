@@ -418,6 +418,14 @@ public class BinaryMarshaller extends Marshaller {
 		return existant != IdentiteIntMap.ABSENT ? existant : -compteurString++;
 	}
 
+	/**
+	 * Chaîne d'un champ dont les valeurs ne se répètent pas : écrite comme nouvelle sans être cherchée ni gardée
+	 * (le lecteur la numérote comme toute nouvelle chaîne). @return l'opposé du smallId attribué.
+	 */
+	protected int nouveauSmallIdStringSansDedoublonnage() {
+		return -compteurString++;
+	}
+
 	protected int smallIdType(final Class<?> type) {
 		final int existant = dejaVuType.putIfAbsent(type, compteurType);
 		return existant != IdentiteIntMap.ABSENT ? existant : -compteurType++;

@@ -47,6 +47,16 @@ public class NullChamp implements FieldInformations {
 	}
 
 	@Override
+	public boolean isDedoublonnageUtile() {
+		return true;
+	}
+
+	@Override
+	public void noteDedoublonnage(final boolean trouvee) {
+		// pas de statistiques
+	}
+
+	@Override
 	public FakeChamp getChampParametre(final int role) {
 		return FakeChamp.pourParametre(this, role);
 	}

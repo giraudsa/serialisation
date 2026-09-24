@@ -73,8 +73,19 @@ public class FakeChamp implements FieldInformations {
 		return name;
 	}
 
+	private final StatsDedoublonnage statsDedoublonnage = new StatsDedoublonnage();
 	/** FakeChamps des paramètres (éléments, clés, valeurs), calculés à la demande. */
 	private volatile FakeChamp[] champsParametres;
+
+	@Override
+	public boolean isDedoublonnageUtile() {
+		return statsDedoublonnage.isUtile();
+	}
+
+	@Override
+	public void noteDedoublonnage(final boolean trouvee) {
+		statsDedoublonnage.note(trouvee);
+	}
 
 	@Override
 	public FakeChamp getChampParametre(final int role) {

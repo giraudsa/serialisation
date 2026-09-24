@@ -51,7 +51,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 			final FieldInformations fieldInformations) throws NotImplementedSerializeException, MarshallExeption {
 		if (binaryMarshaller.debutAttente < 0) {
 			if (valeur != null && valeur.getClass() == String.class) { // cas le plus fréquent : sans aiguillage
-				ecritChaine(binaryMarshaller, (String) valeur);
+				ecritChaine(binaryMarshaller, (String) valeur, fieldInformations);
 				return;
 			}
 			final ActionAbstrait action;
@@ -80,10 +80,15 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	}
 
 	/** Même écriture que ActionBinaryString (en-tête puis, à la première apparition, la chaîne). */
-	private static void ecritChaine(final BinaryMarshaller binaryMarshaller, final String chaine)
-			throws MarshallExeption {
+	private static void ecritChaine(final BinaryMarshaller binaryMarshaller, final String chaine,
+			final FieldInformations champ) throws MarshallExeption {
 		try {
-			final int id = binaryMarshaller.smallIdString(chaine);
+			final int id;
+			if (champ.isDedoublonnageUtile()) {
+				id = binaryMarshaller.smallIdString(chaine);
+				champ.noteDedoublonnage(id > 0);
+			} else
+				id = binaryMarshaller.nouveauSmallIdStringSansDedoublonnage();
 			final boolean isDejaVu = id > 0;
 			final int smallId = isDejaVu ? id : -id;
 			HeaderTypeCourant.getHeader(chaine, smallId, isDejaVu).write(binaryMarshaller.output, smallId);
