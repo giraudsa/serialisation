@@ -64,12 +64,13 @@ import giraudsa.marshall.exception.UnmarshallExeption;
 import giraudsa.marshall.strategie.StrategieDeSerialisation;
 import utils.Constants;
 import utils.EntityManager;
-import utils.IdentiteIntMap;
 import utils.TypeExtension;
 import utils.TypeExtension.ChampsDuType;
 import utils.champ.AccesChamp;
 import utils.champ.Champ;
 import utils.champ.FakeChamp;
+import utils.champ.GenerateurSerialiseurs;
+import utils.champ.LecteurChamps;
 import utils.champ.FieldInformations;
 import utils.headers.Header;
 import utils.headers.HeaderSimpleType;
@@ -166,7 +167,6 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		private final TableParId<UUID> dicoSmallIdToUUID = new TableParId<>();
 		private boolean enUsage;
 		private final EntreeBinaire entree = new EntreeBinaire(null);
-		private final IdentiteIntMap listeClasseDejaRencontre = new IdentiteIntMap(16);
 		private boolean[] totalementLus = new boolean[256];
 		/** nombre d'objets lus par le dernier appel : partie de totalementLus à effacer. */
 		private int nbObjets;
@@ -177,7 +177,6 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 			dicoSmallIdToObject.vide();
 			dicoSmallIdToString.vide();
 			dicoSmallIdToUUID.vide();
-			listeClasseDejaRencontre.vide();
 			if (totalementLus.length > 1 << 16)
 				totalementLus = new boolean[256];
 			else
@@ -223,7 +222,6 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	private int profondeurDirecte;
 	private ActionBinary<?> actionSimple;
 	private Class<?> typeActionSimple;
-	private short biggestSmallIdType = 0;
 	// dernier smallId attribué : à leur première apparition, objets, dates, chaînes et UUID
 	// ne portent pas leur smallId, il est attribué ici dans l'ordre de lecture (comme à l'écriture).
 	private int compteurDate = 0;
@@ -240,8 +238,6 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	private final EntreeBinaire input;
 	/** objets totalement désérialisés, indexés par smallId. */
 	private boolean[] totalementLus;
-	/** classes déjà rencontrées (valeur sans importance). */
-	private final IdentiteIntMap listeClasseDejaRencontre;
 
 	protected int profondeur = 0;
 
@@ -264,7 +260,6 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		dicoSmallIdToString = etat.dicoSmallIdToString;
 		dicoSmallIdToUUID = etat.dicoSmallIdToUUID;
 		totalementLus = etat.totalementLus;
-		listeClasseDejaRencontre = etat.listeClasseDejaRencontre;
 		strategie = readStrategie();
 	}
 
@@ -334,10 +329,6 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 
 	protected boolean isDejaVu(final int smallId) {
 		return dicoSmallIdToObject.contient(smallId);
-	}
-
-	protected boolean isDejaVuClazz(final Class<?> type) {
-		return listeClasseDejaRencontre.contient(type);
 	}
 
 	protected boolean isDejaVuClazz(final short smallIdType) {
@@ -418,10 +409,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	private Object litObjectEnum(final FieldInformations fi, final Header header)
 			throws ClassNotFoundException, IOException, UnmarshallExeption {
 		Class<?> type = fi.getValueType();
-		if (header.isTypeDevinable()) {
-			if (!isDejaVuClazz(type))
-				stockClass(type);
-		} else {
+		if (!header.isTypeDevinable()) { // un type devinable n'est pas numéroté (voir l'écriture)
 			final short smallIdType = header.getSmallIdType(input);
 			if (!isDejaVuClazz(smallIdType))
 				stockClass(getClasse(readUTF()), smallIdType);
@@ -445,11 +433,9 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		return litObjet(fieldInformations, type, smallId);
 	}
 
-	private Class<?> typeDevine(final FieldInformations fieldInformations) {
-		final Class<?> type = fieldInformations.getValueType();
-		if (!isDejaVuClazz(type))
-			stockClass(type);
-		return type;
+	/** Type déduit du champ : il n'est pas numéroté (voir l'écriture). */
+	private static Class<?> typeDevine(final FieldInformations fieldInformations) {
+		return fieldInformations.getValueType();
 	}
 
 	private Class<?> typeLu(final Header header) throws IOException, UnmarshallExeption, ClassNotFoundException {
@@ -525,10 +511,24 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 			}
 			final Champ[] champs;
 			final boolean deserialiseId = !champId.isFakeId();
-			if (strategie.serialiseTout(profondeurObjet, fieldInformations))
+			final boolean tout = strategie.serialiseTout(profondeurObjet, fieldInformations);
+			if (tout)
 				champs = deserialiseId ? champsDuType.getTableauIdEnTete() : champsDuType.getTableauSaufId();
 			else
 				champs = deserialiseId ? champsDuType.getTableauIdSeul() : AUCUN_CHAMP;
+			if (tout && deserialiseId && champs.length > 1) {
+				// cas courant : l'id, puis tous les autres champs par le lecteur généré pour la classe
+				final LecteurChamps lecteur = lecteur(champsDuType, type);
+				if (lecteur != null) {
+					final Object id = litValeurComplete(champId);
+					objet = getObject(id.toString(), type);
+					stockObjectSmallId(smallId, objet);
+					champId.affecte(objet, id, null);
+					setDejaTotalementDeSerialise(smallId);
+					litChamps(lecteur, objet, champs);
+					return objet;
+				}
+			}
 			boolean marqueTotal = false;
 			for (final Champ champ : champs) {
 				if (!marqueTotal && champ != champId) {
@@ -549,6 +549,75 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 			profondeurDirecte--;
 			profondeur = profondeurParent;
 		}
+	}
+
+	private static LecteurChamps lecteur(final ChampsDuType champsDuType, final Class<?> type) {
+		Object lecteur = champsDuType.getLecteurBinaire();
+		if (lecteur == null) {
+			lecteur = GenerateurSerialiseurs.lecteur(type, champsDuType.getTableauIdEnTete(), 1,
+					BinaryUnmarshaller.class);
+			if (lecteur == null)
+				lecteur = Boolean.FALSE; // génération impossible : chemin générique
+			champsDuType.setLecteurBinaire(lecteur);
+		}
+		return lecteur instanceof LecteurChamps ? (LecteurChamps) lecteur : null;
+	}
+
+	private void litChamps(final LecteurChamps lecteur, final Object objet, final Champ[] champs)
+			throws IOException, UnmarshallExeption, NotImplementedSerializeException, InstanciationException,
+			ClassNotFoundException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
+		try {
+			lecteur.lit(objet, this, champs);
+		} catch (IOException | UnmarshallExeption | NotImplementedSerializeException | InstanciationException
+				| ClassNotFoundException | IllegalAccessException | EntityManagerImplementationException
+				| SetValueException | RuntimeException e) {
+			throw e;
+		} catch (final Exception e) {
+			throw new UnmarshallExeption("lecture impossible", e);
+		}
+	}
+
+	/*
+	 * Lecture d'un champ, appelée par les lecteurs générés (utils.champ.GenerateurSerialiseurs) : un primitif est
+	 * lu sans en-tête, une autre valeur complètement (sous-objets compris).
+	 */
+
+	public Object litObjet(final FieldInformations champ)
+			throws NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException,
+			ClassNotFoundException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
+		return litValeurComplete(champ);
+	}
+
+	public int litInt(final FieldInformations champ) throws IOException {
+		return Primitifs.unzigzag(input.readVarInt());
+	}
+
+	public long litLong(final FieldInformations champ) throws IOException {
+		return Primitifs.unzigzag(input.readVarLong());
+	}
+
+	public double litDouble(final FieldInformations champ) throws IOException {
+		return input.readDouble();
+	}
+
+	public float litFloat(final FieldInformations champ) throws IOException {
+		return input.readFloat();
+	}
+
+	public boolean litBoolean(final FieldInformations champ) throws IOException {
+		return input.readByte() != 0;
+	}
+
+	public byte litByte(final FieldInformations champ) throws IOException {
+		return input.readByte();
+	}
+
+	public short litShort(final FieldInformations champ) throws IOException {
+		return (short) Primitifs.unzigzag(input.readVarInt());
+	}
+
+	public char litChar(final FieldInformations champ) throws IOException {
+		return (char) input.readVarInt();
 	}
 
 	/** Lecture directe d'une collection vue pour la première fois : même lecture que ActionBinaryCollection. */
@@ -760,14 +829,8 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		etat.totalementLus = totalementLus;
 	}
 
-	private void stockClass(final Class<?> type) {
-		stockClass(type, ++biggestSmallIdType);
-	}
-
 	private void stockClass(final Class<?> type, final short smallIdType) {
-		listeClasseDejaRencontre.putIfAbsent(type, 1);
 		dicoSmallIdToClazz.set(smallIdType, type);
-		biggestSmallIdType = smallIdType;
 	}
 
 	private void stockDateSmallId(final Date date, final int smallId) {

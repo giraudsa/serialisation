@@ -76,6 +76,7 @@ import utils.IdentiteIntMap;
 import utils.TypeExtension;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
+import utils.io.Primitifs;
 import utils.io.SortieBinaire;
 
 public class BinaryMarshaller extends Marshaller {
@@ -317,6 +318,73 @@ public class BinaryMarshaller extends Marshaller {
 			totalementSerialises.set(smallId);
 		else
 			super.setDejaTotalementSerialise(obj);
+	}
+
+	/*
+	 * Écriture d'un champ, appelée par les écrivains générés (utils.champ.GenerateurSerialiseurs) et par
+	 * ActionBinaryObject : un primitif est écrit sans en-tête s'il peut l'être tout de suite, sinon mis en attente
+	 * (il sera écrit avec le même codage par l'action de son type enveloppe).
+	 */
+
+	public void ecritObjet(final Object valeur, final FieldInformations champ)
+			throws NotImplementedSerializeException, MarshallExeption {
+		ActionBinary.ecritOuDiffere(this, valeur, champ);
+	}
+
+	public void ecritInt(final int valeur, final FieldInformations champ) throws IOException {
+		if (debutAttente < 0)
+			output.writeVarInt(Primitifs.zigzag(valeur));
+		else
+			differe(valeur, champ);
+	}
+
+	public void ecritLong(final long valeur, final FieldInformations champ) throws IOException {
+		if (debutAttente < 0)
+			output.writeVarLong(Primitifs.zigzag(valeur));
+		else
+			differe(valeur, champ);
+	}
+
+	public void ecritDouble(final double valeur, final FieldInformations champ) throws IOException {
+		if (debutAttente < 0)
+			output.writeDouble(valeur);
+		else
+			differe(valeur, champ);
+	}
+
+	public void ecritFloat(final float valeur, final FieldInformations champ) throws IOException {
+		if (debutAttente < 0)
+			output.writeFloat(valeur);
+		else
+			differe(valeur, champ);
+	}
+
+	public void ecritBoolean(final boolean valeur, final FieldInformations champ) throws IOException {
+		if (debutAttente < 0)
+			output.write(valeur ? 1 : 0);
+		else
+			differe(valeur, champ);
+	}
+
+	public void ecritByte(final byte valeur, final FieldInformations champ) throws IOException {
+		if (debutAttente < 0)
+			output.write(valeur);
+		else
+			differe(valeur, champ);
+	}
+
+	public void ecritShort(final short valeur, final FieldInformations champ) throws IOException {
+		if (debutAttente < 0)
+			output.writeVarInt(Primitifs.zigzag(valeur));
+		else
+			differe(valeur, champ);
+	}
+
+	public void ecritChar(final char valeur, final FieldInformations champ) throws IOException {
+		if (debutAttente < 0)
+			output.writeVarInt(valeur);
+		else
+			differe(valeur, champ);
 	}
 
 	/** Empile une valeur ; un champ null marque la fin d'un objet (la profondeur diminuera). */

@@ -14,21 +14,31 @@ public class ActionBinaryBigDecimal extends ActionBinary<BigDecimal> {
 		super();
 	}
 
+	/** @return l'unscaledValue si elle tient dans un long (hors Long.MIN_VALUE), sinon Long.MIN_VALUE. */
+	private static long unscaledLong(final BigDecimal bigDec) {
+		try {
+			// même valeur entière, scale 0 : pour un BigDecimal compact, longValueExact renvoie l'unscaledValue
+			return bigDec.scaleByPowerOfTen(bigDec.scale()).longValueExact();
+		} catch (final ArithmeticException e) {
+			return Long.MIN_VALUE; // trop grand pour un long : chemin BigInteger
+		}
+	}
+
 	@Override
 	protected void ecritValeur(final Marshaller marshaller, final BigDecimal bigDec,
 			final FieldInformations fieldInformations, final boolean isDejaVu) throws IOException {
 		// valeur sans identité (TypeExtension.isValeurImmuableBinaire) : toujours écrite.
 		// scale (zigzag) puis unscaledValue en complément à deux, sur le nombre minimal d'octets
 		writeVarInt(marshaller, ByteHelper.zigzag(bigDec.scale()));
-		if (bigDec.precision() <= 18) {
+		final long unscaled = unscaledLong(bigDec);
+		if (unscaled != Long.MIN_VALUE) {
 			// l'unscaledValue tient dans un long : on évite BigInteger et toByteArray
-			final long unscaled = bigDec.scaleByPowerOfTen(bigDec.scale()).longValueExact();
 			writeVarInt(marshaller, ByteHelper.taille(unscaled));
 			ByteHelper.ecrit(getOutput(marshaller), unscaled);
 		} else {
-			final byte[] unscaled = bigDec.unscaledValue().toByteArray();
-			writeVarInt(marshaller, unscaled.length);
-			writeByteArray(marshaller, unscaled);
+			final byte[] octets = bigDec.unscaledValue().toByteArray();
+			writeVarInt(marshaller, octets.length);
+			writeByteArray(marshaller, octets);
 		}
 	}
 

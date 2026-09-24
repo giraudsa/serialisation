@@ -37,6 +37,12 @@ public class TypeExtension {
 		private final Champ[] tableauSaufId;
 		private final Map<String, Champ> champsParNom;
 		private final List<Champ> champsSaufId;
+		/**
+		 * écrivain et lecteur générés pour le format binaire (voir GenerateurSerialiseurs), créés au premier usage ;
+		 * Boolean.FALSE si la génération est impossible pour ce type.
+		 */
+		private volatile Object ecrivainBinaire;
+		private volatile Object lecteurBinaire;
 
 		private ChampsDuType(final List<Champ> champs, final Map<String, Champ> champsParNom) {
 			this.champs = Collections.unmodifiableList(champs);
@@ -57,6 +63,22 @@ public class TypeExtension {
 			tableauIdEnTete = champsIdEnTete.toArray(new Champ[0]);
 			tableauIdSeul = new Champ[] { champId };
 			tableauSaufId = champsSaufId.toArray(new Champ[0]);
+		}
+
+		public Object getEcrivainBinaire() {
+			return ecrivainBinaire;
+		}
+
+		public void setEcrivainBinaire(final Object ecrivain) {
+			ecrivainBinaire = ecrivain;
+		}
+
+		public Object getLecteurBinaire() {
+			return lecteurBinaire;
+		}
+
+		public void setLecteurBinaire(final Object lecteur) {
+			lecteurBinaire = lecteur;
 		}
 
 		/** @return les champs dans l'ordre de {@link #getChamps()} (tableau partagé : ne pas modifier). */

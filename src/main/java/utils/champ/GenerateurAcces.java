@@ -1,17 +1,19 @@
 package utils.champ;
 
+import static utils.champ.ClasseCachee.descripteur;
+import static utils.champ.ClasseCachee.enveloppe;
+import static utils.champ.ClasseCachee.hi;
+import static utils.champ.ClasseCachee.lo;
+import static utils.champ.ClasseCachee.methode;
+import static utils.champ.ClasseCachee.typeInterne;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.Map;
+
+import utils.champ.ClasseCachee.Pool;
 
 /**
  * Crée l'accès à un champ : de préférence une petite classe cachée (JDK 15+), membre du nid de la classe du champ, qui
@@ -191,97 +193,10 @@ final class GenerateurAcces {
 		}
 	}
 
-	/** Constructeur de bytecode minimal : pool de constantes. */
-	private static final class Pool {
-		private final ByteArrayOutputStream octets = new ByteArrayOutputStream();
-		private final Map<String, Integer> index = new HashMap<>();
-		private final DataOutputStream out = new DataOutputStream(octets);
-		private int prochain = 1;
-
-		private int ajoute(final String cle, final Ecriture ecriture) throws IOException {
-			final Integer existant = index.get(cle);
-			if (existant != null)
-				return existant;
-			ecriture.ecrit(out);
-			index.put(cle, prochain);
-			return prochain++;
-		}
-
-		int classe(final String nomInterne) throws IOException {
-			final int nom = utf8(nomInterne);
-			return ajoute("C" + nomInterne, o -> {
-				o.writeByte(7);
-				o.writeShort(nom);
-			});
-		}
-
-		int champ(final String classe, final String nom, final String descripteur) throws IOException {
-			final int c = classe(classe);
-			final int nt = nomEtType(nom, descripteur);
-			return ajoute("F" + classe + "." + nom + ":" + descripteur, o -> {
-				o.writeByte(9);
-				o.writeShort(c);
-				o.writeShort(nt);
-			});
-		}
-
-		int methode(final String classe, final String nom, final String descripteur) throws IOException {
-			final int c = classe(classe);
-			final int nt = nomEtType(nom, descripteur);
-			return ajoute("M" + classe + "." + nom + descripteur, o -> {
-				o.writeByte(10);
-				o.writeShort(c);
-				o.writeShort(nt);
-			});
-		}
-
-		int nomEtType(final String nom, final String descripteur) throws IOException {
-			final int n = utf8(nom);
-			final int d = utf8(descripteur);
-			return ajoute("N" + nom + ":" + descripteur, o -> {
-				o.writeByte(12);
-				o.writeShort(n);
-				o.writeShort(d);
-			});
-		}
-
-		int utf8(final String s) throws IOException {
-			return ajoute("U" + s, o -> {
-				o.writeByte(1);
-				o.writeUTF(s);
-			});
-		}
-	}
-
-	private interface Ecriture {
-		void ecrit(DataOutputStream out) throws IOException;
-	}
-
 	private static final String INTERFACE = AccesChamp.class.getName().replace('.', '/');
-	private static final Method DEFINE_HIDDEN_CLASS;
-	private static final Object OPTIONS_NESTMATE;
-
-	static {
-		Method m = null;
-		Object options = null;
-		try {
-			@SuppressWarnings({ "unchecked", "rawtypes" })
-			final Class<Enum> classOption = (Class<Enum>) Class
-					.forName("java.lang.invoke.MethodHandles$Lookup$ClassOption");
-			options = Array.newInstance(classOption, 1);
-			Array.set(options, 0, Enum.valueOf(classOption, "NESTMATE"));
-			m = Lookup.class.getMethod("defineHiddenClass", byte[].class, boolean.class, options.getClass());
-		} catch (final ReflectiveOperationException | RuntimeException e) {
-			// JDK < 15 : pas de classes cachées, on reste sur la réflexion
-			m = null;
-		}
-		DEFINE_HIDDEN_CLASS = m;
-		OPTIONS_NESTMATE = options;
-	}
-
 	static AccesChamp cree(final Field champ) {
 		final int modificateurs = champ.getModifiers();
-		if (DEFINE_HIDDEN_CLASS != null && !Modifier.isFinal(modificateurs) && !Modifier.isStatic(modificateurs))
+		if (ClasseCachee.disponible() && !Modifier.isFinal(modificateurs) && !Modifier.isStatic(modificateurs))
 			try {
 				return genere(champ);
 			} catch (final Throwable e) { // NOSONAR : toute erreur de génération ramène à la réflexion
@@ -290,34 +205,8 @@ final class GenerateurAcces {
 		return new AccesParReflexion(champ);
 	}
 
-	private static String descripteur(final Class<?> type) {
-		if (type == int.class)
-			return "I";
-		if (type == long.class)
-			return "J";
-		if (type == double.class)
-			return "D";
-		if (type == float.class)
-			return "F";
-		if (type == boolean.class)
-			return "Z";
-		if (type == byte.class)
-			return "B";
-		if (type == short.class)
-			return "S";
-		if (type == char.class)
-			return "C";
-		if (type.isArray())
-			return type.getName().replace('.', '/');
-		return "L" + type.getName().replace('.', '/') + ";";
-	}
-
 	private static AccesChamp genere(final Field champ) throws Throwable {
-		final Class<?> cible = champ.getDeclaringClass();
-		final Lookup lookup = MethodHandles.privateLookupIn(cible, MethodHandles.lookup());
-		final byte[] classe = octets(champ);
-		final Lookup cachee = (Lookup) DEFINE_HIDDEN_CLASS.invoke(lookup, classe, true, OPTIONS_NESTMATE);
-		return (AccesChamp) cachee.findConstructor(cachee.lookupClass(), MethodType.methodType(void.class)).invoke();
+		return (AccesChamp) ClasseCachee.instancie(champ.getDeclaringClass(), octets(champ));
 	}
 
 	private static byte[] octets(final Field champ) throws IOException {
@@ -330,12 +219,6 @@ final class GenerateurAcces {
 		final String nomEnveloppe = enveloppe == null ? null : enveloppe.getName().replace('.', '/');
 
 		final Pool pool = new Pool();
-		final int thisClass = pool.classe(nomClasse);
-		final int superClass = pool.classe("java/lang/Object");
-		final int iface = pool.classe(INTERFACE);
-		final int init = pool.utf8("<init>");
-		final int descInit = pool.utf8("()V");
-		final int superInit = pool.methode("java/lang/Object", "<init>", "()V");
 		final int code = pool.utf8("Code");
 		final int nomGet = pool.utf8("get");
 		final int descGet = pool.utf8("(Ljava/lang/Object;)Ljava/lang/Object;");
@@ -357,25 +240,8 @@ final class GenerateurAcces {
 		final int nomGetPrimitif = enveloppe == null ? 0 : pool.utf8("get" + suffixe);
 		final int descGetPrimitif = enveloppe == null ? 0 : pool.utf8("(Ljava/lang/Object;)" + desc);
 
-		final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		final DataOutputStream out = new DataOutputStream(bos);
-		out.writeInt(0xCAFEBABE);
-		out.writeShort(0);
-		out.writeShort(52); // Java 8 : pas de branchement, donc pas de StackMapTable
-		out.writeShort(pool.prochain);
-		pool.out.flush();
-		out.write(pool.octets.toByteArray());
-		out.writeShort(0x0031); // public final super
-		out.writeShort(thisClass);
-		out.writeShort(superClass);
-		out.writeShort(1);
-		out.writeShort(iface);
-		out.writeShort(0); // aucun champ
-		out.writeShort(enveloppe == null ? 3 : 5); // méthodes
-
-		// public <init>() { super(); }
-		methode(out, init, descInit, code, 1, 1, new byte[] { 0x2a, (byte) 0xb7, hi(superInit), lo(superInit),
-				(byte) 0xb1 });
+		final ByteArrayOutputStream methodes = new ByteArrayOutputStream();
+		final DataOutputStream out = new DataOutputStream(methodes);
 
 		// public Object get(Object o) { return ((Cible) o).champ; } (+ valueOf pour un primitif)
 		final ByteArrayOutputStream g = new ByteArrayOutputStream();
@@ -445,56 +311,8 @@ final class GenerateurAcces {
 			methode(out, nomGetPrimitif, descGetPrimitif, code, 2, 2, q.toByteArray());
 		}
 
-		out.writeShort(0); // attributs de classe
 		out.flush();
-		return bos.toByteArray();
-	}
-
-	private static Class<?> enveloppe(final Class<?> primitif) {
-		if (primitif == int.class)
-			return Integer.class;
-		if (primitif == long.class)
-			return Long.class;
-		if (primitif == double.class)
-			return Double.class;
-		if (primitif == float.class)
-			return Float.class;
-		if (primitif == boolean.class)
-			return Boolean.class;
-		if (primitif == byte.class)
-			return Byte.class;
-		if (primitif == short.class)
-			return Short.class;
-		return Character.class;
-	}
-
-	private static byte hi(final int v) {
-		return (byte) (v >> 8);
-	}
-
-	private static byte lo(final int v) {
-		return (byte) v;
-	}
-
-	private static void methode(final DataOutputStream out, final int nom, final int descripteur, final int code,
-			final int maxStack, final int maxLocals, final byte[] instructions) throws IOException {
-		out.writeShort(0x0001); // public
-		out.writeShort(nom);
-		out.writeShort(descripteur);
-		out.writeShort(1); // attribut Code
-		out.writeShort(code);
-		out.writeInt(12 + instructions.length);
-		out.writeShort(maxStack);
-		out.writeShort(maxLocals);
-		out.writeInt(instructions.length);
-		out.write(instructions);
-		out.writeShort(0); // table d'exceptions
-		out.writeShort(0); // attributs
-	}
-
-	/** Nom interne pour checkcast (pour un tableau, c'est son descripteur, que getName donne déjà). */
-	private static String typeInterne(final Class<?> type) {
-		return type.getName().replace('.', '/');
+		return ClasseCachee.assemble(pool, nomClasse, INTERFACE, methodes, enveloppe == null ? 2 : 4);
 	}
 
 	private GenerateurAcces() {

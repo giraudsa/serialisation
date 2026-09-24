@@ -44,15 +44,19 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	@SuppressWarnings("rawtypes")
 	protected void ecritOuDiffere(final Marshaller marshaller, final Object valeur,
 			final FieldInformations fieldInformations) throws NotImplementedSerializeException, MarshallExeption {
-		final BinaryMarshaller binaryMarshaller = getBinaryMarshaller(marshaller);
+		ecritOuDiffere(getBinaryMarshaller(marshaller), valeur, fieldInformations);
+	}
+
+	static void ecritOuDiffere(final BinaryMarshaller binaryMarshaller, final Object valeur,
+			final FieldInformations fieldInformations) throws NotImplementedSerializeException, MarshallExeption {
 		if (binaryMarshaller.debutAttente < 0) {
 			if (valeur != null && valeur.getClass() == String.class) { // cas le plus fréquent : sans aiguillage
 				ecritChaine(binaryMarshaller, (String) valeur);
 				return;
 			}
-			final ActionAbstrait action = getAction(marshaller, valeur);
+			final ActionAbstrait action = binaryMarshaller.getAction(valeur);
 			if (action instanceof ActionBinary && ((ActionBinary) action).isFeuille()) {
-				marshallAvec(action, marshaller, valeur, fieldInformations);
+				marshallAvec(action, binaryMarshaller, valeur, fieldInformations);
 				return;
 			}
 		}
@@ -206,10 +210,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 		final Class<?> typeObj = getTypeObjProblemeHibernate(objetASerialiser);
 		if (TypeExtension.isValeurImmuableBinaire(typeObj)) {
 			// valeur sans identité : toujours écrite, sans smallId (même règle à la lecture)
-			final int idType = binaryMarshaller.smallIdType(typeObj);
-			final short smallIdType = (short) Math.abs(idType);
-			Header.getHeader(false, isTypeDevinable(marshaller, objetASerialiser, fieldInformations), 0, smallIdType)
-					.write(output, 0, smallIdType, idType > 0, typeObj);
+			ecritEnTeteNouveau(marshaller, binaryMarshaller, objetASerialiser, fieldInformations, typeObj, 0);
 			return false;
 		}
 		final int id = binaryMarshaller.smallIdObjet(objetASerialiser);
@@ -217,13 +218,26 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 			Header.getHeader(true, true, id, (short) 0).write(output, id, (short) 0, true, typeObj);
 			return true;
 		}
-		final int smallId = -id;
-		final boolean isTypeDevinable = isTypeDevinable(marshaller, objetASerialiser, fieldInformations);
+		ecritEnTeteNouveau(marshaller, binaryMarshaller, objetASerialiser, fieldInformations, typeObj, -id);
+		return false;
+	}
+
+	/**
+	 * En-tête d'une première apparition. Un type devinable (celui du champ) n'est pas écrit et ne reçoit pas de
+	 * numéro : seuls les types écrits sont numérotés, dans l'ordre (même règle à la lecture).
+	 */
+	private void ecritEnTeteNouveau(final Marshaller marshaller, final BinaryMarshaller binaryMarshaller,
+			final Object objet, final FieldInformations fieldInformations, final Class<?> typeObj, final int smallId)
+			throws IOException {
+		if (isTypeDevinable(marshaller, objet, fieldInformations)) {
+			Header.getHeader(false, true, smallId, (short) 0).write(binaryMarshaller.output, smallId, (short) 0, true,
+					typeObj);
+			return;
+		}
 		final int idType = binaryMarshaller.smallIdType(typeObj);
 		final short smallIdType = (short) Math.abs(idType);
-		Header.getHeader(false, isTypeDevinable, smallId, smallIdType).write(output, smallId, smallIdType, idType > 0,
-				typeObj);
-		return false;
+		Header.getHeader(false, false, smallId, smallIdType).write(binaryMarshaller.output, smallId, smallIdType,
+				idType > 0, typeObj);
 	}
 
 	protected void writeInt(final Marshaller marshaller, final int v) throws IOException {

@@ -31,7 +31,8 @@ public class ActionBinaryEnum extends ActionBinary<Enum> {
 			final FieldInformations fieldInformations) throws IOException {
 		final Class<?> typeObj = getTypeObjProblemeHibernate(objetASerialiser);
 		final boolean isTypeDevinable = isTypeDevinable(marshaller, objetASerialiser, fieldInformations);
-		final int idType = smallIdType(marshaller, typeObj);
+		// type devinable : ni écrit ni numéroté (même règle à la lecture)
+		final int idType = isTypeDevinable ? 0 : smallIdType(marshaller, typeObj);
 		final short smallIdType = (short) Math.abs(idType);
 		HeaderEnum.getHeader(smallIdType, isTypeDevinable).write(getOutput(marshaller), smallIdType, typeObj,
 				idType > 0);

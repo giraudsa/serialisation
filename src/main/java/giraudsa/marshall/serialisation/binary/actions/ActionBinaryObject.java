@@ -9,11 +9,14 @@ import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.binary.ActionBinary;
+import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
 import utils.EntityManager;
 import utils.TypeExtension;
 import utils.TypeExtension.ChampsDuType;
 import utils.champ.AccesChamp;
 import utils.champ.Champ;
+import utils.champ.EcrivainChamps;
+import utils.champ.GenerateurSerialiseurs;
 import utils.champ.FieldInformations;
 import utils.io.Primitifs;
 
@@ -43,6 +46,15 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 		else
 			champs = serialiseId ? champsDuType.getTableauIdSeul() : AUCUN_CHAMP;
 		// seul un faux id (ChampUid) a besoin de la table des faux ids
+		if (serialiseToutSaufId && serialiseId) {
+			// cas courant (objet neuf, tous ses champs) : écrivain généré pour la classe, s'il existe
+			final EcrivainChamps ecrivain = ecrivain(champsDuType, objetASerialiser.getClass());
+			if (ecrivain != null) {
+				ecrit(ecrivain, objetASerialiser, marshaller, champs);
+				empileDifferes(marshaller);
+				return;
+			}
+		}
 		final Map<Object, UUID> dicoObjToFakeId = champsDuType.getChampId().isFakeId() ? getDicoObjToFakeId(marshaller)
 				: null;
 		final EntityManager entityManager = getEntityManager(marshaller);
@@ -59,6 +71,28 @@ public class ActionBinaryObject extends ActionBinary<Object> {
 				ecritOuDiffere(marshaller, valeur, champ);
 		}
 		empileDifferes(marshaller);
+	}
+
+	private static EcrivainChamps ecrivain(final ChampsDuType champsDuType, final Class<?> type) {
+		Object ecrivain = champsDuType.getEcrivainBinaire();
+		if (ecrivain == null) {
+			ecrivain = GenerateurSerialiseurs.ecrivain(type, champsDuType.getTableauChamps(), BinaryMarshaller.class);
+			if (ecrivain == null)
+				ecrivain = Boolean.FALSE; // génération impossible : chemin générique
+			champsDuType.setEcrivainBinaire(ecrivain);
+		}
+		return ecrivain instanceof EcrivainChamps ? (EcrivainChamps) ecrivain : null;
+	}
+
+	private void ecrit(final EcrivainChamps ecrivain, final Object objet, final Marshaller marshaller,
+			final Champ[] champs) throws IOException, NotImplementedSerializeException, MarshallExeption {
+		try {
+			ecrivain.ecrit(objet, getBinaryMarshaller(marshaller), champs);
+		} catch (IOException | NotImplementedSerializeException | MarshallExeption | RuntimeException e) {
+			throw e;
+		} catch (final Exception e) {
+			throw new MarshallExeption(e);
+		}
 	}
 
 	@Override

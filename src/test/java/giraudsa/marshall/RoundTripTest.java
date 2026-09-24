@@ -250,6 +250,15 @@ class RoundTripTest {
 	@Test
 	void binaireGrapheComplet() throws Exception {
 		grapheComplet(BINARY);
+		// JDK 15+ : écrivain et lecteur générés pour les classes du graphe (sinon, chemin générique)
+		if (Runtime.version().feature() >= 15)
+			for (final Class<?> c : new Class<?>[] { Noeud.class, NoeudDerive.class }) {
+				final utils.TypeExtension.ChampsDuType champs = utils.TypeExtension.getChampsDuType(c);
+				org.junit.jupiter.api.Assertions.assertTrue(
+						champs.getEcrivainBinaire() instanceof utils.champ.EcrivainChamps, "écrivain de " + c);
+				org.junit.jupiter.api.Assertions.assertTrue(
+						champs.getLecteurBinaire() instanceof utils.champ.LecteurChamps, "lecteur de " + c);
+			}
 	}
 
 	@Test
