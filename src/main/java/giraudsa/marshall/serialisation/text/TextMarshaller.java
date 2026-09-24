@@ -19,9 +19,9 @@ import utils.io.SortieTexte;
 
 public abstract class TextMarshaller extends Marshaller {
 	/** Sortie tamponnée non synchronisée (vidée vers le Writer de l'appelant par flush, en fin de sérialisation). */
-	private static Writer bufferise(final Writer writer) {
+	private static SortieTexte bufferise(final Writer writer) {
 		if (writer instanceof SortieTexte)
-			return writer;
+			return (SortieTexte) writer;
 		return new SortieTexte(writer);
 	}
 
@@ -31,7 +31,7 @@ public abstract class TextMarshaller extends Marshaller {
 	// prettyPrint
 	protected boolean lastIsOpen = false;
 
-	protected final Writer writer;
+	protected final SortieTexte writer;
 
 	protected TextMarshaller(final Writer writer, final SimpleDateFormat dateFormat,
 			final StrategieDeSerialisation strategie, final EntityManager entityManager) {

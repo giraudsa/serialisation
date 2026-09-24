@@ -24,6 +24,11 @@ public final class TableEchappement {
 			remplacements[e.getKey()] = e.getValue();
 	}
 
+	/** @return la table des remplacements, indexée par caractère (partagée : ne pas modifier). */
+	public String[] remplacements() {
+		return remplacements;
+	}
+
 	public void ecris(final Writer writer, final String aEchapper) throws IOException {
 		if (writer instanceof SortieTexte) { // cas courant : directement dans le tampon
 			((SortieTexte) writer).writeEchappe(aEchapper, remplacements);

@@ -233,11 +233,8 @@ public class JsonMarshaller extends TextMarshaller {
 	protected void ecritClef(final String nomClef) throws IOException {
 		if (isPrettyPrint())
 			aLaLigne();
-		if (nomClef != null) {
-			writer.write('"');
-			writer.write(nomClef);
-			writer.write("\":");
-		}
+		if (nomClef != null)
+			writer.writeClef(nomClef);
 	}
 
 	protected void ecritType(final Class<?> type) throws IOException {
@@ -273,6 +270,11 @@ public class JsonMarshaller extends TextMarshaller {
 	protected void ouvreCrochet() throws IOException {
 		++profondeur;
 		writer.write('[');
+	}
+
+	/** Écrit "chaine" entre guillemets, échappée selon la table de remplacements. */
+	void ecritEntreGuillemets(final String chaine, final String[] remplacements) throws IOException {
+		writer.writeEntreGuillemets(chaine, remplacements);
 	}
 
 	protected void writeQuote() throws IOException {

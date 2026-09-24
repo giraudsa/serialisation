@@ -189,8 +189,6 @@ public abstract class ActionJson<T> extends ActionText<T> {
 	}
 
 	protected void writeWithQuote(final Marshaller marshaller, final String string) throws IOException {
-		getJsonMarshaller(marshaller).writeQuote();
-		writeEscape(marshaller, string);
-		getJsonMarshaller(marshaller).writeQuote();
+		getJsonMarshaller(marshaller).ecritEntreGuillemets(string, ECHAPPEMENT.remplacements());
 	}
 }

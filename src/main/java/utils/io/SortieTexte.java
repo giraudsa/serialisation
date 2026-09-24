@@ -94,15 +94,56 @@ public final class SortieTexte extends Writer {
 		position += len;
 	}
 
+	/** Écrit une clé JSON : "nom": d'un seul tenant. */
+	public void writeClef(final String nom) throws IOException {
+		final int n = nom.length();
+		assure(n + 3);
+		final char[] b = buffer;
+		int p = position;
+		b[p++] = '"';
+		nom.getChars(0, n, b, p);
+		p += n;
+		b[p++] = '"';
+		b[p++] = ':';
+		position = p;
+	}
+
+	/** Écrit "chaine" entre guillemets, échappée (voir writeEchappe), d'un seul tenant. */
+	public void writeEntreGuillemets(final String s, final String[] remplacements) throws IOException {
+		write('"');
+		writeEchappe(s, remplacements);
+		write('"');
+	}
+
 	/**
 	 * Écrit la chaîne en remplaçant chaque caractère c qui a un remplacement (remplacements[c] non nul), directement
-	 * dans le tampon.
+	 * dans le tampon. Cas courant (rien à remplacer) : copie d'un bloc (getChars, intrinsèque) puis vérification.
 	 */
 	public void writeEchappe(final String s, final String[] remplacements) throws IOException {
 		final int n = s.length();
 		assure(n);
+		final char[] b = buffer;
+		final int debut = position;
+		s.getChars(0, n, b, debut);
 		final int nbRemplacables = remplacements.length;
-		for (int i = 0; i < n; i++) {
+		for (int k = 0; k < n; k++) {
+			final char c = b[debut + k];
+			if (c < nbRemplacables && remplacements[c] != null) {
+				// un caractère à remplacer : on reprend à partir de lui, caractère par caractère
+				position = debut + k;
+				writeEchappeDepuis(s, k, remplacements);
+				return;
+			}
+		}
+		position = debut + n;
+	}
+
+	private void writeEchappeDepuis(final String s, final int depuis, final String[] remplacements)
+			throws IOException {
+		final int n = s.length();
+		assure(n - depuis);
+		final int nbRemplacables = remplacements.length;
+		for (int i = depuis; i < n; i++) {
 			final char c = s.charAt(i);
 			final String r = c < nbRemplacables ? remplacements[c] : null;
 			if (r == null)
