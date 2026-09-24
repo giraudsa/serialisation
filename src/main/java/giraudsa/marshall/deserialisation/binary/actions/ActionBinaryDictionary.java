@@ -103,6 +103,12 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 	}
 
 	private Object newInstance() throws UnmarshallExeption {
+		return nouvelleMap(type, fieldInformations);
+	}
+
+	/** Instancie la map de type donné (lecture directe ou par action). */
+	@SuppressWarnings("rawtypes")
+	public static Object nouvelleMap(final Class<?> type, final FieldInformations fi) throws UnmarshallExeption {
 		Map objetADeserialiser = null;
 		try {
 			if (type == HashMap.class)
@@ -110,18 +116,18 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 			else if (type == LinkedHashMap.class)
 				objetADeserialiser = new LinkedHashMap<>();
 			else if (TypeExtension.isHibernate(type)) {
-				if (fieldInformations.getValueType().isAssignableFrom(ConcurrentHashMap.class))
+				if (fi.getValueType().isAssignableFrom(ConcurrentHashMap.class))
 					objetADeserialiser = new ConcurrentHashMap<>();
-				else if (fieldInformations.getValueType().isAssignableFrom(LinkedHashMap.class))
+				else if (fi.getValueType().isAssignableFrom(LinkedHashMap.class))
 					objetADeserialiser = new LinkedHashMap<>();
-				else if (fieldInformations.getValueType().isAssignableFrom(HashMap.class))
+				else if (fi.getValueType().isAssignableFrom(HashMap.class))
 					objetADeserialiser = new HashMap<>();
 				else
 					throw new UnmarshallExeption("Probleme avec un type hibernate " + type.getName(),
 							new InstantiationException());
 			} else
 				try {
-					objetADeserialiser = type.getDeclaredConstructor().newInstance();
+					objetADeserialiser = (Map) type.getDeclaredConstructor().newInstance();
 				} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
 					// map sans constructeur accessible : on se rabat sur HashMap comme
 					// historiquement

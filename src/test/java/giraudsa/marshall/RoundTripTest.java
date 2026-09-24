@@ -510,6 +510,32 @@ class RoundTripTest {
 	}
 
 	@Test
+	void binaireGrapheProfond() throws Exception {
+		// chaîne de 50 000 objets : bien au-delà de la lecture directe (récursive), la pile d'actions prend le relais
+		Noeud dernier = null;
+		for (int i = 0; i < 50_000; i++) {
+			final Noeud n = new Noeud();
+			n.id = "p" + i;
+			n.entier = i;
+			n.parent = dernier;
+			if (i % 1000 == 0) { // collections et objets mêlés dans la profondeur
+				final Noeud enfant = new Noeud();
+				enfant.id = "e" + i;
+				n.enfants.add(enfant);
+			}
+			dernier = n;
+		}
+		Noeud lu = BINARY.roundTrip(dernier);
+		for (int i = 49_999; i >= 0; i--) {
+			assertEquals("p" + i, lu.id);
+			assertEquals(i, lu.entier);
+			assertEquals(i % 1000 == 0 ? 1 : 0, lu.enfants.size());
+			lu = lu.parent;
+		}
+		assertEquals(null, lu);
+	}
+
+	@Test
 	void binaireAppelsSuccessifs() throws Exception {
 		// les tables sont réutilisées d'un appel à l'autre sur un même thread : aucun état ne doit fuir,
 		// y compris après un flux tronqué

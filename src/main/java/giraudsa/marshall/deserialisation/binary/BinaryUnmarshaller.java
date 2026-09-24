@@ -11,6 +11,7 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Currency;
 import java.util.Date;
 import java.util.Locale;
@@ -33,6 +34,8 @@ import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryArray;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryCollection;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryDictionary;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryEnum;
+import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryCollection;
+import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryDictionary;
 import giraudsa.marshall.deserialisation.binary.actions.ActionBinaryObject;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinarySimple;
 import giraudsa.marshall.deserialisation.binary.actions.simple.ActionBinaryAtomicBoolean;
@@ -63,6 +66,7 @@ import utils.Constants;
 import utils.EntityManager;
 import utils.IdentiteIntMap;
 import utils.TypeExtension;
+import utils.TypeExtension.ChampsDuType;
 import utils.champ.AccesChamp;
 import utils.champ.Champ;
 import utils.champ.FakeChamp;
@@ -211,6 +215,11 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	/** actions d'objet terminées, réutilisables (une action par objet lu sinon). */
 	private final ArrayDeque<ActionBinaryObject<?>> actionsObjetLibres;
 	private final EtatLecture etat;
+	/** au-delà, les objets sont lus par la pile d'actions : pas de débordement de pile sur un graphe profond. */
+	private static final int PROFONDEUR_MAX_DIRECTE = 200;
+	private static final Champ[] AUCUN_CHAMP = new Champ[0];
+	/** nombre de lectures directes (litObjetDirect) imbriquées en cours. */
+	private int profondeurDirecte;
 	private ActionBinary<?> actionSimple;
 	private Class<?> typeActionSimple;
 	private short biggestSmallIdType = 0;
@@ -500,7 +509,19 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	}
 
 	private Object litObjet(final FieldInformations fieldInformations, final Class<?> type, final int smallId)
-			throws NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException {
+			throws NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException,
+			ClassNotFoundException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
+		// objet neuf, peu profond, sans EntityManager : lu directement, par récursion (voir litObjetDirect)
+		if (smallId > 0 && entity == null && profondeurDirecte < PROFONDEUR_MAX_DIRECTE && !isDejaVu(smallId)) {
+			final ActionAbstrait<?> prototype = prototype(type);
+			if (prototype instanceof ActionBinaryObject)
+				return litObjetDirect(((ActionBinaryObject<?>) prototype).getChampsDuType(), fieldInformations, type,
+						smallId);
+			if (prototype instanceof ActionBinaryCollection)
+				return litCollectionDirecte(fieldInformations, type, smallId);
+			if (prototype instanceof ActionBinaryDictionary)
+				return litMapDirecte(fieldInformations, type, smallId);
+		}
 		// une action simple (BigDecimal, BigInteger, Calendar...) lit tout dans set : elle n'est pas empilée et peut
 		// être réutilisée pour la valeur suivante du même type
 		final ActionBinary<?> action;
@@ -516,6 +537,175 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		}
 		pileAction.push(action);
 		return EN_ATTENTE;
+	}
+
+	/**
+	 * Lit un objet neuf directement, par un appel récursif, sans action ni pile : même lecture que
+	 * {@link ActionBinaryObject} pour un objet vu pour la première fois (sans EntityManager). La récursion est bornée
+	 * par {@link #PROFONDEUR_MAX_DIRECTE} : au-delà, les objets passent par la pile d'actions (graphes profonds).
+	 */
+	private Object litObjetDirect(final ChampsDuType champsDuType, final FieldInformations fieldInformations,
+			final Class<?> type, final int smallId)
+			throws NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException,
+			ClassNotFoundException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
+		final int profondeurParent = profondeur;
+		final int profondeurObjet = profondeurParent + 1; // comme une action créée à cette profondeur
+		profondeur = profondeurObjet;
+		profondeurDirecte++;
+		try {
+			final Champ champId = champsDuType.getChampId();
+			Object objet = null;
+			if (champId.isFakeId()) {
+				objet = newInstance(type);
+				stockObjectSmallId(smallId, objet);
+			}
+			final Champ[] champs;
+			final boolean deserialiseId = !champId.isFakeId();
+			if (strategie.serialiseTout(profondeurObjet, fieldInformations))
+				champs = deserialiseId ? champsDuType.getTableauIdEnTete() : champsDuType.getTableauSaufId();
+			else
+				champs = deserialiseId ? champsDuType.getTableauIdSeul() : AUCUN_CHAMP;
+			boolean marqueTotal = false;
+			for (final Champ champ : champs) {
+				if (!marqueTotal && champ != champId) {
+					setDejaTotalementDeSerialise(smallId);
+					marqueTotal = true;
+				}
+				if (champ.getNaturePrimitive() != AccesChamp.AUCUNE && champ != champId && litPrimitif(champ, objet))
+					continue;
+				final Object valeur = litValeurComplete(champ);
+				if (champ == champId) {
+					objet = getObject(valeur.toString(), type);
+					stockObjectSmallId(smallId, objet);
+				}
+				champ.affecte(objet, valeur, champ.isFakeId() ? getDicoObjToFakeId() : null);
+			}
+			return objet;
+		} finally {
+			profondeurDirecte--;
+			profondeur = profondeurParent;
+		}
+	}
+
+	/** Lecture directe d'une collection vue pour la première fois : même lecture que ActionBinaryCollection. */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private Object litCollectionDirecte(final FieldInformations fieldInformations, final Class<?> type,
+			final int smallId)
+			throws NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException,
+			ClassNotFoundException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
+		final int profondeurParent = profondeur;
+		profondeur = profondeurParent + 1;
+		profondeurDirecte++;
+		try {
+			final Collection collection = ActionBinaryCollection.nouvelleCollection(type, fieldInformations);
+			stockObjectSmallId(smallId, collection);
+			if (strategie.serialiseTout(profondeur, fieldInformations))
+				setDejaTotalementDeSerialise(smallId);
+			final FakeChamp element = fieldInformations.getChampParametre(FieldInformations.ELEMENT);
+			for (int i = readVarInt(); i > 0; i--)
+				collection.add(litValeurComplete(element));
+			return collection;
+		} finally {
+			profondeurDirecte--;
+			profondeur = profondeurParent;
+		}
+	}
+
+	/** Lecture directe d'une map vue pour la première fois : même lecture que ActionBinaryDictionary. */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private Object litMapDirecte(final FieldInformations fieldInformations, final Class<?> type, final int smallId)
+			throws NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException,
+			ClassNotFoundException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
+		final int profondeurParent = profondeur;
+		profondeur = profondeurParent + 1;
+		profondeurDirecte++;
+		try {
+			final Map map = (Map) ActionBinaryDictionary.nouvelleMap(type, fieldInformations);
+			stockObjectSmallId(smallId, map);
+			if (strategie.serialiseTout(profondeur, fieldInformations))
+				setDejaTotalementDeSerialise(smallId);
+			final FakeChamp cle = fieldInformations.getChampParametre(FieldInformations.CLE);
+			final FakeChamp valeur = fieldInformations.getChampParametre(FieldInformations.VALEUR);
+			for (int i = readVarInt(); i > 0; i--) {
+				final Object k = litValeurComplete(cle);
+				map.put(k, litValeurComplete(valeur));
+			}
+			return map;
+		} finally {
+			profondeurDirecte--;
+			profondeur = profondeurParent;
+		}
+	}
+
+	/** Lit une valeur et, si elle a été confiée à une action, la termine (lecture directe). */
+	private Object litValeurComplete(final FieldInformations fieldInformations)
+			throws NotImplementedSerializeException, IOException, UnmarshallExeption, InstanciationException,
+			ClassNotFoundException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
+		final Object valeur = litValeur(fieldInformations);
+		return valeur == EN_ATTENTE ? termineValeurEnAttente() : valeur;
+	}
+
+	/**
+	 * Pendant une lecture directe, une valeur a été confiée à une action (collection, map, objet profond...) : on la
+	 * fait tourner jusqu'au bout, avec une action réceptrice glissée sous elle pour recueillir la valeur.
+	 */
+	private Object termineValeurEnAttente()
+			throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption,
+			InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
+		final ActionAbstrait<?> action = pileAction.pop();
+		final ActionReceptrice receptrice = new ActionReceptrice(this);
+		pileAction.push(receptrice);
+		pileAction.push(action);
+		final int profondeurAvant = profondeur;
+		while (pileAction.peek() != receptrice) {
+			final ActionBinary<?> actionEnCours = (ActionBinary<?>) pileAction.peek();
+			profondeur = actionEnCours.getProfondeur();
+			actionEnCours.deserialisePariellement();
+		}
+		profondeur = profondeurAvant;
+		pileAction.pop();
+		return receptrice.valeur;
+	}
+
+	/** Reçoit la valeur d'une action terminée pendant une lecture directe (voir termineValeurEnAttente). */
+	private static final class ActionReceptrice extends ActionBinary<Object> {
+		private Object valeur;
+
+		private ActionReceptrice(final BinaryUnmarshaller<?> unmarshaller) {
+			super(Object.class, unmarshaller);
+		}
+
+		@Override
+		protected void deserialisePariellement() {
+			throw new IllegalStateException("action réceptrice : ne lit rien");
+		}
+
+		@SuppressWarnings("rawtypes")
+		@Override
+		public <U> ActionAbstrait<U> getNewInstance(final Class<U> type, final Unmarshaller unmarshaller) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		protected void initialise() {
+			// rien
+		}
+
+		@Override
+		protected <W> void integreObjet(final String nom, final W objet) {
+			valeur = objet;
+		}
+	}
+
+	/** prototype d'action d'une classe (voir ACTIONS). */
+	private static ActionAbstrait<?> prototype(final Class<?> type) throws NotImplementedSerializeException {
+		try {
+			return ACTIONS.get(type);
+		} catch (final IllegalStateException e) {
+			if (e.getCause() instanceof NotImplementedSerializeException)
+				throw (NotImplementedSerializeException) e.getCause();
+			throw e;
+		}
 	}
 
 	private T parse()

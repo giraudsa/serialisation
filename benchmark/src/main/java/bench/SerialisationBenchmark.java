@@ -28,7 +28,7 @@ import bench.model.Catalogue;
 public class SerialisationBenchmark {
 
 	@Param({ "giraudsa-json", "giraudsa-xml", "giraudsa-binaire", "jackson-json", "gson", "jackson-xml", "xstream",
-			"kryo", "java-natif" })
+			"kryo", "fory", "java-natif" })
 	public String framework;
 
 	/** petit = 1 commande × 10 lignes (~13 objets) ; gros = 1000 commandes × 10 lignes (~13 000 objets). */

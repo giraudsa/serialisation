@@ -132,6 +132,11 @@ public class ActionBinaryObject<O extends Object> extends ActionBinary<O> {
 		champsDuType = prototype.generationChamps == TypeExtension.getGeneration() ? prototype.champsDuType : null;
 	}
 
+	/** @return les champs du type (prototype). */
+	public ChampsDuType getChampsDuType() {
+		return champsDuType;
+	}
+
 	/** Oublie l'objet lu, pour qu'une action gardée en réserve ne retienne pas le graphe. */
 	public void nettoie() {
 		obj = null;

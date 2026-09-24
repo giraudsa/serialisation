@@ -97,6 +97,12 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 	}
 
 	private Collection newInstance() throws UnmarshallExeption {
+		return nouvelleCollection(type, fieldInformations);
+	}
+
+	/** Instancie la collection de type donné (lecture directe ou par action). */
+	@SuppressWarnings("rawtypes")
+	public static Collection nouvelleCollection(final Class<?> type, final FieldInformations fi) throws UnmarshallExeption {
 		Collection objetADeserialiser = null;
 		try {
 			if (type == ArrayList.class)
@@ -106,16 +112,16 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 			else if (type == HashSet.class)
 				objetADeserialiser = new HashSet();
 			else if (TypeExtension.isHibernate(type)) {
-				if (fieldInformations.getValueType().isAssignableFrom(ArrayList.class))
+				if (fi.getValueType().isAssignableFrom(ArrayList.class))
 					objetADeserialiser = new ArrayList();
-				else if (fieldInformations.getValueType().isAssignableFrom(HashSet.class))
+				else if (fi.getValueType().isAssignableFrom(HashSet.class))
 					objetADeserialiser = new HashSet();
 				else
 					throw new UnmarshallExeption("Probleme avec un type hibernate " + type.getName(),
 							new InstantiationException());
 			} else
 				try {
-					objetADeserialiser = type.getDeclaredConstructor().newInstance();
+					objetADeserialiser = (Collection) type.getDeclaredConstructor().newInstance();
 				} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
 					// liste sans constructeur accessible (Arrays$ArrayList...) : on se rabat
 					// sur ArrayList comme historiquement

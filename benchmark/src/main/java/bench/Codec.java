@@ -44,7 +44,7 @@ public abstract class Codec {
 	}
 
 	public static final String[] NOMS = { "giraudsa-json", "giraudsa-xml", "giraudsa-binaire", "jackson-json",
-			"gson", "jackson-xml", "xstream", "kryo", "java-natif" };
+			"gson", "jackson-xml", "xstream", "kryo", "fory", "java-natif" };
 
 	static ObjectMapper jacksonChamps(final ObjectMapper m) {
 		m.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
@@ -174,6 +174,22 @@ public abstract class Codec {
 				@Override
 				public Catalogue decode(final Object d) {
 					return k.readObject(new Input((byte[]) d), Catalogue.class);
+				}
+			};
+		}
+		case "fory": {
+			// suivi des références activé : même sémantique d'identité que giraudsa et kryo
+			final org.apache.fory.ThreadSafeFory f = org.apache.fory.Fory.builder().withRefTracking(true)
+					.requireClassRegistration(false).buildThreadSafeFory();
+			return new Codec() {
+				@Override
+				public Object encode(final Catalogue c) {
+					return f.serialize(c);
+				}
+
+				@Override
+				public Catalogue decode(final Object d) {
+					return (Catalogue) f.deserialize((byte[]) d);
 				}
 			};
 		}

@@ -125,7 +125,7 @@ public abstract class Unmarshaller<T> {
 		return entity;
 	}
 
-	<W> W getObject(final String id, final Class<W> type)
+	protected <W> W getObject(final String id, final Class<W> type)
 			throws EntityManagerImplementationException, InstanciationException {
 		if (id == null) {
 			final W ret = newInstance(type);
@@ -161,7 +161,7 @@ public abstract class Unmarshaller<T> {
 		action.integreObjet(nom, objet);
 	}
 
-	<W> W newInstance(final Class<W> type) throws InstanciationException {
+	protected <W> W newInstance(final Class<W> type) throws InstanciationException {
 		return fabrique.newObject(type);
 	}
 
