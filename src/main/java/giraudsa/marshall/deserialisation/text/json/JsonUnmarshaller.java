@@ -62,6 +62,35 @@ import utils.TypeExtension;
 
 public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
+
+	/** prototype d'action de chaque classe, résolu une fois (ClassValue : plus rapide qu'une map concurrente). */
+	private static final ClassValue<ActionAbstrait<?>> ACTIONS = new ClassValue<>() {
+		@Override
+		protected ActionAbstrait<?> computeValue(final Class<?> type) {
+			final ActionAbstrait<?> action = dicoTypeToAction.get(type);
+			if (action != null)
+				return action;
+			try {
+				return choisiAction(dicoTypeToAction, type);
+			} catch (final NotImplementedSerializeException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+	};
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override
+	protected <U> ActionAbstrait getAction(final Class<U> type) throws NotImplementedSerializeException {
+		if (type == null)
+			return null;
+		try {
+			return ACTIONS.get(type).getNewInstance((Class) type, this);
+		} catch (final IllegalStateException e) {
+			if (e.getCause() instanceof NotImplementedSerializeException)
+				throw (NotImplementedSerializeException) e.getCause();
+			throw e;
+		}
+	}
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUnmarshaller.class);
 	static {
 		dicoTypeToAction.put(Date.class, ActionJsonDate.getInstance());

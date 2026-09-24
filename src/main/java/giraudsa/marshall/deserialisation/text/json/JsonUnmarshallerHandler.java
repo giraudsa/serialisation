@@ -222,7 +222,37 @@ public class JsonUnmarshallerHandler {
 		int t = lit();
 		while (t != FIN) {
 			comportement((char) t);
+			ajouteCaracteresOrdinaires();
 			t = lit();
+		}
+	}
+
+	/**
+	 * Ajoute d'un bloc les caractères suivants du tampon qui ne déclenchent rien (ceux que comportement ajouterait
+	 * un à un à buff) : même résultat, sans aiguillage par caractère. Entre guillemets, seuls " et \ comptent ; hors
+	 * guillemets, les séparateurs aussi.
+	 */
+	private void ajouteCaracteresOrdinaires() {
+		final char[] b = bloc;
+		final int fin = finBloc;
+		int i = positionBloc;
+		if (isBetweenQuote)
+			while (i < fin) {
+				final char c = b[i];
+				if (c == '"' || c == '\\')
+					break;
+				i++;
+			}
+		else
+			while (i < fin) {
+				final char c = b[i];
+				if (c == '"' || c == '\\' || c == '{' || c == '}' || c == '[' || c == ']' || c == ':' || c == ',')
+					break;
+				i++;
+			}
+		if (i > positionBloc) {
+			buff.append(b, positionBloc, i - positionBloc);
+			positionBloc = i;
 		}
 	}
 
