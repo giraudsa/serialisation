@@ -15,6 +15,7 @@ import utils.ConfigurationMarshalling;
 import utils.CopieFormatDate;
 import utils.EntityManager;
 import utils.champ.FakeChamp;
+import utils.io.DatesIso;
 import utils.io.SortieTexte;
 
 public abstract class TextMarshaller extends Marshaller {
@@ -26,6 +27,8 @@ public abstract class TextMarshaller extends Marshaller {
 	}
 
 	protected final DateFormat df;
+	/** le format de date est le format ISO UTC par défaut : les dates peuvent être écrites sans lui (DatesIso). */
+	protected final boolean dateIsoUtc;
 	protected final boolean isUniversalId;
 	private final boolean prettyPrint;
 	// prettyPrint
@@ -38,6 +41,7 @@ public abstract class TextMarshaller extends Marshaller {
 		super(strategie, entityManager);
 		this.writer = bufferise(writer);
 		df = CopieFormatDate.copie(dateFormat);
+		dateIsoUtc = DatesIso.estMotifIsoUtc(df);
 		isUniversalId = ConfigurationMarshalling.getEstIdUniversel();
 		prettyPrint = ConfigurationMarshalling.isPrettyPrint();
 	}

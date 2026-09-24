@@ -58,6 +58,7 @@ import utils.ConfigurationMarshalling;
 import utils.Constants;
 import utils.EntityManager;
 import utils.TypeExtension;
+import utils.io.DatesIso;
 import utils.io.SortieTexte;
 
 public class JsonMarshaller extends TextMarshaller {
@@ -270,6 +271,23 @@ public class JsonMarshaller extends TextMarshaller {
 	protected void ouvreCrochet() throws IOException {
 		++profondeur;
 		writer.write('[');
+	}
+
+	/** Écrit la valeur brute (nombre : rien à échapper). */
+	void ecritBrut(final String valeur) throws IOException {
+		writer.write(valeur);
+	}
+
+	void ecritEntier(final long valeur) throws IOException {
+		writer.writeLong(valeur);
+	}
+
+	/** @return true si la date est écrite par le chemin rapide (format ISO UTC par défaut, années 1583 à 9999). */
+	boolean ecritDateRapide(final long millis) throws IOException {
+		if (!dateIsoUtc || millis < DatesIso.MIN || millis > DatesIso.MAX)
+			return false;
+		writer.writeDateIso(millis);
+		return true;
 	}
 
 	/** Écrit "chaine" entre guillemets, échappée selon la table de remplacements. */

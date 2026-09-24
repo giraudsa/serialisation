@@ -94,6 +94,37 @@ public final class SortieTexte extends Writer {
 		position += len;
 	}
 
+	/** Écrit l'entier en décimal (mêmes caractères que Long.toString), sans allocation. */
+	public void writeLong(final long v) throws IOException {
+		if (v == Long.MIN_VALUE) {
+			write("-9223372036854775808");
+			return;
+		}
+		assure(20);
+		long reste = v;
+		if (reste < 0) {
+			buffer[position++] = '-';
+			reste = -reste;
+		}
+		int n = 1;
+		for (long p = 10; n < 19 && reste >= p; p *= 10)
+			n++;
+		for (int i = position + n - 1; i >= position; i--) {
+			buffer[i] = (char) ('0' + reste % 10);
+			reste /= 10;
+		}
+		position += n;
+	}
+
+	/** Écrit "date" au format ISO UTC par défaut (voir DatesIso), entre guillemets. */
+	public void writeDateIso(final long millis) throws IOException {
+		assure(DatesIso.LONGUEUR + 2);
+		buffer[position++] = '"';
+		DatesIso.ecris(millis, buffer, position);
+		position += DatesIso.LONGUEUR;
+		buffer[position++] = '"';
+	}
+
 	/** Écrit une clé JSON : "nom": d'un seul tenant. */
 	public void writeClef(final String nom) throws IOException {
 		final int n = nom.length();

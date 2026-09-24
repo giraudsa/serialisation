@@ -188,6 +188,18 @@ public abstract class ActionJson<T> extends ActionText<T> {
 		return getJsonMarshaller(marshaller).writeType;
 	}
 
+	protected void ecritEntier(final Marshaller marshaller, final long valeur) throws IOException {
+		getJsonMarshaller(marshaller).ecritEntier(valeur);
+	}
+
+	protected void ecritBrut(final Marshaller marshaller, final String valeur) throws IOException {
+		getJsonMarshaller(marshaller).ecritBrut(valeur);
+	}
+
+	protected boolean ecritDateRapide(final Marshaller marshaller, final long millis) throws IOException {
+		return getJsonMarshaller(marshaller).ecritDateRapide(millis);
+	}
+
 	protected void writeWithQuote(final Marshaller marshaller, final String string) throws IOException {
 		getJsonMarshaller(marshaller).ecritEntreGuillemets(string, ECHAPPEMENT.remplacements());
 	}
