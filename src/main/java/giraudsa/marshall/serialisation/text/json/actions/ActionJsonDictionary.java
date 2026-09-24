@@ -64,6 +64,14 @@ public class ActionJsonDictionary extends ActionJson<Map> {
 		final FakeChamp fakeChampValue = new FakeChamp(null, genericTypeValue, fi.getRelation(), fi.getAnnotations());
 
 		final Map<?, ?> map = obj;
+		if (ecritureDirecte(marshaller)) {
+			for (final Entry<?, ?> entry : map.entrySet()) {
+				ecritDirect(marshaller, entry.getKey(), fakeChampKey, ecrisSeparateur);
+				ecrisSeparateur = true;
+				ecritDirect(marshaller, entry.getValue(), fakeChampValue, true);
+			}
+			return;
+		}
 		final Deque<Comportement> tmp = new ArrayDeque<>();
 		for (final Entry<?, ?> entry : map.entrySet()) {
 			tmp.push(traiteChamp(marshaller, entry.getKey(), fakeChampKey, ecrisSeparateur));

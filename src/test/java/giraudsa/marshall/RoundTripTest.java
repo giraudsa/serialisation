@@ -607,6 +607,26 @@ class RoundTripTest {
 	}
 
 	@Test
+	void jsonGrapheProfond() throws Exception {
+		// écriture récursive bornée : au-delà, la pile prend le relais (pas de StackOverflowError)
+		Noeud dernier = null;
+		for (int i = 0; i < 20_000; i++) {
+			final Noeud n = new Noeud();
+			n.id = "p" + i;
+			n.entier = i;
+			n.parent = dernier;
+			dernier = n;
+		}
+		Noeud lu = JSON.roundTrip(dernier);
+		for (int i = 19_999; i >= 0; i--) {
+			assertEquals("p" + i, lu.id);
+			assertEquals(i, lu.entier);
+			lu = lu.parent;
+		}
+		assertEquals(null, lu);
+	}
+
+	@Test
 	void binaireAppelsSuccessifs() throws Exception {
 		// les tables sont réutilisées d'un appel à l'autre sur un même thread : aucun état ne doit fuir,
 		// y compris après un flux tronqué

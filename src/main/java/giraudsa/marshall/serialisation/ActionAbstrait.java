@@ -85,6 +85,14 @@ public abstract class ActionAbstrait<T> {
 		action.marshall(marshaller, value, fieldInformations);
 	}
 
+	/** Sérialise la valeur tout de suite (écriture récursive des formats texte). */
+	protected void marshallDirect(final Marshaller marshaller, final Object value,
+			final FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException,
+			InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException,
+			MarshallExeption {
+		marshaller.marshall(value, fieldInformations);
+	}
+
 	/** Comportement qui sérialisera la valeur ; action peut être null (elle est alors cherchée à l'évaluation). */
 	protected Comportement comportementMarshallValue(final ActionAbstrait<?> action, final Object value,
 			final FieldInformations fieldInformations) {

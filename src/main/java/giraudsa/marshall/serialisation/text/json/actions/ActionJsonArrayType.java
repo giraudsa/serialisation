@@ -53,6 +53,13 @@ public class ActionJsonArrayType extends ActionJson<Object> {
 			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
 		final Type genericType = obj.getClass().getComponentType();
 		final FakeChamp fakeChamp = new FakeChamp(null, genericType, fi.getRelation(), fi.getAnnotations());
+		if (ecritureDirecte(marshaller)) {
+			for (int i = 0; i < Array.getLength(obj); ++i) {
+				ecritDirect(marshaller, Array.get(obj, i), fakeChamp, ecrisSeparateur);
+				ecrisSeparateur = true;
+			}
+			return;
+		}
 		final Deque<Comportement> tmp = new ArrayDeque<>();
 		for (int i = 0; i < Array.getLength(obj); ++i) {
 			tmp.push(traiteChamp(marshaller, Array.get(obj, i), fakeChamp, ecrisSeparateur));

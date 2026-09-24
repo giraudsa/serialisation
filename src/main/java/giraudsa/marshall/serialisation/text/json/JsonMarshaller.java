@@ -57,6 +57,7 @@ import giraudsa.marshall.strategie.StrategieSerialisationComplete;
 import utils.ConfigurationMarshalling;
 import utils.Constants;
 import utils.EntityManager;
+import utils.TypeExtension;
 import utils.io.SortieTexte;
 
 public class JsonMarshaller extends TextMarshaller {
@@ -159,6 +160,55 @@ public class JsonMarshaller extends TextMarshaller {
 	final boolean writeType;
 
 	// ///CONSTRUCTEUR
+	/**
+	 * Au-delà de cette profondeur de récursion, les valeurs sont mises sur la pile au lieu d'être écrites par un
+	 * appel récursif : pas de débordement de pile sur un graphe profond.
+	 */
+	static final int RECURSION_MAX = 200;
+	/** nombre d'écritures récursives d'objets imbriquées en cours. */
+	int recursion;
+
+	/** Évalue les comportements empilés au-dessus de base (dans l'ordre), y compris ceux qu'ils empilent. */
+	void videPileJusqua(final int base)
+			throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
+			IOException, NotImplementedSerializeException, MarshallExeption {
+		while (aFaire.size() > base)
+			deserialisePile();
+	}
+
+	int hauteurPile() {
+		return aFaire.size();
+	}
+
+	/** action de chaque classe, résolue une fois (ClassValue est plus rapide qu'une map concurrente). */
+	private static final ClassValue<ActionAbstrait<?>> ACTIONS = new ClassValue<>() {
+		@Override
+		protected ActionAbstrait<?> computeValue(final Class<?> type) {
+			final ActionAbstrait<?> action = dicoTypeToAction.get(type);
+			if (action != null)
+				return action;
+			try {
+				return choisiAction(dicoTypeToAction, type);
+			} catch (final NotImplementedSerializeException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+	};
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	protected <T> ActionAbstrait getAction(final T obj) throws NotImplementedSerializeException {
+		if (obj == null)
+			return dicoTypeToAction.get(void.class);
+		try {
+			return ACTIONS.get(TypeExtension.getClasseASerialiser(obj));
+		} catch (final IllegalStateException e) {
+			if (e.getCause() instanceof NotImplementedSerializeException)
+				throw (NotImplementedSerializeException) e.getCause();
+			throw e;
+		}
+	}
+
 	private JsonMarshaller(final Writer output, final StrategieDeSerialisation strategie,
 			final EntityManager entityManager, final boolean writeType) throws IOException {
 		super(output, ConfigurationMarshalling.getDatFormatJson(), strategie, entityManager);

@@ -62,6 +62,13 @@ public class ActionJsonCollectionType extends ActionJson<Collection> {
 		if (types != null && types.length > 0)
 			genericType = types[0];
 		final FakeChamp fakeChamp = new FakeChamp(null, genericType, fi.getRelation(), fi.getAnnotations());
+		if (ecritureDirecte(marshaller)) {
+			for (final Object value : obj) {
+				ecritDirect(marshaller, value, fakeChamp, ecrisSeparateur);
+				ecrisSeparateur = true;
+			}
+			return;
+		}
 
 		final Deque<Comportement> tmp = new ArrayDeque<>();
 		for (final Object value : obj) {

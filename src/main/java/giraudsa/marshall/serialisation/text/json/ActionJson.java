@@ -133,9 +133,42 @@ public abstract class ActionJson<T> extends ActionText<T> {
 			throws MarshallExeption {
 		final String nomClef = fieldInformations.getName();
 		final boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
+		final JsonMarshaller jsonMarshaller = getJsonMarshaller(marshaller);
+		if (jsonMarshaller.recursion < JsonMarshaller.RECURSION_MAX) {
+			// écriture récursive : mêmes étapes que les deux comportements empilés ci-dessous, sur place ; les
+			// valeurs éventuellement empilées au-delà de la limite sont écrites avant la fermeture
+			final int base = jsonMarshaller.hauteurPile();
+			jsonMarshaller.recursion++;
+			try {
+				new ComportementEcritClefOuvreAccoladeEtEcrisValeur(nomClef, typeDevinable, fieldInformations, obj)
+						.evalue(marshaller);
+				jsonMarshaller.videPileJusqua(base);
+				new ComportementFermeAccolade(obj, typeDevinable).evalue(marshaller);
+			} catch (IOException | IllegalAccessException | InstantiationException | InvocationTargetException
+					| NoSuchMethodException | NotImplementedSerializeException e) {
+				throw new MarshallExeption(e);
+			} finally {
+				jsonMarshaller.recursion--;
+			}
+			return;
+		}
 		pushComportement(marshaller, new ComportementFermeAccolade(obj, typeDevinable));
 		pushComportement(marshaller,
 				new ComportementEcritClefOuvreAccoladeEtEcrisValeur(nomClef, typeDevinable, fieldInformations, obj));
+	}
+
+	/** @return true si les valeurs peuvent être écrites sur place (récursion), plutôt qu'empilées. */
+	protected boolean ecritureDirecte(final Marshaller marshaller) {
+		return getJsonMarshaller(marshaller).recursion < JsonMarshaller.RECURSION_MAX;
+	}
+
+	/** Écrit la valeur sur place (séparateur éventuel compris) : même effet que ComportementMarshallValue. */
+	protected void ecritDirect(final Marshaller marshaller, final Object valeur, final FieldInformations champ,
+			final boolean separateur) throws IOException, InstantiationException, IllegalAccessException,
+			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
+		if (separateur)
+			writeSeparator(marshaller);
+		marshallDirect(marshaller, valeur, champ);
 	}
 
 	protected void ouvreAccolade(final Marshaller marshaller) throws IOException {
