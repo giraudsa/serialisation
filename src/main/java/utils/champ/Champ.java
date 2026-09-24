@@ -98,6 +98,32 @@ public class Champ implements Comparable<Champ>, FieldInformations {
 		return info == null ? null : acces();
 	}
 
+	/** "nom": en octets Latin-1 (écriture JSON), calculé à la première demande ; vide si le nom n'est pas Latin-1. */
+	private byte[] clefJson;
+
+	/** @return "nom": en octets Latin-1, ou null si le nom a des caractères au-delà de U+00FF. */
+	public byte[] getClefJson() {
+		byte[] c = clefJson;
+		if (c == null) {
+			c = new byte[name.length() + 3];
+			c[0] = '"';
+			for (int i = 0; i < name.length(); i++) {
+				final char x = name.charAt(i);
+				if (x > 0xFF) {
+					c = new byte[0];
+					break;
+				}
+				c[i + 1] = (byte) x;
+			}
+			if (c.length > 0) {
+				c[c.length - 2] = '"';
+				c[c.length - 1] = ':';
+			}
+			clefJson = c; // course bénigne : deux tableaux identiques
+		}
+		return c.length == 0 ? null : c;
+	}
+
 	private AccesChamp acces() {
 		AccesChamp a = acces;
 		if (a == null) {

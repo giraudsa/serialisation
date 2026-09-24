@@ -59,7 +59,7 @@ public class ActionJsonObject extends ActionJson<Object> {
 			if (aTraiter(valeur, champ)) {
 				if (virgule)
 					writeSeparator(marshaller);
-				ecritClef(marshaller, champ.getName());
+				ecritClef(marshaller, champ);
 				writeWithQuote(marshaller, valeur.toString());
 			}
 			return true;
@@ -103,7 +103,7 @@ public class ActionJsonObject extends ActionJson<Object> {
 			throws IOException {
 		if (virgule)
 			writeSeparator(marshaller);
-		ecritClef(marshaller, champ.getName());
+		ecritClef(marshaller, champ);
 	}
 
 	@Override

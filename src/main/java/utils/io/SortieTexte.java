@@ -239,6 +239,17 @@ public final class SortieTexte extends Writer {
 		buffer[position++] = '"';
 	}
 
+	/** Écrit une clé JSON déjà mise en octets Latin-1 ("nom":, voir Champ.getClefJson). */
+	public void writeClef(final byte[] clef, final String nom) throws IOException {
+		if (octets == null) {
+			writeClef(nom);
+			return;
+		}
+		assure(clef.length);
+		System.arraycopy(clef, 0, octets, position, clef.length);
+		position += clef.length;
+	}
+
 	/** Écrit une clé JSON : "nom": d'un seul tenant. */
 	public void writeClef(final String nom) throws IOException {
 		final int n = nom.length();

@@ -58,6 +58,7 @@ import utils.ConfigurationMarshalling;
 import utils.Constants;
 import utils.EntityManager;
 import utils.TypeExtension;
+import utils.champ.Champ;
 import utils.io.DatesIso;
 import utils.io.SortieTexte;
 
@@ -236,6 +237,18 @@ public class JsonMarshaller extends TextMarshaller {
 			aLaLigne();
 		if (nomClef != null)
 			writer.writeClef(nomClef);
+	}
+
+	/** clé d'un champ : ses octets préparés quand c'est possible. */
+	protected void ecritClef(final Champ champ) throws IOException {
+		final byte[] clef = champ.getClefJson();
+		if (clef == null) {
+			ecritClef(champ.getName());
+			return;
+		}
+		if (isPrettyPrint())
+			aLaLigne();
+		writer.writeClef(clef, champ.getName());
 	}
 
 	protected void ecritType(final Class<?> type) throws IOException {

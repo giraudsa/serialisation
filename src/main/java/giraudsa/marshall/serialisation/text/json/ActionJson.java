@@ -11,6 +11,7 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.ActionText;
 import giraudsa.marshall.serialisation.text.TableEchappement;
+import utils.champ.Champ;
 import utils.champ.FieldInformations;
 
 public abstract class ActionJson<T> extends ActionText<T> {
@@ -96,6 +97,10 @@ public abstract class ActionJson<T> extends ActionText<T> {
 
 	protected void ecritClef(final Marshaller marshaller, final String clef) throws IOException {
 		getJsonMarshaller(marshaller).ecritClef(clef);
+	}
+
+	protected void ecritClef(final Marshaller marshaller, final Champ champ) throws IOException {
+		getJsonMarshaller(marshaller).ecritClef(champ);
 	}
 
 	protected void ecritType(final Marshaller marshaller, final T obj) throws IOException {
