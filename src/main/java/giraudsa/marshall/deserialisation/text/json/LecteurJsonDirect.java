@@ -144,6 +144,13 @@ final class LecteurJsonDirect {
 		private Class<?> classe2;
 		private FieldInformations champ2;
 		private Class<?> attendu2;
+		/** clé qui a suivi celle-ci dans un objet de la classe (deux dernières classes). */
+		private Class<?> classeSuite1;
+		private Clef suite1;
+		private Class<?> classeSuite2;
+		private Clef suite2;
+		/** classe nommée par ce texte, quand il est la valeur d'une clé de type. */
+		private Class<?> typeNomme;
 
 		private Clef(final String nom, final byte[] octets, final int hash) {
 			this.nom = nom;
@@ -159,6 +166,25 @@ final class LecteurJsonDirect {
 				nature = CLEF_ID;
 			else
 				nature = CLEF_NORMALE;
+		}
+
+		private Clef suitePrevue(final Class<?> classe) {
+			return classe == classeSuite1 ? suite1 : classe == classeSuite2 ? suite2 : null;
+		}
+
+		private void apprendSuite(final Class<?> classe, final Clef suite) {
+			if (suite.octets == null)
+				return;
+			if (classe == classeSuite1)
+				suite1 = suite;
+			else if (classe == classeSuite2)
+				suite2 = suite;
+			else {
+				classeSuite2 = classeSuite1;
+				suite2 = suite1;
+				classeSuite1 = classe;
+				suite1 = suite;
+			}
 		}
 
 		private void memorise(final Class<?> classe, final FieldInformations champ, final Class<?> attendu) {
@@ -195,8 +221,7 @@ final class LecteurJsonDirect {
 			int i = (hash ^ hash >>> 16) & masque;
 			Clef e;
 			while ((e = t[i]) != null) {
-				if (e.hash == hash && e.octets.length == taille
-						&& Arrays.equals(e.octets, 0, taille, b, debut, fin))
+				if (e.hash == hash && e.octets.length == taille && egaux(e.octets, b, debut))
 					return e;
 				i = i + 1 & masque;
 			}
@@ -211,6 +236,13 @@ final class LecteurJsonDirect {
 				t[i] = clef;
 			nb++;
 			return clef;
+		}
+
+		private static boolean egaux(final byte[] o, final byte[] b, final int debut) {
+			for (int k = 0; k < o.length; k++)
+				if (o[k] != b[debut + k])
+					return false;
+			return true;
 		}
 
 		private void agrandit() {
@@ -436,8 +468,46 @@ final class LecteurJsonDirect {
 
 	/** lit une clé et le deux-points qui la suit. */
 	private Clef litClef() {
+		final Clef clef = litNom(null);
+		attend(':');
+		return clef;
+	}
+
+	/**
+	 * lit une clé et le deux-points qui la suit, la clé prévue (celle qui a suivi la précédente dans cette classe)
+	 * étant vérifiée d'abord ; la clé lue devient la suite prévue.
+	 */
+	private Clef litClef(final Clef precedente, final Class<?> classe) {
+		final Clef clef = litNom(precedente.suitePrevue(classe));
+		attend(':');
+		precedente.apprendSuite(classe, clef);
+		return clef;
+	}
+
+	/** @return true si le texte entre guillemets en p est celui de la clé. */
+	private boolean correspond(final Clef clef) {
+		final byte[] o = clef.octets;
+		final int debut = p + 1;
+		final int fin = debut + o.length;
+		if (fin >= n || c[fin] != '"')
+			return false;
+		for (int k = 0; k < o.length; k++)
+			if (o[k] != c[debut + k])
+				return false;
+		return true;
+	}
+
+	/**
+	 * lit un texte entre guillemets comme clé : retrouvé d'après ses octets (ou égal à la clé prévue), sinon (texte
+	 * échappé ou non ASCII) une clé non gardée.
+	 */
+	private Clef litNom(final Clef prevue) {
 		if (suivant() != '"')
 			throw ABANDON;
+		if (prevue != null && correspond(prevue)) {
+			p += prevue.octets.length + 2;
+			return prevue;
+		}
 		final byte[] b = c;
 		final int debut = ++p;
 		int i = debut;
@@ -448,9 +518,7 @@ final class LecteurJsonDirect {
 				break;
 			if (x == '\\' || x < 0) { // clé échappée ou non ASCII : non gardée
 				p = debut - 1;
-				final String nom = litChaine();
-				attend(':');
-				return new Clef(nom, null, 0);
+				return new Clef(litChaine(), null, 0);
 			}
 			h = 31 * h + x;
 			i++;
@@ -459,7 +527,6 @@ final class LecteurJsonDirect {
 			throw ABANDON;
 		final Clef clef = clefs.cherche(b, debut, i, h);
 		p = i + 1;
-		attend(':');
 		return clef;
 	}
 
@@ -538,6 +605,8 @@ final class LecteurJsonDirect {
 				if (rapide != null)
 					return rapide;
 			}
+			if (type == BigDecimal.class) // même résultat que le constructeur (String), sans réflexion
+				return new BigDecimal(texte(chaine, debut, fin));
 			return ActionJsonSimpleComportement.construit(type, texte(chaine, debut, fin));
 		case DATE:
 			return date(type, texte(chaine, debut, fin));
@@ -573,12 +642,44 @@ final class LecteurJsonDirect {
 				return Double.valueOf(v);
 		} else if (type == Float.class)
 			return floatRapide(debut, fin);
+		else if (type == BigDecimal.class)
+			return decimalExact(debut, fin);
 		else if (type == Boolean.class) {
 			if (fin - debut == 4 && c[debut] == 't' && c[debut + 1] == 'r' && c[debut + 2] == 'u'
 					&& c[debut + 3] == 'e')
 				return Boolean.TRUE;
 		}
 		return null;
+	}
+
+	/**
+	 * [-]chiffres[.chiffres], au plus 18 chiffres : valeur non mise à l'échelle et échelle, comme le constructeur
+	 * BigDecimal(String).
+	 */
+	private Object decimalExact(final int debut, final int fin) {
+		int i = debut;
+		final boolean negatif = c[i] == '-';
+		if (negatif)
+			i++;
+		long v = 0;
+		int chiffres = 0;
+		int echelle = -1;
+		for (; i < fin; i++) {
+			final int d = c[i] - '0';
+			if (d >= 0 && d <= 9) {
+				if (++chiffres > 18)
+					return null;
+				v = v * 10 + d;
+				if (echelle >= 0)
+					echelle++;
+			} else if (c[i] == '.' && echelle < 0 && chiffres > 0)
+				echelle = 0;
+			else
+				return null;
+		}
+		if (chiffres == 0 || echelle == 0)
+			return null;
+		return BigDecimal.valueOf(negatif ? -v : v, echelle < 0 ? 0 : echelle);
 	}
 
 	/** [-]chiffres[.chiffres], mantisse d'au plus 2^24 et au plus 10 décimales (exacts en float). */
@@ -663,17 +764,17 @@ final class LecteurJsonDirect {
 		Clef clef = litClef();
 		final Class<?> type;
 		if (isClefType(clef)) {
-			if (suivant() != '"')
-				throw ABANDON;
-			type = JsonUnmarshaller.classeDepuisNom(litChaine());
+			final Clef nomType = litNom(null);
+			type = nomType.typeNomme != null ? nomType.typeNomme : JsonUnmarshaller.classeDepuisNom(nomType.nom);
 			if (type.isAssignableFrom(String.class))
 				throw ABANDON;
+			nomType.typeNomme = type;
 			final byte s = suivant();
 			p++;
 			if (s == '}')
 				clef = null;
 			else if (s == ',') {
-				clef = litClef();
+				clef = litClef(clef, type);
 				if (isClefType(clef))
 					throw ABANDON;
 			} else
@@ -708,6 +809,20 @@ final class LecteurJsonDirect {
 		return o;
 	}
 
+	/** passe à la clé suivante de l'objet de la classe donnée, prévue d'après la précédente : null en fin d'objet. */
+	private Clef clefSuivante(final Clef precedente, final Class<?> classe) {
+		final byte s = suivant();
+		p++;
+		if (s == '}')
+			return null;
+		if (s != ',')
+			throw ABANDON;
+		final Clef clef = litClef(precedente, classe);
+		if (isClefType(clef))
+			throw ABANDON;
+		return clef;
+	}
+
 	/** passe à la clé suivante de l'objet en cours : null en fin d'objet. */
 	private Clef clefSuivante() {
 		final byte s = suivant();
@@ -732,7 +847,7 @@ final class LecteurJsonDirect {
 		Object[] enAttente = null;
 		int nbEnAttente = 0;
 		final Map<Object, UUID> fakeIds = u.fakeIds();
-		for (; clef != null; clef = clefSuivante()) {
+		for (; clef != null; clef = clefSuivante(clef, type)) {
 			FieldInformations champ;
 			final Class<?> attendu;
 			if (clef.classe1 == type) {

@@ -303,6 +303,7 @@ class LecteurJsonDirectTest {
 		@Relation(type = TypeRelation.COMPOSITION)
 		List<Double> liste = new ArrayList<>();
 		String texte;
+		BigDecimal montant;
 	}
 
 	@Test
@@ -313,7 +314,7 @@ class LecteurJsonDirectTest {
 				"123456.7890123", "16777216", "16777217", "3.4028235E38", "NaN", "-Infinity", "1_0", "+1" };
 		final String type = Nombres.class.getName();
 		for (final String d : decimaux)
-			for (final String champ : new String[] { "d", "f", "boiteD", "boiteF", "l", "i" })
+			for (final String champ : new String[] { "d", "f", "boiteD", "boiteF", "l", "i", "montant" })
 				compare("{\"__type\":\"" + type + "\",\"id\":\"n\",\"" + champ + "\":" + d + "}", false);
 		for (int k = 0; k < 300; k++) {
 			final Nombres nb = new Nombres();
@@ -325,6 +326,7 @@ class LecteurJsonDirectTest {
 			nb.i = r.nextInt() >> k % 32;
 			nb.liste.add(nb.d);
 			nb.liste.add((double) nb.f);
+			nb.montant = BigDecimal.valueOf(r.nextLong() >> k % 64, k % 25 - 5);
 			final StringBuilder sb = new StringBuilder();
 			for (int j = 0; j < 10; j++)
 				sb.append((char) (k % 2 == 0 ? r.nextInt(0x80) : r.nextInt(0x3000)));
@@ -340,6 +342,7 @@ class LecteurJsonDirectTest {
 			assertEquals(nb.l, lu.l);
 			assertEquals(nb.i, lu.i);
 			assertEquals(nb.texte, lu.texte);
+			assertEquals(nb.montant, lu.montant); // valeur et échelle
 		}
 		// demi-caractère isolé : lecteur historique
 		final Nombres isole = new Nombres();
