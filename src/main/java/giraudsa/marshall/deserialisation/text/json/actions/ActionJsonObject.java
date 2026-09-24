@@ -1,8 +1,7 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,25 +23,48 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 		return new ActionJsonObject<>(Object.class, null);
 	}
 
-	private final Map<String, Object> dicoNomChampToValue;
+	/**
+	 * valeurs lues, dans l'ordre (une clé répétée : la dernière valeur l'emporte, comme avec une map), avec le champ
+	 * résolu et le type pour lequel il l'a été
+	 */
+	private final List<String> noms = new ArrayList<>();
+	private final List<Object> valeurs = new ArrayList<>();
+	private final List<FieldInformations> champs = new ArrayList<>();
+	private final List<Class<?>> typesDesChamps = new ArrayList<>();
+	/** dernier champ résolu : le même nom (même instance) est demandé pour le type, les informations et la valeur. */
+	private String dernierNom;
+	private Class<?> dernierType;
+	private FieldInformations dernierChamp;
 
 	private ActionJsonObject(final Class<T> type, final JsonUnmarshaller<?> jsonUnmarshaller) {
 		super(type, jsonUnmarshaller);
-		dicoNomChampToValue = new HashMap<>();
+	}
+
+	private FieldInformations champ(final String nom) {
+		if (nom == dernierNom && type == dernierType) // NOSONAR : comparaison d'identité voulue
+			return dernierChamp;
+		final FieldInformations champ = TypeExtension.getChampByName(type, nom);
+		dernierNom = nom;
+		dernierType = type;
+		dernierChamp = champ;
+		return champ;
 	}
 
 	@Override
 	protected void construitObjet()
 			throws EntityManagerImplementationException, InstanciationException, SetValueException {
-		for (final Entry<String, Object> entry : dicoNomChampToValue.entrySet()) {
-			final FieldInformations champ = TypeExtension.getChampByName(type, entry.getKey());
-			champ.set(obj, entry.getValue(), getDicoObjToFakeId());
+		final int n = noms.size();
+		for (int i = 0; i < n; i++) {
+			// le type a pu changer depuis (id connu d'un objet d'une sous-classe) : le champ est alors recherché
+			final FieldInformations champ = typesDesChamps.get(i) == type ? champs.get(i)
+					: TypeExtension.getChampByName(type, noms.get(i));
+			champ.set(obj, valeurs.get(i), getDicoObjToFakeId());
 		}
 	}
 
 	@Override
 	protected FieldInformations getFieldInformationSpecialise(final String nomAttribut) {
-		return TypeExtension.getChampByName(type, nomAttribut);
+		return champ(nomAttribut);
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -53,7 +75,7 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 
 	@Override
 	protected Class<?> getTypeAttribute(final String nomAttribut) {
-		final FieldInformations champ = TypeExtension.getChampByName(type, nomAttribut);
+		final FieldInformations champ = champ(nomAttribut);
 		if (champ.isSimple())
 			return TypeExtension.getTypeEnveloppe(champ.getValueType());// on renvoie Integer à la place de int, Double
 																		// au lieu de double, etc...
@@ -64,7 +86,10 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 	protected <W> void integreObjet(final String nomAttribut, final W objet)
 			throws EntityManagerImplementationException, InstanciationException {
 		preciseLeTypeSiIdConnu(nomAttribut, objet != null ? objet.toString() : null);
-		dicoNomChampToValue.put(nomAttribut, objet);
+		noms.add(nomAttribut);
+		valeurs.add(objet);
+		champs.add(champ(nomAttribut));
+		typesDesChamps.add(type);
 	}
 
 	@Override
