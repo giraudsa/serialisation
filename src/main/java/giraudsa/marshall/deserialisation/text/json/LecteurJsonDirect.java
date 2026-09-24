@@ -32,6 +32,7 @@ import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
 import utils.champ.NullChamp;
 import utils.io.DatesIso;
+import utils.io.Decimaux;
 
 /**
  * Lecture directe d'un JSON sans gestionnaire d'entités : analyse stricte du texte entier (en octets) et construction
@@ -113,14 +114,10 @@ final class LecteurJsonDirect {
 		}
 	};
 
-	/** puissances de dix exactes en double (jusqu'à 10^22) et en float (jusqu'à 10^10). */
-	private static final double[] PUISSANCES_DOUBLE = new double[23];
+	/** puissances de dix exactes en float (jusqu'à 10^10). */
 	private static final float[] PUISSANCES_FLOAT = new float[11];
 
 	static {
-		double d = 1;
-		for (int i = 0; i < PUISSANCES_DOUBLE.length; i++, d *= 10)
-			PUISSANCES_DOUBLE[i] = d;
 		float f = 1;
 		for (int i = 0; i < PUISSANCES_FLOAT.length; i++, f *= 10)
 			PUISSANCES_FLOAT[i] = f;
@@ -570,8 +567,12 @@ final class LecteurJsonDirect {
 			final long v = entier(debut, fin, 18);
 			if (v != Long.MIN_VALUE)
 				return Long.valueOf(v);
-		} else if (type == Double.class || type == Float.class)
-			return decimalRapide(type == Float.class, debut, fin);
+		} else if (type == Double.class) {
+			final double v = Decimaux.lit(c, debut, fin);
+			if (v == v) // INVALIDE (NaN) : lecture par valueOf
+				return Double.valueOf(v);
+		} else if (type == Float.class)
+			return floatRapide(debut, fin);
 		else if (type == Boolean.class) {
 			if (fin - debut == 4 && c[debut] == 't' && c[debut + 1] == 'r' && c[debut + 2] == 'u'
 					&& c[debut + 3] == 'e')
@@ -580,8 +581,8 @@ final class LecteurJsonDirect {
 		return null;
 	}
 
-	/** [-]chiffres[.chiffres], mantisse d'au plus 15 chiffres (7 pour un float). */
-	private Object decimalRapide(final boolean simple, final int debut, final int fin) {
+	/** [-]chiffres[.chiffres], mantisse d'au plus 2^24 et au plus 10 décimales (exacts en float). */
+	private Object floatRapide(final int debut, final int fin) {
 		int i = debut;
 		final boolean negatif = c[i] == '-';
 		if (negatif)
@@ -605,14 +606,10 @@ final class LecteurJsonDirect {
 		if (chiffres == 0 || decimales == 0)
 			return null;
 		final int k = decimales < 0 ? 0 : decimales;
-		if (simple) {
-			if (m > 1 << 24 || k >= PUISSANCES_FLOAT.length)
-				return null;
-			final float f = (float) m / PUISSANCES_FLOAT[k];
-			return Float.valueOf(negatif ? -f : f);
-		}
-		final double v = m / PUISSANCES_DOUBLE[k];
-		return Double.valueOf(negatif ? -v : v);
+		if (m > 1 << 24 || k >= PUISSANCES_FLOAT.length)
+			return null;
+		final float f = (float) m / PUISSANCES_FLOAT[k];
+		return Float.valueOf(negatif ? -f : f);
 	}
 
 	private String texte(final String chaine, final int debut, final int fin) {
