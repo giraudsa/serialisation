@@ -78,6 +78,19 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		}
 	};
 
+	/** @return le prototype d'action de la classe (sans l'instancier). */
+	private static ActionAbstrait<?> prototype(final Class<?> type) throws NotImplementedSerializeException {
+		if (type == null)
+			return null;
+		try {
+			return ACTIONS.get(type);
+		} catch (final IllegalStateException e) {
+			if (e.getCause() instanceof NotImplementedSerializeException)
+				throw (NotImplementedSerializeException) e.getCause();
+			throw e;
+		}
+	}
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	protected <U> ActionAbstrait getAction(final Class<U> type) throws NotImplementedSerializeException {
@@ -264,6 +277,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	protected void setValeur(final String valeur, final Class<?> typeGuess)
 			throws EntityManagerImplementationException, InstanciationException, ClassNotFoundException,
 			NotImplementedSerializeException, IllegalAccessException, SetValueException {
@@ -275,6 +289,19 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		Class<?> typeAction = typeGuess;
 		if (typeGuess != Void.class && type != null && !type.isAssignableFrom(typeGuess))
 			typeAction = type;
+		if (!waitingForType && ActionJsonSimpleComportement.estActionDe(prototype(typeAction))) {
+			// valeur simple (nombre, booléen, chaîne...) : même résultat que l'action empilée, remplie puis intégrée
+			// par integreObject, sans l'allouer ni l'empiler
+			final Object valeurLue = ActionJsonSimpleComportement.construit(typeAction, valeur);
+			final String nom = clefEnCours;
+			clefEnCours = null;
+			waitingForAction = false;
+			if (pileAction.isEmpty())
+				obj = (T) valeurLue;
+			else
+				integreObjet(getActionEnCours(), nom, valeurLue);
+			return;
+		}
 		final ActionJson<?> action = (ActionJson<?>) getAction(typeAction);
 		setNom(action, clefEnCours);
 		setFieldInformation(action);

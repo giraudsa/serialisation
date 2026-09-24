@@ -51,17 +51,26 @@ public class ActionJsonSimpleComportement<T> extends ActionJson<T> {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void rempliData(final String donnees) throws InstanciationException {
+		obj = (T) construit(type, donnees);
+	}
+
+	/** @return true si la classe est lue par cette action même (et non par une action dérivée : date, enum...). */
+	public static boolean estActionDe(final ActionAbstrait<?> prototype) {
+		return prototype != null && prototype.getClass() == ActionJsonSimpleComportement.class;
+	}
+
+	/** Construit la valeur de type donné à partir de sa chaîne. */
+	public static Object construit(final Class<?> type, final String donnees) throws InstanciationException {
 		if (type == Character.class) { // pas de constructeur Character(String)
 			if (donnees.length() != 1)
 				throw new InstanciationException("un caractère est attendu au lieu de \"" + donnees + "\"");
-			obj = (T) Character.valueOf(donnees.charAt(0));
-			return;
+			return Character.valueOf(donnees.charAt(0));
 		}
 		final Function<String, Object> constructeur = CONSTRUCTEURS.get(type);
 		try {
 			if (constructeur == null)
 				throw new NoSuchMethodException(type.getName() + ".<init>(String)");
-			obj = (T) constructeur.apply(donnees);
+			return constructeur.apply(donnees);
 		} catch (NoSuchMethodException | RuntimeException e) {
 			final Throwable cause = e instanceof ConstructionImpossible ? e.getCause() : e;
 			throw new InstanciationException(
