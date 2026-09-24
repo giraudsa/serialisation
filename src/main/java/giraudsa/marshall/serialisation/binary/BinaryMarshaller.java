@@ -16,8 +16,10 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Currency;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.RandomAccess;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -286,8 +288,15 @@ public class BinaryMarshaller extends Marshaller {
 					final Collection collection = (Collection) valeur;
 					final FakeChamp element = champ.getChampParametre(FieldInformations.ELEMENT);
 					output.writeVarInt(collection.size());
-					for (final Object e : collection)
-						ActionBinary.ecritOuDiffere(this, e, element);
+					if (collection instanceof List && collection instanceof RandomAccess) {
+						// liste à accès direct : par index, sans itérateur
+						final List liste = (List) collection;
+						final int taille = liste.size();
+						for (int i = 0; i < taille; i++)
+							ActionBinary.ecritOuDiffere(this, liste.get(i), element);
+					} else
+						for (final Object e : collection)
+							ActionBinary.ecritOuDiffere(this, e, element);
 				}
 				empileDifferes();
 				videPileJusqua(base);
