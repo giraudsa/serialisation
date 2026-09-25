@@ -268,17 +268,9 @@ public class JsonMarshaller extends TextMarshaller {
 		return isDejaVu(o);
 	}
 
-	boolean totalementSerialise(final Object o) {
-		return isDejaTotalementSerialise(o);
-	}
-
-	/** @return true si l'objet était déjà totalement sérialisé. */
-	boolean marqueDejaVu(final Object o) {
-		return marqueVu(o);
-	}
-
-	void marqueTotalementSerialise(final Object o) {
-		setDejaTotalementSerialise(o);
+	/** @return true si l'objet était déjà totalement sérialisé (voir Marshaller.marqueVu). */
+	boolean marqueDejaVu(final Object o, final boolean tout) {
+		return marqueVu(o, tout);
 	}
 
 	boolean serialiseTout(final FieldInformations fi) {

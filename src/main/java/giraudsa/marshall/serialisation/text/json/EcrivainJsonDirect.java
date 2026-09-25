@@ -229,8 +229,10 @@ public final class EcrivainJsonDirect {
 			virgule = true;
 		}
 		final TypeExtension.ChampsDuType champsDuType = TypeExtension.getChampsDuType(v.getClass());
-		// (la stratégie ne dépend que de la profondeur et du champ : l'ordre avec le marquage est indifférent)
-		final boolean serialiseTout = !m.marqueDejaVu(v) && m.serialiseTout(fi);
+		// la stratégie ne dépend que de la profondeur et du champ : consultée d'abord, l'objet est ensuite marqué déjà vu
+		// et, si tout doit être écrit, totalement sérialisé (sans effet s'il l'était déjà), en une recherche
+		final boolean strategieTout = m.serialiseTout(fi);
+		final boolean serialiseTout = !m.marqueDejaVu(v, strategieTout) && strategieTout;
 		profondeur++;
 		if (!serialiseTout) {
 			final Champ champId = champsDuType.getChampId();
@@ -238,7 +240,6 @@ public final class EcrivainJsonDirect {
 			if (aTraiter(id, champId))
 				ecrit(id, champId, virgule);
 		} else {
-			m.marqueTotalementSerialise(v);
 			final Champ[] champs = champsDuType.getTableauChamps();
 			final EcrivainChamps ecrivain = ecrivainGenere(v.getClass(), champsDuType);
 			if (ecrivain != null) {
