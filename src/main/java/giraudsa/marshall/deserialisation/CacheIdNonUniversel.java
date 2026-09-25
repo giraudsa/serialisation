@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
+import giraudsa.marshall.exception.InstanciationException;
+
 /**
  * Cache des objets par (id, classe exacte). Une map d'id par classe, sans clé composée allouée à chaque accès ; la
  * dernière classe consultée est gardée (les accès se suivent souvent pour une même classe).
@@ -27,6 +29,31 @@ public class CacheIdNonUniversel implements CacheObject {
 		derniereClasse = clazz;
 		derniereTable = table;
 		return table;
+	}
+
+	/** Création d'un objet absent du cache. */
+	public interface Creation {
+		Object cree(Class<?> type) throws InstanciationException;
+	}
+
+	/**
+	 * L'objet de cette classe et de cet id, créé et gardé s'il est absent (même effet que getObject puis, si absent,
+	 * création et addObject, en un seul accès à la table).
+	 */
+	public Object obtient(final Class<?> clazz, final String id, final Creation creation)
+			throws InstanciationException {
+		final Map<String, Object> table = table(clazz, true);
+		final Object present = table.get(id);
+		if (present != null)
+			return present;
+		final Object objet = creation.cree(clazz);
+		if (objet != null) {
+			if (objet.getClass() == clazz)
+				table.put(id, objet);
+			else
+				addObject(objet, id);
+		}
+		return objet;
 	}
 
 	@Override

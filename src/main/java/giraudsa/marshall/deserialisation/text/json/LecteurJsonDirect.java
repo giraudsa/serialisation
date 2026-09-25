@@ -404,6 +404,8 @@ final class LecteurJsonDirect {
 	private void saute() {
 		while (p < n) {
 			final byte x = c[p];
+			if (x > ' ') // cas courant : caractère significatif
+				return;
 			if (x == ' ' || x == '\n')
 				p++;
 			else if (x == '\r' && p + 1 < n && c[p + 1] == '\n')

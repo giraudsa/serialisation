@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import giraudsa.marshall.deserialisation.ActionAbstrait;
+import giraudsa.marshall.deserialisation.CacheIdNonUniversel;
 import giraudsa.marshall.deserialisation.text.ActionText;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonArrayType;
@@ -230,6 +231,8 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 
 	Object objetParId(final String id, final Class<?> type)
 			throws EntityManagerImplementationException, InstanciationException {
+		if (entity == null && cacheObject instanceof CacheIdNonUniversel)
+			return ((CacheIdNonUniversel) cacheObject).obtient(type, id, this::newInstance);
 		return getObject(id, type);
 	}
 
