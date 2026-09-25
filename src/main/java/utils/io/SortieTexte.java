@@ -323,6 +323,29 @@ public final class SortieTexte extends Writer {
 
 	/** Écrit "chaine" entre guillemets, échappée (voir writeEchappe), d'un seul tenant. */
 	public void writeEntreGuillemets(final String s, final String[] remplacements) throws IOException {
+		final byte[] o = octets;
+		if (o != null) {
+			// cas courant en Latin-1 : guillemets et caractères d'un seul tenant, sans rien à remplacer
+			final int n = s.length();
+			assure(n + 2);
+			final int nbRemplacables = remplacements.length;
+			final byte[] t = octets;
+			int p = position;
+			t[p++] = '"';
+			for (int k = 0; k < n; k++) {
+				final char c = s.charAt(k);
+				if (c < nbRemplacables && remplacements[c] != null || c > LATIN1_MAX) {
+					position = p;
+					writeEchappeDepuis(s, k, remplacements);
+					write('"');
+					return;
+				}
+				t[p++] = (byte) c;
+			}
+			t[p++] = '"';
+			position = p;
+			return;
+		}
 		write('"');
 		writeEchappe(s, remplacements);
 		write('"');

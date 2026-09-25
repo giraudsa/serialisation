@@ -178,6 +178,14 @@ public abstract class Marshaller {
 		etats.ou(obj, TOTALEMENT_SERIALISE);
 	}
 
+	/** Marque l'objet déjà vu. @return true s'il était déjà totalement sérialisé (une seule recherche). */
+	protected <T> boolean marqueVu(final T obj) {
+		if (etats == null)
+			etats = prendTable();
+		final int precedent = etats.ou(obj, DEJA_VU);
+		return precedent != IdentiteIntMap.ABSENT && (precedent & TOTALEMENT_SERIALISE) != 0;
+	}
+
 	protected <T> void setDejaVu(final T obj) {
 		if (etats == null)
 			etats = prendTable();
