@@ -5,7 +5,7 @@ import bench.model.Catalogue;
 /** Coût marginal (octets) d'une commande et d'une ligne, par différence de tailles. */
 public final class Tailles {
 	public static void main(final String[] args) throws Exception {
-		for (final String nom : new String[] { "giraudsa-binaire", "kryo", "java-natif" }) {
+		for (final String nom : new String[] { "fidelis-binaire", "kryo", "java-natif" }) {
 			final Codec c = Codec.cree(nom);
 			final int base = Codec.taille(c.encode(Catalogue.genere(1000, 0)));
 			final int doubleCmd = Codec.taille(c.encode(Catalogue.genere(2000, 0)));

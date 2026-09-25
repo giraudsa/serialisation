@@ -27,7 +27,7 @@ import bench.model.Catalogue;
 		"--add-opens=java.base/java.text=ALL-UNNAMED" })
 public class SerialisationBenchmark {
 
-	@Param({ "giraudsa-json", "giraudsa-binaire", "jackson-json", "gson", "fastjson2", "fastjson2-ref", "fory-json",
+	@Param({ "fidelis-json", "fidelis-binaire", "jackson-json", "gson", "fastjson2", "fastjson2-ref", "fory-json",
 			"kryo", "fory", "java-natif" })
 	public String framework;
 

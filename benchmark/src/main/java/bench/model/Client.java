@@ -2,8 +2,8 @@ package bench.model;
 
 import java.io.Serializable;
 
-import giraudsa.marshall.annotations.Relation;
-import giraudsa.marshall.annotations.TypeRelation;
+import io.github.giraudsa.fidelis.annotations.Relation;
+import io.github.giraudsa.fidelis.annotations.TypeRelation;
 
 public class Client implements Serializable {
 	private static final long serialVersionUID = 1L;

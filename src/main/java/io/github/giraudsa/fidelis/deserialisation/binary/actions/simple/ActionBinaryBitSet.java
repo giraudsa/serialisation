@@ -1,0 +1,39 @@
+package io.github.giraudsa.fidelis.deserialisation.binary.actions.simple;
+
+import java.io.IOException;
+import java.util.BitSet;
+
+import io.github.giraudsa.fidelis.deserialisation.ActionAbstrait;
+import io.github.giraudsa.fidelis.deserialisation.Unmarshaller;
+import io.github.giraudsa.fidelis.deserialisation.binary.BinaryUnmarshaller;
+
+@SuppressWarnings("rawtypes")
+public class ActionBinaryBitSet extends ActionBinarySimple<BitSet> {
+	public static ActionAbstrait<BitSet> getInstance() { // NOSONAR
+		return new ActionBinaryBitSet(BitSet.class, null);
+	}
+
+	private ActionBinaryBitSet(final Class<BitSet> type, final BinaryUnmarshaller<?> b) {
+		super(type, b);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <U extends BitSet> ActionAbstrait<U> getNewInstance(final Class<U> type, final Unmarshaller unmarshaller) {
+		return (ActionAbstrait<U>) new ActionBinaryBitSet(BitSet.class, (BinaryUnmarshaller<?>) unmarshaller);
+	}
+
+	@Override
+	protected void initialise() throws IOException {
+		if (isDejaVu())
+			obj = getObjet();
+		else {
+			final int taille = readInt();
+			obj = new BitSet(taille);
+			for (int i = 0; i < taille; i++)
+				((BitSet) obj).set(i, readBoolean());
+			stockeObjetId();
+			setDejaTotalementDeSerialise();
+		}
+	}
+}
