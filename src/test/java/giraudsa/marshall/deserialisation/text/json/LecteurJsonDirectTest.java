@@ -352,6 +352,28 @@ class LecteurJsonDirectTest {
 		compare(JsonMarshaller.toCompleteJson(isole), false);
 	}
 
+	static class Unicode {
+		String id = "u";
+		String prix\u20ac;
+		String texte;
+		String question;
+	}
+
+	@Test
+	void latin1EtAuDela() throws Exception {
+		final Unicode u = new Unicode();
+		u.prix\u20ac = "12 \u20ac ?";
+		u.texte = "caf\u00e9 ? \u4e2d ?";
+		u.question = "pourquoi ?";
+		compare(JsonMarshaller.toCompleteJson(u), true);
+		final Unicode seulementLatin1 = new Unicode();
+		seulementLatin1.question = "quoi ? où ?";
+		compare(JsonMarshaller.toCompleteJson(seulementLatin1), true);
+		final String type = Unicode.class.getName();
+		compare("{\"__type\":\"" + type + "\",\"id\":\"a?\",\"question\":\"\u20ac\"}", true);
+		compare("{\"__type\":\"" + type + "\",\"id\":\"a?\",\"question\":\"?\u20ac?\\n\"}", true);
+	}
+
 	@Test
 	void lecteurGenere() throws Exception {
 		final String n = Nombres.class.getName();

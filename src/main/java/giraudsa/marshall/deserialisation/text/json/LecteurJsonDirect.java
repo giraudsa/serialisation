@@ -161,8 +161,12 @@ public final class LecteurJsonDirect {
 		/** classe nommée par ce texte, quand il est la valeur d'une clé de type. */
 		private Class<?> typeNomme;
 
+		/** le nom contient '?' (à vérifier sur le texte d'origine en Latin-1). */
+		private final boolean interrogation;
+
 		private Clef(final String nom, final byte[] octets, final int hash) {
 			this.nom = nom;
+			interrogation = nom.indexOf('?') >= 0;
 			this.octets = octets;
 			this.hash = hash;
 			if (nom.equals(Constants.CLEF_TYPE))
@@ -325,24 +329,41 @@ public final class LecteurJsonDirect {
 	 *         texte).
 	 */
 	static Object lit(final String texte) {
-		// texte en Latin-1 (un octet par caractère, copie directe d'une chaîne compacte) quand il s'y prête, sinon
-		// en UTF-8
-		byte[] octets = texte.getBytes(StandardCharsets.ISO_8859_1);
-		final boolean latin1 = new String(octets, StandardCharsets.ISO_8859_1).equals(texte);
-		if (!latin1) {
-			// un demi-caractère UTF-16 isolé ne survit pas à l'UTF-8 : lecteur historique
-			if (aSubstitutIsole(texte))
-				return null;
-			octets = texte.getBytes(StandardCharsets.UTF_8);
-		}
+		// d'abord en Latin-1 (un octet par caractère, copie directe d'une chaîne compacte) ; un caractère au-delà de
+		// U+00FF y devient '?' : les chaînes lues qui en contiennent sont comparées au texte, et au premier écart la
+		// lecture reprend en UTF-8
 		try {
-			return new LecteurJsonDirect(octets, latin1).lit();
-		} catch (final Abandon | StackOverflowError e) {
-			return null;
-		} catch (final Exception e) {
+			return new LecteurJsonDirect(texte.getBytes(StandardCharsets.ISO_8859_1), texte).lit();
+		} catch (final Abandon e) {
+			if (e != LATIN1_INSUFFISANT)
+				return null;
+		} catch (final StackOverflowError | Exception e) {
 			// le lecteur historique relira et signalera l'erreur à sa manière
 			return null;
 		}
+		// un demi-caractère UTF-16 isolé ne survit pas à l'UTF-8 : lecteur historique
+		if (aSubstitutIsole(texte))
+			return null;
+		try {
+			return new LecteurJsonDirect(texte.getBytes(StandardCharsets.UTF_8), null).lit();
+		} catch (final Abandon | StackOverflowError e) {
+			return null;
+		} catch (final Exception e) {
+			return null;
+		}
+	}
+
+	/** le texte n'est pas en Latin-1 : relecture en UTF-8. */
+	private static final Abandon LATIN1_INSUFFISANT = new Abandon();
+
+	/**
+	 * En Latin-1, une chaîne lue qui contient '?' est comparée au texte d'origine (même indice : un octet par
+	 * caractère) : ce '?' peut remplacer un caractère au-delà de U+00FF.
+	 */
+	private String verifie(final String s, final int debut) {
+		if (source != null && s.indexOf('?') >= 0 && !source.regionMatches(debut, s, 0, s.length()))
+			throw LATIN1_INSUFFISANT;
+		return s;
 	}
 
 	private static boolean aSubstitutIsole(final String s) {
@@ -374,9 +395,13 @@ public final class LecteurJsonDirect {
 	/** une clé de type a été rencontrée (la première fixe le mode de cache des ids, comme le lecteur historique). */
 	private boolean clefTypeVue;
 
-	private LecteurJsonDirect(final byte[] texte, final boolean latin1) throws Exception {
+	/** texte d'origine quand les octets sont en Latin-1 (voir verifie), null en UTF-8. */
+	private final String source;
+
+	private LecteurJsonDirect(final byte[] texte, final String sourceLatin1) throws Exception {
 		c = texte;
-		codage = latin1 ? StandardCharsets.ISO_8859_1 : StandardCharsets.UTF_8;
+		source = sourceLatin1;
+		codage = sourceLatin1 != null ? StandardCharsets.ISO_8859_1 : StandardCharsets.UTF_8;
 		n = texte.length;
 		u = JsonUnmarshaller.pourLectureDirecte();
 		clefs = TABLES.get();
@@ -441,8 +466,7 @@ public final class LecteurJsonDirect {
 		while (i < n) {
 			final byte x = b[i];
 			if (x == '"') {
-				final String s = new String(b, p, i - p,
-						ou < 0 ? codage : StandardCharsets.ISO_8859_1);
+				final String s = verifie(new String(b, p, i - p, ou < 0 ? codage : StandardCharsets.ISO_8859_1), p);
 				p = i + 1;
 				return s;
 			}
@@ -518,7 +542,7 @@ public final class LecteurJsonDirect {
 
 	private void segment(final StringBuilder sb, final int debut, final int fin) {
 		if (fin > debut)
-			sb.append(new String(c, debut, fin - debut, codage));
+			sb.append(verifie(new String(c, debut, fin - debut, codage), debut));
 	}
 
 	/** lit une clé et le deux-points qui la suit. */
@@ -560,6 +584,8 @@ public final class LecteurJsonDirect {
 		if (suivant() != '"')
 			throw ABANDON;
 		if (prevue != null && correspond(prevue)) {
+			if (prevue.interrogation)
+				verifie(prevue.nom, p + 1);
 			p += prevue.octets.length + 2;
 			return prevue;
 		}
@@ -581,6 +607,8 @@ public final class LecteurJsonDirect {
 		if (i >= n)
 			throw ABANDON;
 		final Clef clef = clefs.cherche(b, debut, i, h);
+		if (clef.interrogation)
+			verifie(clef.nom, debut);
 		p = i + 1;
 		return clef;
 	}
@@ -769,7 +797,7 @@ public final class LecteurJsonDirect {
 	}
 
 	private String texte(final String chaine, final int debut, final int fin) {
-		return chaine != null ? chaine : new String(c, debut, fin - debut, StandardCharsets.ISO_8859_1);
+		return chaine != null ? chaine : verifie(new String(c, debut, fin - debut, StandardCharsets.ISO_8859_1), debut);
 	}
 
 	/** @return l'entier écrit dans c[debut, fin[ (signe moins et chiffres seulement), ou Long.MIN_VALUE. */
@@ -986,8 +1014,8 @@ public final class LecteurJsonDirect {
 			}
 			if (i >= n)
 				return false;
-			final String s = new String(c, debut + 1, i - debut - 1,
-					ou < 0 ? codage : StandardCharsets.ISO_8859_1);
+			final String s = verifie(new String(c, debut + 1, i - debut - 1,
+					ou < 0 ? codage : StandardCharsets.ISO_8859_1), debut + 1);
 			p = i + 1;
 			if (!finDeValeur()) {
 				p = debut;
@@ -1253,8 +1281,8 @@ public final class LecteurJsonDirect {
 				i++;
 			}
 			if (i < n && c[i] == '"') {
-				final String s = new String(c, debut + 1, i - debut - 1,
-						ou < 0 ? codage : StandardCharsets.ISO_8859_1);
+				final String s = verifie(new String(c, debut + 1, i - debut - 1,
+						ou < 0 ? codage : StandardCharsets.ISO_8859_1), debut + 1);
 				p = i + 1;
 				if (finDeValeur())
 					return s;
