@@ -1,13 +1,12 @@
 package io.github.giraudsa.fidelis.serialisation.binary;
 
+import java.lang.System.Logger.Level;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.github.giraudsa.fidelis.exception.MarshallExeption;
 import io.github.giraudsa.fidelis.exception.NotImplementedSerializeException;
@@ -23,7 +22,7 @@ import io.github.giraudsa.fidelis.utils.io.SortieBinaire;
 import io.github.giraudsa.fidelis.utils.TypeExtension;
 
 public abstract class ActionBinary<T> extends ActionAbstrait<T> {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ActionBinary.class);
+	private static final System.Logger LOGGER = System.getLogger(ActionBinary.class.getName());
 
 	protected ActionBinary() {
 		super();
@@ -221,7 +220,7 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 			ecritValeur(marshaller, (T) objetASerialiser, fieldInformation, isDejaVu);
 		} catch (MarshallExeption | IOException | IllegalAccessException | InstantiationException
 				| InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
-			LOGGER.error("problème à la sérialisation de l'objet " + objetASerialiser.toString(), e);
+			LOGGER.log(Level.ERROR, "problème à la sérialisation de l'objet " + objetASerialiser.toString(), e);
 			throw new MarshallExeption(e);
 		}
 

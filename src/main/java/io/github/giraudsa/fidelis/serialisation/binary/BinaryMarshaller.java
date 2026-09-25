@@ -1,5 +1,6 @@
 package io.github.giraudsa.fidelis.serialisation.binary;
 
+import java.lang.System.Logger.Level;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,8 +29,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.github.giraudsa.fidelis.annotations.TypeRelation;
 import io.github.giraudsa.fidelis.exception.MarshallExeption;
@@ -89,7 +88,7 @@ public class BinaryMarshaller extends Marshaller {
 	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
 	/** champ fictif de la racine du graphe (sans état propre : partagé). */
 	private static final FakeChamp RACINE = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
-	private static final Logger LOGGER = LoggerFactory.getLogger(BinaryMarshaller.class);
+	private static final System.Logger LOGGER = System.getLogger(BinaryMarshaller.class.getName());
 	static {
 		dicoTypeToAction.put(void.class, new ActionBinaryVoid());
 		dicoTypeToAction.put(Boolean.class, new ActionBinaryBoolean());
@@ -158,7 +157,7 @@ public class BinaryMarshaller extends Marshaller {
 			etat.sortie.flush();
 		} catch (IOException | InstantiationException | IllegalAccessException | InvocationTargetException
 				| NoSuchMethodException | NotImplementedSerializeException e) {
-			LOGGER.error(messageErreur, e);
+			LOGGER.log(Level.ERROR, messageErreur, e);
 			throw new MarshallExeption(e);
 		} finally {
 			etat.libere();

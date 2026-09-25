@@ -1,11 +1,10 @@
 package io.github.giraudsa.fidelis.deserialisation.binary.actions.simple;
 
+import java.lang.System.Logger.Level;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.github.giraudsa.fidelis.deserialisation.ActionAbstrait;
 import io.github.giraudsa.fidelis.deserialisation.Unmarshaller;
@@ -13,7 +12,7 @@ import io.github.giraudsa.fidelis.deserialisation.binary.BinaryUnmarshaller;
 import io.github.giraudsa.fidelis.exception.UnmarshallExeption;
 
 public class ActionBinaryUri extends ActionBinarySimple<URI> {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ActionBinaryUri.class);
+	private static final System.Logger LOGGER = System.getLogger(ActionBinaryUri.class.getName());
 
 	public static ActionAbstrait<URI> getInstance() {
 		return new ActionBinaryUri(URI.class, null);
@@ -37,7 +36,7 @@ public class ActionBinaryUri extends ActionBinarySimple<URI> {
 			try {
 				obj = new URI(readUTF());
 			} catch (final URISyntaxException e) {
-				LOGGER.error(e.getMessage(), e);
+				LOGGER.log(Level.ERROR, e.getMessage(), e);
 				throw new UnmarshallExeption("bad Uri Syntax", e);
 			}
 			stockeObjetId();

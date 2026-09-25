@@ -1,5 +1,6 @@
 package io.github.giraudsa.fidelis.deserialisation.binary;
 
+import java.lang.System.Logger.Level;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -24,8 +25,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.github.giraudsa.fidelis.annotations.TypeRelation;
 import io.github.giraudsa.fidelis.deserialisation.ActionAbstrait;
@@ -83,7 +82,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
 	/** champ fictif de la racine du graphe (sans état propre : partagé). */
 	private static final FakeChamp RACINE = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
-	private static final Logger LOGGER = LoggerFactory.getLogger(BinaryUnmarshaller.class);
+	private static final System.Logger LOGGER = System.getLogger(BinaryUnmarshaller.class.getName());
 	static {
 		dicoTypeToAction.put(Constants.dateType, ActionBinaryDate.getInstance());
 		dicoTypeToAction.put(Constants.collectionType, ActionBinaryCollection.getInstance());
@@ -148,7 +147,7 @@ public class BinaryUnmarshaller<T> extends Unmarshaller<T> {
 		} catch (UnmarshallExeption | FabriqueInstantiationException | IOException | IllegalAccessException
 				| ClassNotFoundException | NotImplementedSerializeException | InstanciationException
 				| EntityManagerImplementationException | SetValueException e) {
-			LOGGER.error("Impossible de désérialiser", e);
+			LOGGER.log(Level.ERROR, "Impossible de désérialiser", e);
 			throw new UnmarshallExeption("Impossible de désérialiser", e);
 		} finally {
 			etat.libere();

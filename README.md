@@ -60,7 +60,7 @@ puis ajoutez la dépendance :
 </dependency>
 ```
 
-La seule dépendance est `slf4j-api`.
+Fidelis n'a **aucune dépendance** : seul le JDK est nécessaire. Les erreurs sont journalisées par `java.lang.System.Logger` (par défaut vers `java.util.logging` ; une application sous SLF4J les récupère avec `slf4j-jdk-platform-logging`).
 
 ## Démarrage rapide
 

@@ -1,10 +1,9 @@
 package io.github.giraudsa.fidelis.deserialisation.text.json.actions;
 
+import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.github.giraudsa.fidelis.deserialisation.ActionAbstrait;
 import io.github.giraudsa.fidelis.deserialisation.Unmarshaller;
@@ -12,7 +11,7 @@ import io.github.giraudsa.fidelis.deserialisation.text.json.JsonUnmarshaller;
 import io.github.giraudsa.fidelis.exception.InstanciationException;
 
 public class ActionJsonInetAddress<T extends InetAddress> extends ActionJsonSimpleComportement<T> {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ActionJsonInetAddress.class);
+	private static final System.Logger LOGGER = System.getLogger(ActionJsonInetAddress.class.getName());
 
 	@SuppressWarnings("unchecked")
 	public static <U> ActionAbstrait<U> getInstance() {
@@ -34,7 +33,7 @@ public class ActionJsonInetAddress<T extends InetAddress> extends ActionJsonSimp
 		try {
 			obj = InetAddress.getByName(donnees);
 		} catch (final UnknownHostException e) {
-			LOGGER.error("unknown host destination : " + donnees, e);
+			LOGGER.log(Level.ERROR, "unknown host destination : " + donnees, e);
 			throw new InstanciationException("unknown host destination : " + donnees, e);
 		}
 	}

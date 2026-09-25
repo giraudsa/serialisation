@@ -1,12 +1,11 @@
 package io.github.giraudsa.fidelis.deserialisation.text.json.actions;
 
+import java.lang.System.Logger.Level;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.Date;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.github.giraudsa.fidelis.deserialisation.ActionAbstrait;
 import io.github.giraudsa.fidelis.deserialisation.Unmarshaller;
@@ -14,7 +13,7 @@ import io.github.giraudsa.fidelis.deserialisation.text.json.JsonUnmarshaller;
 import io.github.giraudsa.fidelis.utils.io.DatesIso;
 
 public class ActionJsonDate<T extends Date> extends ActionJsonSimpleComportement<T> {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ActionJsonDate.class);
+	private static final System.Logger LOGGER = System.getLogger(ActionJsonDate.class.getName());
 
 	@SuppressWarnings("unchecked")
 	public static ActionAbstrait<Date> getInstance() {
@@ -75,7 +74,7 @@ public class ActionJsonDate<T extends Date> extends ActionJsonSimpleComportement
 			obj = constructeur.newInstance(time);
 		} catch (ParseException | InstantiationException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-			LOGGER.error("pas de constructeur avec un long pour le type date " + type.getName(), e);
+			LOGGER.log(Level.ERROR, "pas de constructeur avec un long pour le type date " + type.getName(), e);
 			obj = new Date(time);
 		}
 	}

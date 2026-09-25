@@ -1,5 +1,6 @@
 package io.github.giraudsa.fidelis.serialisation.text.json;
 
+import java.lang.System.Logger.Level;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Array;
@@ -26,8 +27,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.github.giraudsa.fidelis.annotations.TypeRelation;
 import io.github.giraudsa.fidelis.exception.ChampNotFound;
@@ -69,7 +68,7 @@ import io.github.giraudsa.fidelis.utils.io.SortieTexte;
 
 public class JsonMarshaller extends TextMarshaller {
 	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
-	private static final Logger LOGGER = LoggerFactory.getLogger(JsonMarshaller.class);
+	private static final System.Logger LOGGER = System.getLogger(JsonMarshaller.class.getName());
 
 	static {
 		dicoTypeToAction.put(Date.class, new ActionJsonDate());
@@ -122,7 +121,7 @@ public class JsonMarshaller extends TextMarshaller {
 			v.marshall(obj);
 		} catch (ChampNotFound | IOException | InstantiationException | IllegalAccessException
 				| InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
-			LOGGER.debug("probleme de sérialisation complète en json de " + obj.toString(), e);
+			LOGGER.log(Level.DEBUG, "probleme de sérialisation complète en json de " + obj.toString(), e);
 			throw new MarshallExeption(e);
 		}
 	}
@@ -156,7 +155,7 @@ public class JsonMarshaller extends TextMarshaller {
 			v.marshall(obj);
 		} catch (ChampNotFound | IOException | InstantiationException | IllegalAccessException
 				| InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
-			LOGGER.debug("probleme de sérialisation json de " + obj.toString(), e);
+			LOGGER.log(Level.DEBUG, "probleme de sérialisation json de " + obj.toString(), e);
 			throw new MarshallExeption(e);
 		}
 	}
