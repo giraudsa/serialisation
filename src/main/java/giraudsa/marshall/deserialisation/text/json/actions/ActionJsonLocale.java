@@ -21,7 +21,7 @@ public class ActionJsonLocale extends ActionJsonSimpleComportement<Locale> {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public <U extends Locale> ActionAbstrait<U> getNewInstance(final Class<U> type, final Unmarshaller unmarshaller) {
-		return (ActionAbstrait<U>) new ActionJsonSimpleComportement<>(Locale.class, (JsonUnmarshaller<?>) unmarshaller);
+		return (ActionAbstrait<U>) new ActionJsonLocale(Locale.class, (JsonUnmarshaller<?>) unmarshaller);
 	}
 
 	@Override

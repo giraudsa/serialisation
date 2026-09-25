@@ -25,6 +25,17 @@ public final class CopieFormatDate {
 		return (DateFormat) prototype.clone();
 	}
 
+	/** par motif et fuseau : le format copié est-il le format ISO UTC par défaut ? */
+	private static final Map<String, Boolean> isoUtc = new ConcurrentHashMap<>();
+
+	/** @return DatesIso.estMotifIsoUtc(copie(dateFormat)), sans faire la copie. */
+	public static boolean estIsoUtc(final SimpleDateFormat dateFormat) {
+		final String motif = dateFormat.toPattern();
+		final String fuseau = dateFormat.getTimeZone().getID();
+		return isoUtc.computeIfAbsent(motif + '\u0000' + fuseau,
+				k -> utils.io.DatesIso.estMotifIsoUtc(copie(dateFormat)));
+	}
+
 	private CopieFormatDate() {
 	}
 }

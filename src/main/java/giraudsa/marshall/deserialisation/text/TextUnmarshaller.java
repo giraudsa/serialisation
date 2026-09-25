@@ -13,10 +13,13 @@ import utils.TypeExtension;
 import utils.champ.FakeChamp;
 import utils.CopieFormatDate;
 import utils.champ.FieldInformations;
+import utils.io.DatesIso;
 
 public abstract class TextUnmarshaller<T> extends Unmarshaller<T> {
 
 	protected final DateFormat df;
+	/** le format de date est le format ISO UTC par défaut : lecture rapide possible (DatesIso.lit). */
+	protected final boolean dateIsoUtc;
 	protected final Reader reader;
 
 	protected TextUnmarshaller(final Reader reader, final EntityManager entity, final SimpleDateFormat dateFormat)
@@ -24,6 +27,19 @@ public abstract class TextUnmarshaller<T> extends Unmarshaller<T> {
 		super(entity);
 		this.reader = reader;
 		df = CopieFormatDate.copie(dateFormat);
+		dateIsoUtc = DatesIso.estMotifIsoUtc(df);
+	}
+
+	/**
+	 * Sans copie du format de date (df null) : pour une lecture qui ne s'en sert qu'au besoin, en le copiant alors
+	 * elle-même.
+	 */
+	protected TextUnmarshaller(final EntityManager entity, final SimpleDateFormat dateFormat)
+			throws FabriqueInstantiationException {
+		super(entity);
+		reader = null;
+		df = null;
+		dateIsoUtc = CopieFormatDate.estIsoUtc(dateFormat);
 	}
 
 	@Override

@@ -2,7 +2,6 @@ package giraudsa.marshall.deserialisation.binary.actions;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -19,6 +18,7 @@ import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.TypeExtension;
 import utils.champ.FakeChamp;
+import utils.champ.FieldInformations;
 
 @SuppressWarnings("rawtypes")
 public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
@@ -44,13 +44,13 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 	public void deserialisePariellement()
 			throws ClassNotFoundException, NotImplementedSerializeException, IOException, UnmarshallExeption,
 			InstanciationException, IllegalAccessException, EntityManagerImplementationException, SetValueException {
-		if (!deserialisationFini) {
-			if (!clefLue)
-				litObject(fakeChampKey);
-			else
-				litObject(fakeChampValue);
-		} else
-			exporteObject();
+		while (!deserialisationFini) {
+			final Object valeur = litValeur(clefLue ? fakeChampValue : fakeChampKey);
+			if (isEnAttente(valeur))
+				return;
+			ajoute(valeur);
+		}
+		exporteObject();
 	}
 
 	@Override
@@ -73,26 +73,24 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 			stockeObjetId();
 			if (strategieDeSerialiseTout())
 				setDejaTotalementDeSerialise();
-			tailleCollection = readInt();
+			tailleCollection = readVarInt();
 			deserialisationFini = index >= tailleCollection;
 		}
-		final Type[] types = fieldInformations.getParametreType();
-		Type parametreTypeKey = Object.class;
-		Type parametreTypeValue = Object.class;
-		if (types.length > 1) {
-			parametreTypeKey = types[0];
-			parametreTypeValue = types[1];
-		}
-		fakeChampKey = new FakeChamp(null, parametreTypeKey, fieldInformations.getRelation(),
-				fieldInformations.getAnnotations());
-		fakeChampValue = new FakeChamp(null, parametreTypeValue, fieldInformations.getRelation(),
-				fieldInformations.getAnnotations());
+		fakeChampKey = fieldInformations.getChampParametre(FieldInformations.CLE);
+		fakeChampValue = fieldInformations.getChampParametre(FieldInformations.VALEUR);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void integreObjet(final String name, final Object objet) throws IllegalAccessException,
 			EntityManagerImplementationException, InstanciationException, SetValueException {
+		ajoute(objet);
+		if (deserialisationFini)
+			exporteObject();
+	}
+
+	@SuppressWarnings("unchecked")
+	private void ajoute(final Object objet) {
 		if (!clefLue) {
 			clefTampon = objet;
 			clefLue = true;
@@ -102,11 +100,15 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 			clefLue = false;
 			deserialisationFini = ++index >= tailleCollection;
 		}
-		if (deserialisationFini)
-			exporteObject();
 	}
 
 	private Object newInstance() throws UnmarshallExeption {
+		return nouvelleMap(type, fieldInformations);
+	}
+
+	/** Instancie la map de type donné (lecture directe ou par action). */
+	@SuppressWarnings("rawtypes")
+	public static Object nouvelleMap(final Class<?> type, final FieldInformations fi) throws UnmarshallExeption {
 		Map objetADeserialiser = null;
 		try {
 			if (type == HashMap.class)
@@ -114,18 +116,18 @@ public class ActionBinaryDictionary<D extends Map> extends ActionBinary<D> {
 			else if (type == LinkedHashMap.class)
 				objetADeserialiser = new LinkedHashMap<>();
 			else if (TypeExtension.isHibernate(type)) {
-				if (fieldInformations.getValueType().isAssignableFrom(ConcurrentHashMap.class))
+				if (fi.getValueType().isAssignableFrom(ConcurrentHashMap.class))
 					objetADeserialiser = new ConcurrentHashMap<>();
-				else if (fieldInformations.getValueType().isAssignableFrom(LinkedHashMap.class))
+				else if (fi.getValueType().isAssignableFrom(LinkedHashMap.class))
 					objetADeserialiser = new LinkedHashMap<>();
-				else if (fieldInformations.getValueType().isAssignableFrom(HashMap.class))
+				else if (fi.getValueType().isAssignableFrom(HashMap.class))
 					objetADeserialiser = new HashMap<>();
 				else
 					throw new UnmarshallExeption("Probleme avec un type hibernate " + type.getName(),
 							new InstantiationException());
 			} else
 				try {
-					objetADeserialiser = type.getDeclaredConstructor().newInstance();
+					objetADeserialiser = (Map) type.getDeclaredConstructor().newInstance();
 				} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
 					// map sans constructeur accessible : on se rabat sur HashMap comme
 					// historiquement

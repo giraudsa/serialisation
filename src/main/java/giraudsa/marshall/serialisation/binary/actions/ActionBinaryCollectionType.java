@@ -2,11 +2,8 @@ package giraudsa.marshall.serialisation.binary.actions;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Type;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.TreeSet;
 
@@ -29,25 +26,24 @@ public class ActionBinaryCollectionType extends ActionBinary<Collection> {
 	protected void ecritValeur(final Marshaller marshaller, final Collection obj, final FieldInformations fi,
 			final boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException,
 			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
-		final Type[] types = fi.getParametreType();
-		Type genericType = Object.class;
-		if (types != null && types.length > 0)
-			genericType = types[0];
-		final FakeChamp fakeChamp = new FakeChamp(null, genericType, fi.getRelation(), fi.getAnnotations());
-
-		final Deque<Comportement> tmp = new ArrayDeque<>();
+		final FakeChamp fakeChamp = fi.getChampParametre(FieldInformations.ELEMENT);
 		if (!isDejaVu) {
 			if (strategieSerialiseTout(marshaller, fi))
 				setDejaTotalementSerialise(marshaller, obj);
-			writeInt(marshaller, obj.size());
+			writeVarInt(marshaller, obj.size());
 			for (final Object value : obj)
-				tmp.push(traiteChamp(marshaller, value, fakeChamp));
+				ecritOuDiffere(marshaller, value, fakeChamp);
 		} else if (!isDejaTotalementSerialise(marshaller, obj) && strategieSerialiseTout(marshaller, fi)) {
 			setDejaTotalementSerialise(marshaller, obj);
 			for (final Object value : obj)
-				tmp.push(traiteChamp(marshaller, value, fakeChamp));
+				ecritOuDiffere(marshaller, value, fakeChamp);
 		}
-		pushComportements(marshaller, tmp);
+		empileDifferes(marshaller);
+	}
+
+	@Override
+	protected boolean isFeuille() {
+		return false;
 	}
 
 	@Override

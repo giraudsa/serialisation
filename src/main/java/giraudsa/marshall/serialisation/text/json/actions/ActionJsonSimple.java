@@ -8,6 +8,7 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.Marshaller;
 import giraudsa.marshall.serialisation.text.json.ActionJson;
 import utils.Constants;
+import utils.champ.Champ;
 import utils.champ.FieldInformations;
 
 public abstract class ActionJsonSimple<T> extends ActionJson<T> {
@@ -28,7 +29,10 @@ public abstract class ActionJsonSimple<T> extends ActionJson<T> {
 		final boolean typeDevinable = isTypeDevinable(marshaller, obj, fieldInformations);
 		final boolean nePasEcrireType = writeType(marshaller) ? typeDevinable : true;
 		try {
-			ecritClef(marshaller, fieldInformations.getName());
+			if (fieldInformations instanceof Champ)
+				ecritClef(marshaller, (Champ) fieldInformations);
+			else
+				ecritClef(marshaller, fieldInformations.getName());
 			final boolean separateurAEcrire = commenceObject(marshaller, (T) obj, nePasEcrireType);
 			ecritValeur(marshaller, (T) obj, fieldInformations, separateurAEcrire);
 			clotureObject(marshaller, (T) obj, nePasEcrireType);

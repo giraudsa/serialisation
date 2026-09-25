@@ -22,11 +22,10 @@ public class ActionBinaryByte extends ActionBinary<Byte> {
 	@Override
 	protected boolean writeHeaders(final Marshaller marshaller, final Byte octet, final FieldInformations fi)
 			throws IOException {
-		if (!fi.getValueType().isPrimitive()) {
-			final HeaderSimpleType<?> header = (HeaderSimpleType<?>) HeaderSimpleType.getHeader(octet);
-			header.writeValue(getOutput(marshaller), octet);
-		} else
-			writeByte(marshaller, octet);
+		if (ecritSansEnTeteSiPrimitif(marshaller, fi, octet))
+			return false;
+		final HeaderSimpleType<?> header = (HeaderSimpleType<?>) HeaderSimpleType.getHeader(octet);
+		header.writeValue(getOutput(marshaller), octet);
 		return false;
 	}
 }

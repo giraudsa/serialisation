@@ -2,13 +2,12 @@ package giraudsa.marshall.serialisation.binary.actions;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Type;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.function.BiConsumer;
 
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
@@ -29,33 +28,69 @@ public class ActionBinaryDictionaryType extends ActionBinary<Map> {
 	protected void ecritValeur(final Marshaller marshaller, final Map map, final FieldInformations fi,
 			final boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException,
 			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
-		final Type[] types = fi.getParametreType();
-		Type genericTypeKey = Object.class;
-		Type genericTypeValue = Object.class;
-		if (types != null && types.length > 1) {
-			genericTypeKey = types[0];
-			genericTypeValue = types[1];
-		}
-		final FakeChamp fakeChampKey = new FakeChamp("K", genericTypeKey, fi.getRelation(), fi.getAnnotations());
-		final FakeChamp fakeChampValue = new FakeChamp("V", genericTypeValue, fi.getRelation(), fi.getAnnotations());
-
-		final Deque<Comportement> tmp = new ArrayDeque<>();
+		final FakeChamp fakeChampKey = fi.getChampParametre(FieldInformations.CLE);
+		final FakeChamp fakeChampValue = fi.getChampParametre(FieldInformations.VALEUR);
 		if (!isDejaVu) {
 			if (strategieSerialiseTout(marshaller, fi))
 				setDejaTotalementSerialise(marshaller, map);
-			writeInt(marshaller, map.size());
-			for (final Object entry : map.entrySet()) {
-				tmp.push(traiteChamp(marshaller, ((Entry) entry).getKey(), fakeChampKey));
-				tmp.push(traiteChamp(marshaller, ((Entry) entry).getValue(), fakeChampValue));
-			}
+			writeVarInt(marshaller, map.size());
+			ecritEntrees(marshaller, map, fakeChampKey, fakeChampValue);
 		} else if (!isDejaTotalementSerialise(marshaller, map) && strategieSerialiseTout(marshaller, fi)) {
 			setDejaTotalementSerialise(marshaller, map);
-			for (final Object entry : map.entrySet()) {
-				tmp.push(traiteChamp(marshaller, ((Entry) entry).getKey(), fakeChampKey));
-				tmp.push(traiteChamp(marshaller, ((Entry) entry).getValue(), fakeChampValue));
+			ecritEntrees(marshaller, map, fakeChampKey, fakeChampValue);
+		}
+		empileDifferes(marshaller);
+	}
+
+	/** Écrit les entrées par l'itération interne de la map (sans itérateur ni Entry), même ordre que entrySet. */
+	private static final class EcritureEntrees implements BiConsumer<Object, Object> {
+		private Exception erreur;
+		private final FakeChamp fakeChampKey;
+		private final FakeChamp fakeChampValue;
+		private final Marshaller marshaller;
+
+		private EcritureEntrees(final Marshaller marshaller, final FakeChamp fakeChampKey,
+				final FakeChamp fakeChampValue) {
+			this.marshaller = marshaller;
+			this.fakeChampKey = fakeChampKey;
+			this.fakeChampValue = fakeChampValue;
+		}
+
+		@Override
+		public void accept(final Object cle, final Object valeur) {
+			if (erreur != null)
+				return;
+			try {
+				ecritOuDiffere(binaryMarshaller(marshaller), cle, fakeChampKey);
+				ecritOuDiffere(binaryMarshaller(marshaller), valeur, fakeChampValue);
+			} catch (NotImplementedSerializeException | MarshallExeption e) {
+				erreur = e;
 			}
 		}
-		pushComportements(marshaller, tmp);
+	}
+
+	@SuppressWarnings("unchecked")
+	private void ecritEntrees(final Marshaller marshaller, final Map map, final FakeChamp fakeChampKey,
+			final FakeChamp fakeChampValue) throws NotImplementedSerializeException, MarshallExeption {
+		final Class<?> classe = map.getClass();
+		if (classe == LinkedHashMap.class || classe == HashMap.class) {
+			final EcritureEntrees ecriture = new EcritureEntrees(marshaller, fakeChampKey, fakeChampValue);
+			map.forEach(ecriture);
+			if (ecriture.erreur instanceof NotImplementedSerializeException)
+				throw (NotImplementedSerializeException) ecriture.erreur;
+			if (ecriture.erreur != null)
+				throw (MarshallExeption) ecriture.erreur;
+			return;
+		}
+		for (final Object entry : map.entrySet()) {
+			ecritOuDiffere(marshaller, ((Entry) entry).getKey(), fakeChampKey);
+			ecritOuDiffere(marshaller, ((Entry) entry).getValue(), fakeChampValue);
+		}
+	}
+
+	@Override
+	protected boolean isFeuille() {
+		return false;
 	}
 
 	@Override

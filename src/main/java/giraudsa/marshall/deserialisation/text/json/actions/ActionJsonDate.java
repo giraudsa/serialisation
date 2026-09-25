@@ -1,5 +1,6 @@
 package giraudsa.marshall.deserialisation.text.json.actions;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.Date;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import giraudsa.marshall.deserialisation.ActionAbstrait;
 import giraudsa.marshall.deserialisation.Unmarshaller;
 import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
+import utils.io.DatesIso;
 
 public class ActionJsonDate<T extends Date> extends ActionJsonSimpleComportement<T> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ActionJsonDate.class);
@@ -39,14 +41,38 @@ public class ActionJsonDate<T extends Date> extends ActionJsonSimpleComportement
 		obj = objet;
 	}
 
+	/** constructeur (long) des sous-classes de Date, recherché une fois par classe. */
+	private static final ClassValue<Constructor<?>> CONSTRUCTEURS = new ClassValue<>() {
+		@Override
+		protected Constructor<?> computeValue(final Class<?> t) {
+			try {
+				return t.getConstructor(long.class);
+			} catch (final NoSuchMethodException | SecurityException e) {
+				return null;
+			}
+		}
+	};
+
 	@Override
 	protected void rempliData(final String donnees) {
 		Date date;
 		long time = 0;
 		try {
-			date = getDateFormat().parse(donnees);
-			time = date.getTime();
-			obj = type.getConstructor(long.class).newInstance(time);
+			final long rapide = isDateIsoUtc() ? DatesIso.lit(donnees) : DatesIso.INVALIDE;
+			if (rapide != DatesIso.INVALIDE)
+				time = rapide;
+			else {
+				date = getDateFormat().parse(donnees);
+				time = date.getTime();
+			}
+			if (type == Date.class) {
+				obj = new Date(time);
+				return;
+			}
+			final Constructor<?> constructeur = CONSTRUCTEURS.get(type);
+			if (constructeur == null)
+				throw new NoSuchMethodException(type.getName() + ".<init>(long)");
+			obj = constructeur.newInstance(time);
 		} catch (ParseException | InstantiationException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			LOGGER.error("pas de constructeur avec un long pour le type date " + type.getName(), e);

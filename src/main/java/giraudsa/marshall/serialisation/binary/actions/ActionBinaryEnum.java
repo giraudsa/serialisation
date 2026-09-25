@@ -31,10 +31,11 @@ public class ActionBinaryEnum extends ActionBinary<Enum> {
 			final FieldInformations fieldInformations) throws IOException {
 		final Class<?> typeObj = getTypeObjProblemeHibernate(objetASerialiser);
 		final boolean isTypeDevinable = isTypeDevinable(marshaller, objetASerialiser, fieldInformations);
-		final boolean isDejaVuType = isDejaVuType(marshaller, typeObj);
-		final short smallIdType = getSmallIdTypeAndStockType(marshaller, typeObj);
-		final HeaderEnum header = HeaderEnum.getHeader(smallIdType, isTypeDevinable);
-		header.write(getOutput(marshaller), smallIdType, typeObj, isDejaVuType);
+		// type devinable : ni écrit ni numéroté (même règle à la lecture)
+		final int idType = isTypeDevinable ? 0 : smallIdType(marshaller, typeObj);
+		final short smallIdType = (short) Math.abs(idType);
+		HeaderEnum.getHeader(smallIdType, isTypeDevinable).write(getOutput(marshaller), smallIdType, typeObj,
+				idType > 0);
 		return false;
 	}
 

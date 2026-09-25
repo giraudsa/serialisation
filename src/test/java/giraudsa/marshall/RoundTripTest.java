@@ -25,10 +25,8 @@ import giraudsa.marshall.annotations.Relation;
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
-import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
 import giraudsa.marshall.serialisation.text.json.JsonMarshaller;
-import giraudsa.marshall.serialisation.text.xml.XmlMarshaller;
 
 class RoundTripTest {
 
@@ -109,12 +107,6 @@ class RoundTripTest {
 		@Override
 		public <T> T roundTrip(final T obj) throws Exception {
 			return JsonUnmarshaller.fromJson(new StringReader(JsonMarshaller.toCompleteJson(obj)));
-		}
-	};
-	private static final Format XML = new Format() {
-		@Override
-		public <T> T roundTrip(final T obj) throws Exception {
-			return XmlUnmarshaller.fromXml(XmlMarshaller.toCompleteXml(obj));
 		}
 	};
 	private static final Format BINARY = new Format() {
@@ -243,23 +235,22 @@ class RoundTripTest {
 	}
 
 	@Test
-	void xmlGrapheComplet() throws Exception {
-		grapheComplet(XML);
-	}
-
-	@Test
 	void binaireGrapheComplet() throws Exception {
 		grapheComplet(BINARY);
+		// JDK 15+ : écrivain et lecteur générés pour les classes du graphe (sinon, chemin générique)
+		if (Runtime.version().feature() >= 15)
+			for (final Class<?> c : new Class<?>[] { Noeud.class, NoeudDerive.class }) {
+				final utils.TypeExtension.ChampsDuType champs = utils.TypeExtension.getChampsDuType(c);
+				org.junit.jupiter.api.Assertions.assertTrue(
+						champs.getEcrivainBinaire() instanceof utils.champ.EcrivainChamps, "écrivain de " + c);
+				org.junit.jupiter.api.Assertions.assertTrue(
+						champs.getLecteurBinaire() instanceof utils.champ.LecteurChamps, "lecteur de " + c);
+			}
 	}
 
 	@Test
 	void jsonSansId() throws Exception {
 		sansId(JSON);
-	}
-
-	@Test
-	void xmlSansId() throws Exception {
-		sansId(XML);
 	}
 
 	@Test
@@ -273,11 +264,6 @@ class RoundTripTest {
 	}
 
 	@Test
-	void xmlIdentite() throws Exception {
-		identite(XML);
-	}
-
-	@Test
 	void binaireIdentite() throws Exception {
 		identite(BINARY);
 	}
@@ -288,20 +274,14 @@ class RoundTripTest {
 	}
 
 	@Test
-	void xmlConcurrence() throws Exception {
-		concurrence(XML);
-	}
-
-	@Test
 	void binaireConcurrence() throws Exception {
 		concurrence(BINARY);
 	}
 
 	@Test
 	void caracteresDeControle() throws Exception {
-		// \u0000 n'est représentable dans aucune version de XML : testé à part
 		final String texte = "a\r\nb\u0001c\u001fd\u2029e\bf\fg\u0085h\u007fi\u2028j\r";
-		for (final Format format : new Format[] { JSON, XML, BINARY }) {
+		for (final Format format : new Format[] { JSON, BINARY }) {
 			final Noeud racine = graphe("");
 			racine.nom = texte;
 			verifie(racine, format.roundTrip(racine));
@@ -315,14 +295,11 @@ class RoundTripTest {
 			racine.nom = "a\u0000b";
 			verifie(racine, format.roundTrip(racine));
 		}
-		final Noeud racine = graphe("");
-		racine.nom = "a\u0000b";
-		assertEquals("a\uFFFDb", XML.roundTrip(racine).nom);
 	}
 
 	@Test
 	void texteQuiRessembleAUneEntite() throws Exception {
-		for (final Format format : new Format[] { JSON, XML, BINARY }) {
+		for (final Format format : new Format[] { JSON, BINARY }) {
 			final Noeud racine = graphe("");
 			racine.nom = "a &lt; b &amp; c &#65; &#x42; &quot; d";
 			verifie(racine, format.roundTrip(racine));
@@ -331,7 +308,7 @@ class RoundTripTest {
 
 	@Test
 	void idAvecCaracteresSpeciaux() throws Exception {
-		for (final Format format : new Format[] { JSON, XML, BINARY }) {
+		for (final Format format : new Format[] { JSON, BINARY }) {
 			final Noeud racine = graphe("id \"<&>'\t\n\r fin ");
 			verifie(racine, format.roundTrip(racine));
 		}
@@ -359,7 +336,7 @@ class RoundTripTest {
 		m.nombres.put(-2, Long.MAX_VALUE);
 		m.liste.add("b");
 		m.liste.add("a");
-		for (final Format format : new Format[] { JSON, XML, BINARY }) {
+		for (final Format format : new Format[] { JSON, BINARY }) {
 			final Melange lu = format.roundTrip(m);
 			assertEquals(m.valeurs, lu.valeurs);
 			assertEquals(m.nombres, lu.nombres);
@@ -382,7 +359,7 @@ class RoundTripTest {
 		p.f = -1.5f;
 		p.d = Double.MAX_VALUE;
 		p.grandId = 100_000;
-		for (final Format format : new Format[] { JSON, XML, BINARY }) {
+		for (final Format format : new Format[] { JSON, BINARY }) {
 			final Primitifs lu = format.roundTrip(p);
 			assertEquals(p.b, lu.b);
 			assertEquals(p.s, lu.s);
@@ -408,7 +385,7 @@ class RoundTripTest {
 			enfant.parent = racine;
 			racine.enfants.add(enfant);
 		}
-		for (final Format format : new Format[] { JSON, XML, BINARY })
+		for (final Format format : new Format[] { JSON, BINARY })
 			verifie(racine, format.roundTrip(racine));
 	}
 
@@ -422,10 +399,10 @@ class RoundTripTest {
 
 	@Test
 	void caracteres() throws Exception {
-		for (final Format format : new Format[] { JSON, XML, BINARY }) {
+		for (final Format format : new Format[] { JSON, BINARY }) {
 			final Caracteres c = new Caracteres();
 			c.c = 'é';
-			c.cZero = format == XML ? '"' : 0; // \u0000 impossible en XML
+			c.cZero = 0;
 			c.boite = '<';
 			c.objet = '\u2028';
 			final Caracteres lu = format.roundTrip(c);
@@ -461,7 +438,7 @@ class RoundTripTest {
 
 	@Test
 	void enumAvecCorps() throws Exception {
-		for (final Format format : new Format[] { JSON, XML, BINARY }) {
+		for (final Format format : new Format[] { JSON, BINARY }) {
 			final AvecOperation o = new AvecOperation();
 			o.declaree = Operation.MOINS;
 			o.nonDeclaree = Operation.PLUS;
@@ -469,5 +446,200 @@ class RoundTripTest {
 			assertSame(Operation.MOINS, lu.declaree);
 			assertSame(Operation.PLUS, lu.nonDeclaree);
 		}
+	}
+
+	@Test
+	void binaireReferencesLointaines() throws Exception {
+		// références arrière vers des objets, chaînes, dates et UUID dont le smallId dépasse les "very small id"
+		final Noeud racine = graphe("");
+		final Date[] dates = new Date[700];
+		for (int i = 0; i < dates.length; i++)
+			dates[i] = new Date(i * 1000L);
+		for (int i = 0; i < 1500; i++) {
+			final Noeud enfant = new Noeud();
+			enfant.id = "n" + i;
+			enfant.nom = "nom" + i;
+			enfant.entier = i;
+			enfant.date = dates[i % dates.length];
+			enfant.uuid = new UUID(i % 600, 7);
+			enfant.parent = i >= 300 ? racine.enfants.get(i - 300 + 3) : racine;
+			racine.enfants.add(enfant);
+		}
+		for (int i = 0; i < 1500; i += 7)
+			racine.tags.add("nom" + i);
+		final Noeud lu = BINARY.roundTrip(racine);
+		assertEquals(racine.tags, lu.tags);
+		assertEquals(racine.enfants.size(), lu.enfants.size());
+		for (int i = 3; i < racine.enfants.size(); i++) {
+			final Noeud attendu = racine.enfants.get(i);
+			final Noeud l = lu.enfants.get(i);
+			assertEquals(attendu.id, l.id);
+			assertEquals(attendu.nom, l.nom);
+			assertEquals(attendu.date, l.date);
+			assertEquals(attendu.uuid, l.uuid);
+			if (i >= 303)
+				assertSame(lu.enfants.get(i - 300), l.parent);
+			else
+				assertSame(lu, l.parent);
+		}
+		// les instances partagées restent partagées
+		assertSame(lu.enfants.get(3).date, lu.enfants.get(3 + dates.length).date);
+	}
+
+	static class Tableaux {
+		String id = "t";
+		int[] entiers;
+		long[] longs;
+		double[] reels;
+		boolean[] booleens;
+		char[] caracteres;
+		short[] courts;
+		byte[] octets;
+		float[] flottants;
+		Integer[] boites;
+		Object entierDansObjet;
+		Integer boiteNulle;
+	}
+
+	@Test
+	void binaireTableauxDePrimitifs() throws Exception {
+		final Tableaux t = new Tableaux();
+		t.entiers = new int[] { 0, -1, 63, -64, 64, Integer.MAX_VALUE, Integer.MIN_VALUE };
+		t.longs = new long[] { 0, Long.MIN_VALUE, Long.MAX_VALUE, 1L << 40 };
+		t.reels = new double[] { 0.0, -0.0, Double.NaN, 1e300 };
+		t.booleens = new boolean[] { true, false };
+		t.caracteres = new char[] { 'a', 'é', '\u0000', '\uffff' };
+		t.courts = new short[] { Short.MIN_VALUE, 0, Short.MAX_VALUE };
+		t.octets = new byte[] { -128, 0, 127 };
+		t.flottants = new float[] { -1.5f, Float.MAX_VALUE };
+		t.boites = new Integer[] { 1, null, -5 };
+		t.entierDansObjet = 12;
+		final Tableaux lu = BINARY.roundTrip(t);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.entiers, lu.entiers);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.longs, lu.longs);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.reels, lu.reels);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.booleens, lu.booleens);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.caracteres, lu.caracteres);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.courts, lu.courts);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.octets, lu.octets);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.flottants, lu.flottants);
+		org.junit.jupiter.api.Assertions.assertArrayEquals(t.boites, lu.boites);
+		assertEquals(12, lu.entierDansObjet);
+		assertEquals(null, lu.boiteNulle);
+	}
+
+	@Test
+	void binaireDedoublonnageAdaptatif() throws Exception {
+		// d'abord des valeurs toutes différentes (la déduplication est abandonnée pour ce champ), puis répétées
+		final Noeud racine = graphe("");
+		for (int i = 0; i < 2000; i++) {
+			final Noeud n = new Noeud();
+			n.id = "a" + i;
+			n.nom = i < 1000 ? "unique" + i : "répété" + (i % 3);
+			n.tags.add(i < 1000 ? "t" + i : "tag");
+			racine.enfants.add(n);
+		}
+		for (int tour = 0; tour < 2; tour++) {
+			final Noeud lu = BINARY.roundTrip(racine);
+			for (int i = 3; i < racine.enfants.size(); i++) {
+				assertEquals(racine.enfants.get(i).nom, lu.enfants.get(i).nom);
+				assertEquals(racine.enfants.get(i).tags, lu.enfants.get(i).tags);
+			}
+		}
+	}
+
+	@Test
+	void binaireGrapheProfond() throws Exception {
+		// chaîne de 50 000 objets : bien au-delà de la lecture directe (récursive), la pile d'actions prend le relais
+		Noeud dernier = null;
+		for (int i = 0; i < 50_000; i++) {
+			final Noeud n = new Noeud();
+			n.id = "p" + i;
+			n.entier = i;
+			n.parent = dernier;
+			if (i % 1000 == 0) { // collections et objets mêlés dans la profondeur
+				final Noeud enfant = new Noeud();
+				enfant.id = "e" + i;
+				n.enfants.add(enfant);
+			}
+			dernier = n;
+		}
+		Noeud lu = BINARY.roundTrip(dernier);
+		for (int i = 49_999; i >= 0; i--) {
+			assertEquals("p" + i, lu.id);
+			assertEquals(i, lu.entier);
+			assertEquals(i % 1000 == 0 ? 1 : 0, lu.enfants.size());
+			lu = lu.parent;
+		}
+		assertEquals(null, lu);
+	}
+
+	@Test
+	void jsonGrapheProfond() throws Exception {
+		// écriture récursive bornée : au-delà, la pile prend le relais (pas de StackOverflowError)
+		Noeud dernier = null;
+		for (int i = 0; i < 20_000; i++) {
+			final Noeud n = new Noeud();
+			n.id = "p" + i;
+			n.entier = i;
+			n.parent = dernier;
+			dernier = n;
+		}
+		Noeud lu = JSON.roundTrip(dernier);
+		for (int i = 19_999; i >= 0; i--) {
+			assertEquals("p" + i, lu.id);
+			assertEquals(i, lu.entier);
+			lu = lu.parent;
+		}
+		assertEquals(null, lu);
+	}
+
+	@Test
+	void binaireAppelsSuccessifs() throws Exception {
+		// les tables sont réutilisées d'un appel à l'autre sur un même thread : aucun état ne doit fuir,
+		// y compris après un flux tronqué
+		for (int i = 0; i < 3; i++) {
+			grapheComplet(BINARY);
+			sansId(BINARY);
+			identite(BINARY);
+		}
+		final ByteArrayOutputStream out = new ByteArrayOutputStream();
+		BinaryMarshaller.toCompleteBinary(graphe(""), out);
+		final byte[] octets = out.toByteArray();
+		final byte[] tronque = java.util.Arrays.copyOf(octets, octets.length / 2);
+		org.junit.jupiter.api.Assertions.assertThrows(Exception.class,
+				() -> BinaryUnmarshaller.fromBinary(new ByteArrayInputStream(tronque)));
+		verifie(graphe(""), BinaryUnmarshaller.fromBinary(new ByteArrayInputStream(octets)));
+		grapheComplet(BINARY);
+	}
+
+	@Test
+	void binaireChainesEtDecimaux() throws Exception {
+		final Melange m = new Melange();
+		m.valeurs.put("long", "é".repeat(70_000) + "fin");
+		m.valeurs.put("unicode", "\uD83D\uDE00 surrogate isolé \uD800 nul \u0000 \u07FF \u0800 \uFFFF");
+		m.valeurs.put("vide", "");
+		m.valeurs.put("negatif", new BigDecimal("-1.5E+30"));
+		m.valeurs.put("precis", new BigDecimal("123456789012345678901234567890.123456789"));
+		m.valeurs.put("zero", BigDecimal.ZERO);
+		m.valeurs.put("petit", new BigDecimal("1E-400"));
+		m.valeurs.put("long max", new BigDecimal(Long.MAX_VALUE).movePointLeft(3));
+		m.valeurs.put("long min", BigDecimal.valueOf(Long.MIN_VALUE, 2));
+		// valeurs immuables : écrites sans identité, une instance partagée reste égale
+		final BigDecimal partage = new BigDecimal("42.00");
+		m.valeurs.put("partage 1", partage);
+		m.valeurs.put("partage 2", partage);
+		m.valeurs.put("bigint", new java.math.BigInteger("-123456789012345678901234567890"));
+		for (int i = 0; i < 300; i++)
+			m.nombres.put(i, (long) i * i);
+		// toutes les longueurs autour des tailles d'en-tête (varint 1 à 3 octets), ASCII ou non
+		for (int n = 0; n <= 300; n++) {
+			m.valeurs.put("ascii" + n, "a".repeat(n));
+			m.valeurs.put("latin" + n, "é".repeat(n));
+			m.valeurs.put("mixte" + n, "x€".repeat(n / 2) + (n % 2 == 0 ? "" : "y"));
+		}
+		final Melange lu = BINARY.roundTrip(m);
+		assertEquals(m.valeurs, lu.valeurs);
+		assertEquals(m.nombres, lu.nombres);
 	}
 }

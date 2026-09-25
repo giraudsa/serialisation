@@ -16,8 +16,7 @@ public class ActionBinaryBigInteger extends ActionBinary<BigInteger> {
 	@Override
 	protected void ecritValeur(final Marshaller marshaller, final BigInteger bigInt,
 			final FieldInformations fieldInformations, final boolean isDejaVu) throws IOException {
-		if (!isDejaVu) {
-			setDejaTotalementSerialise(marshaller, bigInt);
+		if (!isDejaVu) { // valeur sans identité : jamais déjà vue
 			final byte[] toByte = bigInt.toByteArray();
 			writeInt(marshaller, toByte.length);
 			for (int i = 0; i < toByte.length; ++i)

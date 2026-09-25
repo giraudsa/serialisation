@@ -23,9 +23,20 @@ public abstract class ActionAbstrait<T> {
 	}
 
 	protected class ComportementMarshallValue extends Comportement {
+		/** action déjà résolue pour la valeur, ou null. */
+		private final ActionAbstrait<?> action;
 		private final FieldInformations fieldInformations;
 		private final Object value;
 		private final boolean writeSeparateur;
+
+		protected ComportementMarshallValue(final ActionAbstrait<?> action, final Object value,
+				final FieldInformations fieldInformations) {
+			super();
+			this.action = action;
+			this.value = value;
+			this.fieldInformations = fieldInformations;
+			writeSeparateur = false;
+		}
 
 		protected ComportementMarshallValue(final Object value, final FieldInformations fieldInformations,
 				final boolean writeSeparateur) {
@@ -33,6 +44,7 @@ public abstract class ActionAbstrait<T> {
 			this.value = value;
 			this.fieldInformations = fieldInformations;
 			this.writeSeparateur = writeSeparateur;
+			action = null;
 		}
 
 		@Override
@@ -41,7 +53,10 @@ public abstract class ActionAbstrait<T> {
 				NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
 			if (writeSeparateur)
 				writeSeparator(marshaller);
-			marshaller.marshall(value, fieldInformations);
+			if (action != null)
+				action.marshall(marshaller, value, fieldInformations);
+			else
+				marshaller.marshall(value, fieldInformations);
 
 		}
 	}
@@ -56,6 +71,32 @@ public abstract class ActionAbstrait<T> {
 		if (fieldInformations.isChampId() && value == null)
 			throw new MarshallExeption("l'objet a un id null");
 		return value != null;
+	}
+
+	@SuppressWarnings("rawtypes")
+	protected ActionAbstrait getAction(final Marshaller marshaller, final Object value)
+			throws NotImplementedSerializeException {
+		return marshaller.getAction(value);
+	}
+
+	/** Donne accès à {@link #marshall} d'une autre action depuis une sous-classe d'un autre paquetage. */
+	protected static void marshallAvec(final ActionAbstrait<?> action, final Marshaller marshaller, final Object value,
+			final FieldInformations fieldInformations) throws MarshallExeption {
+		action.marshall(marshaller, value, fieldInformations);
+	}
+
+	/** Sérialise la valeur tout de suite (écriture récursive des formats texte). */
+	protected void marshallDirect(final Marshaller marshaller, final Object value,
+			final FieldInformations fieldInformations) throws InstantiationException, IllegalAccessException,
+			InvocationTargetException, NoSuchMethodException, IOException, NotImplementedSerializeException,
+			MarshallExeption {
+		marshaller.marshall(value, fieldInformations);
+	}
+
+	/** Comportement qui sérialisera la valeur ; action peut être null (elle est alors cherchée à l'évaluation). */
+	protected Comportement comportementMarshallValue(final ActionAbstrait<?> action, final Object value,
+			final FieldInformations fieldInformations) {
+		return new ComportementMarshallValue(action, value, fieldInformations);
 	}
 
 	protected void augmenteProdondeur(final Marshaller marshaller) {
@@ -100,7 +141,8 @@ public abstract class ActionAbstrait<T> {
 			final FieldInformations fieldInformations) {
 		if (value == null)
 			return false;
-		if (isDejaVu(marshaller, value) && isUniversalId(marshaller))
+		// test le moins coûteux d'abord : les id sont rarement universels, la recherche d'identité est évitée
+		if (isUniversalId(marshaller) && isDejaVu(marshaller, value))
 			return true;
 		return fieldInformations.isTypeDevinable(value);
 	}

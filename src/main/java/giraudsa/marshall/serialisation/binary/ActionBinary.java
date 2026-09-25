@@ -1,8 +1,8 @@
 package giraudsa.marshall.serialisation.binary;
 
-import java.io.DataOutput;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.UUID;
 
@@ -12,20 +12,17 @@ import org.slf4j.LoggerFactory;
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.serialisation.ActionAbstrait;
+import giraudsa.marshall.serialisation.binary.actions.simple.ActionBinaryBigDecimal;
 import giraudsa.marshall.serialisation.Marshaller;
+import utils.champ.AccesChamp;
 import utils.champ.FieldInformations;
 import utils.headers.Header;
+import utils.headers.HeaderTypeCourant;
+import utils.io.Primitifs;
+import utils.io.SortieBinaire;
 import utils.TypeExtension;
 
 public abstract class ActionBinary<T> extends ActionAbstrait<T> {
-	protected class ComportementDiminueProfondeur extends Comportement {
-
-		@Override
-		protected void evalue(final Marshaller marshaller) {
-			diminueProfondeur(marshaller);
-		}
-	}
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(ActionBinary.class);
 
 	protected ActionBinary() {
@@ -41,32 +38,139 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 			boolean isDejaVu) throws IOException, IllegalAccessException, InstantiationException,
 			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption;
 
+	/**
+	 * Écrit la valeur tout de suite si c'est une feuille et qu'aucune valeur précédente n'est en attente (l'ordre du
+	 * flux est préservé), sinon la met en attente. Les valeurs en attente sont empilées par
+	 * {@link #empileDifferes(Marshaller)}, à appeler à la fin de {@link #ecritValeur}.
+	 */
+	@SuppressWarnings("rawtypes")
+	protected void ecritOuDiffere(final Marshaller marshaller, final Object valeur,
+			final FieldInformations fieldInformations) throws NotImplementedSerializeException, MarshallExeption {
+		ecritOuDiffere(getBinaryMarshaller(marshaller), valeur, fieldInformations);
+	}
+
+	/** Accès au BinaryMarshaller depuis une classe imbriquée d'action (sans instance d'action). */
+	protected static BinaryMarshaller binaryMarshaller(final Marshaller marshaller) {
+		return (BinaryMarshaller) marshaller;
+	}
+
+	protected static void ecritOuDiffere(final BinaryMarshaller binaryMarshaller, final Object valeur,
+			final FieldInformations fieldInformations) throws NotImplementedSerializeException, MarshallExeption {
+		if (binaryMarshaller.debutAttente < 0) {
+			if (valeur != null && valeur.getClass() == String.class) { // cas le plus fréquent : sans aiguillage
+				ecritChaine(binaryMarshaller, (String) valeur, fieldInformations);
+				return;
+			}
+			if (valeur != null && valeur.getClass() == BigDecimal.class) {
+				// valeur immuable fréquente : même en-tête que writeHeadersObjet, puis la valeur, sans aiguillage
+				try {
+					binaryMarshaller.ecritEnTeteNouveau(fieldInformations.isTypeDevinable(valeur), BigDecimal.class,
+							0);
+					ActionBinaryBigDecimal.ecrit(binaryMarshaller.output, (BigDecimal) valeur);
+				} catch (final IOException e) {
+					throw new MarshallExeption(e);
+				}
+				return;
+			}
+			final ActionAbstrait action;
+			if (valeur != null) {
+				// un seul accès au plan de la classe : action, feuille, chemin direct
+				final BinaryMarshaller.Plan plan = BinaryMarshaller.plan(valeur);
+				if (plan.feuille) {
+					marshallAvec(plan.action, binaryMarshaller, valeur, fieldInformations);
+					return;
+				}
+				// objet ou collection neufs : chemin direct (voir BinaryMarshaller.ecritDirect)
+				if (binaryMarshaller.recursion < BinaryMarshaller.RECURSION_MAX
+						&& binaryMarshaller.ecritDirect(plan, valeur, fieldInformations))
+					return;
+				action = plan.action != null ? plan.action : binaryMarshaller.getAction(valeur);
+			} else
+				action = binaryMarshaller.getAction(valeur);
+			// feuille, ou sous-objet écrit récursivement tant que la profondeur le permet
+			if (action instanceof ActionBinary && (((ActionBinary) action).isFeuille()
+					|| binaryMarshaller.recursion < BinaryMarshaller.RECURSION_MAX)) {
+				marshallAvec(action, binaryMarshaller, valeur, fieldInformations);
+				return;
+			}
+		}
+		binaryMarshaller.differe(valeur, fieldInformations);
+	}
+
+	/** Même écriture que ActionBinaryString (en-tête puis, à la première apparition, la chaîne). */
+	private static void ecritChaine(final BinaryMarshaller binaryMarshaller, final String chaine,
+			final FieldInformations champ) throws MarshallExeption {
+		try {
+			final int id;
+			if (champ.isDedoublonnageUtile()) {
+				id = binaryMarshaller.smallIdString(chaine);
+				champ.noteDedoublonnage(id > 0);
+			} else
+				id = binaryMarshaller.nouveauSmallIdStringSansDedoublonnage();
+			final boolean isDejaVu = id > 0;
+			final int smallId = isDejaVu ? id : -id;
+			HeaderTypeCourant.getHeader(chaine, smallId, isDejaVu).write(binaryMarshaller.output, smallId);
+			if (!isDejaVu)
+				binaryMarshaller.output.writeString(chaine);
+		} catch (final IOException e) {
+			throw new MarshallExeption(e);
+		}
+	}
+
+	/**
+	 * Valeur d'un type déclaré primitif (champ, élément de tableau) : écrite sans en-tête, le lecteur connaît le type
+	 * (voir Primitifs). @return true si c'est le cas et que la valeur est écrite.
+	 */
+	protected boolean ecritSansEnTeteSiPrimitif(final Marshaller marshaller, final FieldInformations fi,
+			final Object valeur) throws IOException {
+		final int nature = fi.getNaturePrimitive();
+		if (nature == AccesChamp.AUCUNE)
+			return false;
+		Primitifs.ecritValeur(getOutput(marshaller), nature, valeur);
+		return true;
+	}
+
+	/** @return true si aucune valeur de l'objet courant n'est en attente : une valeur peut être écrite tout de suite. */
+	protected boolean aucuneAttente(final Marshaller marshaller) {
+		return getBinaryMarshaller(marshaller).debutAttente < 0;
+	}
+
+	/** Remet les valeurs en attente dans leur ordre d'origine sur la pile. */
+	protected void empileDifferes(final Marshaller marshaller) {
+		getBinaryMarshaller(marshaller).empileDifferes();
+	}
+
+	/**
+	 * @return true si l'action écrit sa valeur sans rien empiler (types simples, chaînes, dates, BigDecimal...). Les
+	 *         actions qui ont des sous-valeurs (objets, collections, maps, tableaux) renvoient false.
+	 */
+	protected boolean isFeuille() {
+		return true;
+	}
+
 	protected BinaryMarshaller getBinaryMarshaller(final Marshaller marshaller) {
 		return (BinaryMarshaller) marshaller;
 	}
 
-	protected DataOutput getOutput(final Marshaller marshaller) {
+	protected SortieBinaire getOutput(final Marshaller marshaller) {
 		return getBinaryMarshaller(marshaller).output;
 	}
 
-	protected int getSmallIdAndStockObj(final Marshaller marshaller, final Object o) {
-		return getBinaryMarshaller(marshaller).getSmallIdAndStockObj(o);
+	/** voir {@link BinaryMarshaller#smallIdDate(Date)} : > 0 si déjà vue, opposé du nouveau smallId sinon. */
+	protected int smallIdDate(final Marshaller marshaller, final Date date) {
+		return getBinaryMarshaller(marshaller).smallIdDate(date);
 	}
 
-	protected int getSmallIdDateAndStockDate(final Marshaller marshaller, final Date date) {
-		return getBinaryMarshaller(marshaller).getSmallIdAndStockDate(date);
+	protected int smallIdString(final Marshaller marshaller, final String string) {
+		return getBinaryMarshaller(marshaller).smallIdString(string);
 	}
 
-	protected int getSmallIdStringAndStockString(final Marshaller marshaller, final String string) {
-		return getBinaryMarshaller(marshaller).getSmallIdAndStockString(string);
+	protected int smallIdType(final Marshaller marshaller, final Class<?> type) {
+		return getBinaryMarshaller(marshaller).smallIdType(type);
 	}
 
-	protected short getSmallIdTypeAndStockType(final Marshaller marshaller, final Class<?> typeObj) {
-		return getBinaryMarshaller(marshaller).getSmallIdTypeAndStockType(typeObj);
-	}
-
-	protected int getSmallIdUUIDAndStockUUID(final Marshaller marshaller, final UUID id) {
-		return getBinaryMarshaller(marshaller).getSmallIdAndStockUUID(id);
+	protected int smallIdUUID(final Marshaller marshaller, final UUID uuid) {
+		return getBinaryMarshaller(marshaller).smallIdUUID(uuid);
 	}
 
 	protected Class<?> getTypeObjProblemeHibernate(final Object object) {
@@ -78,22 +182,6 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 	@Override
 	protected <U> boolean isDejaVu(final Marshaller marshaller, final U objet) {
 		return getBinaryMarshaller(marshaller).isSmallIdDefined(objet);
-	}
-
-	protected boolean isDejaVuDate(final Marshaller marshaller, final Date date) {
-		return getBinaryMarshaller(marshaller).isDejaVuDate(date);
-	}
-
-	protected boolean isDejaVuString(final Marshaller marshaller, final String string) {
-		return getBinaryMarshaller(marshaller).isDejaVuString(string);
-	}
-
-	protected boolean isDejaVuType(final Marshaller marshaller, final Class<?> typeObj) {
-		return getBinaryMarshaller(marshaller).isDejaVuType(typeObj);
-	}
-
-	protected boolean isDejaVuUUID(final Marshaller marshaller, final UUID id) {
-		return getBinaryMarshaller(marshaller).isDejaVuUUID(id);
 	}
 
 	@Override
@@ -108,8 +196,28 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 			final FieldInformations fieldInformation) throws MarshallExeption {
 		try {
 			final boolean isDejaVu = writeHeaders(marshaller, (T) objetASerialiser, fieldInformation);
+			if (isFeuille()) {
+				// rien à empiler : la profondeur n'a pas à être suivie
+				ecritValeur(marshaller, (T) objetASerialiser, fieldInformation, isDejaVu);
+				return;
+			}
+			final BinaryMarshaller binaryMarshaller = getBinaryMarshaller(marshaller);
 			augmenteProdondeur(marshaller);
-			pushComportement(marshaller, new ComportementDiminueProfondeur());
+			if (binaryMarshaller.recursion < BinaryMarshaller.RECURSION_MAX) {
+				// écriture récursive : les sous-objets sont écrits sur place (même ordre que par la pile)
+				final int base = binaryMarshaller.hautPile();
+				binaryMarshaller.recursion++;
+				try {
+					ecritValeur(marshaller, (T) objetASerialiser, fieldInformation, isDejaVu);
+					// valeurs mises en attente au-delà de la limite : écrites avant de rendre la main
+					binaryMarshaller.videPileJusqua(base);
+				} finally {
+					binaryMarshaller.recursion--;
+				}
+				diminueProfondeur(marshaller);
+				return;
+			}
+			binaryMarshaller.empile(null, null); // fin de l'objet : la profondeur diminuera
 			ecritValeur(marshaller, (T) objetASerialiser, fieldInformation, isDejaVu);
 		} catch (MarshallExeption | IOException | IllegalAccessException | InstantiationException
 				| InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
@@ -145,15 +253,37 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 
 	protected boolean writeHeaders(final Marshaller marshaller, final T objetASerialiser,
 			final FieldInformations fieldInformations) throws IOException {
+		return writeHeadersObjet(marshaller, objetASerialiser, fieldInformations);
+	}
+
+	/** En-tête d'un objet avec identité : référence s'il est déjà vu, sinon type (si nécessaire). */
+	protected boolean writeHeadersObjet(final Marshaller marshaller, final Object objetASerialiser,
+			final FieldInformations fieldInformations) throws IOException {
+		final BinaryMarshaller binaryMarshaller = getBinaryMarshaller(marshaller);
+		final SortieBinaire output = binaryMarshaller.output;
 		final Class<?> typeObj = getTypeObjProblemeHibernate(objetASerialiser);
-		final boolean isDejaVu = isDejaVu(marshaller, objetASerialiser);
-		final boolean isTypeDevinable = isTypeDevinable(marshaller, objetASerialiser, fieldInformations);
-		final boolean isDejaVuType = isDejaVuType(marshaller, typeObj);
-		final int smallId = getSmallIdAndStockObj(marshaller, objetASerialiser);
-		final short smallIdType = getSmallIdTypeAndStockType(marshaller, typeObj);
-		final Header header = Header.getHeader(isDejaVu, isTypeDevinable, smallId, smallIdType);
-		header.write(getOutput(marshaller), smallId, smallIdType, isDejaVuType, typeObj);
-		return isDejaVu;
+		if (TypeExtension.isValeurImmuableBinaire(typeObj)) {
+			// valeur sans identité : toujours écrite, sans smallId (même règle à la lecture)
+			ecritEnTeteNouveau(marshaller, binaryMarshaller, objetASerialiser, fieldInformations, typeObj, 0);
+			return false;
+		}
+		final int id = binaryMarshaller.smallIdObjet(objetASerialiser);
+		if (id > 0) {
+			Header.getHeader(true, true, id, (short) 0).write(output, id, (short) 0, true, typeObj);
+			return true;
+		}
+		ecritEnTeteNouveau(marshaller, binaryMarshaller, objetASerialiser, fieldInformations, typeObj, -id);
+		return false;
+	}
+
+	/**
+	 * En-tête d'une première apparition. Un type devinable (celui du champ) n'est pas écrit et ne reçoit pas de
+	 * numéro : seuls les types écrits sont numérotés, dans l'ordre (même règle à la lecture).
+	 */
+	private void ecritEnTeteNouveau(final Marshaller marshaller, final BinaryMarshaller binaryMarshaller,
+			final Object objet, final FieldInformations fieldInformations, final Class<?> typeObj, final int smallId)
+			throws IOException {
+		binaryMarshaller.ecritEnTeteNouveau(isTypeDevinable(marshaller, objet, fieldInformations), typeObj, smallId);
 	}
 
 	protected void writeInt(final Marshaller marshaller, final int v) throws IOException {
@@ -174,5 +304,9 @@ public abstract class ActionBinary<T> extends ActionAbstrait<T> {
 
 	protected void writeUTF(final Marshaller marshaller, final String s) throws IOException {
 		getBinaryMarshaller(marshaller).writeUTF(s);
+	}
+
+	protected void writeVarInt(final Marshaller marshaller, final int v) throws IOException {
+		getBinaryMarshaller(marshaller).writeVarInt(v);
 	}
 }

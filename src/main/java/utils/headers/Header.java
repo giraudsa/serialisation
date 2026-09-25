@@ -1,10 +1,10 @@
 package utils.headers;
 
-import java.io.DataInputStream;
-import java.io.DataOutput;
 import java.io.IOException;
 
 import giraudsa.marshall.exception.UnmarshallExeption;
+import utils.io.EntreeBinaire;
+import utils.io.SortieBinaire;
 
 public abstract class Header {
 	/**
@@ -23,6 +23,7 @@ public abstract class Header {
 			HeaderEnum.init();
 			HeaderTypeDevinable.init();
 			HeaderTypeNonDevinable.init();
+			HeaderReference.init();
 			while (prochainOctet < 256)
 				new HeaderVerySmallId();
 		}
@@ -48,10 +49,8 @@ public abstract class Header {
 		Registre.init();
 		if (isDejaVu)
 			return smallId <= HeaderVerySmallId.getMaxVerySmallId() ? HeaderVerySmallId.getHeader(smallId)
-					: HeaderTypeDevinable.getHeader(smallId);
-		else
-			return isTypeDevinable ? HeaderTypeDevinable.getHeader(smallId)
-					: HeaderTypeNonDevinable.getHeader(smallId, smallIdType);
+					: HeaderReference.getHeader(smallId);
+		return isTypeDevinable ? HeaderTypeDevinable.getHeader() : HeaderTypeNonDevinable.getHeader(smallIdType);
 	}
 
 	public static Header getHeader(final byte b) {
@@ -59,29 +58,51 @@ public abstract class Header {
 		return Registre.headers[b & 0xFF];
 	}
 
+	/** catégories d'en-tête, pour un aiguillage par switch plutôt que par instanceof. */
+	public static final int SIMPLE = 0;
+	public static final int COURANT = 1;
+	public static final int ENUM = 2;
+	public static final int COMPLEXE = 3;
+
 	protected final byte headerByte;
+	/** voir {@link #SIMPLE}, {@link #COURANT}, {@link #ENUM}, {@link #COMPLEXE}. */
+	public final int categorie;
 
 	protected Header() {
 		super();
 		headerByte = Registre.enregistre(this);
+		categorie = categorie();
 	}
 
-	public short getSmallIdType(final DataInputStream input) throws IOException, UnmarshallExeption {
+	/** Catégorie de l'en-tête ; constante pour chaque classe dérivée (appelée depuis le constructeur). */
+	protected int categorie() {
+		return COMPLEXE;
+	}
+
+	public short getSmallIdType(final EntreeBinaire input) throws IOException, UnmarshallExeption {
 		return 0;
+	}
+
+	/**
+	 * @return true si l'objet apparaît pour la première fois : son smallId n'est pas écrit, le lecteur l'attribue
+	 *         séquentiellement.
+	 */
+	public boolean isNouveau() {
+		return false;
 	}
 
 	public boolean isTypeDevinable() {
 		return true;
 	}
 
-	public abstract int readSmallId(DataInputStream input, int i) throws IOException, UnmarshallExeption;
+	public abstract int readSmallId(EntreeBinaire input, int i) throws IOException, UnmarshallExeption;
 
-	public void write(final DataOutput output, final int smallId, final short smallIdType, final boolean isDejaVuType,
+	public void write(final SortieBinaire output, final int smallId, final short smallIdType, final boolean isDejaVuType,
 			final Class<?> type) throws IOException {
 		// A spécifier dans les classes dérivées ad hoc
 	}
 
-	public void writeValue(final DataOutput output, final Object o) throws IOException {
+	public void writeValue(final SortieBinaire output, final Object o) throws IOException {
 		// A spécifier dans les classes dérivées ad hoc
 	}
 

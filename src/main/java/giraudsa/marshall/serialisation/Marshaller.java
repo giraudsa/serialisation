@@ -4,10 +4,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import giraudsa.marshall.exception.MarshallExeption;
@@ -16,6 +14,7 @@ import giraudsa.marshall.serialisation.ActionAbstrait.Comportement;
 import giraudsa.marshall.strategie.StrategieDeSerialisation;
 import utils.Constants;
 import utils.EntityManager;
+import utils.IdentiteIntMap;
 import utils.champ.FieldInformations;
 import utils.TypeExtension;
 
@@ -25,9 +24,46 @@ public abstract class Marshaller {
 	protected Deque<Comportement> aFaire = new ArrayDeque<>();
 	// comparaison par identité : deux objets distincts mais égaux au sens de
 	// equals() sont deux noeuds différents du graphe.
-	protected Set<Object> dejaTotalementSerialise = Collections.newSetFromMap(new IdentityHashMap<>());
-	private final Set<Object> dejaVu = Collections.newSetFromMap(new IdentityHashMap<>());
-	private final Map<Object, UUID> dicoObjToFakeId = new IdentityHashMap<>();
+	// tables créées à la demande : le binaire ne s'en sert presque jamais, leur allocation pèse sur les petits graphes
+	/** tables d'identité réutilisées d'une sérialisation à l'autre sur un même thread (voir rendTables). */
+	private static final ThreadLocal<IdentiteIntMap[]> TABLES_LIBRES = ThreadLocal
+			.withInitial(() -> new IdentiteIntMap[2]);
+
+	private static IdentiteIntMap prendTable() {
+		final IdentiteIntMap[] libres = TABLES_LIBRES.get();
+		for (int i = 0; i < libres.length; i++)
+			if (libres[i] != null) {
+				final IdentiteIntMap table = libres[i];
+				libres[i] = null;
+				return table;
+			}
+		return new IdentiteIntMap(1024);
+	}
+
+	private static void rend(final IdentiteIntMap table) {
+		table.vide(); // ne retient pas les objets sérialisés
+		final IdentiteIntMap[] libres = TABLES_LIBRES.get();
+		for (int i = 0; i < libres.length; i++)
+			if (libres[i] == null) {
+				libres[i] = table;
+				return;
+			}
+	}
+
+	/** Rend les tables d'identité pour la sérialisation suivante ; à appeler en fin de sérialisation. */
+	protected void rendTables() {
+		if (etats != null) {
+			rend(etats);
+			etats = null;
+		}
+	}
+
+	// ensembles par identité (table à adressage ouvert : ni entrée allouée ni boxing)
+	/** état de chaque objet rencontré : bits DEJA_VU et TOTALEMENT_SERIALISE (une seule recherche par accès). */
+	private IdentiteIntMap etats;
+	private static final int DEJA_VU = 1;
+	private static final int TOTALEMENT_SERIALISE = 2;
+	private Map<Object, UUID> dicoObjToFakeId;
 	private final EntityManager entityManager;
 	////// ATTRIBUT
 	protected int profondeur;
@@ -45,7 +81,13 @@ public abstract class Marshaller {
 
 	@SuppressWarnings("rawtypes")
 	private <T> ActionAbstrait choisiAction(final Class<T> type) throws NotImplementedSerializeException {
-		final var dicoTypeToAction = getDicoTypeToAction();
+		return choisiAction(getDicoTypeToAction(), type);
+	}
+
+	/** Choisit l'action d'un type à partir de sa famille (enum, map, date, collection...) et la mémorise. */
+	@SuppressWarnings("rawtypes")
+	protected static ActionAbstrait choisiAction(final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction,
+			final Class<?> type) throws NotImplementedSerializeException {
 		ActionAbstrait action;
 		Class<?> genericType = type;
 		if (TypeExtension.isEnum(type))
@@ -96,6 +138,8 @@ public abstract class Marshaller {
 	}
 
 	protected Map<Object, UUID> getDicoObjToFakeId() {
+		if (dicoObjToFakeId == null)
+			dicoObjToFakeId = new IdentityHashMap<>();
 		return dicoObjToFakeId;
 	}
 
@@ -114,11 +158,11 @@ public abstract class Marshaller {
 	}
 
 	protected <T> boolean isDejaTotalementSerialise(final T obj) {
-		return dejaTotalementSerialise.contains(obj);
+		return etats != null && (etats.get(obj) & TOTALEMENT_SERIALISE) != 0; // ABSENT n'a aucun des deux bits
 	}
 
 	protected <T> boolean isDejaVu(final T obj) {
-		return dejaVu.contains(obj);
+		return etats != null && (etats.get(obj) & DEJA_VU) != 0;
 	}
 
 	protected <T> void marshall(final T value, final FieldInformations fieldInformations)
@@ -129,10 +173,26 @@ public abstract class Marshaller {
 	}
 
 	protected <T> void setDejaTotalementSerialise(final T obj) {
-		dejaTotalementSerialise.add(obj);
+		if (etats == null)
+			etats = prendTable();
+		etats.ou(obj, TOTALEMENT_SERIALISE);
+	}
+
+	/**
+	 * Marque l'objet déjà vu et, si tout doit en être sérialisé, totalement sérialisé, en une seule recherche.
+	 *
+	 * @return true s'il était déjà totalement sérialisé
+	 */
+	protected <T> boolean marqueVu(final T obj, final boolean tout) {
+		if (etats == null)
+			etats = prendTable();
+		final int precedent = etats.ou(obj, tout ? DEJA_VU | TOTALEMENT_SERIALISE : DEJA_VU);
+		return precedent != IdentiteIntMap.ABSENT && (precedent & TOTALEMENT_SERIALISE) != 0;
 	}
 
 	protected <T> void setDejaVu(final T obj) {
-		dejaVu.add(obj);
+		if (etats == null)
+			etats = prendTable();
+		etats.ou(obj, DEJA_VU);
 	}
 }

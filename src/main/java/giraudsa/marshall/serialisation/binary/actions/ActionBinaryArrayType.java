@@ -3,8 +3,6 @@ package giraudsa.marshall.serialisation.binary.actions;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayDeque;
-import java.util.Deque;
 
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
@@ -25,14 +23,13 @@ public class ActionBinaryArrayType extends ActionBinary<Object> {
 			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException, MarshallExeption {
 		final FakeChamp fakeChamp = new FakeChamp(null, obj.getClass().getComponentType(), fi.getRelation(),
 				fi.getAnnotations());
-		final Deque<Comportement> tmp = new ArrayDeque<>();
 		if (!isDejaVu) {
 			if (strategieSerialiseTout(marshaller, fi))
 				setDejaTotalementSerialise(marshaller, obj);
 			final int size = Array.getLength(obj);
-			writeInt(marshaller, size);
+			writeVarInt(marshaller, size);
 			for (int i = 0; i < size; i++)
-				tmp.push(traiteChamp(marshaller, Array.get(obj, i), fakeChamp));
+				ecritOuDiffere(marshaller, Array.get(obj, i), fakeChamp);
 		} else if (!isDejaTotalementSerialise(marshaller, obj) && strategieSerialiseTout(marshaller, fi)) {// deja vu,
 																											// donc on
 																											// passe ici
@@ -43,8 +40,13 @@ public class ActionBinaryArrayType extends ActionBinary<Object> {
 																											// COMPOSITION
 			setDejaTotalementSerialise(marshaller, obj);
 			for (int i = 0; i < Array.getLength(obj); i++)
-				tmp.push(traiteChamp(marshaller, Array.get(obj, i), fakeChamp));
+				ecritOuDiffere(marshaller, Array.get(obj, i), fakeChamp);
 		}
-		pushComportements(marshaller, tmp);
+		empileDifferes(marshaller);
+	}
+
+	@Override
+	protected boolean isFeuille() {
+		return false;
 	}
 }

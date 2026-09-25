@@ -23,7 +23,6 @@ public class Constants {
 	private static final String BOOLEAN_TYPE = "bool";
 
 	private static final String BYTE_TYPE = "byte";
-	private static MapDoubleSens<Byte, Class<? extends StrategieDeSerialisation>> byteToStrategie = new MapDoubleSens<>();
 	public static final Class<?> calendarType = Calendar.class;
 
 	@SuppressWarnings("rawtypes")
@@ -89,11 +88,10 @@ public class Constants {
         entry(Void.class, VOID_TYPE)
     );
 
-	static {
-		byteToStrategie.put(SERIALISATION_COMPLETE, StrategieSerialisationComplete.class);
-		byteToStrategie.put((byte) 1, StrategieParComposition.class);
-		byteToStrategie.put((byte) 2, StrategieParCompositionOuAgregationEtClasseConcrete.class);
-	}
+	/** stratégies connues, sans état, indexées par leur octet de tête dans le flux binaire. */
+	private static final StrategieDeSerialisation[] STRATEGIES_CONNUES = { new StrategieSerialisationComplete(),
+			new StrategieParComposition(), new StrategieParCompositionOuAgregationEtClasseConcrete() };
+
 
 	@SuppressWarnings("rawtypes")
 	public static final Class[] getClassVide() {
@@ -101,10 +99,12 @@ public class Constants {
 	}
 
 	public static byte getFirstByte(final StrategieDeSerialisation strategie) {
-		if (!byteToStrategie.containsValue(strategie.getClass()))
-			return STRATEGIE_INCONNUE;
-		else
-			return byteToStrategie.getReverse(strategie.getClass());
+		// stratégies connues : comparaison directe (appelé à chaque sérialisation binaire)
+		final Class<?> classe = strategie.getClass();
+		for (byte b = 0; b < STRATEGIES_CONNUES.length; b++)
+			if (STRATEGIES_CONNUES[b].getClass() == classe)
+				return b;
+		return STRATEGIE_INCONNUE;
 	}
 
 	public static String getNameType(final String smallName) {
@@ -128,11 +128,10 @@ public class Constants {
 	public static StrategieDeSerialisation getStrategie(final byte firstByte) throws UnmarshallExeption {
 		if (firstByte == STRATEGIE_INCONNUE)
 			return null;
-		try {
-			return byteToStrategie.get(firstByte).newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
-			throw new UnmarshallExeption("impossible d'instancier la strategie de deserialisation", e);
-		}
+		// les stratégies connues sont sans état : une instance partagée (appelé à chaque désérialisation binaire)
+		if (firstByte >= 0 && firstByte < STRATEGIES_CONNUES.length)
+			return STRATEGIES_CONNUES[firstByte];
+		throw new UnmarshallExeption("stratégie de désérialisation inconnue : " + firstByte);
 	}
 
 	private Constants() {

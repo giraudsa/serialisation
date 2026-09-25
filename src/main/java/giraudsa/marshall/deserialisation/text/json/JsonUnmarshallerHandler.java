@@ -18,6 +18,13 @@ public class JsonUnmarshallerHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUnmarshallerHandler.class);
 	private static final char QUOTE = '\"';
 	private static final int TAILLE_BLOC = 8192;
+	/** caractères qui déclenchent une action hors guillemets (voir comportement). */
+	private static final boolean[] SPECIAL_HORS_GUILLEMETS = new boolean[128];
+
+	static {
+		for (final char c : "\"\\{}[]:,".toCharArray())
+			SPECIAL_HORS_GUILLEMETS[c] = true;
+	}
 
 	private static void erreurParsing(final String message, final Exception e) throws UnmarshallExeption {
 		LOGGER.error(message, e);
@@ -67,10 +74,14 @@ public class JsonUnmarshallerHandler {
 			break;
 		case '"':
 			quote();
+			noteGuillemet();
 			buff.append(c);
 			break;
 		case '\\':
-			buff.append(readEscapeCharacter());
+			final char echappe = readEscapeCharacter();
+			if (echappe == '"')
+				noteGuillemet(); // comme la recherche historique (indexOf), un \" compte aussi
+			buff.append(echappe);
 			break;
 		default:
 			buff.append(c);
@@ -114,16 +125,39 @@ public class JsonUnmarshallerHandler {
 	 *
 	 * @return false s'il n'y a pas deux guillemets distincts.
 	 */
+	/** Le guillemet qui va être ajouté à buff : premier et dernier guillemets de buff, suivis au fil de l'eau. */
+	private void noteGuillemet() {
+		final int position = buff.length();
+		if (premierGuillemetBuff < 0)
+			premierGuillemetBuff = position;
+		dernierGuillemetBuff = position;
+	}
+
+	/** Vide buff (et le suivi de ses guillemets). */
+	private void videBuff() {
+		buff.setLength(0);
+		premierGuillemetBuff = -1;
+		dernierGuillemetBuff = -1;
+	}
+
+	/** positions du premier et du dernier guillemet de buff (-1 : aucun), comme indexOf / lastIndexOf. */
+	private int premierGuillemetBuff = -1;
+	private int dernierGuillemetBuff = -1;
+
 	private boolean enleveGuillemets() {
-		final int firstQuote = buff.indexOf("\"");
-		final int lastQuote = buff.lastIndexOf("\"");
+		final int firstQuote = premierGuillemetBuff;
+		final int lastQuote = dernierGuillemetBuff;
 		if (firstQuote != -1 && lastQuote != firstQuote) {
-			buff.setLength(lastQuote);
-			buff.delete(0, firstQuote + 1);
+			premierGuillemet = firstQuote;
+			dernierGuillemet = lastQuote;
 			return true;
 		}
 		return false;
 	}
+
+	/** positions trouvées par enleveGuillemets : getString rend ce qui est entre elles (sans décaler buff). */
+	private int premierGuillemet = -1;
+	private int dernierGuillemet = -1;
 
 	private char escapeCharactere() throws UnmarshallExeption {
 		char result = 0;
@@ -165,8 +199,14 @@ public class JsonUnmarshallerHandler {
 	}
 
 	private String getString() {
-		final String s = buff.toString();
-		buff.setLength(0);
+		final String s;
+		if (premierGuillemet >= 0) {
+			s = buff.substring(premierGuillemet + 1, dernierGuillemet);
+			premierGuillemet = -1;
+			dernierGuillemet = -1;
+		} else
+			s = buff.toString();
+		videBuff();
 		return s;
 	}
 
@@ -202,7 +242,7 @@ public class JsonUnmarshallerHandler {
 
 	private void ouvreAccolade() {
 		if (!isBetweenQuote) {
-			buff.setLength(0);
+			videBuff();
 			jsonUnmarshaller.ouvreAccolade();
 		} else
 			buff.append('{');
@@ -222,7 +262,37 @@ public class JsonUnmarshallerHandler {
 		int t = lit();
 		while (t != FIN) {
 			comportement((char) t);
+			ajouteCaracteresOrdinaires();
 			t = lit();
+		}
+	}
+
+	/**
+	 * Ajoute d'un bloc les caractères suivants du tampon qui ne déclenchent rien (ceux que comportement ajouterait
+	 * un à un à buff) : même résultat, sans aiguillage par caractère. Entre guillemets, seuls " et \ comptent ; hors
+	 * guillemets, les séparateurs aussi.
+	 */
+	private void ajouteCaracteresOrdinaires() {
+		final char[] b = bloc;
+		final int fin = finBloc;
+		int i = positionBloc;
+		if (isBetweenQuote)
+			while (i < fin) {
+				final char c = b[i];
+				if (c == '"' || c == '\\')
+					break;
+				i++;
+			}
+		else
+			while (i < fin) {
+				final char c = b[i];
+				if (c < 128 && SPECIAL_HORS_GUILLEMETS[c])
+					break;
+				i++;
+			}
+		if (i > positionBloc) {
+			buff.append(b, positionBloc, i - positionBloc);
+			positionBloc = i;
 		}
 	}
 

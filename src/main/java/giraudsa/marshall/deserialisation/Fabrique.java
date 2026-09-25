@@ -1,10 +1,12 @@
 package giraudsa.marshall.deserialisation;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import giraudsa.marshall.exception.ConstructorException;
 import giraudsa.marshall.exception.FabriqueInstantiationException;
@@ -18,6 +20,28 @@ import giraudsa.marshall.exception.InstanciationException;
  *
  */
 public class Fabrique {
+	/**
+	 * sun.misc.Unsafe.allocateInstance(Class) : alloue l'objet sans exécuter de constructeur ni d'initialiseur, comme
+	 * le constructeur de sérialisation, mais par une intrinsèque du JIT (le constructeur de sérialisation passe par un
+	 * MethodHandle non constant, parfois très mal compilé). Cette méthode n'est pas concernée par la dépréciation des
+	 * accès mémoire d'Unsafe (JEP 471). null si indisponible : on garde alors le constructeur de sérialisation.
+	 */
+	private static final MethodHandle ALLOCATION = chercheAllocation();
+
+	private static MethodHandle chercheAllocation() {
+		try {
+			final Class<?> classeUnsafe = Class.forName("sun.misc.Unsafe");
+			final Field champ = classeUnsafe.getDeclaredField("theUnsafe");
+			champ.setAccessible(true);
+			final Object unsafe = champ.get(null);
+			return MethodHandles.lookup()
+					.findVirtual(classeUnsafe, "allocateInstance", MethodType.methodType(Object.class, Class.class))
+					.bindTo(unsafe);
+		} catch (final ReflectiveOperationException | RuntimeException e) {
+			return null;
+		}
+	}
+
 	private static volatile Fabrique instance;
 	private static final Object[] noArgument = new Object[0];
 
@@ -35,8 +59,13 @@ public class Fabrique {
 	}
 
 	private final Constructor<Object> constructeurObject;// constructeur par défaut de la classe Object
-	// partagé entre threads (singleton)
-	private final Map<Class<?>, Constructor<?>> dicoClassToConstructeur = new ConcurrentHashMap<>();
+	// partagé entre threads (singleton) ; ClassValue : plus rapide qu'une map concurrente
+	private final ClassValue<Constructor<?>> constructeurs = new ClassValue<>() {
+		@Override
+		protected Constructor<?> computeValue(final Class<?> type) {
+			return creeConstructeur(type);
+		}
+	};
 	private final Method newConstructorForSerializationMethod; // methode public Constructor
 																// newConstructorForSerialization(Class
 																// classToInstantiate, Constructor constructorToCall)
@@ -61,22 +90,24 @@ public class Fabrique {
 	// "return reflectionFactory.newConstructorForSerialization(type, constructor);"
 	@SuppressWarnings("unchecked")
 	private <T> Constructor<T> getConstructor(final Class<T> type) throws ConstructorException {
-		Constructor<?> constr = dicoClassToConstructeur.get(type);
-		if (constr == null) {
-			try {
-				constr = (Constructor<?>) newConstructorForSerializationMethod.invoke(reflectionFactory, type,
-						constructeurObject);
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				throw new ConstructorException("impossible de creer le constructeur pour le type " + type.getName(), e);
-			}
-			constr.setAccessible(true);
-			final Constructor<?> existant = dicoClassToConstructeur.putIfAbsent(type, constr);
-			if (existant != null)
-				constr = existant;
+		try {
+			return (Constructor<T>) constructeurs.get(type);
+		} catch (final IllegalStateException e) {
+			throw new ConstructorException("impossible de creer le constructeur pour le type " + type.getName(),
+					(Exception) e.getCause());
 		}
-		return (Constructor<T>) constr;
 	}
 
+	private Constructor<?> creeConstructeur(final Class<?> type) {
+		try {
+			final Constructor<?> constr = (Constructor<?>) newConstructorForSerializationMethod.invoke(reflectionFactory,
+					type, constructeurObject);
+			constr.setAccessible(true);
+			return constr;
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			throw new IllegalStateException(e);
+		}
+	}
 	/**
 	 * instancie un objet ex-nihilot sans passer par un constructeur et donc sans
 	 * effet de bord...
@@ -85,10 +116,20 @@ public class Fabrique {
 	 * @return
 	 * @throws InstanciationException
 	 */
+	@SuppressWarnings("unchecked")
 	public <T> T newObject(final Class<T> type) throws InstanciationException {
+		if (type == void.class || type == Void.class)
+			return null;
+		if (ALLOCATION != null)
+			try {
+				return (T) ALLOCATION.invokeExact(type);
+			} catch (final InstantiationException e) {
+				throw new InstanciationException("impossible d'instancier le type " + type.getName(), e);
+			} catch (final Throwable e) { // NOSONAR : invokeExact déclare Throwable
+				throw new InstanciationException("impossible d'instancier le type " + type.getName(),
+						e instanceof Exception ? (Exception) e : new IllegalStateException(e));
+			}
 		try {
-			if (type == void.class || type == Void.class)
-				return null;
 			return getConstructor(type).newInstance(noArgument);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
 				| ConstructorException e) {

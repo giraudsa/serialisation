@@ -22,6 +22,8 @@ public class ActionBinaryInteger extends ActionBinary<Integer> {
 	@Override
 	protected boolean writeHeaders(final Marshaller marshaller, final Integer i,
 			final FieldInformations fieldInformations) throws IOException {
+		if (ecritSansEnTeteSiPrimitif(marshaller, fieldInformations, i))
+			return false;
 		final HeaderSimpleType<?> header = (HeaderSimpleType<?>) HeaderSimpleType.getHeader(i);
 		header.writeValue(getOutput(marshaller), i);
 		return false;

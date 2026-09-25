@@ -9,7 +9,10 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Collection;
@@ -30,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import giraudsa.marshall.deserialisation.ActionAbstrait;
+import giraudsa.marshall.deserialisation.CacheIdNonUniversel;
 import giraudsa.marshall.deserialisation.text.ActionText;
 import giraudsa.marshall.deserialisation.text.TextUnmarshaller;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonArrayType;
@@ -56,12 +60,55 @@ import giraudsa.marshall.exception.NotImplementedSerializeException;
 import giraudsa.marshall.exception.SetValueException;
 import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.ConfigurationMarshalling;
+import utils.CopieFormatDate;
 import utils.Constants;
 import utils.EntityManager;
 import utils.TypeExtension;
 
 public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	private static final Map<Class<?>, ActionAbstrait<?>> dicoTypeToAction = new ConcurrentHashMap<>();
+
+	/** prototype d'action de chaque classe, résolu une fois (ClassValue : plus rapide qu'une map concurrente). */
+	private static final ClassValue<ActionAbstrait<?>> ACTIONS = new ClassValue<>() {
+		@Override
+		protected ActionAbstrait<?> computeValue(final Class<?> type) {
+			final ActionAbstrait<?> action = dicoTypeToAction.get(type);
+			if (action != null)
+				return action;
+			try {
+				return choisiAction(dicoTypeToAction, type);
+			} catch (final NotImplementedSerializeException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+	};
+
+	/** @return le prototype d'action de la classe (sans l'instancier). */
+	static ActionAbstrait<?> prototype(final Class<?> type) throws NotImplementedSerializeException {
+		if (type == null)
+			return null;
+		try {
+			return ACTIONS.get(type);
+		} catch (final IllegalStateException e) {
+			if (e.getCause() instanceof NotImplementedSerializeException)
+				throw (NotImplementedSerializeException) e.getCause();
+			throw e;
+		}
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override
+	protected <U> ActionAbstrait getAction(final Class<U> type) throws NotImplementedSerializeException {
+		if (type == null)
+			return null;
+		try {
+			return ACTIONS.get(type).getNewInstance((Class) type, this);
+		} catch (final IllegalStateException e) {
+			if (e.getCause() instanceof NotImplementedSerializeException)
+				throw (NotImplementedSerializeException) e.getCause();
+			throw e;
+		}
+	}
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUnmarshaller.class);
 	static {
 		dicoTypeToAction.put(Date.class, ActionJsonDate.getInstance());
@@ -108,6 +155,8 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 
 	public static <U> U fromJson(final Reader reader, final EntityManager entity) throws UnmarshallExeption {
 		try {
+			if (entity == null)
+				return lit(new String(litTout(reader)));
 			final JsonUnmarshaller<U> w = new JsonUnmarshaller<>(reader, entity);
 			return w.parse();
 		} catch (FabriqueInstantiationException | ClassNotFoundException | IOException
@@ -121,9 +170,90 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 	public static <U> U fromJson(final String stringToUnmarshall) throws UnmarshallExeption {
 		if (stringToUnmarshall == null || stringToUnmarshall.length() == 0)
 			return null;
-		try (StringReader sr = new StringReader(stringToUnmarshall)) {
-			return fromJson(sr);
+		return lit(stringToUnmarshall);
+	}
+
+	/**
+	 * Lecture sans gestionnaire d'entités : directe (LecteurJsonDirect) quand le texte s'y prête, sinon par le
+	 * lecteur historique.
+	 */
+	@SuppressWarnings("unchecked")
+	private static <U> U lit(final String texte) throws UnmarshallExeption {
+		final Object direct = LecteurJsonDirect.lit(texte);
+		if (direct != null)
+			return (U) direct;
+		return litHistorique(texte);
+	}
+
+	/** lecture par le lecteur historique (événements et actions). */
+	static <U> U litHistorique(final String texte) throws UnmarshallExeption {
+		try {
+			final JsonUnmarshaller<U> w = new JsonUnmarshaller<>(new StringReader(texte), null);
+			return w.parse();
+		} catch (FabriqueInstantiationException | ClassNotFoundException | IOException
+				| EntityManagerImplementationException | InstanciationException | NotImplementedSerializeException
+				| JsonHandlerException | IllegalAccessException | DataFormatException | SetValueException e) {
+			LOGGER.error("probleme dans la désérialisation JSON", e);
+			throw new UnmarshallExeption("probleme dans la désérialisation JSON", e);
 		}
+	}
+
+	private static char[] litTout(final Reader reader) throws IOException {
+		char[] texte = new char[8192];
+		int taille = 0;
+		int lu;
+		while ((lu = reader.read(texte, taille, texte.length - taille)) != -1) {
+			taille += lu;
+			if (taille == texte.length)
+				texte = Arrays.copyOf(texte, taille * 2);
+		}
+		return Arrays.copyOf(texte, taille);
+	}
+
+	//////// accès pour LecteurJsonDirect
+
+	static JsonUnmarshaller<?> pourLectureDirecte() throws FabriqueInstantiationException {
+		return new JsonUnmarshaller<>(ConfigurationMarshalling.getDatFormatJson());
+	}
+
+	/** format de date de la lecture directe, copié à la première date qui n'est pas au format ISO UTC. */
+	private SimpleDateFormat formatSource;
+	private DateFormat formatCopie;
+
+	private JsonUnmarshaller(final SimpleDateFormat formatSource) throws FabriqueInstantiationException {
+		super(null, formatSource);
+		this.formatSource = formatSource;
+	}
+
+	static Class<?> classeDepuisNom(final String nom) throws ClassNotFoundException {
+		return getTypeDepuisNom(nom);
+	}
+
+	Object objetParId(final String id, final Class<?> type)
+			throws EntityManagerImplementationException, InstanciationException {
+		if (entity == null && cacheObject instanceof CacheIdNonUniversel)
+			return ((CacheIdNonUniversel) cacheObject).obtient(type, id, this::newInstance);
+		return getObject(id, type);
+	}
+
+	void choisitCache(final boolean isIdUniversel) {
+		setCache(isIdUniversel);
+	}
+
+	Map<Object, UUID> fakeIds() {
+		return getDicoObjToFakeId();
+	}
+
+	DateFormat formatDate() {
+		if (df != null)
+			return df;
+		if (formatCopie == null)
+			formatCopie = CopieFormatDate.copie(formatSource);
+		return formatCopie;
+	}
+
+	boolean datesIsoUtc() {
+		return dateIsoUtc;
 	}
 
 	public static <U> U fromJson(final String stringToUnmarshall, final EntityManager entity)
@@ -235,6 +365,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	protected void setValeur(final String valeur, final Class<?> typeGuess)
 			throws EntityManagerImplementationException, InstanciationException, ClassNotFoundException,
 			NotImplementedSerializeException, IllegalAccessException, SetValueException {
@@ -246,6 +377,19 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		Class<?> typeAction = typeGuess;
 		if (typeGuess != Void.class && type != null && !type.isAssignableFrom(typeGuess))
 			typeAction = type;
+		if (!waitingForType && ActionJsonSimpleComportement.estActionDe(prototype(typeAction))) {
+			// valeur simple (nombre, booléen, chaîne...) : même résultat que l'action empilée, remplie puis intégrée
+			// par integreObject, sans l'allouer ni l'empiler
+			final Object valeurLue = ActionJsonSimpleComportement.construit(typeAction, valeur);
+			final String nom = clefEnCours;
+			clefEnCours = null;
+			waitingForAction = false;
+			if (pileAction.isEmpty())
+				obj = (T) valeurLue;
+			else
+				integreObjet(getActionEnCours(), nom, valeurLue);
+			return;
+		}
 		final ActionJson<?> action = (ActionJson<?>) getAction(typeAction);
 		setNom(action, clefEnCours);
 		setFieldInformation(action);

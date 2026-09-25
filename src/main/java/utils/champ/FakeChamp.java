@@ -19,6 +19,19 @@ public class FakeChamp implements FieldInformations {
 	private final String name;
 	private final TypeRelation relation;
 	private final TypeToken<?> typeToken;
+	private final int naturePrimitive;
+
+	/** Construit le FakeChamp des éléments, clés ou valeurs portés par un champ. */
+	static FakeChamp pourParametre(final FieldInformations fi, final int role) {
+		final Type[] types = fi.getParametreType();
+		final Type type;
+		if (role == ELEMENT)
+			type = types != null && types.length > 0 ? types[0] : Object.class;
+		else
+			type = types != null && types.length > 1 ? types[role - 1] : Object.class;
+		final String nom = role == CLE ? "K" : role == VALEUR ? "V" : null;
+		return new FakeChamp(nom, type, fi.getRelation(), fi.getAnnotations());
+	}
 
 	public FakeChamp(final String name, final Type type, final TypeRelation relation, final Annotation[] annotations) {
 		super();
@@ -26,6 +39,7 @@ public class FakeChamp implements FieldInformations {
 		typeToken = TypeToken.get(type);
 		this.relation = relation;
 		isSimple = TypeExtension.isSimple(typeToken.getRawType());
+		naturePrimitive = AccesChamp.nature(typeToken.getRawType());
 		this.annotations = annotations == null ? noAnnotation : annotations;
 	}
 
@@ -57,6 +71,40 @@ public class FakeChamp implements FieldInformations {
 	@Override
 	public String getName() {
 		return name;
+	}
+
+	private final StatsDedoublonnage statsDedoublonnage = new StatsDedoublonnage();
+	/** FakeChamps des paramètres (éléments, clés, valeurs), calculés à la demande. */
+	private volatile FakeChamp[] champsParametres;
+
+	@Override
+	public boolean isDedoublonnageUtile() {
+		return statsDedoublonnage.isUtile();
+	}
+
+	@Override
+	public void noteDedoublonnage(final boolean trouvee) {
+		statsDedoublonnage.note(trouvee);
+	}
+
+	@Override
+	public FakeChamp getChampParametre(final int role) {
+		FakeChamp[] t = champsParametres;
+		if (t == null) {
+			t = new FakeChamp[3];
+			champsParametres = t;
+		}
+		FakeChamp champ = t[role];
+		if (champ == null) {
+			champ = FakeChamp.pourParametre(this, role);
+			t[role] = champ; // course bénigne : deux calculs donnent des champs équivalents
+		}
+		return champ;
+	}
+
+	@Override
+	public int getNaturePrimitive() {
+		return naturePrimitive;
 	}
 
 	@Override

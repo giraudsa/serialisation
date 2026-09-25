@@ -17,10 +17,6 @@ public class ConfigurationMarshalling {
 		return annotationIgnoreSerialise;
 	}
 
-	public static synchronized SimpleDateFormat getDateFormatXml() {
-		return instance.dateFormatXml;
-	}
-
 	public static synchronized SimpleDateFormat getDatFormatJson() {
 		return instance.dateFormatJson;
 	}
@@ -53,11 +49,6 @@ public class ConfigurationMarshalling {
 			instance.dateFormatJson = dateFormatJson;
 	}
 
-	public static synchronized void setDateFormatXml(final SimpleDateFormat dateFormatXml) {
-		if (dateFormatXml != null)
-			instance.dateFormatXml = dateFormatXml;
-	}
-
 	public static void setIdUniversel() {
 		idEstUniversel = true;
 	}
@@ -68,14 +59,10 @@ public class ConfigurationMarshalling {
 
 	private SimpleDateFormat dateFormatJson;
 
-	private SimpleDateFormat dateFormatXml;
-
 	private ConfigurationMarshalling() {
 		final TimeZone tz = TimeZone.getTimeZone("UTC");
 		dateFormatJson = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-		dateFormatXml = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 		dateFormatJson.setTimeZone(tz);
-		dateFormatXml.setTimeZone(tz);
 	}
 
 }
