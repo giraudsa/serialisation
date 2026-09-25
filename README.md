@@ -22,7 +22,7 @@ Commande relue = JsonUnmarshaller.fromJson(json);   // même graphe : partages, 
 - [API](#api)
 - [Configuration](#configuration)
 - [Format binaire](#format-binaire)
-- [Performances](#performances)
+- [Performances](#performances) et [poids](#poids-et-dépendances)
 - [Compatibilité et version 2.0](#compatibilité-et-version-20)
 - [Licence](#licence)
 
@@ -39,6 +39,7 @@ Commande relue = JsonUnmarshaller.fromJson(json);   // même graphe : partages, 
 - **Pas de constructeur requis** : les objets sont créés sans appeler de constructeur.
 - **Profondeur maîtrisée** : une stratégie décide, champ par champ, d'écrire l'objet en entier ou seulement sa référence (voir [Stratégies](#stratégies-de-sérialisation)).
 - **Intégration à une couche de persistance** : un `EntityManager` permet de relier les objets relus aux instances existantes.
+- **Léger** : un seul jar de 0,4 Mo, **aucune dépendance** (voir [Poids et dépendances](#poids-et-dépendances)).
 - **Rapide** : le format binaire est le plus compact et relit plus vite que Kryo et Fory ; le JSON écrit plus vite que Jackson, Gson et fastjson2 (voir [Performances](#performances)).
 
 ## Installation
@@ -209,6 +210,22 @@ JMH, JDK 25, Linux arm64, catalogue de commandes : « petit » = 1 commande et 1
 | Gson 2.10 | 7,73 | 7,52 | 8,09 | 7,40 | 1 458 |
 
 En gras : le meilleur de sa famille. Kryo et Fory binaire ont le suivi des références activé (même sémantique d'identité que Fidelis). Les autres JSON ne conservent ni identité, ni cycles, ni polymorphisme : le catalogue mesuré est un arbre qu'ils relisent correctement, mais ils ne relisent pas un graphe partagé ou cyclique. Fory lit et écrit l'intérieur des chaînes par `sun.misc.Unsafe`, au prix de l'avertissement du JDK 24+.
+
+### Poids et dépendances
+
+Tout ce qu'il faut ajouter à une application pour s'en servir, dépendances transitives comprises :
+
+| Bibliothèque | Formats | Jars | Taille totale |
+|---|---|---|---:|
+| **Fidelis 2.0.0** | JSON et binaire | fidelis | **0,40 Mo** |
+| Gson 2.10 | JSON | gson | 0,28 Mo |
+| Kryo 5.6 | binaire | kryo, reflectasm, objenesis, minlog | 0,50 Mo |
+| fastjson2 2.0 | JSON | fastjson2 | 2,08 Mo |
+| Jackson 2.17 | JSON | jackson-databind, jackson-core, jackson-annotations | 2,31 Mo |
+| Fory 1.7 | binaire | fory-core, janino, commons-compiler | 3,88 Mo |
+| Fory JSON 1.7 | JSON (et binaire) | fory-json, fory-core, janino, commons-compiler | 5,04 Mo |
+
+Fory embarque un compilateur Java (Janino) pour générer ses codecs ; Fidelis génère directement du bytecode, sans dépendance.
 
 Pour refaire les mesures (module `benchmark/`) :
 
