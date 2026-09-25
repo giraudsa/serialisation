@@ -116,9 +116,9 @@ il y a 2 méthodes public static à la sérialisation en binaire et 2 pour la d�
 	BinaryUnmarshaller.fromBinary(InputStream, EntityManager)
 	BinaryUnmarshaller.fromBinary(InputStream)
 
-###3.3 - Compatibilité (version 1.1)
+###3.3 - Compatibilité (version 2.0)
 
-**Le format binaire de la version 1.1 est incompatible avec celui des versions précédentes** : un flux écrit par une version 1.0.x ne peut pas être relu par la 1.1, et inversement. Le format JSON ne change pas. Le format XML n'existe plus à partir de la 1.1 (XmlMarshaller, XmlUnmarshaller et le format de date XML de ConfigurationMarshalling sont retirés).
+**Le format binaire de la version 2.0 est incompatible avec celui des versions précédentes** : un flux écrit par une version 1.x ne peut pas être relu par la 2.0, et inversement. Le format JSON ne change pas. Le format XML n'existe plus à partir de la 2.0 (XmlMarshaller, XmlUnmarshaller et le format de date XML de ConfigurationMarshalling sont retirés).
 
 ###3.4 - Caractéristiques du format
 
