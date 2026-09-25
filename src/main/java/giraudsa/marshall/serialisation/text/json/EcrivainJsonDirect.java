@@ -28,7 +28,9 @@ import utils.TypeExtension;
 import utils.champ.AccesChamp;
 import utils.champ.Champ;
 import utils.champ.FakeChamp;
+import utils.champ.EcrivainChamps;
 import utils.champ.FieldInformations;
+import utils.champ.GenerateurSerialiseurs;
 import utils.io.SortieTexte;
 
 /**
@@ -38,7 +40,7 @@ import utils.io.SortieTexte;
  * d'action par valeur ni champ d'éléments reconstruit pour chaque collection. Les autres valeurs, et au-delà d'une
  * profondeur, sont écrites par leur action.
  */
-final class EcrivainJsonDirect {
+public final class EcrivainJsonDirect {
 
 	/** au-delà, les valeurs imbriquées sont confiées aux actions (qui passent par une pile explicite). */
 	private static final int PROFONDEUR_MAX = 100;
@@ -190,7 +192,7 @@ final class EcrivainJsonDirect {
 		}
 		case OBJET:
 			if (profondeur < PROFONDEUR_MAX) {
-				ecritObjet(v, fi);
+				ecritObjetComplet(v, fi);
 				return;
 			}
 			break;
@@ -213,7 +215,7 @@ final class EcrivainJsonDirect {
 	}
 
 	/** Objet (ActionJsonObject) : ses champs, ou son seul id s'il est déjà écrit ou selon la stratégie. */
-	private void ecritObjet(final Object v, final FieldInformations fi)
+	private void ecritObjetComplet(final Object v, final FieldInformations fi)
 			throws IOException, MarshallExeption, InstantiationException, IllegalAccessException,
 			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException {
 		final boolean nePasEcrireType = !ecritType || devinable(v, fi);
@@ -235,17 +237,118 @@ final class EcrivainJsonDirect {
 				ecrit(id, champId, virgule);
 		} else {
 			m.marqueTotalementSerialise(v);
-			for (final Champ champ : champsDuType.getTableauChamps()) {
-				if (!ecritChampSimple(v, champ, virgule)) {
-					final Object valeur = champ.get(v, fakeIds, entite);
-					if (aTraiter(valeur, champ))
-						ecrit(valeur, champ, virgule);
+			final Champ[] champs = champsDuType.getTableauChamps();
+			final EcrivainChamps ecrivain = ecrivainGenere(v.getClass(), champsDuType);
+			if (ecrivain != null) {
+				// champ par champ : ecritXxx(t.champ, champ), la virgule suivie ici
+				final boolean virguleEnglobante = virguleCourante;
+				virguleCourante = virgule;
+				try {
+					ecrivain.ecrit(v, this, champs);
+				} catch (IOException | MarshallExeption | InstantiationException | IllegalAccessException
+						| InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException
+						| RuntimeException e) {
+					throw e;
+				} catch (final Exception e) {
+					throw new MarshallExeption(e);
 				}
-				virgule = true;
-			}
+				virguleCourante = virguleEnglobante;
+			} else
+				for (final Champ champ : champs) {
+					if (!ecritChampSimple(v, champ, virgule)) {
+						final Object valeur = champ.get(v, fakeIds, entite);
+						if (aTraiter(valeur, champ))
+							ecrit(valeur, champ, virgule);
+					}
+					virgule = true;
+				}
 		}
 		profondeur--;
 		m.fermeAccolade();
+	}
+
+	/** virgule à écrire avant le prochain champ de l'objet en cours d'écriture par l'écrivain généré. */
+	private boolean virguleCourante;
+
+	/** écrivain généré des champs de la classe (getfield directs), null si la génération n'est pas possible. */
+	private static EcrivainChamps ecrivainGenere(final Class<?> type, final TypeExtension.ChampsDuType champsDuType) {
+		Object ecrivain = champsDuType.getEcrivainJson();
+		if (ecrivain == null) {
+			final EcrivainChamps e = GenerateurSerialiseurs.ecrivain(type, champsDuType.getTableauChamps(),
+					EcrivainJsonDirect.class);
+			ecrivain = e != null ? e : Boolean.FALSE;
+			champsDuType.setEcrivainJson(ecrivain);
+		}
+		return ecrivain instanceof EcrivainChamps ? (EcrivainChamps) ecrivain : null;
+	}
+
+	//////// écriture des champs par l'écrivain généré : même texte que la boucle sur les champs
+
+	private void clefGeneree(final FieldInformations champ) throws IOException {
+		if (virguleCourante)
+			sortie.write(',');
+		virguleCourante = true;
+		m.ecritClef((Champ) champ);
+	}
+
+	public void ecritInt(final int v, final FieldInformations champ) throws IOException {
+		clefGeneree(champ);
+		sortie.writeLong(v);
+	}
+
+	public void ecritLong(final long v, final FieldInformations champ) throws IOException {
+		clefGeneree(champ);
+		sortie.writeLong(v);
+	}
+
+	public void ecritShort(final short v, final FieldInformations champ) throws IOException {
+		clefGeneree(champ);
+		sortie.writeLong(v);
+	}
+
+	public void ecritByte(final byte v, final FieldInformations champ) throws IOException {
+		clefGeneree(champ);
+		sortie.writeLong(v);
+	}
+
+	public void ecritDouble(final double v, final FieldInformations champ) throws IOException {
+		clefGeneree(champ);
+		sortie.write(Double.toString(v));
+	}
+
+	public void ecritFloat(final float v, final FieldInformations champ) throws IOException {
+		clefGeneree(champ);
+		sortie.write(Float.toString(v));
+	}
+
+	public void ecritBoolean(final boolean v, final FieldInformations champ) throws IOException {
+		clefGeneree(champ);
+		sortie.write(v ? "true" : "false");
+	}
+
+	/** char : comme la boucle, par le chemin général (Character). */
+	public void ecritChar(final char v, final FieldInformations champ)
+			throws IOException, MarshallExeption, InstantiationException, IllegalAccessException,
+			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException {
+		final boolean virgule = virguleCourante;
+		virguleCourante = true;
+		ecrit(Character.valueOf(v), champ, virgule);
+	}
+
+	public void ecritObjet(final Object v, final FieldInformations champ)
+			throws IOException, MarshallExeption, InstantiationException, IllegalAccessException,
+			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException {
+		final boolean virgule = virguleCourante;
+		virguleCourante = true;
+		if (!aTraiter(v, champ))
+			return;
+		if (champ.getValueType() == String.class) {
+			if (virgule)
+				sortie.write(',');
+			m.ecritClef((Champ) champ);
+			m.ecritEntreGuillemets(v.toString(), remplacements);
+		} else
+			ecrit(v, champ, virgule);
 	}
 
 	private static boolean aTraiter(final Object valeur, final FieldInformations champ) throws MarshallExeption {

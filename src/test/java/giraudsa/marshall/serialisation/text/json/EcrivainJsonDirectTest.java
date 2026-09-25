@@ -253,6 +253,9 @@ class EcrivainJsonDirectTest {
 	@Test
 	void grapheVarie() throws Exception {
 		compareAussiEnIdsUniversels(tout("t"));
+		final Object ecrivain = utils.TypeExtension.getChampsDuType(Tout.class).getEcrivainJson();
+		org.junit.jupiter.api.Assertions.assertTrue(ecrivain instanceof utils.champ.EcrivainChamps,
+				"l'écrivain généré doit être utilisé : " + ecrivain);
 	}
 
 	@Test

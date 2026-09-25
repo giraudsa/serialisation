@@ -46,6 +46,17 @@ public class TypeExtension {
 		/** lecteur JSON généré (voir GenerateurSerialiseurs.lecteurAvecValeurCourante), Boolean.FALSE si impossible. */
 		private volatile Object lecteurJson;
 
+		/** écrivain JSON généré (voir GenerateurSerialiseurs.ecrivain), Boolean.FALSE si impossible. */
+		private volatile Object ecrivainJson;
+
+		public Object getEcrivainJson() {
+			return ecrivainJson;
+		}
+
+		public void setEcrivainJson(final Object ecrivain) {
+			ecrivainJson = ecrivain;
+		}
+
 		public Object getLecteurJson() {
 			return lecteurJson;
 		}
