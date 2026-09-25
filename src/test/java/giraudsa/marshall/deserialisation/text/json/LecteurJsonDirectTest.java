@@ -304,6 +304,7 @@ class LecteurJsonDirectTest {
 		List<Double> liste = new ArrayList<>();
 		String texte;
 		BigDecimal montant;
+		boolean vrai;
 	}
 
 	@Test
@@ -311,10 +312,11 @@ class LecteurJsonDirectTest {
 		final java.util.Random r = new java.util.Random(7);
 		final String[] decimaux = { "0", "-0", "0.0", "-0.0", "1", "0.1", "0.3", "123.456", "-9.99", "5.", ".5", "1e3",
 				"1.5E-7", "00.25", "999999999999999", "9999999999999999", "0.000000000000000000000001",
-				"123456.7890123", "16777216", "16777217", "3.4028235E38", "NaN", "-Infinity", "1_0", "+1" };
+				"123456.7890123", "16777216", "16777217", "3.4028235E38", "NaN", "-Infinity", "1_0", "+1", "true",
+				"false", "TRUE", "tru", "fx", "null", "\"true\"", "\"12\"", "\"a\\\"b\"", "\"\"", "12 ", " 7" };
 		final String type = Nombres.class.getName();
 		for (final String d : decimaux)
-			for (final String champ : new String[] { "d", "f", "boiteD", "boiteF", "l", "i", "montant" })
+			for (final String champ : new String[] { "d", "f", "boiteD", "boiteF", "l", "i", "montant", "vrai", "texte" })
 				compare("{\"__type\":\"" + type + "\",\"id\":\"n\",\"" + champ + "\":" + d + "}", false);
 		for (int k = 0; k < 300; k++) {
 			final Nombres nb = new Nombres();

@@ -27,6 +27,8 @@ import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonUUID;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonVoid;
 import utils.Constants;
 import utils.TypeExtension;
+import utils.champ.AccesChamp;
+import utils.champ.Champ;
 import utils.champ.ChampUid;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
@@ -144,6 +146,11 @@ final class LecteurJsonDirect {
 		private Class<?> classe2;
 		private FieldInformations champ2;
 		private Class<?> attendu2;
+		/** lecture rapide du champ (RAPIDE_*) et son accès direct, pour les mêmes deux classes. */
+		private int rapide1;
+		private AccesChamp acces1;
+		private int rapide2;
+		private AccesChamp acces2;
 		/** clé qui a suivi celle-ci dans un objet de la classe (deux dernières classes). */
 		private Class<?> classeSuite1;
 		private Clef suite1;
@@ -191,9 +198,47 @@ final class LecteurJsonDirect {
 			classe2 = classe1;
 			champ2 = champ1;
 			attendu2 = attendu1;
+			rapide2 = rapide1;
+			acces2 = acces1;
 			classe1 = classe;
 			champ1 = champ;
 			attendu1 = attendu;
+			rapide1 = RAPIDE_NON;
+			acces1 = null;
+			if (nature == CLEF_NORMALE && champ instanceof Champ && !champ.isChampId()) {
+				final Champ c = (Champ) champ;
+				final AccesChamp acces = c.getAcces();
+				final int r = natureRapide(c);
+				if (acces != null && r != RAPIDE_NON) {
+					rapide1 = r;
+					acces1 = acces;
+				}
+			}
+		}
+	}
+
+	private static final int RAPIDE_NON = 0;
+	private static final int RAPIDE_INT = 1;
+	private static final int RAPIDE_LONG = 2;
+	private static final int RAPIDE_DOUBLE = 3;
+	private static final int RAPIDE_BOOLEAN = 4;
+	private static final int RAPIDE_CHAINE = 5;
+
+	/** champ lu sans boxing ni résolution de type quand la valeur est dans le cas simple de sa nature. */
+	private static int natureRapide(final Champ champ) {
+		switch (champ.getNaturePrimitive()) {
+		case AccesChamp.INT:
+			return RAPIDE_INT;
+		case AccesChamp.LONG:
+			return RAPIDE_LONG;
+		case AccesChamp.DOUBLE:
+			return RAPIDE_DOUBLE;
+		case AccesChamp.BOOLEAN:
+			return RAPIDE_BOOLEAN;
+		case AccesChamp.AUCUNE:
+			return champ.getValueType() == String.class ? RAPIDE_CHAINE : RAPIDE_NON;
+		default:
+			return RAPIDE_NON;
 		}
 	}
 
@@ -857,9 +902,13 @@ final class LecteurJsonDirect {
 			FieldInformations champ;
 			final Class<?> attendu;
 			if (clef.classe1 == type) {
+				if (obj != null && clef.rapide1 != RAPIDE_NON && litRapide(clef.rapide1, clef.acces1, obj))
+					continue;
 				champ = clef.champ1;
 				attendu = clef.attendu1;
 			} else if (clef.classe2 == type) {
+				if (obj != null && clef.rapide2 != RAPIDE_NON && litRapide(clef.rapide2, clef.acces2, obj))
+					continue;
 				champ = clef.champ2;
 				attendu = clef.attendu2;
 			} else {
@@ -900,6 +949,102 @@ final class LecteurJsonDirect {
 		if (obj == null && nbEnAttente > 0)
 			throw ABANDON; // objet sans id : le lecteur historique décide
 		return obj;
+	}
+
+	/**
+	 * Valeur d'un champ primitif ou chaîne, écrite dans son cas simple (nombre décimal, true/false, chaîne sans
+	 * échappement) : lue et affectée directement, avec le même résultat que le chemin général (même type retenu, même
+	 * valeur). @return false (p inchangé) si la valeur n'est pas dans ce cas.
+	 */
+	private boolean litRapide(final int rapide, final AccesChamp acces, final Object obj) {
+		final byte x = suivant();
+		final int debut = p;
+		if (rapide == RAPIDE_CHAINE) {
+			if (x != '"')
+				return false;
+			int i = debut + 1;
+			int ou = 0;
+			while (i < n) {
+				final byte y = c[i];
+				if (y == '"')
+					break;
+				if (y == '\\')
+					return false;
+				ou |= y;
+				i++;
+			}
+			if (i >= n)
+				return false;
+			final String s = new String(c, debut + 1, i - debut - 1,
+					ou < 0 ? codage : StandardCharsets.ISO_8859_1);
+			p = i + 1;
+			if (!finDeValeur()) {
+				p = debut;
+				return false;
+			}
+			acces.set(obj, s);
+			return true;
+		}
+		if (x == '"' || x == '{' || x == '[')
+			return false;
+		int i = debut;
+		while (i < n) {
+			final byte y = c[i];
+			if (y == ',' || y == '}' || y == ']' || y == ' ' || y == '\n' || y == '\r')
+				break;
+			i++;
+		}
+		p = i;
+		if (i == debut || !finDeValeur()) {
+			p = debut;
+			return false;
+		}
+		switch (rapide) {
+		case RAPIDE_INT: {
+			final long v = x == 't' || x == 'f' || x == 'n' ? Long.MIN_VALUE : entier(debut, i, 10);
+			if (v != Long.MIN_VALUE && v >= Integer.MIN_VALUE && v <= Integer.MAX_VALUE) {
+				acces.setInt(obj, (int) v);
+				return true;
+			}
+			break;
+		}
+		case RAPIDE_LONG: {
+			final long v = x == 't' || x == 'f' || x == 'n' ? Long.MIN_VALUE : entier(debut, i, 18);
+			if (v != Long.MIN_VALUE) {
+				acces.setLong(obj, v);
+				return true;
+			}
+			break;
+		}
+		case RAPIDE_DOUBLE: {
+			final double v = Decimaux.lit(c, debut, i);
+			if (v == v) { // INVALIDE (NaN) : chemin général
+				acces.setDouble(obj, v);
+				return true;
+			}
+			break;
+		}
+		case RAPIDE_BOOLEAN:
+			// deviné booléen (t ou f), le type attendu l'accepte : Boolean.valueOf
+			if (x == 't' || x == 'f') {
+				acces.setBoolean(obj, "true".equalsIgnoreCase(new String(c, debut, i - debut, StandardCharsets.ISO_8859_1)));
+				return true;
+			}
+			break;
+		default:
+			break;
+		}
+		p = debut;
+		return false;
+	}
+
+	/** @return true si la valeur est suivie (blancs éventuels) d'une virgule ou d'une fin d'objet ou de tableau. */
+	private boolean finDeValeur() {
+		saute();
+		if (p >= n)
+			return false;
+		final byte s = c[p];
+		return s == ',' || s == '}' || s == ']';
 	}
 
 	/** valeur simple enveloppée {"__type":T,"__valeur":v}. */
