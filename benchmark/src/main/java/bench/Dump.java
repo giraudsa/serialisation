@@ -4,7 +4,7 @@ import bench.model.Catalogue;
 
 public final class Dump {
 	public static void main(final String[] args) throws Exception {
-		for (final String nom : new String[] { "giraudsa-binaire", "kryo" }) {
+		for (final String nom : new String[] { "fidelis-binaire", "kryo" }) {
 			final Codec c = Codec.cree(nom);
 			final byte[] a = (byte[]) c.encode(Catalogue.genere(300, 2));
 			final byte[] b = (byte[]) c.encode(Catalogue.genere(300, 3));

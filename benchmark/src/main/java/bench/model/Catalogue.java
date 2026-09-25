@@ -7,8 +7,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import giraudsa.marshall.annotations.Relation;
-import giraudsa.marshall.annotations.TypeRelation;
+import io.github.giraudsa.fidelis.annotations.Relation;
+import io.github.giraudsa.fidelis.annotations.TypeRelation;
 
 /** Racine du jeu de données : un arbre (sans partage de références) de commandes. */
 public class Catalogue implements Serializable {

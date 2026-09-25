@@ -1,0 +1,83 @@
+package io.github.giraudsa.fidelis.serialisation.text.json.actions;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import io.github.giraudsa.fidelis.exception.MarshallExeption;
+import io.github.giraudsa.fidelis.exception.NotImplementedSerializeException;
+import io.github.giraudsa.fidelis.serialisation.Marshaller;
+import io.github.giraudsa.fidelis.serialisation.text.json.ActionJson;
+import io.github.giraudsa.fidelis.utils.Constants;
+import io.github.giraudsa.fidelis.utils.champ.FakeChamp;
+import io.github.giraudsa.fidelis.utils.champ.FieldInformations;
+
+@SuppressWarnings("rawtypes")
+public class ActionJsonDictionary extends ActionJson<Map> {
+
+	public ActionJsonDictionary() {
+		super();
+	}
+
+	@Override
+	protected void clotureObject(final Marshaller marshaller, final Map obj, final boolean typeDevinable)
+			throws IOException {
+		if (typeDevinable)
+			fermeCrochet(marshaller, !obj.isEmpty());
+		else {
+			fermeCrochet(marshaller, !obj.isEmpty());
+			fermeAccolade(marshaller);
+		}
+	}
+
+	@Override
+	protected boolean commenceObject(final Marshaller marshaller, final Map obj, final boolean typeDevinable)
+			throws IOException {
+		if (typeDevinable)
+			ouvreCrochet(marshaller);
+		else {
+			ouvreAccolade(marshaller);
+			ecritType(marshaller, obj);
+			writeSeparator(marshaller);
+			ecritClef(marshaller, Constants.VALEUR);
+			ouvreCrochet(marshaller);
+		}
+		return false;
+	}
+
+	@Override
+	protected void ecritValeur(final Marshaller marshaller, final Map obj, final FieldInformations fi,
+			boolean ecrisSeparateur) throws InstantiationException, InvocationTargetException, NoSuchMethodException,
+			IllegalAccessException, NotImplementedSerializeException, IOException, MarshallExeption {
+		final Type[] types = fi.getParametreType();
+		Type genericTypeKey = Object.class;
+		Type genericTypeValue = Object.class;
+		if (types != null && types.length > 1) {
+			genericTypeKey = types[0];
+			genericTypeValue = types[1];
+		}
+		final FakeChamp fakeChampKey = new FakeChamp(null, genericTypeKey, fi.getRelation(), fi.getAnnotations());
+		final FakeChamp fakeChampValue = new FakeChamp(null, genericTypeValue, fi.getRelation(), fi.getAnnotations());
+
+		final Map<?, ?> map = obj;
+		if (ecritureDirecte(marshaller)) {
+			for (final Entry<?, ?> entry : map.entrySet()) {
+				ecritDirect(marshaller, entry.getKey(), fakeChampKey, ecrisSeparateur);
+				ecrisSeparateur = true;
+				ecritDirect(marshaller, entry.getValue(), fakeChampValue, true);
+			}
+			return;
+		}
+		final Deque<Comportement> tmp = new ArrayDeque<>();
+		for (final Entry<?, ?> entry : map.entrySet()) {
+			tmp.push(traiteChamp(marshaller, entry.getKey(), fakeChampKey, ecrisSeparateur));
+			ecrisSeparateur = true;
+			tmp.push(traiteChamp(marshaller, entry.getValue(), fakeChampValue));
+		}
+		pushComportements(marshaller, tmp);// on remet dans le bon ordre
+	}
+}

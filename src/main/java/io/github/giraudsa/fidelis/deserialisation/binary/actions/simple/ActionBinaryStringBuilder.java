@@ -1,0 +1,37 @@
+package io.github.giraudsa.fidelis.deserialisation.binary.actions.simple;
+
+import java.io.IOException;
+
+import io.github.giraudsa.fidelis.deserialisation.ActionAbstrait;
+import io.github.giraudsa.fidelis.deserialisation.Unmarshaller;
+import io.github.giraudsa.fidelis.deserialisation.binary.BinaryUnmarshaller;
+
+public class ActionBinaryStringBuilder extends ActionBinarySimple<StringBuilder> {
+
+	public static ActionAbstrait<StringBuilder> getInstance() {
+		return new ActionBinaryStringBuilder(StringBuilder.class, null);
+	}
+
+	private ActionBinaryStringBuilder(final Class<StringBuilder> type, final BinaryUnmarshaller<?> unmarshaller) {
+		super(type, unmarshaller);
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public <U extends StringBuilder> ActionAbstrait<U> getNewInstance(final Class<U> type,
+			final Unmarshaller unmarshaller) {
+		return (ActionAbstrait<U>) new ActionBinaryStringBuilder(StringBuilder.class,
+				(BinaryUnmarshaller<?>) unmarshaller);
+	}
+
+	@Override
+	protected void initialise() throws IOException {
+		if (isDejaVu())
+			obj = getObjet();
+		else {
+			obj = new StringBuilder(readUTF());
+			stockeObjetId();
+			setDejaTotalementDeSerialise();
+		}
+	}
+}

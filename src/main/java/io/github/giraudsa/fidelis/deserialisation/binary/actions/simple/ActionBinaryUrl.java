@@ -1,0 +1,36 @@
+package io.github.giraudsa.fidelis.deserialisation.binary.actions.simple;
+
+import java.io.IOException;
+import java.net.URL;
+
+import io.github.giraudsa.fidelis.deserialisation.ActionAbstrait;
+import io.github.giraudsa.fidelis.deserialisation.Unmarshaller;
+import io.github.giraudsa.fidelis.deserialisation.binary.BinaryUnmarshaller;
+
+public class ActionBinaryUrl extends ActionBinarySimple<URL> {
+
+	public static ActionAbstrait<URL> getInstance() {
+		return new ActionBinaryUrl(URL.class, null);
+	}
+
+	private ActionBinaryUrl(final Class<URL> type, final BinaryUnmarshaller<?> unmarshaller) {
+		super(type, unmarshaller);
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public <U extends URL> ActionAbstrait<U> getNewInstance(final Class<U> type, final Unmarshaller unmarshaller) {
+		return (ActionAbstrait<U>) new ActionBinaryUrl(URL.class, (BinaryUnmarshaller<?>) unmarshaller);
+	}
+
+	@Override
+	protected void initialise() throws IOException {
+		if (isDejaVu())
+			obj = getObjet();
+		else {
+			obj = new URL(readUTF());
+			stockeObjetId();
+			setDejaTotalementDeSerialise();
+		}
+	}
+}

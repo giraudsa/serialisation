@@ -7,8 +7,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import giraudsa.marshall.annotations.Relation;
-import giraudsa.marshall.annotations.TypeRelation;
+import io.github.giraudsa.fidelis.annotations.Relation;
+import io.github.giraudsa.fidelis.annotations.TypeRelation;
 
 public class Commande implements Serializable {
 	private static final long serialVersionUID = 1L;

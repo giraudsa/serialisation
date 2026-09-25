@@ -27,10 +27,10 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
 
 import bench.model.Catalogue;
-import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
-import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
-import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
-import giraudsa.marshall.serialisation.text.json.JsonMarshaller;
+import io.github.giraudsa.fidelis.deserialisation.binary.BinaryUnmarshaller;
+import io.github.giraudsa.fidelis.deserialisation.text.json.JsonUnmarshaller;
+import io.github.giraudsa.fidelis.serialisation.binary.BinaryMarshaller;
+import io.github.giraudsa.fidelis.serialisation.text.json.JsonMarshaller;
 
 /** Adaptateur commun : chaque framework encode un {@link Catalogue} en String ou byte[] et le relit. */
 public abstract class Codec {
@@ -44,7 +44,7 @@ public abstract class Codec {
 				: ((String) data).getBytes(StandardCharsets.UTF_8).length;
 	}
 
-	public static final String[] NOMS = { "giraudsa-json", "giraudsa-binaire", "jackson-json",
+	public static final String[] NOMS = { "fidelis-json", "fidelis-binaire", "jackson-json",
 			"gson", "fastjson2", "fastjson2-ref", "fory-json", "kryo", "fory", "java-natif" };
 
 	static ObjectMapper jacksonChamps(final ObjectMapper m) {
@@ -55,7 +55,7 @@ public abstract class Codec {
 
 	public static Codec cree(final String nom) {
 		switch (nom) {
-		case "giraudsa-json":
+		case "fidelis-json":
 			return new Codec() {
 				@Override
 				public Object encode(final Catalogue c) throws Exception {
@@ -67,7 +67,7 @@ public abstract class Codec {
 					return JsonUnmarshaller.fromJson((String) d);
 				}
 			};
-		case "giraudsa-binaire":
+		case "fidelis-binaire":
 			return new Codec() {
 				// tampon réutilisé d'un appel à l'autre (comme Kryo et Fory) : seule la copie du résultat est payée
 				private final ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
@@ -151,7 +151,7 @@ public abstract class Codec {
 			};
 		}
 		case "kryo": {
-			// références activées : même sémantique d'identité que giraudsa (cycles, partage)
+			// références activées : même sémantique d'identité que Fidelis (cycles, partage)
 			final Kryo k = new Kryo();
 			k.setRegistrationRequired(false);
 			k.setReferences(true);
@@ -176,7 +176,7 @@ public abstract class Codec {
 			};
 		}
 		case "fory": {
-			// suivi des références activé : même sémantique d'identité que giraudsa et kryo
+			// suivi des références activé : même sémantique d'identité que Fidelis et Kryo
 			final org.apache.fory.ThreadSafeFory f = org.apache.fory.Fory.builder().withXlang(false).withRefTracking(true)
 					.requireClassRegistration(false).withTypeChecker((resolveur, classe) -> true)
 					.buildThreadSafeFory();
