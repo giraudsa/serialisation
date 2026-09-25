@@ -17,7 +17,7 @@ import java.util.Arrays;
 public final class SortieTexte extends Writer {
 	private static final int TAILLE = 8192;
 	/** au-delà, le tampon d'une sortie en chaîne n'est pas gardé pour la suivante. */
-	private static final int TAILLE_GARDEE = 1 << 19;
+	private static final int TAILLE_GARDEE = 1 << 22;
 	private static final int LATIN1_MAX = 0xFF;
 
 	/** tampon libre de la dernière sortie en chaîne terminée, par thread (évite l'allocation et sa mise à zéro). */
