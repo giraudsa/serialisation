@@ -25,6 +25,7 @@ import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonObject;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonSimpleComportement;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonUUID;
 import giraudsa.marshall.deserialisation.text.json.actions.ActionJsonVoid;
+import giraudsa.marshall.exception.UnmarshallExeption;
 import utils.Constants;
 import utils.TypeExtension;
 import utils.champ.AccesChamp;
@@ -356,6 +357,36 @@ public final class LecteurJsonDirect {
 		}
 	}
 
+	/**
+	 * Lecture en mode données (voir JsonUnmarshaller.fromDataJson) : types déclarés à partir de la classe racine, pas
+	 * d'identité, pas de lecteur historique de repli.
+	 */
+	static Object litDonnees(final String texte, final Class<?> racine) throws UnmarshallExeption {
+		LecteurJsonDirect lecteur = null;
+		try {
+			try {
+				lecteur = new LecteurJsonDirect(texte.getBytes(StandardCharsets.ISO_8859_1), texte, racine);
+				return lecteur.lit();
+			} catch (final Abandon e) {
+				if (e != LATIN1_INSUFFISANT)
+					throw e;
+			}
+			if (aSubstitutIsole(texte))
+				throw new UnmarshallExeption("mode données : demi-caractère UTF-16 isolé dans le texte");
+			lecteur = new LecteurJsonDirect(texte.getBytes(StandardCharsets.UTF_8), null, racine);
+			return lecteur.lit();
+		} catch (final Abandon e) {
+			throw new UnmarshallExeption("mode données : JSON non pris en charge à la position " + lecteur.p
+					+ " (texte non conforme, ou type à lire par un objet : Calendar, BitSet...)");
+		} catch (final StackOverflowError e) {
+			throw new UnmarshallExeption("mode données : texte trop profond");
+		} catch (final UnmarshallExeption e) {
+			throw e;
+		} catch (final Exception e) {
+			throw new UnmarshallExeption("probleme dans la désérialisation JSON (données)", e);
+		}
+	}
+
 	/** le texte n'est pas en Latin-1 : relecture en UTF-8. */
 	private static final Abandon LATIN1_INSUFFISANT = new Abandon();
 
@@ -407,7 +438,17 @@ public final class LecteurJsonDirect {
 	/** texte d'origine quand les octets sont en Latin-1 (voir verifie), null en UTF-8. */
 	private final String source;
 
+	/** mode données : classe racine (types déclarés), null sinon. */
+	private final Class<?> racineDonnees;
+	private final boolean donnees;
+
 	private LecteurJsonDirect(final byte[] texte, final String sourceLatin1) throws Exception {
+		this(texte, sourceLatin1, null);
+	}
+
+	private LecteurJsonDirect(final byte[] texte, final String sourceLatin1, final Class<?> racine) throws Exception {
+		racineDonnees = racine;
+		donnees = racine != null;
 		c = texte;
 		source = sourceLatin1;
 		codage = sourceLatin1 != null ? StandardCharsets.ISO_8859_1 : StandardCharsets.UTF_8;
@@ -423,13 +464,13 @@ public final class LecteurJsonDirect {
 			throw ABANDON;
 		final Object o;
 		if (c[p] == '{')
-			o = litAccolade(null, RACINE);
+			o = litAccolade(racineDonnees, RACINE);
 		else if (c[p] == '[')
-			o = litCrochet(ArrayList.class, RACINE);
+			o = litCrochet(donnees ? racineDonnees : ArrayList.class, RACINE);
 		else
 			throw ABANDON;
 		saute();
-		if (p != n || o == null)
+		if (p != n || o == null && !donnees)
 			throw ABANDON;
 		return o;
 	}
@@ -446,8 +487,11 @@ public final class LecteurJsonDirect {
 				p++;
 			else if (x == '\r' && p + 1 < n && c[p + 1] == '\n')
 				p += 2;
-			else if (x == '\t' || x == '\r')
-				throw ABANDON;
+			else if (x == '\t' || x == '\r') {
+				if (!donnees) // le lecteur historique les traite à part
+					throw ABANDON;
+				p++;
+			}
 			else
 				return;
 		}
@@ -654,7 +698,7 @@ public final class LecteurJsonDirect {
 		int i = p;
 		while (i < n) {
 			final byte y = c[i];
-			if (y == ',' || y == '}' || y == ']' || y == ' ' || y == '\n' || y == '\r')
+			if (y == ',' || y == '}' || y == ']' || y == ' ' || y == '\n' || y == '\r' || y == '\t' && donnees)
 				break;
 			if (y == '"' || y == '{' || y == '[' || y == ':' || y == '\\' || y == '\t' || y < 0)
 				throw ABANDON;
@@ -711,6 +755,8 @@ public final class LecteurJsonDirect {
 		case VOID:
 			return null;
 		default:
+			if (donnees) // Locale, Currency, InetAddress... : par leur action
+				return u.valeurParAction(type, texte(chaine, debut, fin));
 			throw ABANDON;
 		}
 	}
@@ -845,7 +891,7 @@ public final class LecteurJsonDirect {
 	//////// structures
 
 	private void entre() {
-		if (++profondeur > PROFONDEUR_MAX)
+		if (++profondeur > (donnees ? 1000 : PROFONDEUR_MAX))
 			throw ABANDON;
 	}
 
@@ -853,8 +899,13 @@ public final class LecteurJsonDirect {
 	private Object litAccolade(final Class<?> declare, final FieldInformations fi) throws Exception {
 		entre();
 		p++;
-		if (suivant() == '}')
-			throw ABANDON;
+		if (suivant() == '}') {
+			if (!donnees || declare == null || genre(declare) != OBJET)
+				throw ABANDON;
+			p++;
+			profondeur--;
+			return u.nouvelleInstance(declare);
+		}
 		Clef clef = litNom(premiereClef);
 		attend(':');
 		if (clef.octets != null)
@@ -956,7 +1007,8 @@ public final class LecteurJsonDirect {
 	/** @param plan nom de type lu (plan de lecture de sa classe), ou null */
 	private Object litObjet(final Class<?> typeInitial, Clef clef, final Clef plan) throws Exception {
 		Class<?> type = typeInitial;
-		Object obj = null;
+		// mode données : pas d'identité, l'objet est créé d'emblée et l'id est un champ comme un autre
+		Object obj = donnees ? u.nouvelleInstance(type) : null;
 		Object[] enAttente = null;
 		int nbEnAttente = 0;
 		final Map<Object, UUID> fakeIds = u.fakeIds();
@@ -983,7 +1035,7 @@ public final class LecteurJsonDirect {
 					clef.memorise(type, champ, attendu);
 			}
 			final Object valeur = litValeur(attendu, champ);
-			if (valeur != null && clef.nature == CLEF_ID) {
+			if (valeur != null && clef.nature == CLEF_ID && !donnees) {
 				if (obj != null)
 					throw ABANDON;
 				obj = u.objetParId(valeur.toString(), type);
@@ -1367,13 +1419,13 @@ public final class LecteurJsonDirect {
 		final Object o;
 		switch (genre(type)) {
 		case COLLECTION: {
-			final Collection<Object> coll = nouvelleCollection(type);
+			final Collection<Object> coll = nouvelleCollection(donnees ? concreteDonnees(type) : type);
 			litElements(coll, champsElements(fi)[0]);
 			o = coll;
 			break;
 		}
 		case MAP: {
-			final Map<Object, Object> map = nouvelleMap(type);
+			final Map<Object, Object> map = nouvelleMap(donnees ? concreteDonnees(type) : type);
 			litPaires(map, fi);
 			o = map;
 			break;
@@ -1387,6 +1439,27 @@ public final class LecteurJsonDirect {
 		profondeur--;
 		return o;
 	}
+
+	/**
+	 * Mode données : sans type écrit, une collection ou une map déclarée par une interface (ou une classe abstraite)
+	 * est créée avec l'implémentation courante qui la satisfait (ordre de lecture conservé).
+	 */
+	private static Class<?> concreteDonnees(final Class<?> declare) {
+		if (!declare.isInterface() && !java.lang.reflect.Modifier.isAbstract(declare.getModifiers()))
+			return declare;
+		for (final Class<?> c : IMPLEMENTATIONS)
+			if (declare.isAssignableFrom(c))
+				return c;
+		return declare;
+	}
+
+	/**
+	 * la première qui convient : List et Collection → ArrayList, Map → LinkedHashMap, Set → LinkedHashSet, SortedMap →
+	 * TreeMap, SortedSet → TreeSet, ConcurrentMap → ConcurrentHashMap, Queue et Deque → ArrayDeque.
+	 */
+	private static final Class<?>[] IMPLEMENTATIONS = { ArrayList.class, java.util.LinkedHashMap.class,
+			java.util.LinkedHashSet.class, java.util.TreeMap.class, java.util.TreeSet.class,
+			java.util.concurrent.ConcurrentHashMap.class, java.util.ArrayDeque.class };
 
 	@SuppressWarnings({ "unchecked", "deprecation" })
 	private static Collection<Object> nouvelleCollection(final Class<?> type) throws Exception {

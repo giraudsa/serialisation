@@ -48,7 +48,7 @@ public abstract class Codec {
 				: ((String) data).getBytes(StandardCharsets.UTF_8).length;
 	}
 
-	public static final String[] NOMS = { "giraudsa-json", "giraudsa-xml", "giraudsa-binaire", "jackson-json",
+	public static final String[] NOMS = { "giraudsa-json", "giraudsa-json-donnees", "giraudsa-xml", "giraudsa-binaire", "jackson-json",
 			"gson", "fastjson2", "fastjson2-ref", "fory-json", "jackson-xml", "xstream", "kryo", "fory", "java-natif" };
 
 	static ObjectMapper jacksonChamps(final ObjectMapper m) {
@@ -69,6 +69,19 @@ public abstract class Codec {
 				@Override
 				public Catalogue decode(final Object d) throws Exception {
 					return JsonUnmarshaller.fromJson((String) d);
+				}
+			};
+		case "giraudsa-json-donnees":
+			// mode données : sans type ni identité, comme Jackson, Gson, fastjson2 et Fory JSON
+			return new Codec() {
+				@Override
+				public Object encode(final Catalogue c) throws Exception {
+					return JsonMarshaller.toDataJson(c);
+				}
+
+				@Override
+				public Catalogue decode(final Object d) throws Exception {
+					return JsonUnmarshaller.fromDataJson((String) d, Catalogue.class);
 				}
 			};
 		case "giraudsa-xml":

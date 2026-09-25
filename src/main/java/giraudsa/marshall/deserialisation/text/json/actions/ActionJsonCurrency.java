@@ -20,8 +20,7 @@ public class ActionJsonCurrency extends ActionJsonSimpleComportement<Currency> {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public <U extends Currency> ActionAbstrait<U> getNewInstance(final Class<U> type, final Unmarshaller unmarshaller) {
-		return (ActionAbstrait<U>) new ActionJsonSimpleComportement<>(Currency.class,
-				(JsonUnmarshaller<?>) unmarshaller);
+		return (ActionAbstrait<U>) new ActionJsonCurrency(Currency.class, (JsonUnmarshaller<?>) unmarshaller);
 	}
 
 	@Override
