@@ -10,6 +10,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
 import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Collection;
@@ -28,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.exception.ChampNotFound;
 import giraudsa.marshall.exception.MarshallExeption;
 import giraudsa.marshall.exception.NotImplementedSerializeException;
@@ -60,6 +62,8 @@ import utils.Constants;
 import utils.EntityManager;
 import utils.TypeExtension;
 import utils.champ.Champ;
+import utils.champ.FakeChamp;
+import utils.champ.FieldInformations;
 import utils.io.DatesIso;
 import utils.io.SortieTexte;
 
@@ -181,6 +185,107 @@ public class JsonMarshaller extends TextMarshaller {
 
 	int hauteurPile() {
 		return aFaire.size();
+	}
+
+	/** champ de la valeur racine, comme TextMarshaller.marshall (immuable, partagé). */
+	private static final FakeChamp RACINE = new FakeChamp(null, Object.class, TypeRelation.COMPOSITION, null);
+
+	/**
+	 * Hors mise en forme (pretty print), les valeurs courantes sont écrites par {@link EcrivainJsonDirect} : même
+	 * texte que les actions.
+	 */
+	@Override
+	protected <U> void marshall(final U obj)
+			throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
+			IOException, NotImplementedSerializeException, MarshallExeption {
+		if (obj == null || isPrettyPrint() || !direct) {
+			super.marshall(obj);
+			return;
+		}
+		try {
+			new EcrivainJsonDirect(this).ecrit(obj, RACINE, false);
+			while (!aFaire.isEmpty())
+				deserialisePile();
+			writer.flush();
+		} finally {
+			rendTables();
+		}
+	}
+
+	/** false : tout par les actions (comparaison avec l'écriture directe dans les tests). */
+	private boolean direct = true;
+
+	/** Écrit par les seules actions, sans {@link EcrivainJsonDirect} (tests). */
+	static <U> String toJsonParActions(final U obj, final StrategieDeSerialisation strategie, final boolean writeType)
+			throws MarshallExeption {
+		final SortieTexte sortie = SortieTexte.pourChaine();
+		try {
+			final JsonMarshaller v = new JsonMarshaller(sortie, strategie, null, writeType);
+			v.direct = false;
+			v.marshall(obj);
+		} catch (ChampNotFound | IOException | InstantiationException | IllegalAccessException
+				| InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
+			throw new MarshallExeption(e);
+		}
+		return sortie.termine();
+	}
+
+	//////// accès pour EcrivainJsonDirect
+
+	/** @return l'action de la classe (sans instance). */
+	static ActionAbstrait<?> actionDe(final Class<?> type) throws NotImplementedSerializeException {
+		try {
+			return ACTIONS.get(type);
+		} catch (final IllegalStateException e) {
+			if (e.getCause() instanceof NotImplementedSerializeException)
+				throw (NotImplementedSerializeException) e.getCause();
+			throw e;
+		}
+	}
+
+	/** Écrit la valeur par son action (séparateur déjà écrit), valeurs empilées comprises. */
+	void ecritParAction(final Object valeur, final FieldInformations fi)
+			throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
+			IOException, NotImplementedSerializeException, MarshallExeption {
+		final int base = hauteurPile();
+		marshall(valeur, fi);
+		videPileJusqua(base);
+	}
+
+	SortieTexte sortie() {
+		return writer;
+	}
+
+	boolean idUniversel() {
+		return isUniversalId;
+	}
+
+	Map<Object, UUID> fakeIds() {
+		return getDicoObjToFakeId();
+	}
+
+	boolean dejaVu(final Object o) {
+		return isDejaVu(o);
+	}
+
+	boolean totalementSerialise(final Object o) {
+		return isDejaTotalementSerialise(o);
+	}
+
+	void marqueDejaVu(final Object o) {
+		setDejaVu(o);
+	}
+
+	void marqueTotalementSerialise(final Object o) {
+		setDejaTotalementSerialise(o);
+	}
+
+	boolean serialiseTout(final FieldInformations fi) {
+		return strategie.serialiseTout(profondeur, fi);
+	}
+
+	DateFormat formatDate() {
+		return getDateFormat();
 	}
 
 	/** action de chaque classe, résolue une fois (ClassValue est plus rapide qu'une map concurrente). */

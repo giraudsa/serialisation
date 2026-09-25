@@ -30,6 +30,7 @@ public final class SortieTexte extends Writer {
 		libre[0] = null;
 		final SortieTexte sortie = new SortieTexte(null, null);
 		sortie.octets = tampon != null ? tampon : new byte[TAILLE];
+		sortie.capacite = sortie.octets.length;
 		return sortie;
 	}
 
@@ -40,6 +41,8 @@ public final class SortieTexte extends Writer {
 	/** null en mode chaîne. */
 	private final Writer destination;
 	private int position;
+	/** taille du tampon en cours (octets ou caractères) : test de place d'une seule comparaison. */
+	private int capacite;
 	/** date en cours d'écriture, en mode Latin-1. */
 	private char[] date;
 
@@ -50,6 +53,7 @@ public final class SortieTexte extends Writer {
 	private SortieTexte(final Writer destination, final char[] tampon) {
 		this.destination = destination;
 		buffer = tampon;
+		capacite = tampon == null ? 0 : tampon.length;
 	}
 
 	/**
@@ -63,6 +67,7 @@ public final class SortieTexte extends Writer {
 		octets = null;
 		buffer = null;
 		position = 0;
+		capacite = 0;
 		return s;
 	}
 
@@ -74,13 +79,21 @@ public final class SortieTexte extends Writer {
 			b[i] = (char) (o[i] & 0xFF);
 		buffer = b;
 		octets = null;
+		capacite = b.length;
 	}
 
-	/** Garantit n caractères de place : vide le tampon vers la destination, ou l'agrandit en mode chaîne. */
+	/** Garantit n caractères de place (chemin rapide, inliné ; l'agrandissement est à part). */
 	private void assure(final int n) throws IOException {
+		if (position + n > capacite)
+			agrandit(n);
+	}
+
+	/** Vide le tampon vers la destination, ou l'agrandit en mode chaîne. */
+	private void agrandit(final int n) throws IOException {
 		if (octets != null) {
 			if (position + n > octets.length)
 				octets = Arrays.copyOf(octets, Math.max(octets.length * 2, position + n));
+			capacite = octets.length;
 			return;
 		}
 		if (position + n <= buffer.length)
@@ -92,6 +105,7 @@ public final class SortieTexte extends Writer {
 			if (n > buffer.length)
 				buffer = new char[n];
 		}
+		capacite = buffer.length;
 	}
 
 	private void vide() throws IOException {
@@ -145,6 +159,15 @@ public final class SortieTexte extends Writer {
 
 	@Override
 	public void write(final int c) throws IOException {
+		final byte[] o = octets;
+		if (o != null && (char) c <= LATIN1_MAX && position < capacite) { // cas courant, inliné
+			o[position++] = (byte) c;
+			return;
+		}
+		ecritCaractere(c);
+	}
+
+	private void ecritCaractere(final int c) throws IOException {
 		if (octets != null) {
 			if ((char) c <= LATIN1_MAX) {
 				if (position == octets.length)

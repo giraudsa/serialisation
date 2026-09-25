@@ -94,6 +94,11 @@ public abstract class ActionJson<T> extends ActionText<T> {
 		super();
 	}
 
+	/** @return la table des remplacements des caractères à échapper dans une chaîne JSON. */
+	static String[] remplacements() {
+		return ECHAPPEMENT.remplacements();
+	}
+
 	protected abstract void clotureObject(Marshaller marshaller, T obj, boolean typeDevinable) throws IOException;
 
 	protected abstract boolean commenceObject(Marshaller marshaller, T obj, boolean typeDevinable) throws IOException;

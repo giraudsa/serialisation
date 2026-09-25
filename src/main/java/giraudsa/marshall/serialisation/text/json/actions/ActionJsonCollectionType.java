@@ -80,6 +80,11 @@ public class ActionJsonCollectionType extends ActionJson<Collection> {
 
 	@Override
 	protected Class<?> getType(final Collection obj) {
+		return typeAEcrire(obj);
+	}
+
+	/** @return le type écrit pour la collection (celui du JDK pour une collection Hibernate). */
+	public static Class<?> typeAEcrire(final Collection<?> obj) {
 		final Class<?> clazz = obj.getClass();
 
 		if (TypeExtension.isHibernate(clazz)) {
