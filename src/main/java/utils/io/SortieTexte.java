@@ -242,6 +242,19 @@ public final class SortieTexte extends Writer {
 		position += n;
 	}
 
+	/** Écrit le double comme Double.toString, directement dans le tampon quand c'est possible (DoublesEnTexte). */
+	public void writeDouble(final double v) throws IOException {
+		if (octets != null) {
+			assure(DoublesEnTexte.LONGUEUR_MAX);
+			final int fin = DoublesEnTexte.ecris(v, octets, position);
+			if (fin >= 0) {
+				position = fin;
+				return;
+			}
+		}
+		write(Double.toString(v));
+	}
+
 	/** Écrit "date" au format ISO UTC par défaut (voir DatesIso), entre guillemets. */
 	public void writeDateIso(final long millis) throws IOException {
 		assure(DatesIso.LONGUEUR + 2);

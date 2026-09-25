@@ -179,6 +179,8 @@ public final class EcrivainJsonDirect {
 			}
 			if (v instanceof Integer || v instanceof Long || v instanceof Short || v instanceof Byte)
 				sortie.writeLong(((Number) v).longValue());
+			else if (v instanceof Double)
+				sortie.writeDouble((Double) v);
 			else if (v instanceof Number)
 				sortie.write(v.toString());
 			else if (v instanceof Date) {
@@ -313,7 +315,7 @@ public final class EcrivainJsonDirect {
 
 	public void ecritDouble(final double v, final FieldInformations champ) throws IOException {
 		clefGeneree(champ);
-		sortie.write(Double.toString(v));
+		sortie.writeDouble(v);
 	}
 
 	public void ecritFloat(final float v, final FieldInformations champ) throws IOException {
@@ -395,7 +397,7 @@ public final class EcrivainJsonDirect {
 			return true;
 		case AccesChamp.DOUBLE:
 			clefSimple(champ, virgule);
-			sortie.write(Double.toString(acces.getDouble(obj)));
+			sortie.writeDouble(acces.getDouble(obj));
 			return true;
 		case AccesChamp.FLOAT:
 			clefSimple(champ, virgule);
