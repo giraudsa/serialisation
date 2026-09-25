@@ -1,9 +1,8 @@
 package io.github.giraudsa.fidelis.deserialisation.text.json.actions;
 
+import java.lang.System.Logger.Level;
 import java.util.Arrays;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.github.giraudsa.fidelis.deserialisation.ActionAbstrait;
 import io.github.giraudsa.fidelis.deserialisation.Unmarshaller;
@@ -16,7 +15,7 @@ import io.github.giraudsa.fidelis.utils.TypeExtension;
 import io.github.giraudsa.fidelis.utils.champ.FieldInformations;
 
 public class ActionJsonObject<T> extends ActionJson<T> {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ActionJsonObject.class);
+	private static final System.Logger LOGGER = System.getLogger(ActionJsonObject.class.getName());
 
 	public static ActionAbstrait<Object> getInstance() {
 		return new ActionJsonObject<>(Object.class, null);
@@ -94,7 +93,7 @@ public class ActionJsonObject<T> extends ActionJson<T> {
 
 	@Override
 	protected void rempliData(final String donnees) {
-		LOGGER.error("on est pas supposé avoir de données avec un objet.");
+		LOGGER.log(Level.ERROR, "on est pas supposé avoir de données avec un objet.");
 		// rien a faire avec un objet, il n'y a pas de data
 	}
 

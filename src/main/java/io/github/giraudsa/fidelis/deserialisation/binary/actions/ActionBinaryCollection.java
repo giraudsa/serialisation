@@ -1,5 +1,6 @@
 package io.github.giraudsa.fidelis.deserialisation.binary.actions;
 
+import java.lang.System.Logger.Level;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -7,8 +8,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.github.giraudsa.fidelis.deserialisation.ActionAbstrait;
 import io.github.giraudsa.fidelis.deserialisation.Unmarshaller;
@@ -25,7 +24,7 @@ import io.github.giraudsa.fidelis.utils.TypeExtension;
 
 @SuppressWarnings("rawtypes")
 public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C> {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ActionBinaryCollection.class);
+	private static final System.Logger LOGGER = System.getLogger(ActionBinaryCollection.class.getName());
 
 	public static ActionAbstrait<?> getInstance() { // NOSONAR
 		return new ActionBinaryCollection<>(Collection.class, null);
@@ -130,7 +129,7 @@ public class ActionBinaryCollection<C extends Collection> extends ActionBinary<C
 					objetADeserialiser = new ArrayList();
 				}
 		} catch (final InstantiationException e) {
-			LOGGER.error("impossible d'instancier la collection " + type.getName(), e);
+			LOGGER.log(Level.ERROR, "impossible d'instancier la collection " + type.getName(), e);
 			throw new UnmarshallExeption("impossible d'instancier la collection " + type.getName(), e);
 		}
 		return objetADeserialiser;

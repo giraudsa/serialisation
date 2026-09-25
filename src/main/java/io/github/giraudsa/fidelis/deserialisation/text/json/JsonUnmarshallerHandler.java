@@ -1,10 +1,9 @@
 package io.github.giraudsa.fidelis.deserialisation.text.json;
 
+import java.lang.System.Logger.Level;
 import java.io.IOException;
 import java.io.Reader;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.github.giraudsa.fidelis.exception.EntityManagerImplementationException;
 import io.github.giraudsa.fidelis.exception.InstanciationException;
@@ -15,7 +14,7 @@ import io.github.giraudsa.fidelis.exception.UnmarshallExeption;
 
 public class JsonUnmarshallerHandler {
 	private static final int FIN = -1;
-	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUnmarshallerHandler.class);
+	private static final System.Logger LOGGER = System.getLogger(JsonUnmarshallerHandler.class.getName());
 	private static final char QUOTE = '\"';
 	private static final int TAILLE_BLOC = 8192;
 	/** caractères qui déclenchent une action hors guillemets (voir comportement). */
@@ -27,7 +26,7 @@ public class JsonUnmarshallerHandler {
 	}
 
 	private static void erreurParsing(final String message, final Exception e) throws UnmarshallExeption {
-		LOGGER.error(message, e);
+		LOGGER.log(Level.ERROR, message, e);
 		throw new UnmarshallExeption(message, e);
 	}
 

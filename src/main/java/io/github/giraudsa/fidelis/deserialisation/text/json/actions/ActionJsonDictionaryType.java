@@ -1,11 +1,10 @@
 package io.github.giraudsa.fidelis.deserialisation.text.json.actions;
 
+import java.lang.System.Logger.Level;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.github.giraudsa.fidelis.deserialisation.ActionAbstrait;
 import io.github.giraudsa.fidelis.deserialisation.Unmarshaller;
@@ -18,7 +17,7 @@ import io.github.giraudsa.fidelis.utils.champ.FieldInformations;
 @SuppressWarnings("rawtypes")
 public class ActionJsonDictionaryType<T extends Map> extends ActionJson<T> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ActionJsonDictionaryType.class);
+	private static final System.Logger LOGGER = System.getLogger(ActionJsonDictionaryType.class.getName());
 
 	public static ActionAbstrait<Map> getInstance() {
 		return new ActionJsonDictionaryType<>(Map.class, null);
@@ -35,7 +34,7 @@ public class ActionJsonDictionaryType<T extends Map> extends ActionJson<T> {
 				obj = type.newInstance();
 			} catch (InstantiationException | IllegalAccessException e) {
 				obj = new HashMap<>();
-				LOGGER.error("instanciation impossible pour " + type.getName(), e);
+				LOGGER.log(Level.ERROR, "instanciation impossible pour " + type.getName(), e);
 			}
 	}
 

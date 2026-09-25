@@ -1,5 +1,6 @@
 package io.github.giraudsa.fidelis.deserialisation.text.json;
 
+import java.lang.System.Logger.Level;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -29,8 +30,6 @@ import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.zip.DataFormatException;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.github.giraudsa.fidelis.deserialisation.ActionAbstrait;
 import io.github.giraudsa.fidelis.deserialisation.CacheIdNonUniversel;
@@ -109,7 +108,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 			throw e;
 		}
 	}
-	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUnmarshaller.class);
+	private static final System.Logger LOGGER = System.getLogger(JsonUnmarshaller.class.getName());
 	static {
 		dicoTypeToAction.put(Date.class, ActionJsonDate.getInstance());
 		dicoTypeToAction.put(Collection.class, ActionJsonCollectionType.getInstance());
@@ -162,7 +161,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		} catch (FabriqueInstantiationException | ClassNotFoundException | IOException
 				| EntityManagerImplementationException | InstanciationException | NotImplementedSerializeException
 				| JsonHandlerException | IllegalAccessException | DataFormatException | SetValueException e) {
-			LOGGER.error("probleme dans la désérialisation JSON", e);
+			LOGGER.log(Level.ERROR, "probleme dans la désérialisation JSON", e);
 			throw new UnmarshallExeption("probleme dans la désérialisation JSON", e);
 		}
 	}
@@ -193,7 +192,7 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		} catch (FabriqueInstantiationException | ClassNotFoundException | IOException
 				| EntityManagerImplementationException | InstanciationException | NotImplementedSerializeException
 				| JsonHandlerException | IllegalAccessException | DataFormatException | SetValueException e) {
-			LOGGER.error("probleme dans la désérialisation JSON", e);
+			LOGGER.log(Level.ERROR, "probleme dans la désérialisation JSON", e);
 			throw new UnmarshallExeption("probleme dans la désérialisation JSON", e);
 		}
 	}

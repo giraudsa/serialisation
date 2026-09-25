@@ -1,11 +1,10 @@
 package io.github.giraudsa.fidelis.deserialisation.text.json.actions;
 
+import java.lang.System.Logger.Level;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.github.giraudsa.fidelis.deserialisation.ActionAbstrait;
 import io.github.giraudsa.fidelis.deserialisation.Unmarshaller;
@@ -18,7 +17,7 @@ import io.github.giraudsa.fidelis.utils.TypeExtension;
 @SuppressWarnings("rawtypes")
 public class ActionJsonCollectionType<T extends Collection> extends ActionJsonComplexeObject<T> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ActionJsonCollectionType.class);
+	private static final System.Logger LOGGER = System.getLogger(ActionJsonCollectionType.class.getName());
 
 	public static ActionAbstrait<Collection> getInstance() {
 		return new ActionJsonCollectionType<>(Collection.class, null);
@@ -34,7 +33,7 @@ public class ActionJsonCollectionType<T extends Collection> extends ActionJsonCo
 		try {
 			obj = ttype.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
-			LOGGER.debug("impossible de créer une instance de " + ttype.getName(), e);
+			LOGGER.log(Level.DEBUG, "impossible de créer une instance de " + ttype.getName(), e);
 			obj = new ArrayList<>();
 		}
 	}
