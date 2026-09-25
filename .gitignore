@@ -1,32 +1,29 @@
-*target*
-*.jar
-*.war
-*.ear
-*.class
+# Maven
+target/
+dependency-reduced-pom.xml
 
-# eclipse specific git ignore
-*.pydevproject
+# Compilés et archives
+*.class
+*.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
 .project
-.metadata
-bin/**
-tmp/**
-tmp/**/*
-*.tmp
-*.bak
-*.swp
-*~.nib
-local.properties
 .classpath
 .settings/
-.loadpath
+.factorypath
 
-# External tool builders
-.externalToolBuilders/
+# Système
+.DS_Store
 
-# Locally stored "Eclipse launch configurations"
-*.launch
-/target/
-/target/
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# Plantages de la JVM
 hs_err_pid*
+replay_pid*
+
+# Benchmark : résultats de mesures locales
+benchmark/results*.txt
+benchmark/results*.json
+benchmark/resultats*.txt
+benchmark/resultats*.json
