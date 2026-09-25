@@ -33,8 +33,6 @@ public abstract class TextMarshaller extends Marshaller {
 	protected final boolean dateIsoUtc;
 	protected final boolean isUniversalId;
 	private final boolean prettyPrint;
-	// prettyPrint
-	protected boolean lastIsOpen = false;
 
 	protected final SortieTexte writer;
 

@@ -25,10 +25,8 @@ import giraudsa.marshall.annotations.Relation;
 import giraudsa.marshall.annotations.TypeRelation;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
-import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
 import giraudsa.marshall.serialisation.text.json.JsonMarshaller;
-import giraudsa.marshall.serialisation.text.xml.XmlMarshaller;
 
 class RoundTripTest {
 
@@ -109,12 +107,6 @@ class RoundTripTest {
 		@Override
 		public <T> T roundTrip(final T obj) throws Exception {
 			return JsonUnmarshaller.fromJson(new StringReader(JsonMarshaller.toCompleteJson(obj)));
-		}
-	};
-	private static final Format XML = new Format() {
-		@Override
-		public <T> T roundTrip(final T obj) throws Exception {
-			return XmlUnmarshaller.fromXml(XmlMarshaller.toCompleteXml(obj));
 		}
 	};
 	private static final Format BINARY = new Format() {
@@ -243,11 +235,6 @@ class RoundTripTest {
 	}
 
 	@Test
-	void xmlGrapheComplet() throws Exception {
-		grapheComplet(XML);
-	}
-
-	@Test
 	void binaireGrapheComplet() throws Exception {
 		grapheComplet(BINARY);
 		// JDK 15+ : écrivain et lecteur générés pour les classes du graphe (sinon, chemin générique)
@@ -267,11 +254,6 @@ class RoundTripTest {
 	}
 
 	@Test
-	void xmlSansId() throws Exception {
-		sansId(XML);
-	}
-
-	@Test
 	void binaireSansId() throws Exception {
 		sansId(BINARY);
 	}
@@ -279,11 +261,6 @@ class RoundTripTest {
 	@Test
 	void jsonIdentite() throws Exception {
 		identite(JSON);
-	}
-
-	@Test
-	void xmlIdentite() throws Exception {
-		identite(XML);
 	}
 
 	@Test
@@ -297,20 +274,14 @@ class RoundTripTest {
 	}
 
 	@Test
-	void xmlConcurrence() throws Exception {
-		concurrence(XML);
-	}
-
-	@Test
 	void binaireConcurrence() throws Exception {
 		concurrence(BINARY);
 	}
 
 	@Test
 	void caracteresDeControle() throws Exception {
-		// \u0000 n'est représentable dans aucune version de XML : testé à part
 		final String texte = "a\r\nb\u0001c\u001fd\u2029e\bf\fg\u0085h\u007fi\u2028j\r";
-		for (final Format format : new Format[] { JSON, XML, BINARY }) {
+		for (final Format format : new Format[] { JSON, BINARY }) {
 			final Noeud racine = graphe("");
 			racine.nom = texte;
 			verifie(racine, format.roundTrip(racine));
@@ -324,14 +295,11 @@ class RoundTripTest {
 			racine.nom = "a\u0000b";
 			verifie(racine, format.roundTrip(racine));
 		}
-		final Noeud racine = graphe("");
-		racine.nom = "a\u0000b";
-		assertEquals("a\uFFFDb", XML.roundTrip(racine).nom);
 	}
 
 	@Test
 	void texteQuiRessembleAUneEntite() throws Exception {
-		for (final Format format : new Format[] { JSON, XML, BINARY }) {
+		for (final Format format : new Format[] { JSON, BINARY }) {
 			final Noeud racine = graphe("");
 			racine.nom = "a &lt; b &amp; c &#65; &#x42; &quot; d";
 			verifie(racine, format.roundTrip(racine));
@@ -340,7 +308,7 @@ class RoundTripTest {
 
 	@Test
 	void idAvecCaracteresSpeciaux() throws Exception {
-		for (final Format format : new Format[] { JSON, XML, BINARY }) {
+		for (final Format format : new Format[] { JSON, BINARY }) {
 			final Noeud racine = graphe("id \"<&>'\t\n\r fin ");
 			verifie(racine, format.roundTrip(racine));
 		}
@@ -368,7 +336,7 @@ class RoundTripTest {
 		m.nombres.put(-2, Long.MAX_VALUE);
 		m.liste.add("b");
 		m.liste.add("a");
-		for (final Format format : new Format[] { JSON, XML, BINARY }) {
+		for (final Format format : new Format[] { JSON, BINARY }) {
 			final Melange lu = format.roundTrip(m);
 			assertEquals(m.valeurs, lu.valeurs);
 			assertEquals(m.nombres, lu.nombres);
@@ -391,7 +359,7 @@ class RoundTripTest {
 		p.f = -1.5f;
 		p.d = Double.MAX_VALUE;
 		p.grandId = 100_000;
-		for (final Format format : new Format[] { JSON, XML, BINARY }) {
+		for (final Format format : new Format[] { JSON, BINARY }) {
 			final Primitifs lu = format.roundTrip(p);
 			assertEquals(p.b, lu.b);
 			assertEquals(p.s, lu.s);
@@ -417,7 +385,7 @@ class RoundTripTest {
 			enfant.parent = racine;
 			racine.enfants.add(enfant);
 		}
-		for (final Format format : new Format[] { JSON, XML, BINARY })
+		for (final Format format : new Format[] { JSON, BINARY })
 			verifie(racine, format.roundTrip(racine));
 	}
 
@@ -431,10 +399,10 @@ class RoundTripTest {
 
 	@Test
 	void caracteres() throws Exception {
-		for (final Format format : new Format[] { JSON, XML, BINARY }) {
+		for (final Format format : new Format[] { JSON, BINARY }) {
 			final Caracteres c = new Caracteres();
 			c.c = 'é';
-			c.cZero = format == XML ? '"' : 0; // \u0000 impossible en XML
+			c.cZero = 0;
 			c.boite = '<';
 			c.objet = '\u2028';
 			final Caracteres lu = format.roundTrip(c);
@@ -470,7 +438,7 @@ class RoundTripTest {
 
 	@Test
 	void enumAvecCorps() throws Exception {
-		for (final Format format : new Format[] { JSON, XML, BINARY }) {
+		for (final Format format : new Format[] { JSON, BINARY }) {
 			final AvecOperation o = new AvecOperation();
 			o.declaree = Operation.MOINS;
 			o.nonDeclaree = Operation.PLUS;

@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
- * Sortie texte tamponnée et non synchronisée pour les formats JSON et XML : remplace StringWriter (StringBuffer
+ * Sortie texte tamponnée et non synchronisée pour le format JSON : remplace StringWriter (StringBuffer
  * synchronisé) et BufferedWriter, qui prennent un verrou à chaque petite écriture.
  * <p>
  * Deux modes : vers un Writer de destination (tampon vidé au besoin), ou en chaîne ({@link #pourChaine()}) : le

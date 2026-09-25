@@ -324,7 +324,7 @@ public class TypeExtension {
 		return hibernate.get(type);
 	}
 
-	public static boolean isSimple(final Class<?> type) { // Simple types become XML Attributes and JSON Values
+	public static boolean isSimple(final Class<?> type) { // les types simples sont des valeurs JSON
 		return type.isPrimitive() || isEnum(type) || simpleTypes.contains(type);
 	}
 

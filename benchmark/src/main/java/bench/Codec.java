@@ -20,21 +20,17 @@ import com.esotericsoftware.kryo.io.Output;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
-import com.thoughtworks.xstream.XStream;
 
 import bench.model.Catalogue;
 import giraudsa.marshall.deserialisation.binary.BinaryUnmarshaller;
 import giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller;
-import giraudsa.marshall.deserialisation.text.xml.XmlUnmarshaller;
 import giraudsa.marshall.serialisation.binary.BinaryMarshaller;
 import giraudsa.marshall.serialisation.text.json.JsonMarshaller;
-import giraudsa.marshall.serialisation.text.xml.XmlMarshaller;
 
 /** Adaptateur commun : chaque framework encode un {@link Catalogue} en String ou byte[] et le relit. */
 public abstract class Codec {
@@ -48,8 +44,8 @@ public abstract class Codec {
 				: ((String) data).getBytes(StandardCharsets.UTF_8).length;
 	}
 
-	public static final String[] NOMS = { "giraudsa-json", "giraudsa-xml", "giraudsa-binaire", "jackson-json",
-			"gson", "fastjson2", "fastjson2-ref", "fory-json", "jackson-xml", "xstream", "kryo", "fory", "java-natif" };
+	public static final String[] NOMS = { "giraudsa-json", "giraudsa-binaire", "jackson-json",
+			"gson", "fastjson2", "fastjson2-ref", "fory-json", "kryo", "fory", "java-natif" };
 
 	static ObjectMapper jacksonChamps(final ObjectMapper m) {
 		m.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
@@ -69,18 +65,6 @@ public abstract class Codec {
 				@Override
 				public Catalogue decode(final Object d) throws Exception {
 					return JsonUnmarshaller.fromJson((String) d);
-				}
-			};
-		case "giraudsa-xml":
-			return new Codec() {
-				@Override
-				public Object encode(final Catalogue c) throws Exception {
-					return XmlMarshaller.toCompleteXml(c);
-				}
-
-				@Override
-				public Catalogue decode(final Object d) throws Exception {
-					return XmlUnmarshaller.fromXml((String) d);
 				}
 			};
 		case "giraudsa-binaire":
@@ -146,20 +130,6 @@ public abstract class Codec {
 				}
 			};
 		}
-		case "jackson-xml": {
-			final ObjectMapper m = jacksonChamps(new XmlMapper());
-			return new Codec() {
-				@Override
-				public Object encode(final Catalogue c) throws Exception {
-					return m.writeValueAsString(c);
-				}
-
-				@Override
-				public Catalogue decode(final Object d) throws Exception {
-					return m.readValue((String) d, Catalogue.class);
-				}
-			};
-		}
 		case "gson": {
 			// par défaut Gson sérialise Date en texte localisé et perd les millisecondes
 			final Gson g = new GsonBuilder()
@@ -177,21 +147,6 @@ public abstract class Codec {
 				@Override
 				public Catalogue decode(final Object d) {
 					return g.fromJson((String) d, Catalogue.class);
-				}
-			};
-		}
-		case "xstream": {
-			final XStream x = new XStream();
-			x.allowTypesByWildcard(new String[] { "bench.model.**" });
-			return new Codec() {
-				@Override
-				public Object encode(final Catalogue c) {
-					return x.toXML(c);
-				}
-
-				@Override
-				public Catalogue decode(final Object d) {
-					return (Catalogue) x.fromXML((String) d);
 				}
 			};
 		}
