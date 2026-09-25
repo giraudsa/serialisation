@@ -1,6 +1,6 @@
 # Fidelis
 
-[![CI](https://github.com/giraudsa/serialisation/actions/workflows/ci.yml/badge.svg)](https://github.com/giraudsa/serialisation/actions/workflows/ci.yml)
+[![CI](https://github.com/giraudsa/fidelis/actions/workflows/ci.yml/badge.svg)](https://github.com/giraudsa/fidelis/actions/workflows/ci.yml)
 ![Java 11+](https://img.shields.io/badge/Java-11%2B-blue)
 ![Version](https://img.shields.io/badge/version-2.0.0-informational)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
@@ -46,8 +46,8 @@ Commande relue = JsonUnmarshaller.fromJson(json);   // même graphe : partages, 
 JDK 11 ou plus (15+ recommandé : lecteurs et écrivains générés). La bibliothèque n'est pas publiée sur Maven Central : construisez-la depuis les sources,
 
 ```sh
-git clone https://github.com/giraudsa/serialisation.git
-cd serialisation && mvn install
+git clone https://github.com/giraudsa/fidelis.git
+cd fidelis && mvn install
 ```
 
 puis ajoutez la dépendance :
