@@ -158,8 +158,11 @@ public final class LecteurJsonDirect {
 		private Clef suite1;
 		private Class<?> classeSuite2;
 		private Clef suite2;
-		/** classe nommée par ce texte, quand il est la valeur d'une clé de type. */
+		/** classe nommée par ce texte, quand il est la valeur d'une clé de type, et son plan de lecture. */
 		private Class<?> typeNomme;
+		private int genreNomme;
+		private TypeExtension.ChampsDuType champsNommes;
+		private LecteurChamps lecteurNomme;
 
 		/** le nom contient '?' (à vérifier sur le texte d'origine en Latin-1). */
 		private final boolean interrogation;
@@ -392,6 +395,12 @@ public final class LecteurJsonDirect {
 	private int profondeur;
 	private final JsonUnmarshaller<?> u;
 	private final TableClefs clefs;
+	/** première clé du dernier objet lu (le plus souvent la clé de type) : prévue pour le suivant. */
+	private Clef premiereClef;
+	/** dernier nom de type lu pour un type attendu (table à accès direct par type attendu). */
+	private static final int PREVISIONS = 16;
+	private final Class<?>[] declaresPrevus = new Class<?>[PREVISIONS];
+	private final Clef[] nomsPrevus = new Clef[PREVISIONS];
 	/** une clé de type a été rencontrée (la première fixe le mode de cache des ids, comme le lecteur historique). */
 	private boolean clefTypeVue;
 
@@ -846,14 +855,32 @@ public final class LecteurJsonDirect {
 		p++;
 		if (suivant() == '}')
 			throw ABANDON;
-		Clef clef = litClef();
+		Clef clef = litNom(premiereClef);
+		attend(':');
+		if (clef.octets != null)
+			premiereClef = clef;
 		final Class<?> type;
+		Clef nomType = null;
 		if (isClefType(clef)) {
-			final Clef nomType = litNom(null);
-			type = nomType.typeNomme != null ? nomType.typeNomme : JsonUnmarshaller.classeDepuisNom(nomType.nom);
-			if (type.isAssignableFrom(String.class))
-				throw ABANDON;
-			nomType.typeNomme = type;
+			// nom de type prévu d'après le type attendu (dernier nom lu pour lui)
+			final int prevision = declare == null ? 0 : System.identityHashCode(declare) & PREVISIONS - 1;
+			nomType = litNom(declaresPrevus[prevision] == declare ? nomsPrevus[prevision] : null);
+			if (nomType.octets != null) {
+				declaresPrevus[prevision] = declare;
+				nomsPrevus[prevision] = nomType;
+			}
+			if (nomType.typeNomme == null) {
+				final Class<?> t = JsonUnmarshaller.classeDepuisNom(nomType.nom);
+				if (t.isAssignableFrom(String.class))
+					throw ABANDON;
+				nomType.genreNomme = genre(t);
+				if (nomType.genreNomme == OBJET) {
+					nomType.champsNommes = TypeExtension.getChampsDuType(t);
+					nomType.lecteurNomme = lecteurGenere(t, nomType.champsNommes);
+				}
+				nomType.typeNomme = t;
+			}
+			type = nomType.typeNomme;
 			final byte s = suivant();
 			p++;
 			if (s == '}')
@@ -870,9 +897,9 @@ public final class LecteurJsonDirect {
 			type = declare;
 		}
 		final Object o;
-		switch (genre(type)) {
+		switch (nomType != null ? nomType.genreNomme : genre(type)) {
 		case OBJET:
-			o = litObjet(type, clef);
+			o = litObjet(type, clef, nomType);
 			break;
 		case COLLECTION:
 			o = litCollectionEnveloppee(type, fi, clef);
@@ -926,7 +953,8 @@ public final class LecteurJsonDirect {
 	 * Objet métier. Comme ActionJsonObject : l'objet est celui de son id (déjà vu ou créé), son type celui de l'objet
 	 * retrouvé ; les champs sont affectés dans l'ordre de lecture. Les valeurs lues avant l'id attendent l'objet.
 	 */
-	private Object litObjet(final Class<?> typeInitial, Clef clef) throws Exception {
+	/** @param plan nom de type lu (plan de lecture de sa classe), ou null */
+	private Object litObjet(final Class<?> typeInitial, Clef clef, final Clef plan) throws Exception {
 		Class<?> type = typeInitial;
 		Object obj = null;
 		Object[] enAttente = null;
@@ -973,8 +1001,10 @@ public final class LecteurJsonDirect {
 				champ.set(obj, valeur, fakeIds);
 				if (clef.nature == CLEF_ID) {
 					// les champs suivants, dans l'ordre d'écriture, par le lecteur généré de la classe
-					final TypeExtension.ChampsDuType champsDuType = TypeExtension.getChampsDuType(type);
-					final LecteurChamps lecteur = lecteurGenere(type, champsDuType);
+					final boolean planValide = plan != null && plan.typeNomme == type;
+					final TypeExtension.ChampsDuType champsDuType = planValide ? plan.champsNommes
+							: TypeExtension.getChampsDuType(type);
+					final LecteurChamps lecteur = planValide ? plan.lecteurNomme : lecteurGenere(type, champsDuType);
 					if (lecteur != null)
 						lecteur.lit(obj, this, champsDuType.getTableauChamps());
 				}
