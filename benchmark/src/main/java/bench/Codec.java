@@ -9,6 +9,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
 
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONReader;
+import com.alibaba.fastjson2.JSONWriter;
+import org.apache.fory.json.ForyJson;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -44,7 +49,7 @@ public abstract class Codec {
 	}
 
 	public static final String[] NOMS = { "giraudsa-json", "giraudsa-xml", "giraudsa-binaire", "jackson-json",
-			"gson", "jackson-xml", "xstream", "kryo", "fory", "java-natif" };
+			"gson", "fastjson2", "fastjson2-ref", "fory-json", "jackson-xml", "xstream", "kryo", "fory", "java-natif" };
 
 	static ObjectMapper jacksonChamps(final ObjectMapper m) {
 		m.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
@@ -95,6 +100,38 @@ public abstract class Codec {
 					return BinaryUnmarshaller.fromBinary(new ByteArrayInputStream((byte[]) d));
 				}
 			};
+		case "fastjson2":
+		case "fastjson2-ref": {
+			// par champs comme Jackson ; la variante -ref détecte aussi les références partagées ($ref)
+			final JSONWriter.Feature[] ecriture = nom.endsWith("-ref")
+					? new JSONWriter.Feature[] { JSONWriter.Feature.FieldBased, JSONWriter.Feature.ReferenceDetection }
+					: new JSONWriter.Feature[] { JSONWriter.Feature.FieldBased };
+			return new Codec() {
+				@Override
+				public Object encode(final Catalogue c) throws Exception {
+					return JSON.toJSONString(c, ecriture);
+				}
+
+				@Override
+				public Catalogue decode(final Object d) throws Exception {
+					return JSON.parseObject((String) d, Catalogue.class, JSONReader.Feature.FieldBased);
+				}
+			};
+		}
+		case "fory-json": {
+			final ForyJson j = ForyJson.builder().withFieldMode(true).build();
+			return new Codec() {
+				@Override
+				public Object encode(final Catalogue c) throws Exception {
+					return j.toJson(c);
+				}
+
+				@Override
+				public Catalogue decode(final Object d) throws Exception {
+					return j.fromJson((String) d, Catalogue.class);
+				}
+			};
+		}
 		case "jackson-json": {
 			final ObjectMapper m = jacksonChamps(new ObjectMapper());
 			return new Codec() {
@@ -185,8 +222,9 @@ public abstract class Codec {
 		}
 		case "fory": {
 			// suivi des références activé : même sémantique d'identité que giraudsa et kryo
-			final org.apache.fory.ThreadSafeFory f = org.apache.fory.Fory.builder().withRefTracking(true)
-					.requireClassRegistration(false).buildThreadSafeFory();
+			final org.apache.fory.ThreadSafeFory f = org.apache.fory.Fory.builder().withXlang(false).withRefTracking(true)
+					.requireClassRegistration(false).withTypeChecker((resolveur, classe) -> true)
+					.buildThreadSafeFory();
 			return new Codec() {
 				@Override
 				public Object encode(final Catalogue c) {
