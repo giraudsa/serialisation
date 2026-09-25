@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/giraudsa/fidelis/actions/workflows/ci.yml/badge.svg)](https://github.com/giraudsa/fidelis/actions/workflows/ci.yml)
 ![Java 11+](https://img.shields.io/badge/Java-11%2B-blue)
-![Version](https://img.shields.io/badge/version-2.0.0-informational)
+[![Release](https://img.shields.io/github/v/release/giraudsa/fidelis)](https://github.com/giraudsa/fidelis/releases/latest)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
 
 **Fidelis** est une bibliothèque Java de sérialisation *fidèle au graphe d'objets* : ce qui est relu est exactement le graphe écrit — mêmes objets partagés, mêmes cycles, mêmes sous-classes — en **JSON** ou dans un **format binaire** compact, sans annotation obligatoire, sans constructeur requis et sans code généré dans votre projet.
@@ -43,7 +43,11 @@ Commande relue = JsonUnmarshaller.fromJson(json);   // même graphe : partages, 
 
 ## Installation
 
-JDK 11 ou plus (15+ recommandé : lecteurs et écrivains générés). La bibliothèque n'est pas publiée sur Maven Central : construisez-la depuis les sources,
+JDK 11 ou plus (15+ recommandé : lecteurs et écrivains générés).
+
+**Sans Maven** : téléchargez `fidelis-<version>.jar` sur la [page des releases](https://github.com/giraudsa/fidelis/releases/latest) et ajoutez-le au classpath (`fidelis-<version>-sources.jar` contient les sources, pour l'IDE).
+
+**Avec Maven** : la bibliothèque n'est pas encore publiée sur Maven Central ; construisez-la depuis les sources,
 
 ```sh
 git clone https://github.com/giraudsa/fidelis.git

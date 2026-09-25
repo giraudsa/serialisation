@@ -1,0 +1,46 @@
+name: Release
+
+# Publie le jar (et celui des sources) dans une release GitHub à chaque étiquette vX.Y.Z,
+# pour ceux qui n'utilisent pas Maven. Lancé à la main, il construit seulement les jars (sans publier).
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  jar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Version du pom
+        id: version
+        run: echo "version=$(mvn -B -q help:evaluate -Dexpression=project.version -DforceStdout)" >> "$GITHUB_OUTPUT"
+      - name: Étiquette et version du pom concordantes
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          if [ "${GITHUB_REF_NAME}" != "v${{ steps.version.outputs.version }}" ]; then
+            echo "L'étiquette ${GITHUB_REF_NAME} ne correspond pas à la version du pom (${{ steps.version.outputs.version }})"
+            exit 1
+          fi
+      - name: Jars (tests compris)
+        run: mvn -B verify source:jar-no-fork
+      - name: Jars en artefacts du workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: fidelis-${{ steps.version.outputs.version }}
+          path: target/fidelis-*.jar
+      - name: Release GitHub
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" target/fidelis-*.jar \
+            --title "Fidelis ${{ steps.version.outputs.version }}" --generate-notes
