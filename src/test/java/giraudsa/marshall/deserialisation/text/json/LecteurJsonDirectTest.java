@@ -353,6 +353,25 @@ class LecteurJsonDirectTest {
 	}
 
 	@Test
+	void lecteurGenere() throws Exception {
+		final String n = Nombres.class.getName();
+		final String debut = "{\"__type\":\"" + n + "\",\"id\":\"n\"";
+		// dans l'ordre d'écriture, clés manquantes, désordre, doublon, blancs, référence seule
+		compare(JsonMarshaller.toCompleteJson(new Nombres()), true);
+		compare(debut + ",\"d\":1.5,\"i\":3,\"texte\":\"t\"}", true);
+		compare(debut + ",\"texte\":\"t\",\"i\":3,\"d\":1.5,\"l\":7}", true);
+		compare(debut + ",\"i\":3,\"i\":4,\"vrai\":true,\"vrai\":false}", true);
+		compare(debut + " , \"i\" : 3 ,\n\"d\":2}", true);
+		compare(debut + "}", false);
+		compare(debut + ",\"i\":\"12\",\"l\":\"13\",\"d\":\"1e2\",\"f\":2,\"vrai\":\"true\"}", true);
+		compare(debut + ",\"i\":null}", false);
+		compare(debut + ",\"i\":3000000000}", false);
+		final Object lecteur = utils.TypeExtension.getChampsDuType(Nombres.class).getLecteurJson();
+		org.junit.jupiter.api.Assertions.assertTrue(lecteur instanceof utils.champ.LecteurChamps,
+				"le lecteur généré doit être utilisé : " + lecteur);
+	}
+
+	@Test
 	void grapheProfond() throws Exception {
 		final SansId racine = new SansId();
 		SansId courant = racine;

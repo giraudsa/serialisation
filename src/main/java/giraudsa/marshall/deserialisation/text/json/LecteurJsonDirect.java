@@ -32,6 +32,8 @@ import utils.champ.Champ;
 import utils.champ.ChampUid;
 import utils.champ.FakeChamp;
 import utils.champ.FieldInformations;
+import utils.champ.GenerateurSerialiseurs;
+import utils.champ.LecteurChamps;
 import utils.champ.NullChamp;
 import utils.io.DatesIso;
 import utils.io.Decimaux;
@@ -44,7 +46,7 @@ import utils.io.Decimaux;
  * id. Tout ce qui sort de ces cas (JSON non strict, types particuliers, erreurs...) abandonne la lecture : le texte
  * est alors relu par le lecteur historique, sans effet de bord puisque rien n'est persisté.
  */
-final class LecteurJsonDirect {
+public final class LecteurJsonDirect {
 
 	/** abandon de la lecture directe : le lecteur historique prend le relais. */
 	private static final class Abandon extends RuntimeException {
@@ -937,9 +939,16 @@ final class LecteurJsonDirect {
 					TypeExtension.getChampByName(type, (String) enAttente[i]).set(obj, enAttente[i + 1], fakeIds);
 				nbEnAttente = 0;
 			}
-			if (obj != null)
+			if (obj != null) {
 				champ.set(obj, valeur, fakeIds);
-			else {
+				if (clef.nature == CLEF_ID) {
+					// les champs suivants, dans l'ordre d'écriture, par le lecteur généré de la classe
+					final TypeExtension.ChampsDuType champsDuType = TypeExtension.getChampsDuType(type);
+					final LecteurChamps lecteur = lecteurGenere(type, champsDuType);
+					if (lecteur != null)
+						lecteur.lit(obj, this, champsDuType.getTableauChamps());
+				}
+			} else {
 				if (enAttente == null)
 					enAttente = new Object[8];
 				else if (nbEnAttente == enAttente.length)
@@ -1047,6 +1056,212 @@ final class LecteurJsonDirect {
 			return false;
 		final byte s = c[p];
 		return s == ',' || s == '}' || s == ']';
+	}
+
+	/**
+	 * Lecteur généré des champs de la classe (tous sauf l'id, qui vient en tête) : pour chaque champ, dans l'ordre
+	 * d'écriture, t.champ = litXxx(t.champ, champ). null si la génération n'est pas possible.
+	 */
+	private static LecteurChamps lecteurGenere(final Class<?> type, final TypeExtension.ChampsDuType champsDuType) {
+		Object lecteur = champsDuType.getLecteurJson();
+		if (lecteur == null) {
+			lecteur = creeLecteur(type, champsDuType);
+			champsDuType.setLecteurJson(lecteur);
+		}
+		return lecteur instanceof LecteurChamps ? (LecteurChamps) lecteur : null;
+	}
+
+	private static Object creeLecteur(final Class<?> type, final TypeExtension.ChampsDuType champsDuType) {
+		final Champ[] champs = champsDuType.getTableauChamps();
+		if (champs.length < 2 || champs[0] != champsDuType.getChampId())
+			return Boolean.FALSE;
+		for (int i = 1; i < champs.length; i++) {
+			final String nom = champs[i].getName();
+			// un champ au nom réservé est lu par le chemin général (clé de type ou de valeur enveloppée)
+			if (nom.equals(Constants.CLEF_TYPE) || nom.equals(Constants.CLEF_TYPE_ID_UNIVERSEL)
+					|| nom.equals(Constants.VALEUR) || champs[i].getClefJson() == null)
+				return Boolean.FALSE;
+		}
+		final LecteurChamps lecteur = GenerateurSerialiseurs.lecteurAvecValeurCourante(type, champs, 1,
+				LecteurJsonDirect.class);
+		return lecteur != null ? lecteur : Boolean.FALSE;
+	}
+
+	/**
+	 * Si la clé du champ suit (après une virgule), la lit, deux-points compris. Sinon (fin de l'objet, autre clé,
+	 * blancs inhabituels...) rien n'est lu : le chemin général traitera la suite.
+	 */
+	private boolean clefPresente(final FieldInformations fi) {
+		int q = p;
+		while (q < n && (c[q] == ' ' || c[q] == '\n'))
+			q++;
+		if (q >= n || c[q] != ',')
+			return false;
+		q++;
+		while (q < n && (c[q] == ' ' || c[q] == '\n'))
+			q++;
+		final byte[] clef = ((Champ) fi).getClefJson();
+		if (q + clef.length > n)
+			return false;
+		for (int k = 0; k < clef.length; k++)
+			if (c[q + k] != clef[k])
+				return false;
+		p = q + clef.length;
+		return true;
+	}
+
+	/** valeur générale du champ, du type attendu (enveloppe) : comme le chemin général. */
+	private Object valeurGenerale(final FieldInformations fi) throws Exception {
+		return litValeur(TypeExtension.getTypeEnveloppe(fi.getValueType()), fi);
+	}
+
+	/** valeur d'un champ primitif par le chemin général : du type de l'enveloppe, sinon abandon (null...). */
+	private Object valeurPrimitive(final FieldInformations fi, final Class<?> enveloppe) throws Exception {
+		final Object v = valeurGenerale(fi);
+		if (v == null || v.getClass() != enveloppe)
+			throw ABANDON;
+		return v;
+	}
+
+	/**
+	 * Entier sans guillemets suivi d'une fin de valeur : sa valeur, p après lui ; sinon Long.MIN_VALUE, p inchangé.
+	 */
+	private long entierSimple(final int chiffresMax) {
+		final int debut = p;
+		if (debut >= n)
+			return Long.MIN_VALUE;
+		final byte x = c[debut];
+		if (x != '-' && (x < '0' || x > '9'))
+			return Long.MIN_VALUE;
+		int i = debut + 1;
+		while (i < n && c[i] >= '0' && c[i] <= '9')
+			i++;
+		final long v = entier(debut, i, chiffresMax);
+		if (v == Long.MIN_VALUE)
+			return v;
+		p = i;
+		if (!finDeValeur()) {
+			p = debut;
+			return Long.MIN_VALUE;
+		}
+		return v;
+	}
+
+	//////// lecture des champs par le lecteur généré : valeur lue si la clé suit, sinon valeur courante
+
+	public int litInt(final int courant, final FieldInformations fi) throws Exception {
+		if (!clefPresente(fi))
+			return courant;
+		saute();
+		final long v = entierSimple(10);
+		if (v != Long.MIN_VALUE && v >= Integer.MIN_VALUE && v <= Integer.MAX_VALUE)
+			return (int) v;
+		return (Integer) valeurPrimitive(fi, Integer.class);
+	}
+
+	public long litLong(final long courant, final FieldInformations fi) throws Exception {
+		if (!clefPresente(fi))
+			return courant;
+		saute();
+		final long v = entierSimple(18);
+		if (v != Long.MIN_VALUE)
+			return v;
+		return (Long) valeurPrimitive(fi, Long.class);
+	}
+
+	public double litDouble(final double courant, final FieldInformations fi) throws Exception {
+		if (!clefPresente(fi))
+			return courant;
+		saute();
+		final int debut = p;
+		int i = debut;
+		while (i < n) {
+			final byte y = c[i];
+			if (y == ',' || y == '}' || y == ']' || y == ' ' || y == '\n' || y == '\r')
+				break;
+			i++;
+		}
+		if (i > debut) {
+			final double v = Decimaux.lit(c, debut, i);
+			if (v == v) { // INVALIDE (NaN) : chemin général
+				p = i;
+				if (finDeValeur())
+					return v;
+				p = debut;
+			}
+		}
+		return (Double) valeurPrimitive(fi, Double.class);
+	}
+
+	public float litFloat(final float courant, final FieldInformations fi) throws Exception {
+		if (!clefPresente(fi))
+			return courant;
+		return (Float) valeurPrimitive(fi, Float.class);
+	}
+
+	public boolean litBoolean(final boolean courant, final FieldInformations fi) throws Exception {
+		if (!clefPresente(fi))
+			return courant;
+		saute();
+		final int debut = p;
+		if (debut + 4 <= n && c[debut] == 't' && c[debut + 1] == 'r' && c[debut + 2] == 'u' && c[debut + 3] == 'e') {
+			p = debut + 4;
+			if (finDeValeur())
+				return true;
+			p = debut;
+		} else if (debut + 5 <= n && c[debut] == 'f' && c[debut + 1] == 'a' && c[debut + 2] == 'l'
+				&& c[debut + 3] == 's' && c[debut + 4] == 'e') {
+			p = debut + 5;
+			if (finDeValeur())
+				return false;
+			p = debut;
+		}
+		return (Boolean) valeurPrimitive(fi, Boolean.class);
+	}
+
+	public byte litByte(final byte courant, final FieldInformations fi) throws Exception {
+		if (!clefPresente(fi))
+			return courant;
+		return (Byte) valeurPrimitive(fi, Byte.class);
+	}
+
+	public short litShort(final short courant, final FieldInformations fi) throws Exception {
+		if (!clefPresente(fi))
+			return courant;
+		return (Short) valeurPrimitive(fi, Short.class);
+	}
+
+	public char litChar(final char courant, final FieldInformations fi) throws Exception {
+		if (!clefPresente(fi))
+			return courant;
+		return (Character) valeurPrimitive(fi, Character.class);
+	}
+
+	public Object litObjet(final Object courant, final FieldInformations fi) throws Exception {
+		if (!clefPresente(fi))
+			return courant;
+		if (fi.getValueType() == String.class && suivant() == '"') {
+			// chaîne sans échappement : lue directement
+			final int debut = p;
+			int i = debut + 1;
+			int ou = 0;
+			while (i < n) {
+				final byte y = c[i];
+				if (y == '"' || y == '\\')
+					break;
+				ou |= y;
+				i++;
+			}
+			if (i < n && c[i] == '"') {
+				final String s = new String(c, debut + 1, i - debut - 1,
+						ou < 0 ? codage : StandardCharsets.ISO_8859_1);
+				p = i + 1;
+				if (finDeValeur())
+					return s;
+				p = debut;
+			}
+		}
+		return valeurGenerale(fi);
 	}
 
 	/** valeur simple enveloppée {"__type":T,"__valeur":v}. */

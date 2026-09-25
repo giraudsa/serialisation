@@ -43,6 +43,16 @@ public class TypeExtension {
 		 */
 		private volatile Object ecrivainBinaire;
 		private volatile Object lecteurBinaire;
+		/** lecteur JSON généré (voir GenerateurSerialiseurs.lecteurAvecValeurCourante), Boolean.FALSE si impossible. */
+		private volatile Object lecteurJson;
+
+		public Object getLecteurJson() {
+			return lecteurJson;
+		}
+
+		public void setLecteurJson(final Object lecteur) {
+			lecteurJson = lecteur;
+		}
 
 		private ChampsDuType(final List<Champ> champs, final Map<String, Champ> champsParNom) {
 			this.champs = Collections.unmodifiableList(champs);
