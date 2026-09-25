@@ -1,6 +1,9 @@
 package utils.io;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 
 /**
  * Lecture rapide des décimaux écrits en ASCII ([-]chiffres[.chiffres][e[+-]chiffres], au plus 19 chiffres
@@ -61,6 +64,26 @@ public final class Decimaux {
 	private Decimaux() {
 	}
 
+	/** lecture de 8 octets d'un coup (API publique, sans Unsafe). */
+	private static final VarHandle HUIT_OCTETS = MethodHandles.byteArrayViewVarHandle(long[].class,
+			ByteOrder.LITTLE_ENDIAN);
+
+	/** valeur des 8 chiffres ASCII de x (le premier dans l'octet de poids faible). */
+	private static int huitChiffres(final long octets) {
+		long x = octets - 0x3030303030303030L;
+		x = x * 10 + (x >>> 8) & 0x00FF00FF00FF00FFL;
+		x = x * 100 + (x >>> 16) & 0x0000FFFF0000FFFFL;
+		x = x * 10000 + (x >>> 32) & 0x00000000FFFFFFFFL;
+		return (int) x;
+	}
+
+	/** nombre de chiffres de v (1 à 99 999 999). */
+	private static int nbChiffres(final int v) {
+		if (v < 10_000)
+			return v < 10 ? 1 : v < 100 ? 2 : v < 1000 ? 3 : 4;
+		return v < 100_000 ? 5 : v < 1_000_000 ? 6 : v < 10_000_000 ? 7 : 8;
+	}
+
 	/** 64 bits hauts du produit non signé. */
 	private static long multiplieHaut(final long a, final long b) {
 		return Math.multiplyHigh(a, b) + (a >> 63 & b) + (b >> 63 & a);
@@ -93,6 +116,28 @@ public final class Decimaux {
 			return INVALIDE;
 		if (i < fin && b[i] == '.') {
 			final int debutDecimales = ++i;
+			// décimales par blocs de 8 chiffres (SWAR), même effet que chiffre par chiffre
+			while (i + 8 <= fin) {
+				final long x = (long) HUIT_OCTETS.get(b, i);
+				if (((x & 0xF0F0F0F0F0F0F0F0L) | ((x + 0x0606060606060606L) & 0xF0F0F0F0F0F0F0F0L) >>> 4)
+						!= 0x3333333333333333L)
+					break;
+				final int v = huitChiffres(x);
+				if (w == 0) {
+					// zéros de tête non comptés
+					if (v != 0) {
+						chiffres = nbChiffres(v);
+						w = v;
+					}
+				} else {
+					chiffres += 8;
+					if (chiffres > 19)
+						return INVALIDE;
+					w = w * 100_000_000L + v;
+				}
+				q -= 8;
+				i += 8;
+			}
 			for (; i < fin; i++) {
 				final int d = b[i] - '0';
 				if (d < 0 || d > 9)
