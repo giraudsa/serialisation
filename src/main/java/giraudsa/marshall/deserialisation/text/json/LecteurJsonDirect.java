@@ -681,6 +681,8 @@ public final class LecteurJsonDirect {
 		Class<?> type = typeGuess;
 		if (typeGuess != Void.class && declare != null && !declare.isAssignableFrom(typeGuess))
 			type = declare;
+		if (type == String.class && chaine != null) // construit(String, s) rend s
+			return chaine;
 		switch (genre(type)) {
 		case SIMPLE:
 			if (chaine == null) {
