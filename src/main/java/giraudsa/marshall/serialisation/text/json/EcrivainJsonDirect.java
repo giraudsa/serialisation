@@ -46,8 +46,6 @@ public final class EcrivainJsonDirect {
 
 	/** au-delà, les valeurs imbriquées sont confiées aux actions (qui passent par une pile explicite). */
 	private static final int PROFONDEUR_MAX = 100;
-	/** mode données : pas de repli possible ; au-delà, le graphe est sans doute cyclique. */
-	private static final int PROFONDEUR_DONNEES_MAX = 1000;
 
 	private static final int AUTRE = 0;
 	private static final int CHAINE = 1;
@@ -105,9 +103,6 @@ public final class EcrivainJsonDirect {
 	private final String[] remplacements = ActionJson.remplacements();
 	private final boolean universel;
 	private final boolean ecritType;
-	/** mode données : ni type, ni identité (chaque objet écrit en entier à chaque occurrence), ni faux id. */
-	private final boolean donnees;
-	private final int profondeurMax;
 	private final Map<Object, UUID> fakeIds;
 	private final EntityManager entite;
 	private int profondeur;
@@ -125,8 +120,6 @@ public final class EcrivainJsonDirect {
 		sortie = m.sortie();
 		universel = m.idUniversel();
 		ecritType = m.writeType;
-		donnees = m.donnees;
-		profondeurMax = donnees ? PROFONDEUR_DONNEES_MAX : PROFONDEUR_MAX;
 		fakeIds = m.fakeIds();
 		entite = m.getEntityManager();
 	}
@@ -205,25 +198,25 @@ public final class EcrivainJsonDirect {
 			return;
 		}
 		case OBJET:
-			if (profondeur < profondeurMax) {
+			if (profondeur < PROFONDEUR_MAX) {
 				ecritObjetComplet(v, fi);
 				return;
 			}
 			break;
 		case COLLECTION:
-			if (profondeur < profondeurMax) {
+			if (profondeur < PROFONDEUR_MAX) {
 				ecritCollection((Collection<?>) v, fi);
 				return;
 			}
 			break;
 		case MAP:
-			if (profondeur < profondeurMax) {
+			if (profondeur < PROFONDEUR_MAX) {
 				ecritMap((Map<?, ?>) v, fi);
 				return;
 			}
 			break;
 		case TABLEAU:
-			if (profondeur < profondeurMax) {
+			if (profondeur < PROFONDEUR_MAX) {
 				ecritTableau(v, fi);
 				return;
 			}
@@ -233,9 +226,6 @@ public final class EcrivainJsonDirect {
 			m.ecritParAction(v, fi);
 			return;
 		}
-		if (donnees)
-			throw new MarshallExeption("mode données : profondeur supérieure à " + PROFONDEUR_DONNEES_MAX
-					+ " (graphe cyclique ?)");
 		m.ecritParAction(v, fi);
 	}
 
@@ -252,14 +242,6 @@ public final class EcrivainJsonDirect {
 			virgule = true;
 		}
 		final TypeExtension.ChampsDuType champsDuType = TypeExtension.getChampsDuType(v.getClass());
-		if (donnees) {
-			// ni identité ni stratégie : tous les champs, faux id exclu
-			profondeur++;
-			ecritChamps(v, champsDuType, virgule);
-			profondeur--;
-			m.fermeAccolade();
-			return;
-		}
 		// la stratégie ne dépend que de la profondeur et du champ : consultée d'abord, l'objet est ensuite marqué déjà vu
 		// et, si tout doit être écrit, totalement sérialisé (sans effet s'il l'était déjà), en une recherche
 		final boolean strategieTout = m.serialiseTout(fi);
@@ -277,7 +259,7 @@ public final class EcrivainJsonDirect {
 		m.fermeAccolade();
 	}
 
-	/** Tous les champs de l'objet, par l'écrivain généré de sa classe s'il existe (en mode données, sans faux id). */
+	/** Tous les champs de l'objet, par l'écrivain généré de sa classe s'il existe. */
 	private void ecritChamps(final Object v, final TypeExtension.ChampsDuType champsDuType, boolean virgule)
 			throws IOException, MarshallExeption, InstantiationException, IllegalAccessException,
 			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException {
@@ -297,24 +279,6 @@ public final class EcrivainJsonDirect {
 				throw new MarshallExeption(e);
 			}
 			virguleCourante = virguleEnglobante;
-			return;
-		}
-		if (donnees) {
-			// mode données : faux id exclu, virgule seulement après un champ écrit (un id null est omis comme un autre
-			// champ null)
-			for (final Champ champ : champs) {
-				if (champ.getAcces() == null)
-					continue;
-				if (champ.getNaturePrimitive() != AccesChamp.AUCUNE && ecritChampSimple(v, champ, virgule)) {
-					virgule = true;
-					continue;
-				}
-				final Object valeur = champ.get(v, fakeIds, entite);
-				if (valeur != null) {
-					ecrit(valeur, champ, virgule);
-					virgule = true;
-				}
-			}
 			return;
 		}
 		for (final Champ champ : champs) {
@@ -426,8 +390,6 @@ public final class EcrivainJsonDirect {
 			throws IOException, MarshallExeption, InstantiationException, IllegalAccessException,
 			InvocationTargetException, NoSuchMethodException, NotImplementedSerializeException {
 		final boolean virgule = virguleCourante;
-		if (v == null && donnees)
-			return; // rien d'écrit : pas de virgule pour le champ suivant (un id null est omis comme un autre)
 		virguleCourante = true;
 		if (!aTraiter(v, champ))
 			return;

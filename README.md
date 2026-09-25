@@ -123,21 +123,6 @@ L'écriture parcourt directement objets, collections et maps (sans pile de compo
 
 Les mesures sont au paragraphe 4.5.
 
-###3.4 - Mode données
-
-Quand le graphe est un simple arbre (pas d'objet partagé, pas de cycle, pas de polymorphisme à reconstituer), le mode données écrit l'arbre des valeurs sans type (`__type`) ni suivi d'identité, comme les bibliothèques JSON usuelles : texte plus court, écriture et lecture plus rapides.
-
-	String json = JsonMarshaller.toDataJson(obj);
-	JsonMarshaller.toDataJson(obj, writer);
-	MonObjet o = JsonUnmarshaller.fromDataJson(json, MonObjet.class);
-	MonObjet o = JsonUnmarshaller.fromDataJson(reader, MonObjet.class);
-
-* la classe racine est donnée à la lecture ; les autres types sont ceux déclarés par les champs (paramètres génériques compris) ; une collection ou une map déclarée par une interface est créée avec l'implémentation usuelle qui conserve l'ordre (ArrayList, LinkedHashMap, LinkedHashSet, TreeMap pour une SortedMap...) ;
-* un objet partagé est écrit à chaque occurrence et relu en autant d'objets distincts ; un graphe cyclique (ou plus profond que 1 000 niveaux) est refusé à l'écriture ;
-* un champ `id` est un champ comme un autre ; les faux id (classes sans champ id) ne sont pas écrits ;
-* une sous-classe placée dans un champ de son type parent est relue comme le type parent (erreur si le modèle est contraignant et qu'elle a des champs propres) ;
-* un JSON écrit normalement, s'il ne dépend pas de l'identité, se relit aussi en mode données ; le texte n'est pas mis en forme.
-
 
 ##4 - Format Binaire
 ------------------
@@ -185,7 +170,6 @@ Mesures (JMH, JDK 25, Linux arm64, 10 itérations de 2 s) sur un catalogue de co
 | Kryo 5.6 | 1,85 | 4,43 | 2,31 | 1,93 | 508 |
 | Java natif | 7,31 | 8,13 | 36,8 | 8,20 | 1 174 |
 | giraudsa JSON | 2,20 | 1,98 | 2,96 | 3,25 | 1 519 |
-| giraudsa JSON, mode données | 1,71 | 1,71 | 2,74 | 2,63 | 1 471 |
 | **Fory JSON 1.7** | **0,83** | **0,98** | **1,13** | **1,19** | 1 458 |
 | fastjson2 2.0 | 2,71 | 2,21 | 2,15 | 1,83 | 1 466 |
 | fastjson2 2.0, ref | 2,30 | 5,40 (instable) | 2,10 | 1,84 | 1 466 |

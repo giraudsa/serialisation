@@ -167,27 +167,6 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		}
 	}
 
-	/**
-	 * Lit un JSON « de données » (voir JsonMarshaller.toDataJson) : les types sont ceux déclarés, à partir de la classe
-	 * racine ; pas d'identité (chaque objet lu est un nouvel objet, un champ id est un champ comme un autre). Les
-	 * clés de type éventuelles (__type) sont prises en compte.
-	 */
-	@SuppressWarnings("unchecked")
-	public static <U> U fromDataJson(final String json, final Class<U> racine) throws UnmarshallExeption {
-		if (json == null || json.isEmpty())
-			return null;
-		return (U) LecteurJsonDirect.litDonnees(json, racine);
-	}
-
-	/** Voir {@link #fromDataJson(String, Class)}. */
-	public static <U> U fromDataJson(final Reader reader, final Class<U> racine) throws UnmarshallExeption {
-		try {
-			return fromDataJson(new String(litTout(reader)), racine);
-		} catch (final IOException e) {
-			throw new UnmarshallExeption("probleme dans la désérialisation JSON (données)", e);
-		}
-	}
-
 	public static <U> U fromJson(final String stringToUnmarshall) throws UnmarshallExeption {
 		if (stringToUnmarshall == null || stringToUnmarshall.length() == 0)
 			return null;
@@ -255,18 +234,6 @@ public class JsonUnmarshaller<T> extends TextUnmarshaller<T> {
 		if (entity == null && cacheObject instanceof CacheIdNonUniversel)
 			return ((CacheIdNonUniversel) cacheObject).obtient(type, id, this::newInstance);
 		return getObject(id, type);
-	}
-
-	Object nouvelleInstance(final Class<?> type) throws InstanciationException {
-		return newInstance(type);
-	}
-
-	/** valeur d'un type lu par son action (Locale, Currency...) à partir de son texte. */
-	Object valeurParAction(final Class<?> type, final String donnees) throws Exception {
-		final ActionAbstrait<?> action = getAction(type);
-		rempliData(action, donnees);
-		construitObjet(action);
-		return getObjet(action);
 	}
 
 	void choisitCache(final boolean isIdUniversel) {

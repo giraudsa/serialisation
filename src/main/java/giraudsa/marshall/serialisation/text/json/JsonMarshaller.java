@@ -127,33 +127,6 @@ public class JsonMarshaller extends TextMarshaller {
 		}
 	}
 
-	/**
-	 * JSON « de données » : l'arbre des valeurs, sans type (__type) ni identité. Chaque objet est écrit en entier à
-	 * chaque occurrence (un objet partagé est dupliqué, un graphe cyclique est refusé), les faux id ne sont pas écrits.
-	 * Plus court et plus rapide ; à relire avec {@link giraudsa.marshall.deserialisation.text.json.JsonUnmarshaller#fromDataJson}
-	 * en donnant la classe racine, les types étant ceux déclarés par les champs. Sans mise en forme.
-	 */
-	public static <U> String toDataJson(final U obj) throws MarshallExeption {
-		final SortieTexte sortie = SortieTexte.pourChaine();
-		toDataJson(obj, sortie);
-		return sortie.termine();
-	}
-
-	/** Voir {@link #toDataJson(Object)}. */
-	public static <U> void toDataJson(final U obj, final Writer output) throws MarshallExeption {
-		try {
-			final JsonMarshaller v = new JsonMarshaller(output, new StrategieSerialisationComplete(), null, false);
-			v.donnees = true;
-			v.marshall(obj);
-		} catch (ChampNotFound | IOException | InstantiationException | IllegalAccessException
-				| InvocationTargetException | NoSuchMethodException | NotImplementedSerializeException e) {
-			LOGGER.debug("probleme de sérialisation json (données) de " + obj, e);
-			throw new MarshallExeption(e);
-		} catch (final StackOverflowError e) {
-			throw new MarshallExeption("mode données : graphe trop profond ou cyclique");
-		}
-	}
-
 	public static <U> String toJson(final U obj) throws MarshallExeption {
 		return toJson(obj, new StrategieParComposition(), null, true);
 	}
@@ -225,7 +198,7 @@ public class JsonMarshaller extends TextMarshaller {
 	protected <U> void marshall(final U obj)
 			throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
 			IOException, NotImplementedSerializeException, MarshallExeption {
-		if (obj == null || !donnees && (isPrettyPrint() || !direct)) {
+		if (obj == null || isPrettyPrint() || !direct) {
 			super.marshall(obj);
 			return;
 		}
@@ -238,9 +211,6 @@ public class JsonMarshaller extends TextMarshaller {
 			rendTables();
 		}
 	}
-
-	/** mode données (voir toDataJson) : ni type ni identité. */
-	boolean donnees;
 
 	/** false : tout par les actions (comparaison avec l'écriture directe dans les tests). */
 	private boolean direct = true;
